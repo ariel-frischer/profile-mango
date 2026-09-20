@@ -82,8 +82,9 @@ and use only permitted excerpts rather than copying entire documentation sites.
 Agents should consult these references first once available. Fresh local evidence
 should eliminate routine repeated research, not prohibit a targeted official lookup
 when the installed version differs, a source is stale or the local summary is
-insufficient. Update `docs/index.md` and concise agent-instruction pointers when the
-pack is created. The pack has not been populated by this strategy update.
+insufficient. The populated [agent configuration references](agents/README.md)
+are indexed in `docs/index.md` and linked from the agent instructions. They remain
+documentation provenance, not executed evidence or a compatibility claim.
 
 ## Refresh deliberately, not automatically
 

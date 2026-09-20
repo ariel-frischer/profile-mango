@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-09-20",
+  "purpose": "Documentation provenance for local agent configuration references; not a product schema or compatibility ledger.",
+  "state_definitions": {
+    "documentation_basis": "Source material reviewed for the local reference.",
+    "installed_observation": "A separately recorded local binary or source observation; not compatibility evidence.",
+    "tested_evidence": "An isolated, exact-version native or runtime check.",
+    "supported_capability": "A capability backed by evidence at the level claimed."
+  },
+  "targets": [
+    {
+      "id": "codex",
+      "name": "Codex",
+      "reference": "codex.md",
+      "product_status": "first_public_adapter_candidate_no_adapter",
+      "documentation_basis": "mutable_unversioned_official_docs",
+      "installed_observation": "recorded_separately_in_target_evidence",
+      "tested_evidence": "none_for_reference_pack",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "separate_local_observation",
+        "version": "0.154.0",
+        "note": "Does not version or pin the mutable documentation sources."
+      },
+      "sources": [
+        {
+          "url": "https://developers.openai.com/codex/config-schema.json",
+          "kind": "mutable_unversioned_schema",
+          "sha256": "786fee5181619dc73963f7544fa6afe8364236392d999df92d3dd6b3a8c8ac70"
+        },
+        {
+          "url": "https://learn.chatgpt.com/docs/config-file/config-basic",
+          "kind": "mutable_unversioned_documentation",
+          "sha256": "7fc85ae0b8f8ae1483fca0cf8972ccc6ee6b923c9e156b0c2965c52ecb5941e0"
+        },
+        {
+          "url": "https://learn.chatgpt.com/docs/config-file/config-advanced",
+          "kind": "mutable_unversioned_documentation",
+          "sha256": "08a695b708b3f9a178751bf4be7088e4ee598bf8aba4ef9c67711b117e9279f9"
+        },
+        {
+          "url": "https://learn.chatgpt.com/docs/config-file/config-reference",
+          "kind": "mutable_unversioned_documentation",
+          "sha256": "70b83fbc16382697a3bee781d3a00b7f2d18dacc75a807ffa2d545ccacf4dd3a"
+        },
+        {
+          "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+          "kind": "mutable_unversioned_documentation",
+          "sha256": "9d1f87a2d1cb55b4782b95abe710692b35b9659789c2db31a22c7074a3383e8e"
+        },
+        {
+          "url": "https://learn.chatgpt.com/docs/build-skills",
+          "kind": "mutable_unversioned_documentation",
+          "sha256": "d15791562748e64a53dfec534b8558aa522e732cec0fdedcf7257fa4ef486a20"
+        }
+      ]
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "reference": "claude-code.md",
+      "product_status": "intended_mvp_no_adapter",
+      "documentation_basis": "mutable_unversioned_official_docs_with_separate_release_context",
+      "installed_observation": "none",
+      "tested_evidence": "none",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "release_context_only",
+        "version": "v2.1.278",
+        "commit": "bf7d404e26a5fb6167d21b46c93a2bf6c22ab274",
+        "note": "The mutable documentation is not attributed to this release."
+      },
+      "sources": [
+        { "url": "https://code.claude.com/docs/en/settings", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/model-config", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/cli-reference", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/authentication", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/permissions", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/memory", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://code.claude.com/docs/en/skills", "kind": "mutable_unversioned_documentation" },
+        { "url": "https://json.schemastore.org/claude-code-settings.json", "kind": "mutable_unversioned_third_party_schema" },
+        { "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.278", "kind": "release_context" }
+      ]
+    },
+    {
+      "id": "pi",
+      "name": "Pi",
+      "reference": "pi.md",
+      "product_status": "intended_mvp_no_adapter",
+      "documentation_basis": "release_pinned_official_repository_docs",
+      "installed_observation": "none",
+      "tested_evidence": "none",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "release_pin",
+        "version": "v0.86.1",
+        "commit": "13cbf77df2396303013a41646bcfa77b4271ae56"
+      },
+      "sources": [
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/README.md", "kind": "release_pinned_documentation" }
+      ]
+    },
+    {
+      "id": "oh-my-pi",
+      "name": "Oh My Pi",
+      "reference": "oh-my-pi.md",
+      "product_status": "intended_mvp_no_adapter",
+      "documentation_basis": "release_pinned_official_repository_docs",
+      "installed_observation": "none",
+      "tested_evidence": "none",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "release_pin",
+        "version": "v18.2.6",
+        "commit": "78b753124d11f8dd3ae73e2524125890ff7c977e"
+      },
+      "sources": [
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/context-files.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/skills.md", "kind": "release_pinned_documentation" }
+      ]
+    },
+    {
+      "id": "openclaw",
+      "name": "OpenClaw",
+      "reference": "openclaw.md",
+      "product_status": "intended_mvp_no_adapter",
+      "documentation_basis": "release_pinned_official_repository_docs",
+      "installed_observation": "none",
+      "tested_evidence": "none",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "release_pin",
+        "version": "v2026.9.5",
+        "commit": "ec9c1a13db8938e5a3eaa51fca2e981cde2395a9"
+      },
+      "sources": [
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/concepts/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/config-agents/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/config-secrets-env.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/config-tools/tool-policy.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/concepts/agent-workspace.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md", "kind": "release_pinned_documentation" }
+      ]
+    },
+    {
+      "id": "hermes",
+      "name": "Hermes",
+      "reference": "hermes.md",
+      "product_status": "intended_mvp_no_adapter",
+      "documentation_basis": "release_pinned_official_repository_docs",
+      "installed_observation": "none",
+      "tested_evidence": "none",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "release_pin",
+        "version": "v2026.9.14",
+        "product_version": "v0.21.3",
+        "commit": "345cd2b057a452236de401d3534b8502a7465e8d"
+      },
+      "sources": [
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/user-guide/configuration.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/reference/profile-commands.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/user-guide/configuring-models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/integrations/providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/features/fallback-providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/user-guide/features/tools.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/skills/security/references/security-privacy.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/features/context-files.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/features/skills.md", "kind": "release_pinned_documentation" }
+      ]
+    },
+    {
+      "id": "jcode",
+      "name": "Ariel Jcode",
+      "reference": "jcode.md",
+      "product_status": "experimental_only_not_publicly_supported",
+      "documentation_basis": "local_source_snapshot",
+      "installed_observation": "recorded_separately_in_target_evidence",
+      "tested_evidence": "none_for_reference_pack",
+      "supported_capability": "none",
+      "version_context": {
+        "kind": "local_snapshot",
+        "version": "0.83.0",
+        "branch": "dev",
+        "commit": "ed9b93b894454619f73ccddd24c2ff7a3c98ddc3",
+        "note": "No canonical public release or public support claim."
+      },
+      "sources": [
+        { "locator": "/home/ari/repos/jcode/crates/jcode-config-types/src/lib.rs", "kind": "local_snapshot_source" },
+        { "locator": "/home/ari/repos/jcode/src/cli/profile.rs", "kind": "local_snapshot_source" },
+        { "locator": "/home/ari/repos/jcode/docs/SYSTEM_PROMPT_CONFIG.md", "kind": "local_snapshot_documentation" }
+      ]
+    }
+  ]
+}

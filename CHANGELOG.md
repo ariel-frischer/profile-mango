@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
 - Version-qualified target evidence with explicit public-support and applicability boundaries
+- Version-qualified local agent configuration references with deterministic source provenance
 
 ### Changed
 
