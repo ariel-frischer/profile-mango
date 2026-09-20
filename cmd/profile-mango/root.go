@@ -5,12 +5,12 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/agent-profile/internal/config"
-	"gitlab.com/ariel-frischer/agent-profile/internal/version"
+	"gitlab.com/ariel-frischer/profile-mango/internal/config"
+	"gitlab.com/ariel-frischer/profile-mango/internal/version"
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "agent-profile",
+	Use:     "profile-mango",
 	Short:   "Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.",
 	Version: version.Version,
 }
@@ -26,7 +26,7 @@ func init() {
 
 	var noColor bool
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
-	rootCmd.PersistentFlags().StringVar(&configPathOverride, "config", "", "config file path (default $AGENT_PROFILE_CONFIG or ~/.config/agent-profile/config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&configPathOverride, "config", "", "config file path (default $PROFILE_MANGO_CONFIG or ~/.config/profile-mango/config.yaml)")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if noColor {
 			color.NoColor = true

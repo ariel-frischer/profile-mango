@@ -1,4 +1,4 @@
-package agentprofile
+package profilemango
 
 import (
 	"crypto/sha256"

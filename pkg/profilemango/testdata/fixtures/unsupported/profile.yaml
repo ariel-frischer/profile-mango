@@ -1,4 +1,4 @@
-apiVersion: agentprofiles.dev/v1alpha1
+apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: unsupported

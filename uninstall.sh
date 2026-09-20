@@ -1,9 +1,9 @@
 #!/bin/sh
-# agent-profile Uninstaller
+# profile-mango Uninstaller
 set -eu
 
-BINARY_NAME="agent-profile"
-INSTALL_DIR="${AGENT_PROFILE_INSTALL_DIR:-$HOME/.local/bin}"
+BINARY_NAME="profile-mango"
+INSTALL_DIR="${PROFILE_MANGO_INSTALL_DIR:-$HOME/.local/bin}"
 TARGET="${INSTALL_DIR}/${BINARY_NAME}"
 
 # Colors (disabled if not a terminal)

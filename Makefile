@@ -1,7 +1,7 @@
 
 .PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
 
-MODULE_PATH=gitlab.com/ariel-frischer/agent-profile
+MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
 ifeq ($(BUILD_VERSION),)
   BUILD_VERSION=dev
@@ -26,8 +26,8 @@ install: ## Download dependencies
 
 i: install ## Alias for install
 
-go-install: ## Install agent-profile to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/agent-profile/
+go-install: ## Install profile-mango to GOPATH/bin
+	go install ${LDFLAGS} ./cmd/profile-mango/
 
 install-global: go-install ## Alias for go-install
 
@@ -60,12 +60,12 @@ clean: ## Clean build artifacts
 	rm -rf bin/ coverage.out
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/agent-profile ./cmd/agent-profile/
+	go build ${LDFLAGS} -o bin/profile-mango ./cmd/profile-mango/
 
 bin: build ## Alias for build
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/agent-profile/
+	go run ${LDFLAGS} ./cmd/profile-mango/
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)
@@ -77,7 +77,7 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall agent-profile
+uninstall: ## Uninstall profile-mango
 	@./uninstall.sh
 
 ##@ Release

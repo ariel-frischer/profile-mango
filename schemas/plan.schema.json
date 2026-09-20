@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentprofiles.dev/schemas/plan-v1alpha1.json",
+  "$id": "https://profilemango.dev/schemas/plan-v1alpha1.json",
   "type": "object", "additionalProperties": false,
   "required": ["apiVersion", "kind", "profile", "target", "route", "resources"],
   "properties": {
-    "apiVersion": {"const": "agentprofiles.dev/plan/v1alpha1"},
+    "apiVersion": {"const": "profilemango.dev/plan/v1alpha1"},
     "kind": {"const": "Plan"},
     "profile": {"type": "string"}, "target": {"type": "string"},
     "route": {"$ref": "bindings.schema.json#/properties/routes/additionalProperties"},

@@ -1,4 +1,4 @@
-package agentprofile
+package profilemango
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 		"unknown key":   {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
 		"duplicate key": {yaml: strings.Replace(validProfileYAML(), "kind: PolicyProfile", "kind: PolicyProfile\nkind: PolicyProfile", 1), code: "yaml.duplicate_key"},
 		"null":          {yaml: strings.Replace(validProfileYAML(), "routeRef: research-primary", "routeRef: null", 1), code: "yaml.null"},
-		"version":       {yaml: strings.Replace(validProfileYAML(), APIVersion, "agentprofiles.dev/v9", 1), code: "profile.api_version"},
+		"version":       {yaml: strings.Replace(validProfileYAML(), APIVersion, "profilemango.dev/v9", 1), code: "profile.api_version"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 
 func TestResolveInheritanceAndDenyWins(t *testing.T) {
 	t.Parallel()
-	base := mustParse(t, `apiVersion: agentprofiles.dev/v1alpha1
+	base := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: base
@@ -51,7 +51,7 @@ spec:
     append: [instructions/base.md]
   skills: [skills/base/SKILL.md]
 `)
-	child := mustParse(t, `apiVersion: agentprofiles.dev/v1alpha1
+	child := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: research
@@ -225,7 +225,7 @@ func TestVersionedContractsRoundTrip(t *testing.T) {
 	if !reflect.DeepEqual(plan, decoded) {
 		t.Fatalf("round trip %#v", decoded)
 	}
-	manifest := Manifest{APIVersion: ManifestVersion, Kind: "Manifest", Owner: "agent-profile", Generation: 1, Profile: "research", Target: "codex"}
+	manifest := Manifest{APIVersion: ManifestVersion, Kind: "Manifest", Owner: "profile-mango", Generation: 1, Profile: "research", Target: "codex"}
 	if _, err := CanonicalJSON(manifest); err != nil {
 		t.Fatal(err)
 	}
@@ -260,7 +260,7 @@ func mustWrite(t *testing.T, path, content string) {
 }
 
 func validProfileYAML() string {
-	return `apiVersion: agentprofiles.dev/v1alpha1
+	return `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: research
@@ -270,7 +270,7 @@ spec:
 }
 
 func profileWithParent(name, parent string) string {
-	return `apiVersion: agentprofiles.dev/v1alpha1
+	return `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: ` + name + `

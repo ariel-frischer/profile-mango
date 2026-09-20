@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentprofiles.dev/schemas/policy-profile-v1alpha1.json",
+  "$id": "https://profilemango.dev/schemas/policy-profile-v1alpha1.json",
   "title": "PolicyProfile v1alpha1",
   "type": "object",
   "additionalProperties": false,
   "required": ["apiVersion", "kind", "metadata", "spec"],
   "properties": {
-    "apiVersion": {"const": "agentprofiles.dev/v1alpha1"},
+    "apiVersion": {"const": "profilemango.dev/v1alpha1"},
     "kind": {"const": "PolicyProfile"},
     "metadata": {
       "type": "object", "additionalProperties": false, "required": ["name"],

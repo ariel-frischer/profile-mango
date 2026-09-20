@@ -1,9 +1,11 @@
-project: agent-profile
+project: profile-mango
 versions:
     unreleased:
         added:
             - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
             - Version-qualified target evidence with explicit public-support and applicability boundaries
+        changed:
+            - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
         fixed:
             - CI formatting checks inspect tracked Go sources without scanning the restored module cache
     0.0.1:

@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/agent-profile/internal/version"
+	"gitlab.com/ariel-frischer/profile-mango/internal/version"
 )
 
 var versionPlain bool
@@ -30,7 +30,7 @@ func init() {
 }
 
 func printPlainVersion() {
-	fmt.Printf("agent-profile %s\n", version.Version)
+	fmt.Printf("profile-mango %s\n", version.Version)
 	fmt.Printf("commit: %s\n", version.Commit)
 	fmt.Printf("built: %s\n", version.BuildDate)
 	fmt.Printf("go: %s\n", runtime.Version())
@@ -43,7 +43,7 @@ func printPrettyVersion() {
 	yellow := color.New(color.FgYellow).SprintFunc()
 
 	fmt.Println()
-	fmt.Println(dim("  agent-profile — Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts."))
+	fmt.Println(dim("  profile-mango — Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts."))
 	fmt.Println()
 
 	info := []struct {

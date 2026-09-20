@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/agent-profile/pkg/agentprofile"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func newValidateCmd() *cobra.Command {
@@ -21,17 +21,17 @@ func newValidateCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read profile: %w", err)
 			}
-			profile, diagnostics := agentprofile.ParseProfile(profileData)
+			profile, diagnostics := profilemango.ParseProfile(profileData)
 			if bindingsPath != "" {
 				bindingsData, readErr := os.ReadFile(bindingsPath)
 				if readErr != nil {
 					return fmt.Errorf("read bindings: %w", readErr)
 				}
-				bindings, bindingDiagnostics := agentprofile.ParseBindings(bindingsData)
+				bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)
 				diagnostics = append(diagnostics, bindingDiagnostics...)
 				if profile.Spec.RouteRef != "" {
 					if _, found := bindings.Routes[profile.Spec.RouteRef]; !found {
-						diagnostics.Add(agentprofile.SeverityError, "binding.route_missing", "spec.routeRef", "routeRef is not present in bindings", 0, 0)
+						diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "spec.routeRef", "routeRef is not present in bindings", 0, 0)
 					}
 				}
 			}
@@ -57,11 +57,11 @@ func newValidateCmd() *cobra.Command {
 	return cmd
 }
 
-func printValidationJSON(cmd *cobra.Command, profile agentprofile.PolicyProfile, diagnostics agentprofile.Diagnostics) error {
+func printValidationJSON(cmd *cobra.Command, profile profilemango.PolicyProfile, diagnostics profilemango.Diagnostics) error {
 	result := struct {
 		Valid       bool                     `json:"valid"`
 		ProfileName string                   `json:"profileName,omitempty"`
-		Diagnostics agentprofile.Diagnostics `json:"diagnostics"`
+		Diagnostics profilemango.Diagnostics `json:"diagnostics"`
 	}{Valid: !diagnostics.HasErrors(), ProfileName: profile.Metadata.Name, Diagnostics: diagnostics.Sorted()}
 	encoder := json.NewEncoder(cmd.OutOrStdout())
 	encoder.SetIndent("", "  ")
@@ -74,7 +74,7 @@ func printValidationJSON(cmd *cobra.Command, profile agentprofile.PolicyProfile,
 	return nil
 }
 
-func diagnosticLine(diagnostic agentprofile.Diagnostic) string {
+func diagnosticLine(diagnostic profilemango.Diagnostic) string {
 	path := diagnostic.Path
 	if path == "" {
 		path = "document"

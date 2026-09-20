@@ -1,4 +1,4 @@
-# agent-profile
+# profile-mango
 
 Define portable coding-agent behavior once, resolve it deterministically, and know which properties a target can or cannot preserve.
 
@@ -6,7 +6,7 @@ Define portable coding-agent behavior once, resolve it deterministically, and kn
 
 ## Why
 
-Coding-agent configuration mixes portable intent with target-specific syntax, authentication routes, and enforcement boundaries. `agent-profile` provides a strict canonical model for the portable part while failing closed on ambiguous input.
+Coding-agent configuration mixes portable intent with target-specific syntax, authentication routes, and enforcement boundaries. `profile-mango` provides a strict canonical model for the portable part while failing closed on ambiguous input.
 
 M0 includes:
 
@@ -30,7 +30,7 @@ Experimental comparison targets are documented only in developer evidence. They 
 ## Profile
 
 ```yaml
-apiVersion: agentprofiles.dev/v1alpha1
+apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: research
@@ -68,10 +68,10 @@ routes:
 ```bash
 make build
 
-./bin/agent-profile validate profiles/research/profile.yaml \
+./bin/profile-mango validate profiles/research/profile.yaml \
   --bindings bindings/local.yaml
 
-./bin/agent-profile validate profiles/research/profile.yaml --json
+./bin/profile-mango validate profiles/research/profile.yaml --json
 ```
 
 Validation reads only the explicitly supplied files. It does not inspect agent homes, resolve credentials, run subprocesses, or use the network.
@@ -79,9 +79,9 @@ Validation reads only the explicitly supplied files. It does not inspect agent h
 ## Library
 
 ```go
-profile, diagnostics := agentprofile.ParseProfile(profileYAML)
-resolved, diagnostics := agentprofile.Resolve(profiles, "research")
-resources, diagnostics := agentprofile.DigestResources(packageRoot, resolved)
+profile, diagnostics := profilemango.ParseProfile(profileYAML)
+resolved, diagnostics := profilemango.Resolve(profiles, "research")
+resources, diagnostics := profilemango.DigestResources(packageRoot, resolved)
 ```
 
 See [`schemas/`](schemas/) for the versioned contracts and [`docs/dev/target-evidence.md`](docs/dev/target-evidence.md) for the evidence boundary.

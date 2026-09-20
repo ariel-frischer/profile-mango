@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/agent-profile/internal/config"
+	"gitlab.com/ariel-frischer/profile-mango/internal/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -95,7 +95,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("creating config directory: %w", err)
 	}
 
-	content := `# agent-profile configuration
+	content := `# profile-mango configuration
 # All fields are optional. CLI flags always override these values.
 
 # Example output format for commands that support formatted output.
@@ -137,7 +137,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 func runConfigEdit(cmd *cobra.Command, args []string) error {
 	path := selectedConfigPath()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "warning: %s not found - run `agent-profile config init` first\n", path)
+		fmt.Fprintf(os.Stderr, "warning: %s not found - run `profile-mango config init` first\n", path)
 	}
 
 	editor := os.Getenv("EDITOR")
@@ -273,7 +273,7 @@ func findConfigKeySpec(key string) (configKeySpec, bool) {
 }
 
 func unknownConfigKeyError(key string) error {
-	return fmt.Errorf("unknown config key %q; run `agent-profile config keys`", key)
+	return fmt.Errorf("unknown config key %q; run `profile-mango config keys`", key)
 }
 
 func parseConfigValue(spec configKeySpec, value string) (*yaml.Node, error) {

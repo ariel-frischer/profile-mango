@@ -2,22 +2,22 @@
 
 ## Project Context
 
-agent-profile: Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
+profile-mango: Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 
 - **Language:** Go
-- **Module:** `gitlab.com/ariel-frischer/agent-profile`
+- **Module:** `gitlab.com/ariel-frischer/profile-mango`
 - **Layout:** CLI + library
-- **Env prefix:** `AGENT_PROFILE`
+- **Env prefix:** `PROFILE_MANGO`
 
 ## Command Map
 
 ```bash
 make help           # List Make targets
 make install        # Download Go modules
-make build          # Build ./bin/agent-profile with version ldflags
+make build          # Build ./bin/profile-mango with version ldflags
 make bin            # Alias for build
-make run            # Run ./cmd/agent-profile
-make go-install     # Install agent-profile to GOPATH/bin
+make run            # Run ./cmd/profile-mango
+make go-install     # Install profile-mango to GOPATH/bin
 make install-global # Alias for go-install
 make test           # Run tests
 make test-v         # Run tests verbosely
@@ -31,16 +31,16 @@ make release VERSION=v0.1.0       # Alias for prep-release
 CLI smoke checks:
 
 ```bash
-go run ./cmd/agent-profile --help
-go run ./cmd/agent-profile version
-go run ./cmd/agent-profile config keys
-go run ./cmd/agent-profile validate <profile.yaml> [--bindings <local.yaml>] [--json]
+go run ./cmd/profile-mango --help
+go run ./cmd/profile-mango version
+go run ./cmd/profile-mango config keys
+go run ./cmd/profile-mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
 ```
 
 ## File Layout
 
 ```
-cmd/agent-profile/      # CLI entry point (cobra)
+cmd/profile-mango/      # CLI entry point (cobra)
   main.go             # binary entry point
   root.go             # root command, persistent flags, command wiring
   version.go          # version subcommand
@@ -50,7 +50,7 @@ cmd/agent-profile/      # CLI entry point (cobra)
 internal/
   version/            # version info injected via ldflags
   config/             # YAML config load/save/path helpers
-pkg/agentprofile/      # pure canonical domain, parsing, resolution, resource hashing
+pkg/profilemango/      # pure canonical domain, parsing, resolution, resource hashing
   testdata/fixtures/  # route-only, constrained, and unsupported fixtures
   testdata/golden/    # deterministic resolved output
 schemas/               # versioned profile, binding, plan, and manifest contracts
@@ -64,8 +64,8 @@ CHANGELOG.md          # generated changelog output
 
 ## Config Behavior
 
-- User config lives at `~/.config/agent-profile/config.yaml` by default.
-- Path priority: root `--config`, then `$AGENT_PROFILE_CONFIG`, then the default path.
+- User config lives at `~/.config/profile-mango/config.yaml` by default.
+- Path priority: root `--config`, then `$PROFILE_MANGO_CONFIG`, then the default path.
 - Config commands: `init`, `show`, `path`, `edit`, `get`, `set`, `toggle`, `keys`.
 - Missing config files load as empty config; CLI flags should still win over config defaults.
 
@@ -83,8 +83,8 @@ CHANGELOG.md          # generated changelog output
 - Toolchain versions are pinned in `mise.toml`; run `mise install` before canonical lint/build checks.
 - Run `chlog check` after changelog edits.
 - Run `make test` for normal validation; use `make test-coverage` when touching shared packages.
-- Smoke-test generated command paths with `go run ./cmd/agent-profile ...` before release work.
-- Keep fixtures in `pkg/agentprofile/testdata/` and avoid depending on the caller's working directory.
+- Smoke-test generated command paths with `go run ./cmd/profile-mango ...` before release work.
+- Keep fixtures in `pkg/profilemango/testdata/` and avoid depending on the caller's working directory.
 
 ## Release And Changelog
 

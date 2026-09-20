@@ -1,12 +1,12 @@
-# Contributing to agent-profile
+# Contributing to profile-mango
 
 Thanks for your interest in contributing!
 
 ## Getting Started
 
 ```bash
-git clone https://gitlab.com/demo/agent-profile.git
-cd agent-profile
+git clone https://gitlab.com/ariel-frischer/profile-mango.git
+cd profile-mango
 make install   # Download dependencies
 make build     # Build binary
 make test      # Run tests
@@ -15,7 +15,7 @@ make test      # Run tests
 ## Development
 
 ```bash
-make build     # Build to bin/agent-profile
+make build     # Build to bin/profile-mango
 make test      # Run all tests
 make lint      # Run linters
 make format    # Format code
@@ -30,10 +30,10 @@ make format    # Format code
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://gitlab.com/demo/agent-profile/issues). Include:
+Use [GitLab issues](https://gitlab.com/ariel-frischer/profile-mango/issues). Include:
 - What you expected vs what happened
 - Steps to reproduce
-- `agent-profile version` output
+- `profile-mango version` output
 - OS and architecture
 
 ## Code Style

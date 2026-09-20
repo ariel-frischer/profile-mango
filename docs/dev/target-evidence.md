@@ -156,7 +156,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Local binaries: `codex --version`, `codex --help`, `jcode --version`, `jcode profile --help` on 2026-09-20.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
 - Bundled Jcode documentation for build `ed9b93b89`: `README.md` named-session-profile section and `docs/WRAPPERS.md` profile inspection section.
-- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in Ariel's OpenClaw workspace at `/home/ari/.openclaw/docs/research/general/2026-09-20-unified-coding-agent-profiles.md`. The Bead ID is the durable cross-repository reference.
+- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in Ariel's OpenClaw workspace at `/home/ari/.openclaw/docs/research/general/2026-09-20-unified-coding-profile-mangos.md`. The Bead ID is the durable cross-repository reference.
 
 ## Deferred checks
 
@@ -165,4 +165,4 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
 - Claude Code, Pi, Oh My Pi, OpenClaw, and Hermes remain roadmap research, not M0 targets.
-- The placeholder `agentprofiles.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.
+- The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.

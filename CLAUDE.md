@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## Project: agent-profile
+## Project: profile-mango
 
 Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 
@@ -16,10 +16,10 @@ make format         # Format code
 ## Architecture
 
 ```
-cmd/agent-profile/      # CLI entry point (cobra)
+cmd/profile-mango/      # CLI entry point (cobra)
   validate.go         # offline strict validation
 internal/version/      # Version info (ldflags)
-pkg/agentprofile/      # pure domain, parser, resolver, resource digests
+pkg/profilemango/      # pure domain, parser, resolver, resource digests
 schemas/               # versioned contracts
 docs/dev/              # target evidence and support policy
 assets/                # Demo content (GIFs, screenshots)

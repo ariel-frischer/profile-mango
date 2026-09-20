@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to agent-profile will be documented in this file.
+All notable changes to profile-mango will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
 - Version-qualified target evidence with explicit public-support and applicability boundaries
+
+### Changed
+
+- Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
 
 ### Fixed
 
@@ -21,4 +25,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://gitlab.com/demo/agent-profile/-/compare/v0.0.1...HEAD
+[Unreleased]: https://gitlab.com/ariel-frischer/profile-mango/-/compare/v0.0.1...HEAD

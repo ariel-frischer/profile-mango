@@ -1,5 +1,5 @@
 ---
-name: agent-profile
+name: profile-mango
 description: >
   Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 license: MIT
@@ -16,36 +16,36 @@ metadata:
 allowed-tools: Bash Read Write Edit
 ---
 
-# agent-profile
+# profile-mango
 
 Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 
 ## Commands
 
 ```bash
-agent-profile --help              # Show available commands
-agent-profile version             # Show version info
-agent-profile v                   # Alias for version
-agent-profile completion bash     # Shell completion: bash|zsh|fish|powershell
-agent-profile --config ./config.yaml config path
-agent-profile config init         # Create user config
-agent-profile config get <key>    # Read a config value
-agent-profile config set <key> <value>
-agent-profile config toggle <key> # Toggle a boolean value
-agent-profile config keys         # List configurable keys
+profile-mango --help              # Show available commands
+profile-mango version             # Show version info
+profile-mango v                   # Alias for version
+profile-mango completion bash     # Shell completion: bash|zsh|fish|powershell
+profile-mango --config ./config.yaml config path
+profile-mango config init         # Create user config
+profile-mango config get <key>    # Read a config value
+profile-mango config set <key> <value>
+profile-mango config toggle <key> # Toggle a boolean value
+profile-mango config keys         # List configurable keys
 ```
 
 ## Library Usage
 
 ```go
-import "gitlab.com/ariel-frischer/agent-profile/pkg/agentprofile"
+import "gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 ```
 
 ## Project Structure
 
 Includes: Makefile, CI pipelines, assets/ directory, .gitignore, LICENSE, SECURITY.md, CHANGELOG.yaml + CHANGELOG.md.
 Agent guidance lives in `AGENTS.md`.
-Test fixtures live in `pkg/agentprofile/testdata/`.
+Test fixtures live in `pkg/profilemango/testdata/`.
 
 ## Development
 

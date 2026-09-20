@@ -5,13 +5,13 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/agent-profile/
-    binary: agent-profile
+  - main: ./cmd/profile-mango/
+    binary: profile-mango
     ldflags:
       - -s -w
-      - -X gitlab.com/ariel-frischer/agent-profile/internal/version.Version={{.Version}}
-      - -X gitlab.com/ariel-frischer/agent-profile/internal/version.Commit={{.ShortCommit}}
-      - -X gitlab.com/ariel-frischer/agent-profile/internal/version.BuildDate={{.Date}}
+      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Version={{.Version}}
+      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Commit={{.ShortCommit}}
+      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.BuildDate={{.Date}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -40,6 +40,6 @@ changelog:
 
 release:
   gitlab:
-    owner: demo
-    name: agent-profile
+    owner: ariel-frischer
+    name: profile-mango
   mode: replace

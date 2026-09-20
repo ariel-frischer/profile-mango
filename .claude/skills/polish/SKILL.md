@@ -3,7 +3,7 @@ name: polish
 description: Validate changelog, docs, Go code, fixtures, schemas, and offline CLI behavior after changes.
 ---
 
-# Polish agent-profile
+# Polish profile-mango
 
 Run from the repository root after code or documentation changes:
 
@@ -15,9 +15,9 @@ make test
 make test-coverage
 make lint
 make build
-go run ./cmd/agent-profile --help
-go run ./cmd/agent-profile validate pkg/agentprofile/testdata/fixtures/route-only/profile.yaml \
-  --bindings pkg/agentprofile/testdata/fixtures/bindings.yaml --json
+go run ./cmd/profile-mango --help
+go run ./cmd/profile-mango validate pkg/profilemango/testdata/fixtures/route-only/profile.yaml \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml --json
 git diff --check
 ```
 

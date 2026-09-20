@@ -1,4 +1,4 @@
-module gitlab.com/ariel-frischer/agent-profile
+module gitlab.com/ariel-frischer/profile-mango
 
 go 1.25.5
 

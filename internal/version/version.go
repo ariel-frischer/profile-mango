@@ -1,4 +1,4 @@
-// Package version holds agent-profile version information.
+// Package version holds profile-mango version information.
 // Separate package to avoid import cycles.
 package version
 

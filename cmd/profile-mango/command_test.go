@@ -22,7 +22,7 @@ func executeCommand(t *testing.T, args ...string) string {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("agent-profile %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
+		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
 }
@@ -48,8 +48,8 @@ func TestCompletionCommandSmoke(t *testing.T) {
 }
 
 func TestValidateCommandSmoke(t *testing.T) {
-	profile := filepath.Join("..", "..", "pkg", "agentprofile", "testdata", "fixtures", "route-only", "profile.yaml")
-	bindings := filepath.Join("..", "..", "pkg", "agentprofile", "testdata", "fixtures", "bindings.yaml")
+	profile := filepath.Join("..", "..", "pkg", "profilemango", "testdata", "fixtures", "route-only", "profile.yaml")
+	bindings := filepath.Join("..", "..", "pkg", "profilemango", "testdata", "fixtures", "bindings.yaml")
 	out := executeCommand(t, "validate", profile, "--bindings", bindings, "--json")
 	if !strings.Contains(out, `"valid": true`) {
 		t.Fatalf("validate output = %q", out)
@@ -58,7 +58,7 @@ func TestValidateCommandSmoke(t *testing.T) {
 
 func TestConfigPathCommandSmoke(t *testing.T) {
 	want := filepath.Join(t.TempDir(), "from-env.yaml")
-	t.Setenv("AGENT_PROFILE_CONFIG", want)
+	t.Setenv("PROFILE_MANGO_CONFIG", want)
 
 	out := executeCommand(t, "config", "path")
 	if strings.TrimSpace(out) != want {
@@ -69,7 +69,7 @@ func TestConfigPathCommandSmoke(t *testing.T) {
 func TestConfigPathFlagOverride(t *testing.T) {
 	envPath := filepath.Join(t.TempDir(), "from-env.yaml")
 	flagPath := filepath.Join(t.TempDir(), "from-flag.yaml")
-	t.Setenv("AGENT_PROFILE_CONFIG", envPath)
+	t.Setenv("PROFILE_MANGO_CONFIG", envPath)
 
 	out := executeCommand(t, "--config", flagPath, "config", "path")
 	if strings.TrimSpace(out) != flagPath {

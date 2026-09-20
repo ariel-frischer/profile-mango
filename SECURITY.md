@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Security updates are provided for the latest released version of agent-profile.
+Security updates are provided for the latest released version of profile-mango.
 If you maintain older versions, document any additional supported branches here.
 
 | Version | Supported |
@@ -17,7 +17,7 @@ security-sensitive reports.
 
 Send your report to the maintainer security contact for this project. If no
 private contact is listed, ask the maintainers for a private reporting channel at
-https://gitlab.com/demo/agent-profile/issues before sharing vulnerability details.
+https://gitlab.com/ariel-frischer/profile-mango/issues before sharing vulnerability details.
 
 Include:
 

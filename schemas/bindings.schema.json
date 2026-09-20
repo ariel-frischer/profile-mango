@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentprofiles.dev/schemas/bindings-v1alpha1.json",
+  "$id": "https://profilemango.dev/schemas/bindings-v1alpha1.json",
   "title": "Local route bindings v1alpha1",
   "type": "object",
   "additionalProperties": false,

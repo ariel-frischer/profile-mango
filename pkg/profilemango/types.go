@@ -1,12 +1,12 @@
-package agentprofile
+package profilemango
 
 // APIVersion is the only profile contract supported by M0.
-const APIVersion = "agentprofiles.dev/v1alpha1"
+const APIVersion = "profilemango.dev/v1alpha1"
 
 const (
 	KindPolicyProfile = "PolicyProfile"
-	PlanVersion       = "agentprofiles.dev/plan/v1alpha1"
-	ManifestVersion   = "agentprofiles.dev/manifest/v1alpha1"
+	PlanVersion       = "profilemango.dev/plan/v1alpha1"
+	ManifestVersion   = "profilemango.dev/manifest/v1alpha1"
 )
 
 // PolicyProfile is the strict YAML input document.

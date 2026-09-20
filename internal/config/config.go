@@ -1,4 +1,4 @@
-// Package config manages user-level configuration for agent-profile.
+// Package config manages user-level configuration for profile-mango.
 package config
 
 import (
@@ -10,18 +10,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const EnvConfigPath = "AGENT_PROFILE_CONFIG"
+const EnvConfigPath = "PROFILE_MANGO_CONFIG"
 
-// DefaultDir returns ~/.config/agent-profile.
+// DefaultDir returns ~/.config/profile-mango.
 func DefaultDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		dir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
-	return filepath.Join(dir, "agent-profile")
+	return filepath.Join(dir, "profile-mango")
 }
 
-// DefaultPath returns ~/.config/agent-profile/config.yaml.
+// DefaultPath returns ~/.config/profile-mango/config.yaml.
 func DefaultPath() string {
 	return filepath.Join(DefaultDir(), "config.yaml")
 }
@@ -37,7 +37,7 @@ func Path(override string) string {
 	return DefaultPath()
 }
 
-// Config holds user-level defaults for agent-profile.
+// Config holds user-level defaults for profile-mango.
 // All fields are optional — zero values mean "use CLI default".
 type Config struct {
 	// Add your config fields here, e.g.:

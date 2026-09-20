@@ -1,17 +1,17 @@
 #!/bin/sh
 # shellcheck disable=SC3043  # 'local' is widely supported in practice (dash, ash, busybox)
-# agent-profile Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/demo/agent-profile/main/install.sh | sh
+# profile-mango Installer
+# Usage: curl -fsSL https://gitlab.com/ariel-frischer/profile-mango/-/raw/main/install.sh | sh
 #
 # Environment variables:
-#   AGENT_PROFILE_INSTALL_DIR - Installation directory (default: ~/.local/bin)
-#   AGENT_PROFILE_VERSION     - Specific version to install (default: latest)
+#   PROFILE_MANGO_INSTALL_DIR - Installation directory (default: ~/.local/bin)
+#   PROFILE_MANGO_VERSION     - Specific version to install (default: latest)
 
 set -eu
 
 # Configuration
-GITHUB_REPO="demo/agent-profile"
-BINARY_NAME="agent-profile"
+GITLAB_REPO="ariel-frischer/profile-mango"
+BINARY_NAME="profile-mango"
 DEFAULT_INSTALL_DIR="$HOME/.local/bin"
 
 # Colors (disabled if not a terminal)
@@ -54,7 +54,7 @@ detect_os() {
         Darwin*) echo "darwin" ;;
         MINGW*|MSYS*|CYGWIN*)
             printf '%bWindows Detected%b\n\n' "${YELLOW}" "${NC}" >&2
-            printf 'agent-profile requires WSL (Windows Subsystem for Linux).\n\n' >&2
+            printf 'profile-mango requires WSL (Windows Subsystem for Linux).\n\n' >&2
             printf 'Install WSL and try again:\n\n' >&2
             printf '  1. Open PowerShell as Administrator and run:\n' >&2
             printf '     %bwsl --install%b\n\n' "${GREEN}" "${NC}" >&2
@@ -84,15 +84,15 @@ check_dependencies() {
     done
 }
 
-# Get latest release version from GitHub
+# Get latest release version from GitLab
 get_latest_version() {
-    local latest_url="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
+    local latest_url="https://gitlab.com/api/v4/projects/ariel-frischer%2Fprofile-mango/releases/permalink/latest"
     local version
 
     version=$(curl -fsSL "$latest_url" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
 
     if [ -z "$version" ]; then
-        error "Failed to fetch latest version from GitHub. Check your internet connection."
+        error "Failed to fetch latest version from GitLab. Check your internet connection."
     fi
 
     echo "$version"
@@ -107,8 +107,8 @@ download_and_verify() {
 
     # Construct archive name (matches goreleaser template)
     local archive_name="${BINARY_NAME}_${version#v}_${os}_${arch}.tar.gz"
-    local download_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/${archive_name}"
-    local checksum_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/checksums.txt"
+    local download_url="https://gitlab.com/${GITLAB_REPO}/-/releases/${version}/downloads/${archive_name}"
+    local checksum_url="https://gitlab.com/${GITLAB_REPO}/-/releases/${version}/downloads/checksums.txt"
 
     info "Downloading ${archive_name}..."
 
@@ -246,7 +246,7 @@ check_path() {
 # Main installation function
 main() {
     echo ""
-    echo "  agent-profile Installer"
+    echo "  profile-mango Installer"
     echo ""
 
     check_dependencies
@@ -257,14 +257,14 @@ main() {
     arch=$(detect_arch)
     info "Detected platform: ${os}/${arch}"
 
-    local version="${AGENT_PROFILE_VERSION:-}"
+    local version="${PROFILE_MANGO_VERSION:-}"
     if [ -z "$version" ]; then
         info "Fetching latest version..."
         version=$(get_latest_version)
     fi
     info "Installing version: ${version}"
 
-    local install_dir="${AGENT_PROFILE_INSTALL_DIR:-$DEFAULT_INSTALL_DIR}"
+    local install_dir="${PROFILE_MANGO_INSTALL_DIR:-$DEFAULT_INSTALL_DIR}"
     info "Install directory: ${install_dir}"
 
     # Check for existing installation
@@ -378,7 +378,7 @@ main() {
     echo ""
     echo "    ${BINARY_NAME} --help"
     echo ""
-    echo "Documentation: https://github.com/${GITHUB_REPO}"
+    echo "Documentation: https://gitlab.com/${GITLAB_REPO}"
     echo ""
 
     rm -rf "$tmp_dir"
