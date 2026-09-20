@@ -20,7 +20,7 @@ lint:
   image: golang:1.25
   extends: .go-cache
   script:
-    - test -z "$(gofmt -s -l .)"
+    - test -z "$(git ls-files -- '*.go' | xargs gofmt -s -l)"
     - go vet ./...
 
 
