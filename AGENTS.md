@@ -13,6 +13,11 @@ profile-mango: Define portable coding-agent behavior once and compile it into de
 
 Consult and follow [`.autospec/constitution.yaml`](.autospec/constitution.yaml) for relevant planning, implementation, review, and documentation. Use [`docs/dev/project-scope.md`](docs/dev/project-scope.md) to distinguish shipped capabilities, intended targets, and proposed defaults. Check affected principles proportionally: documentation normally needs factual/link/scope checks, while code, contracts, and compatibility claims need relevant tests and evidence. Surface conflicts explicitly rather than silently bypassing the constitution.
 
+For target configuration work, consult the version-qualified
+[`docs/dev/agents/`](docs/dev/agents/README.md) references before fresh research.
+Treat their documentation provenance separately from installed observations,
+tested evidence, and supported capabilities.
+
 ## Command Map
 
 ```bash
