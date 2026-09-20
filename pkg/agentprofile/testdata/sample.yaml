@@ -1,0 +1,5 @@
+# Sample test fixture for agent-profile.
+# Place your test data files in this directory.
+# Access them in tests with: os.ReadFile("testdata/sample.yaml")
+name: example
+value: 42
