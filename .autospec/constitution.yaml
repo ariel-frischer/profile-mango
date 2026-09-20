@@ -1,0 +1,171 @@
+constitution:
+  project_name: "profile-mango"
+  version: "1.0.0"
+  ratified: "2026-09-20"
+  last_amended: "2026-09-20"
+
+preamble: |
+  profile-mango aims to be the best open system for stable profile management
+  across AI agents, earning broad adoption through useful, trustworthy portability.
+  Unify intent where it has shared meaning, preserve meaningful agent differences,
+  and keep the system simple enough to understand, use, and contribute to.
+
+principles:
+  - name: "Portable intent, explicit differences"
+    id: "PRIN-001"
+    category: "architecture"
+    priority: "MUST"
+    description: |
+      Define shared behavioral intent in a small canonical core and map it through
+      target-specific adapters. Distinguish semantic fidelity, delivery, and
+      enforcement rather than treating syntax translation as equivalence.
+      Make partial, unsupported, and unknown mappings explicit. Neither exact
+      parity nor erasing useful target differences is a requirement.
+    rationale: "Portability is useful only when users can see what survives a target change."
+    enforcement:
+      - mechanism: "Contract and adapter checks"
+        description: "Use representative mappings and negative fixtures to expose preserved intent and capability gaps."
+    exceptions: []
+
+  - name: "Evidence before compatibility claims"
+    id: "PRIN-002"
+    category: "quality"
+    priority: "MUST"
+    description: |
+      Qualify target claims by tested version, relevant environment, and evidence
+      level. Keep contract fixtures, isolated native parsing or effective-config
+      inspection, and authorized runtime observation distinct. A lower level
+      never proves a higher one. Diagnostics must identify the affected intent,
+      the limitation, and a useful next step or state that none is known.
+      Planned and experimental targets are not shipped support.
+    rationale: "Honest limits prevent false confidence and make compatibility maintainable."
+    enforcement:
+      - mechanism: "Evidence and documentation review"
+        description: "Trace changed support claims and diagnostics to version-qualified tests or recorded observations."
+    exceptions: []
+
+  - name: "No silent weakening of requirements"
+    id: "PRIN-003"
+    category: "security"
+    priority: "NON-NEGOTIABLE"
+    description: |
+      Reject ambiguous input and fail closed when a required security property
+      or exact route cannot be preserved or verified. Never substitute instruction
+      text for enforcement, silently broaden permissions, or fall back to a
+      different provider or authentication route. Account for relevant precedence
+      and bypass surfaces before claiming enforcement. A diagnostic or inert
+      preview may explain a rejected mapping but must not present it as applicable.
+    rationale: "A portable profile must not become less safe merely because the target changes."
+    enforcement:
+      - mechanism: "Boundary and negative tests"
+        description: "Check invalid input, unsupported requirements, overrides, and route mismatch for rejection without application."
+    exceptions: []
+
+  - name: "Deterministic, inspectable contracts"
+    id: "PRIN-004"
+    category: "architecture"
+    priority: "MUST"
+    description: |
+      Keep canonical parsing and resolution separate from target inspection and
+      mutation. For the same explicit inputs and contract/adapter versions,
+      produce the same semantic result and reproducible generated content.
+      Make artifacts and diagnostics inspectable. Version persisted public
+      contracts and document incompatible changes and migration implications
+      rather than silently reinterpreting existing profiles.
+    rationale: "Reproducibility and explicit evolution make profiles dependable over time."
+    enforcement:
+      - mechanism: "Contract regression checks"
+        description: "Use schema, golden, and focused regression tests for changed formats or semantics; review compatibility impact."
+    exceptions: []
+
+  - name: "User ownership and privacy"
+    id: "PRIN-005"
+    category: "security"
+    priority: "MUST"
+    description: |
+      Keep profiles user-owned and usable without a centralized service. Separate
+      portable policy, machine-local route bindings, and target-owned credentials;
+      never embed or copy secrets into profiles, generated artifacts, or diagnostics.
+      Inspect only explicitly scoped inputs and authorized target state. Any future
+      application must expose its effects and ownership boundaries and preserve
+      unrelated user configuration. Test with synthetic isolated state, not personal
+      agent homes; live or costly checks require explicit authorization.
+    rationale: "Unification must not take control of users' agents or expose their private state."
+    enforcement:
+      - mechanism: "Data and effect boundary checks"
+        description: "Review changed reads, writes, and output surfaces; test secret exclusion and unrelated-state preservation where applicable."
+    exceptions: []
+
+  - name: "Simple, composable, accessible"
+    id: "PRIN-006"
+    category: "architecture"
+    priority: "MUST"
+    description: |
+      Prefer a small coherent canonical core with explicit target-adapter boundaries.
+      Add abstractions and dependencies only for demonstrated needs, not hypothetical
+      agents or premature plugin infrastructure. Keep common workflows understandable
+      through concise examples and actionable errors. Make contribution practical
+      with reproducible fixtures, clear adapter evidence requirements, and checks
+      proportional to the change; do not require credentials or model calls for
+      ordinary core development.
+    rationale: "Low complexity and reproducible contributions support adoption better than speculative machinery."
+    enforcement:
+      - mechanism: "Focused design and usability checks"
+        description: "Verify the motivating use case, smallest adequate boundary, runnable examples, and relevant offline checks."
+    exceptions: []
+
+sections:
+  - name: "Stable principles, evolving scope"
+    content: |
+      These principles govern relevant planning, implementation, review, and
+      documentation. docs/dev/project-scope.md records current delivery, intended
+      targets, non-goals, and open decisions. A roadmap entry does not authorize
+      implementation or establish support. Milestone and target changes need not
+      amend this constitution unless they change a principle.
+  - name: "Proportional verification"
+    content: |
+      Check the principles affected by a change and retain concise evidence with
+      the work. Code and contract changes need focused tests plus applicable
+      repository quality checks. Adapter claims need evidence at the level claimed.
+      Documentation-only changes normally need factual, link, and scope checks,
+      not the entire build or target validation suite. Surface conflicts rather
+      than silently bypassing principles; do not add standing review ceremonies.
+
+governance:
+  amendment_process:
+    - step: 1
+      action: "Describe the proposed amendment"
+      requirements: "Record its reason and compatibility or workflow impact in the normal change record."
+    - step: 2
+      action: "Check and update the affected guidance"
+      requirements: "Use the existing repository review workflow, update version and last_amended, and synchronize relevant pointers."
+  versioning_policy: |
+    MAJOR: Incompatible principle or governance changes.
+    MINOR: New principles or substantively expanded guidance.
+    PATCH: Clarifications without changed obligations.
+  compliance_review:
+    frequency: "When relevant work or an amendment affects a principle"
+    process: "Check affected principles and evidence in the normal work review; no separate periodic ceremony."
+  rules:
+    - "Keep amendments lightweight; do not invent approval roles, waiting periods, or centralized governance."
+    - "Do not treat milestone scope or proposed defaults as permanent constitutional requirements."
+    - "Resolve conflicts explicitly; an implementation shortcut is not an amendment."
+
+sync_impact:
+  version_change: "none -> 1.0.0"
+  modified_principles: []
+  added_sections:
+    - "Six founding principles (PRIN-001 through PRIN-006)"
+    - "Stable principles, evolving scope"
+    - "Proportional verification"
+    - "Lightweight governance"
+  removed_sections: []
+  templates_requiring_updates: []
+  follow_up_todos: []
+
+_meta:
+  version: "1.0.0"
+  generator: "autospec"
+  generator_version: "autospec dev"
+  created: "2026-09-20T22:56:05Z"
+  artifact_type: "constitution"
