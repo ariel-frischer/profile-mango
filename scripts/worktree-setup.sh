@@ -37,6 +37,11 @@ link_local_state() {
 }
 
 setup_project() {
+  if [ -f "$WORKTREE_DIR/mise.toml" ] && command -v mise >/dev/null 2>&1; then
+    mise trust --yes "$WORKTREE_DIR/mise.toml" >/dev/null
+    (cd "$WORKTREE_DIR" && mise install && mise exec -- go mod download)
+    return
+  fi
   (cd "$WORKTREE_DIR" && go mod download)
 }
 

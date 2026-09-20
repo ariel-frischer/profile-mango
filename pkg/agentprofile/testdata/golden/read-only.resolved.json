@@ -1,0 +1,36 @@
+{
+  "apiVersion": "agentprofiles.dev/v1alpha1",
+  "kind": "PolicyProfile",
+  "metadata": {
+    "name": "read-only",
+    "description": "Route and instructions with security fields intentionally unmanaged"
+  },
+  "routeRef": "codex-oauth",
+  "permissions": {
+    "mode": "read-only",
+    "network": "allow",
+    "shell": "deny"
+  },
+  "tools": {
+    "allow": [
+      "read",
+      "search",
+      "web"
+    ],
+    "deny": [
+      "deploy",
+      "edit",
+      "write"
+    ],
+    "managed": true,
+    "closed": true
+  },
+  "instructions": [
+    "fixtures/route-only/instructions/system.md",
+    "fixtures/read-only/instructions/research.md"
+  ],
+  "skills": [
+    "fixtures/read-only/skills/research/SKILL.md"
+  ],
+  "parent": "route-only"
+}

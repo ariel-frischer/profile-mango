@@ -1,115 +1,101 @@
-<div align="center">
+# agent-profile
 
-**agent-profile**
+Define portable coding-agent behavior once, resolve it deterministically, and know which properties a target can or cannot preserve.
 
-Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+> **Status:** private M0 contract prototype. It validates and resolves profiles offline. It does not render, install, launch, or modify any coding agent.
 
-</div>
+## Why
 
-## Install
+Coding-agent configuration mixes portable intent with target-specific syntax, authentication routes, and enforcement boundaries. `agent-profile` provides a strict canonical model for the portable part while failing closed on ambiguous input.
 
-**Go install**:
+M0 includes:
 
-```bash
-go install gitlab.com/ariel-frischer/agent-profile/cmd/agent-profile@latest
+- strict `PolicyProfile` and local route-binding parsing
+- stable, field-aware diagnostics
+- one-parent inheritance with explicit merge rules
+- closed tool allowlists and deny-wins resolution
+- safe instruction and skill resource hashing
+- versioned plan and ownership-manifest contracts
+- JSON Schemas and positive, constrained, and unsupported fixtures
+- an offline `validate` command
+
+M0 intentionally excludes adapters, rendering, application, import, drift repair, credentials, provider calls, target-home inspection, roles, MCP projection, and identity management.
+
+## Support policy
+
+Codex is the first intended public adapter target, but no adapter is shipped in M0. Target support begins only after version-qualified capability evidence and golden rendering tests exist.
+
+Experimental comparison targets are documented only in developer evidence. They are not part of the public compatibility promise.
+
+## Profile
+
+```yaml
+apiVersion: agentprofiles.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: research
+spec:
+  routeRef: research-primary
+  permissions:
+    mode: read-only
+    network: allow
+    shell: deny
+  tools:
+    allow: [read, search, web]
+    deny: [write, edit, deploy]
+  instructions:
+    append:
+      - instructions/system.md
+      - instructions/research.md
+  skills:
+    - skills/research/SKILL.md
 ```
 
-**Go get** (library):
+Machine-local bindings contain route identity, never tokens:
 
-```bash
-go get gitlab.com/ariel-frischer/agent-profile
+```yaml
+routes:
+  research-primary:
+    provider: openai
+    transport: native
+    authentication: oauth
+    model: gpt-5.6
+    effort: high
 ```
 
-**From source**:
+## CLI
 
 ```bash
-git clone https://gitlab.com/demo/agent-profile.git
-cd agent-profile
-make build    # Binary at bin/agent-profile
-make bin      # Alias for build
+make build
+
+./bin/agent-profile validate profiles/research/profile.yaml \
+  --bindings bindings/local.yaml
+
+./bin/agent-profile validate profiles/research/profile.yaml --json
 ```
 
-## Usage
+Validation reads only the explicitly supplied files. It does not inspect agent homes, resolve credentials, run subprocesses, or use the network.
 
-```bash
-agent-profile --help
-```
-
-## Library Usage
+## Library
 
 ```go
-import "gitlab.com/ariel-frischer/agent-profile/pkg/agentprofile"
+profile, diagnostics := agentprofile.ParseProfile(profileYAML)
+resolved, diagnostics := agentprofile.Resolve(profiles, "research")
+resources, diagnostics := agentprofile.DigestResources(packageRoot, resolved)
 ```
 
-### AI Agent Skill
-
-This project ships a [SKILL.md](.skills/default/SKILL.md) following the [Agent Skills open standard](https://agentskills.io). Install it so your coding agent knows all commands and options.
-
-**Quick install with [`skills`](https://skills.sh) CLI** (by Vercel Labs):
-
-```bash
-npx skills add demo/agent-profile
-```
-
-<details>
-<summary><strong>Manual install</strong></summary>
-
-**Claude Code** — Skills live in `~/.claude/skills/` (global) or `.claude/skills/` (project-local).
-
-```bash
-# Global — available in all projects
-mkdir -p ~/.claude/skills/agent-profile
-curl -fsSL https://raw.githubusercontent.com/demo/agent-profile/main/.skills/default/SKILL.md \
-  -o ~/.claude/skills/agent-profile/SKILL.md
-
-# Project-local — checked into this repo only
-mkdir -p .claude/skills/agent-profile
-curl -fsSL https://raw.githubusercontent.com/demo/agent-profile/main/.skills/default/SKILL.md \
-  -o .claude/skills/agent-profile/SKILL.md
-```
-
-**Codex CLI** — reads skills from `~/.codex/skills/` (global) or `.codex/skills/` (project-local).
-
-```bash
-# Global
-mkdir -p ~/.codex/skills/agent-profile
-curl -fsSL https://raw.githubusercontent.com/demo/agent-profile/main/.skills/default/SKILL.md \
-  -o ~/.codex/skills/agent-profile/SKILL.md
-
-# Project-local
-mkdir -p .codex/skills/agent-profile
-curl -fsSL https://raw.githubusercontent.com/demo/agent-profile/main/.skills/default/SKILL.md \
-  -o .codex/skills/agent-profile/SKILL.md
-```
-
-Or pass directly: `codex --instructions .skills/default/SKILL.md`
-
-</details>
+See [`schemas/`](schemas/) for the versioned contracts and [`docs/dev/target-evidence.md`](docs/dev/target-evidence.md) for the evidence boundary.
 
 ## Development
 
 ```bash
-make build          # Build binary
-make bin            # Alias for build
-make install-global # Alias for go-install
-make test           # Run tests
-make lint           # Run linters
-make format         # Format code
-```
-
-## Shell Completion
-
-```bash
-# Bash
-source <(agent-profile completion bash)
-
-# Zsh
-source <(agent-profile completion zsh)
-
-# Fish
-agent-profile completion fish > ~/.config/fish/completions/agent-profile.fish
+make test
+make test-coverage
+make lint
+make format
+make build
 ```
 
 ## License
+
 [MIT](LICENSE)

@@ -1,7 +1,9 @@
 project: agent-profile
 versions:
-    unreleased: {}
+    unreleased:
+        added:
+            - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
     0.0.1:
-        date: "2026-01-01"
+        date: 2026-01-01
         added:
             - Initial project scaffolding

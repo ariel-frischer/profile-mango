@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentprofiles.dev/schemas/manifest-v1alpha1.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["apiVersion", "kind", "owner", "generation", "profile", "target", "resources"],
+  "properties": {
+    "apiVersion": {"const": "agentprofiles.dev/manifest/v1alpha1"},
+    "kind": {"const": "Manifest"},
+    "owner": {"type": "string"}, "generation": {"type": "integer", "minimum": 0},
+    "profile": {"type": "string"}, "target": {"type": "string"},
+    "resources": {"type": "array", "items": {"$ref": "plan.schema.json#/$defs/resource"}}
+  }
+}

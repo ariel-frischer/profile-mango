@@ -34,6 +34,7 @@ CLI smoke checks:
 go run ./cmd/agent-profile --help
 go run ./cmd/agent-profile version
 go run ./cmd/agent-profile config keys
+go run ./cmd/agent-profile validate <profile.yaml> [--bindings <local.yaml>] [--json]
 ```
 
 ## File Layout
@@ -44,13 +45,16 @@ cmd/agent-profile/      # CLI entry point (cobra)
   root.go             # root command, persistent flags, command wiring
   version.go          # version subcommand
   config.go           # user config subcommands
-  ui.go               # terminal output helpers
+  validate.go         # offline strict profile/binding validation
   help.go             # custom help formatting
 internal/
   version/            # version info injected via ldflags
   config/             # YAML config load/save/path helpers
-pkg/agentprofile/      # public library package
-  testdata/           # test fixtures
+pkg/agentprofile/      # pure canonical domain, parsing, resolution, resource hashing
+  testdata/fixtures/  # route-only, constrained, and unsupported fixtures
+  testdata/golden/    # deterministic resolved output
+schemas/               # versioned profile, binding, plan, and manifest contracts
+docs/dev/              # target evidence and support boundaries
 assets/               # demo content (GIFs, screenshots)
 .gitlab-ci.yml        # GitLab CI + release
 CHANGELOG.yaml        # changelog source
@@ -66,9 +70,17 @@ CHANGELOG.md          # generated changelog output
 - Missing config files load as empty config; CLI flags should still win over config defaults.
 
 
+## M0 Safety Boundary
+
+- M0 is offline and pure: no target homes, credentials, subprocesses, providers, or network access.
+- Codex is the first intended public adapter target, but no adapter exists yet.
+- Jcode is developer-only experimental evidence, not a supported product target or README promise.
+- Unknown keys, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed.
+
 ## Testing Guidance
 
 - Prefer table tests with `map[string]struct{}` for command/config behavior.
+- Toolchain versions are pinned in `mise.toml`; run `mise install` before canonical lint/build checks.
 - Run `chlog check` after changelog edits.
 - Run `make test` for normal validation; use `make test-coverage` when touching shared packages.
 - Smoke-test generated command paths with `go run ./cmd/agent-profile ...` before release work.
