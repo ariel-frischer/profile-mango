@@ -131,6 +131,16 @@ Evaluate these as the relevant capabilities arrive, not as claims already met:
 Broad adoption is the aspiration, not an invented download, market-share, or
 performance threshold. Gather real user feedback before setting such targets.
 
+## Validation and reference maintenance
+
+The [validation and reference strategy](agent-validation.md) records the agreed
+approach to no-inference native checks, exact tested versions, local agent docs
+with official source links, and deliberate upstream refresh. Build the reference
+pack (**ap-8vz**) before compatibility probes (**ap-3kw**), then the first Codex
+adapter (**ap-3pa**). The later refresh workflow (**ap-a07**) consumes the same
+references without blocking adapter work or automatically promoting support.
+These are planned work items, not delivered tooling or additional support claims.
+
 ## Open product decisions
 
 The following defaults are **proposals, not adopted mandates or new work orders**.

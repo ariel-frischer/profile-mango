@@ -12,6 +12,12 @@ M0 freezes the portable contract. It does not claim that either target enforces 
 
 A lower evidence level never implies a higher one. Parsing is not runtime enforcement, and instruction text is not a permission boundary.
 
+The [validation and reference strategy](agent-validation.md) defines future
+no-inference probes, exact-version support records, local documentation provenance
+and on-demand upstream drift checks. It adds no executed evidence to this ledger.
+Native `doctor` commands require effect review, not automatic trust. Documentation
+versions, installed binaries and tested support must remain distinct.
+
 ## Product boundary
 
 Codex is the first intended public adapter candidate. Jcode is **not** a supported public target. It remains here only as experimental developer evidence for Ariel's custom fork, because that fork currently provides the closest comparison surface for named policy profiles.
