@@ -37,3 +37,14 @@ Thumbs.db
 # Agent Skills (npx skills add)
 .agents/
 skills-lock.json
+
+# Agent worktrees and local task/index state
+.worktrees/
+.beads/
+.codegraph/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/

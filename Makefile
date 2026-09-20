@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run go-install install-global uninstall release patch minor major prep-release
+.PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/agent-profile
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -12,6 +12,8 @@ LDFLAGS=-ldflags="-X ${MODULE_PATH}/internal/version.Version=${BUILD_VERSION} \
                    -X ${MODULE_PATH}/internal/version.Commit=${COMMIT} \
                    -X ${MODULE_PATH}/internal/version.BuildDate=${BUILD_DATE} \
                    -s -w"
+WORKTREE_SCRIPT ?= scripts/worktree-setup.sh
+BASE ?= $(shell git branch --show-current 2>/dev/null || echo HEAD)
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -62,6 +64,16 @@ bin: build ## Alias for build
 
 run: ## Run main package
 	go run ${LDFLAGS} ./cmd/agent-profile/
+
+worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
+	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)
+	@bash "$(WORKTREE_SCRIPT)" "$(BRANCH)" "$(BASE)"
+
+worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves reports)
+	@git worktree list --porcelain | awk '/^worktree .*\/.worktrees\// { sub(/^worktree /, ""); print }' | while read wt; do \
+		echo "removing $$wt"; \
+		git worktree remove --force "$$wt"; \
+	done
 
 uninstall: ## Uninstall agent-profile
 	@./uninstall.sh
