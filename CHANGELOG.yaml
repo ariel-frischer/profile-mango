@@ -3,6 +3,7 @@ versions:
     unreleased:
         added:
             - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
+            - Version-qualified target evidence with explicit public-support and applicability boundaries
     0.0.1:
         date: 2026-01-01
         added:
