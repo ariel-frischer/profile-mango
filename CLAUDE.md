@@ -4,6 +4,10 @@
 
 Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 
+## Constitution and Scope
+
+Consult and follow [`.autospec/constitution.yaml`](.autospec/constitution.yaml) for relevant planning, implementation, review, and documentation. Use [`docs/dev/project-scope.md`](docs/dev/project-scope.md) to distinguish shipped capabilities, intended targets, and proposed defaults. Check affected principles proportionally: documentation normally needs factual/link/scope checks, while code, contracts, and compatibility claims need relevant tests and evidence. Surface conflicts explicitly rather than silently bypassing the constitution.
+
 ## Commands
 
 ```bash
