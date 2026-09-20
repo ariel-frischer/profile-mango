@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-"path/filepath"
-"strings"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -20,7 +20,6 @@ func executeCommand(t *testing.T, args ...string) string {
 		_ = flag.Value.Set("")
 		flag.Changed = false
 	}
-
 
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("agent-profile %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
@@ -48,6 +47,14 @@ func TestCompletionCommandSmoke(t *testing.T) {
 	}
 }
 
+func TestValidateCommandSmoke(t *testing.T) {
+	profile := filepath.Join("..", "..", "pkg", "agentprofile", "testdata", "fixtures", "route-only", "profile.yaml")
+	bindings := filepath.Join("..", "..", "pkg", "agentprofile", "testdata", "fixtures", "bindings.yaml")
+	out := executeCommand(t, "validate", profile, "--bindings", bindings, "--json")
+	if !strings.Contains(out, `"valid": true`) {
+		t.Fatalf("validate output = %q", out)
+	}
+}
 
 func TestConfigPathCommandSmoke(t *testing.T) {
 	want := filepath.Join(t.TempDir(), "from-env.yaml")
@@ -69,4 +76,3 @@ func TestConfigPathFlagOverride(t *testing.T) {
 		t.Fatalf("config path = %q, want %q", strings.TrimSpace(out), flagPath)
 	}
 }
-

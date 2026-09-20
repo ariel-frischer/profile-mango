@@ -17,10 +17,12 @@ make format         # Format code
 
 ```
 cmd/agent-profile/      # CLI entry point (cobra)
-internal/version/    # Version info (ldflags)
-pkg/agentprofile/      # Public library package
-  testdata/          # Test fixtures
-assets/              # Demo content (GIFs, screenshots)
+  validate.go         # offline strict validation
+internal/version/      # Version info (ldflags)
+pkg/agentprofile/      # pure domain, parser, resolver, resource digests
+schemas/               # versioned contracts
+docs/dev/              # target evidence and support policy
+assets/                # Demo content (GIFs, screenshots)
 ```
 
 ## Coding Standards
@@ -29,6 +31,14 @@ assets/              # Demo content (GIFs, screenshots)
 - Errors wrapped with context: `fmt.Errorf("doing X: %w", err)`
 - Map-based table tests: `map[string]struct{}`
 - Accept interfaces, return concrete types
+
+## M0 Safety Boundary
+
+M0 is offline only. Do not add target-home inspection, credential access, subprocess execution, network calls, or live application without a later accepted Bead. Codex is the first intended public target. Jcode remains experimental developer evidence and is not a supported product target.
+
+## Post-Feature Checklist
+
+Always invoke the `/polish` skill after changes and before handoff.
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->

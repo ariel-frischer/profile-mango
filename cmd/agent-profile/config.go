@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/ariel-frischer/agent-profile/internal/config"
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/agent-profile/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

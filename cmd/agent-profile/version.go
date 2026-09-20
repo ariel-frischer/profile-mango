@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"strings"
 
-	"gitlab.com/ariel-frischer/agent-profile/internal/version"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/agent-profile/internal/version"
 )
 
 var versionPlain bool

@@ -1,0 +1,9 @@
+[tools]
+go = "1.25.5"
+"aqua:golangci/golangci-lint" = "v2.13.2"
+
+[tasks.test]
+run = "make test"
+
+[tasks.lint]
+run = "make lint"

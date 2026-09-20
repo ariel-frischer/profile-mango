@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-"gitlab.com/ariel-frischer/agent-profile/internal/config"
-"gitlab.com/ariel-frischer/agent-profile/internal/version"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/agent-profile/internal/config"
+	"gitlab.com/ariel-frischer/agent-profile/internal/version"
 )
 
 var rootCmd = &cobra.Command{
@@ -15,6 +15,7 @@ var rootCmd = &cobra.Command{
 	Version: version.Version,
 }
 var configPathOverride string
+
 func init() {
 	// Disable colors when not writing to a terminal.
 	if fi, err := os.Stdout.Stat(); err == nil {
@@ -36,6 +37,7 @@ func init() {
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(newValidateCmd())
 }
 func selectedConfigPath() string {
 	return config.Path(configPathOverride)

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentprofiles.dev/schemas/bindings-v1alpha1.json",
+  "title": "Local route bindings v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["routes"],
+  "properties": {
+    "routes": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$"},
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["provider", "transport", "authentication", "model", "effort"],
+        "properties": {
+          "provider": {"type": "string", "minLength": 1},
+          "transport": {"type": "string", "minLength": 1},
+          "authentication": {"type": "string", "minLength": 1},
+          "model": {"type": "string", "minLength": 1},
+          "effort": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

@@ -43,7 +43,9 @@ test-coverage: ## Run tests with coverage
 lint: lint-go ## Run all linters
 
 lint-go: ## Run Go linters
-	@if command -v golangci-lint >/dev/null 2>&1; then \
+	@if command -v mise >/dev/null 2>&1 && [ -f mise.toml ]; then \
+		mise exec -- golangci-lint run; \
+	elif command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run; \
 	else \
 		echo "golangci-lint not installed, running go vet"; \

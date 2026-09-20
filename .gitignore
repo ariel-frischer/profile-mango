@@ -33,6 +33,12 @@ Thumbs.db
 
 # Claude Code
 .claude/
+!.claude/
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/polish/
+!.claude/skills/polish/SKILL.md
 
 # Agent Skills (npx skills add)
 .agents/
