@@ -2,10 +2,10 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0 and Oh My Pi 18.2.6 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, and OpenClaw 2026.9.5 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider.
+did not start a session or initialize a provider. No OpenClaw command was executed.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -23,8 +23,8 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. Oh My Pi has an exact source
-version inert preview renderer, but no applicable support. Ariel's custom Jcode fork
+Codex is the first intended public adapter candidate. Oh My Pi and OpenClaw have
+exact source/version inert preview renderers, but no applicable support. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -40,9 +40,73 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | --- | --- | --- | --- |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
+| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
+
+## OpenClaw v2026.9.5 evidence
+
+### Immutable source, build inputs, and platform
+
+The task-owned checkout verified annotated tag object
+`ce2a56d4f41a756662328f4098e303014fdbb38c`, commit
+`ec9c1a13db8938e5a3eaa51fca2e981cde2395a9`, and tree
+`ac00d08eb2766b4fd114bee710e78a1df6c3cc03`. The deterministic source archive
+`git archive --format=tar --prefix=openclaw-v2026.9.5/ HEAD` has SHA-256
+`0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4`.
+`package.json`, `pnpm-lock.yaml`, `scripts/build-all.mts`, and `openclaw.mjs`
+have SHA-256 values `16a72a5768e629f703a89b27417feb05d4c4ece7df816c5d1364d202c5a2e619`,
+`2415d6f2835843db64b1f4eadd676fa64c2fc9f5ddd868e73ae3deb2f0ed1b78`,
+`65f6726bbc3b5e18f02d268458b73648da5da5a0ddfb5dd5eca6e3b9a8984e17`, and
+`538e8ee2b65a0b24bb8a5ed3421bfe66621b1e0b5f726a167758c004f566fb36`.
+The review platform was Linux 7.2.5-3-omarchy x86_64 with Node `v24.21.0`
+(runtime binary SHA-256
+`7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c`) and
+PNPM `10.28.2`.
+
+The immutable checkout contained no `node_modules` or `dist/entry.js`. No
+dependency install or OpenClaw build was run, so the record contains source and
+build-input evidence rather than a produced runtime artifact hash.
+
+### Source/effect review and execution decision
+
+Review covered `openclaw.mjs`, `src/cli/program/preaction.ts`,
+`src/cli/config-cli.ts`, `src/config/io.snapshot.ts`, `src/config/io.context.ts`,
+`src/config/io.plugin-metadata.ts`, and
+`src/state/openclaw-state-db-readonly.ts` before considering any command.
+`config validate --json` calls `readConfigFileSnapshotWithPluginMetadata({
+observe: false })`; that flag suppresses config observation but does not remove
+dotenv/config-environment processing, `$include` resolution, plugin/workspace/index
+discovery, state-database reads, or migration-capable normalization. The source
+also contains recovery-capable helpers, although this handler does not pass an
+explicit suspicious-recovery opt-in. The launcher also
+performs Node/SQLite runtime checks before the CLI. The documented
+`OPENCLAW_CONFIG_READONLY=1` switch protects `openclaw.json`, not every state or
+discovery path.
+
+`OPENCLAW_CONFIG_READONLY=1 openclaw config validate --json` was **not executed**.
+The source review did not establish a bounded, credential-free, no-write native
+inspector even with synthetic homes and blocked network. No OpenClaw command,
+gateway, daemon, session, provider, credential, plugin, update, or native probe
+was run, and the repository probe harness was not broadened.
+
+### Capability classification
+
+| Portable property | OpenClaw evidence | Applicability consequence |
+| --- | --- | --- |
+| Config syntax fidelity | Source/docs establish strict JSON5 and the model/thinking field locations | Partial candidate fidelity only; native acceptance is unverified |
+| Effective state | No safe command with merged per-field provenance was established | Blocking unknown |
+| Config/runtime precedence | Documented layers and overrides were not observed in an exact isolated run | Blocking unknown |
+| Route and authentication | `provider/model` and thinking candidate fields are source-grounded; auth profile identity and route selection are unverified | Authentication-required mappings remain non-applicable |
+| Permissions and tools | Tool policy, plugins, sender rules, and sandbox gates are documented; enforcement and bypass surfaces were not observed | Blocking unknown |
+| Instructions and skills | Workspace and project/state/bundled sources are documented; delivery and precedence were not observed | Blocking unknown when requested |
+| Runtime enforcement | No gateway/session/runtime observation was authorized or performed | Blocking unknown |
+
+The adapter emits an inert JSON5 candidate at
+`preview/<profile>.config.json5.preview`, resource copies under `resources/`,
+and a `v1alpha1` report. It never emits credentials, auth references, active
+target paths, or an applicable result. See the [OpenClaw reference](agents/openclaw.md).
 
 ## Codex CLI evidence
 
@@ -382,10 +446,10 @@ No candidate field is classified as runtime-enforced by M0. The route/instructio
 
 The minimum contract can proceed without public Jcode support and without pretending Codex is already supported. M0 establishes deterministic canonical semantics and records that:
 
-- Codex is the first public M1 adapter candidate, and Oh My Pi now has an exact
-  source-qualified inert preview renderer.
+- Codex is the first public M1 adapter candidate, and Oh My Pi and OpenClaw now
+  have exact source-qualified inert preview renderers.
 - Ariel's custom Jcode fork is a private experimental comparison target only.
-- exact authentication-route proof is unresolved for both targets without isolated target inspection
+- exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
 - no target artifact, launch recipe, or live-state mutation is part of M0
 
@@ -400,6 +464,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   and its opt-in integration test `TestAgentConfigProbe`.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
 - Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
+- OpenClaw v2026.9.5 source and documentation: [`openclaw.mjs`](https://github.com/openclaw/openclaw/blob/v2026.9.5/openclaw.mjs), [`config-cli.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/cli/config-cli.ts), [`io.snapshot.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/io.snapshot.ts), [`configuration.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md), and [`config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md). The exact source review did not execute config inspection because plugin/state/include and migration effects were not bounded.
 - Bundled Ariel custom Jcode fork documentation for source snapshot `ed9b93b89`:
   `README.md` named-session-profile section and `docs/WRAPPERS.md` profile
   inspection section. This source snapshot is separate from the tested build
@@ -416,7 +481,9 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code, Pi, OpenClaw, and Hermes remain roadmap research, not M0 targets.
+- Claude Code, Pi, and Hermes remain roadmap research, not M0 targets. OpenClaw
+  has a source-qualified inert preview boundary, but native applicability remains
+  blocked pending a safe exact-artifact inspection path.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.

@@ -12,8 +12,10 @@ flowchart LR
     CLI --> DISPATCH[explicit target switch]
     DISPATCH --> CODEX[Codex adapter]
     DISPATCH --> OMP[Oh My Pi adapter]
+    DISPATCH --> OPENCLAW[OpenClaw adapter]
     CODEX --> CONTRACT[target-neutral render contract]
     OMP --> CONTRACT
+    OPENCLAW --> CONTRACT
     CONTRACT --> STAGE[atomic inert staging]
 ```
 
@@ -22,8 +24,9 @@ flowchart LR
 - `pkg/render` owns the smallest two-consumer boundary: `TargetBuild`, pure
   input/resource types, evidence, capabilities, artifacts, report serialization,
   stable sorting, safe artifact paths, and resource-byte validation.
-- `pkg/adapters/codex` and `pkg/adapters/ohmypi` own exact evidence pins, target
-  syntax, capability mapping, target-specific diagnostics, and applicability.
+- `pkg/adapters/codex`, `pkg/adapters/ohmypi`, and `pkg/adapters/openclaw` own exact
+  evidence pins, target syntax, capability mapping, target-specific diagnostics,
+  and applicability.
 - `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
 - `internal/staging` creates only a new explicit output directory and never writes
@@ -45,12 +48,14 @@ are staged.
 
 ## Current target boundary
 
-Codex `0.154.0` and Oh My Pi `18.2.6` each have deterministic inert preview
-renderers. Codex uses TOML candidate syntax. Oh My Pi uses the pinned source's
-YAML settings fields for a `modelRoles.default` and `defaultThinkingLevel`
-candidate. Neither adapter claims native applicability, installs output, reads a
-target home, accesses credentials, starts a session, calls a provider, or uses a
-network connection.
+Codex `0.154.0`, Oh My Pi `18.2.6`, and OpenClaw `2026.9.5` each have deterministic
+inert preview renderers. Codex uses TOML candidate syntax. Oh My Pi uses the pinned
+source's YAML settings fields for a `modelRoles.default` and
+`defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields for
+`agents.defaults.model.primary`, an explicit empty fallback list, and
+`agents.defaults.thinkingDefault`. None of these adapters claims native
+applicability, installs output, reads a target home, accesses credentials, starts
+a session, calls a provider, or uses a network connection.
 
 Oh My Pi's source-level version observation is exact, but the standalone build is
 currently blocked by its missing pinned native addon and the reviewed `config`
@@ -58,3 +63,10 @@ commands initialize settings, discovery, and migration paths. That is recorded a
 an explicit support blocker rather than bypassed by running the unsafe inspector.
 See [target evidence](target-evidence.md) and the [Oh My Pi reference](agents/oh-my-pi.md)
 for the provenance and effect details.
+
+OpenClaw's exact source/archive identity is pinned, but no dependency install,
+runtime build, or native command was run. The reviewed `config validate --json`
+path performs plugin/state/include discovery and was not accepted as a safe M0
+probe. Those are explicit blockers, not reasons to add a target-home inspector or
+plugin framework. See [target evidence](target-evidence.md) and the
+[OpenClaw reference](agents/openclaw.md).

@@ -1,0 +1,15 @@
+// profile-mango: INERT PREVIEW ONLY
+// NON-APPLICABLE: candidate syntax for OpenClaw 2026.9.5.
+// This is not an active ~/.openclaw/openclaw.json. Authentication, state, delivery, precedence, and enforcement are unverified.
+
+{
+  agents: {
+    defaults: {
+      model: {
+        primary: "openai/gpt-5.6",
+        fallbacks: [],
+      },
+      thinkingDefault: "high",
+    },
+  },
+}

@@ -17,11 +17,12 @@ resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
-> are offline and pure. Codex CLI `0.154.0` and Oh My Pi `18.2.6` have exact-
-> version, explicitly inert preview renderers, but no generated output is
-> applicable or installed because authentication, delivery, and enforcement
-> remain unverified. Oh My Pi native support is also blocked by its missing
-> standalone native addon and unsafe config-inspector effects.
+> are offline and pure. Codex CLI `0.154.0`, Oh My Pi `18.2.6`, and OpenClaw
+> `2026.9.5` have exact-version, explicitly inert preview renderers, but no
+> generated output is applicable or installed because authentication, delivery,
+> precedence, and enforcement remain unverified. Oh My Pi is blocked by its
+> missing standalone native addon and unsafe config-inspector effects. OpenClaw
+> is blocked by source-only runtime evidence and an unsafe config-inspection path.
 
 ## Install
 
@@ -221,6 +222,29 @@ The Oh My Pi adapter emits no credentials or active target-home files. Its sourc
 version, build blocker, config-inspector effects, and capability gaps are recorded
 in the [target evidence ledger](docs/dev/target-evidence.md).
 
+## Inert OpenClaw preview
+
+The same explicit package can render a deterministic OpenClaw `2026.9.5` JSON5
+candidate. The output is under `preview/`, never `~/.openclaw`, and the command
+exits nonzero because the report is non-applicable:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target openclaw \
+  --target-version 2026.9.5 \
+  --out ./openclaw-preview \
+  --preview --json
+```
+
+The OpenClaw candidate contains only source-grounded `agents.defaults.model` and
+`agents.defaults.thinkingDefault` fields. It emits no credentials, auth profile
+references, active target paths, or enforcement claims. The exact source/archive
+hashes, config command effect review, and blocked native acceptance boundary are
+recorded in the [target evidence ledger](docs/dev/target-evidence.md).
+
 ## Commands
 
 ```text
@@ -253,12 +277,13 @@ Versioned JSON Schemas live in [`schemas/`](schemas/).
 
 ## Support boundary
 
-Codex is the first intended public adapter target. The shipped Codex `0.154.0`
-and Oh My Pi `18.2.6` boundaries are preview-only and always report current
-profiles as non-applicable. No applicable adapter, installation engine, import, drift repair, credential
-handling, provider call, target-home inspection, role projection, MCP projection,
-or identity management is shipped. User-level preference storage is not shipped;
-the application home stores profile packages and route identity only.
+Codex is the first intended public adapter target. The shipped Codex `0.154.0`,
+Oh My Pi `18.2.6`, and OpenClaw `2026.9.5` boundaries are preview-only and always
+report current profiles as non-applicable. No applicable adapter, installation
+engine, import, drift repair, credential handling, provider call, target-home
+inspection, role projection, MCP projection, or identity management is shipped.
+User-level preference storage is not shipped; the application home stores profile
+packages and route identity only.
 
 Other intended targets and experimental comparison evidence are documented as
 roadmap or developer material, not as current compatibility claims. See
