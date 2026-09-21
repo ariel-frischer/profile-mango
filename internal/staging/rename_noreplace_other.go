@@ -2,8 +2,10 @@
 
 package staging
 
-import "os"
+import "errors"
 
-func renameNoReplace(source, destination string) error {
-	return os.Rename(source, destination)
+var errAtomicNoReplaceUnsupported = errors.New("atomic no-replace staging is unsupported on this platform")
+
+func renameNoReplace(_, _ string) error {
+	return errAtomicNoReplaceUnsupported
 }
