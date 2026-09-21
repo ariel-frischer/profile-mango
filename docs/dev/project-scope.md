@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Codex and Oh My Pi preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -43,8 +43,12 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus an ex
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
+- An Oh My Pi `18.2.6` preview renderer that emits deterministic candidate YAML,
+  resource copies, and a versioned report only into an explicit staging directory.
+  Its source-level target evidence, native build blocker, and unsafe config-inspector
+  effects remain explicit in every report.
 
-**No applicable target adapter is shipped.** The Codex renderer always reports current profiles as non-applicable and never installs output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable target adapter is shipped.** The Codex and Oh My Pi renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -55,7 +59,8 @@ supported targets. This is product intent, not a current compatibility matrix:
 | --- | --- | --- |
 | Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | No adapter; compatibility not established |
-| Pi / Oh My Pi | Intended MVP target family; evaluate each variant separately | No adapter; compatibility not established for either |
+| Pi | Intended MVP target | No adapter; compatibility not established |
+| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | No adapter; compatibility not established |
 | Hermes | Intended MVP target | No adapter; compatibility not established |
 

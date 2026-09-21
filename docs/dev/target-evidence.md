@@ -2,10 +2,10 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0 inert preview-renderer boundary. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
-`--version`, `--help`, Codex `features list`, and Ariel custom-fork profile
-inspection commands in synthetic homes; they did not start a session or initialize
-a provider.
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0 and Oh My Pi 18.2.6 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+`--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
+list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
+did not start a session or initialize a provider.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -23,7 +23,8 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. Ariel's custom Jcode fork
+Codex is the first intended public adapter candidate. Oh My Pi has an exact source
+version inert preview renderer, but no applicable support. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -38,6 +39,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
+| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
@@ -168,6 +170,80 @@ This is preview-rendering support only. Every report remains `applicable: false`
 and the command returns nonzero while authentication, delivery, precedence, or
 enforcement is unverified. The preview never contains active `config.toml`,
 `AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
+paths.
+
+## Oh My Pi v18.2.6 source and preview-renderer evidence
+
+The task-owned source checkout is pinned to tag `v18.2.6` and commit
+`78b753124d11f8dd3ae73e2524125890ff7c977e`. Frozen dependency installation used
+Bun `1.3.14` and the pinned `bun.lock`. The direct source entrypoint
+`packages/coding-agent/src/cli.ts --version` printed `omp/18.2.6` with an
+isolated task-owned `HOME` and sanitized environment.
+
+The exact hashes used by the observation and adapter evidence are:
+
+| Item | SHA-256 |
+| --- | --- |
+| Bun `1.3.14` runtime | `9fd36f87e4b90b07632b987a2e4ec81ca15a62c81bf983190cea6d715be2ad74` |
+| `packages/coding-agent/package.json` | `4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e` |
+| pinned `bun.lock` | `b74fbff79c5acbacc6bc46f4180e070cb5edb9853c8c5a00ff97d9c8734d4a70` |
+
+The adapter uses the package manifest hash as `EvidenceSHA256` and labels the
+evidence `source-entrypoint-version`. It does not present that source hash as a
+standalone Oh My Pi binary hash.
+
+The official pinned build command was attempted only after source review and
+frozen dependency installation:
+
+```bash
+bun run packages/coding-agent/scripts/build-binary.ts
+```
+
+The build generated intermediate client assets, then stopped at native embedding:
+
+```text
+No native addons found for linux-x64.
+Expected pi_natives.linux-x64-modern.node / pi_natives.linux-x64-baseline.node
+```
+
+The exact standalone artifact was therefore not produced. No mutable wrapper,
+global tool install, release download, alternate version, or native-addon
+substitution was used.
+
+### Config command source effects
+
+Before any target execution, source review covered the pinned command and settings
+paths:
+
+- `packages/coding-agent/src/cli.ts` bypasses network bootstrap for `--version`.
+- `packages/coding-agent/src/cli/config-cli.ts` initializes `Settings` before
+  handling `config path` or `config list --json`.
+- `packages/coding-agent/src/config/settings.ts` opens agent storage and loads
+  global, project, and overlay configuration during initialization.
+- `packages/coding-agent/src/config/config-file.ts` contains legacy JSON migration
+  that can write a YAML settings file.
+
+`config path` and `config list --json` were not run. The source-reviewed storage,
+discovery, and migration effects are not accepted as a side-effect-free inspector
+under the M0 safety boundary. No provider, credential, session, hook, extension,
+child, personal home, or target-home operation was invoked.
+
+### Capability result
+
+| Capability | Evidence result | Applicability consequence |
+| --- | --- | --- |
+| Exact source version | `omp/18.2.6` printed from the pinned source entrypoint | Version-qualified source observation only |
+| Standalone artifact | Official build stopped because the pinned linux-x64 native addon was missing | Blocking |
+| Config inspection | `config path/list` source path initializes storage, discovery, and migration | Blocking, command not run |
+| Route provider/model/effort | Pinned docs and source identify `modelRoles` and `defaultThinkingLevel` syntax | Candidate syntax only, blocking |
+| Authentication identity | No credential-free route proof was established | Blocking |
+| Permissions/tools | Approval and tool policy concepts are documented, but equivalence and enforcement were not tested | Blocking |
+| Instruction/skill delivery | Context-file and skill precedence is documented, but no safe native delivery observation exists | Blocking |
+
+The adapter consequently emits only deterministic inert YAML candidates and
+content-addressed resource copies. Reports remain `applicable: false`, include
+the source, build, and config blockers above, and return nonzero. It never writes
+`~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
 
 ## Experimental Ariel custom Jcode fork evidence
@@ -306,7 +382,8 @@ No candidate field is classified as runtime-enforced by M0. The route/instructio
 
 The minimum contract can proceed without public Jcode support and without pretending Codex is already supported. M0 establishes deterministic canonical semantics and records that:
 
-- Codex is the first public M1 adapter candidate.
+- Codex is the first public M1 adapter candidate, and Oh My Pi now has an exact
+  source-qualified inert preview renderer.
 - Ariel's custom Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for both targets without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
@@ -322,6 +399,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Reproducible harness: [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
   and its opt-in integration test `TestAgentConfigProbe`.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
+- Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
 - Bundled Ariel custom Jcode fork documentation for source snapshot `ed9b93b89`:
   `README.md` named-session-profile section and `docs/WRAPPERS.md` profile
   inspection section. This source snapshot is separate from the tested build
@@ -338,5 +416,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code, Pi, Oh My Pi, OpenClaw, and Hermes remain roadmap research, not M0 targets.
+- Claude Code, Pi, OpenClaw, and Hermes remain roadmap research, not M0 targets.
+- Oh My Pi remains non-applicable. Requalify the missing native addon and perform
+  a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.

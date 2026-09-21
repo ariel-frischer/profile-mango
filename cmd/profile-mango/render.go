@@ -9,7 +9,9 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/staging"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 type renderOptions struct {
@@ -22,6 +24,39 @@ type renderOptions struct {
 	preview       bool
 	jsonOutput    bool
 	usesHome      bool
+}
+
+type renderAdapter struct {
+	evidenceSHA256 string
+	newResult      func(string, render.TargetBuild) render.Result
+	render         func(render.Input) render.Result
+}
+
+func renderAdapterFor(name string) (renderAdapter, bool) {
+	switch name {
+	case codex.TargetName:
+		return renderAdapter{
+			evidenceSHA256: codex.EvidenceSHA256,
+			newResult: func(profileName string, target render.TargetBuild) render.Result {
+				return codex.NewResult(profileName, target)
+			},
+			render: func(input render.Input) render.Result {
+				return codex.Render(input)
+			},
+		}, true
+	case ohmypi.TargetName:
+		return renderAdapter{
+			evidenceSHA256: ohmypi.EvidenceSHA256,
+			newResult: func(profileName string, target render.TargetBuild) render.Result {
+				return ohmypi.NewResult(profileName, target)
+			},
+			render: func(input render.Input) render.Result {
+				return ohmypi.Render(input)
+			},
+		}, true
+	default:
+		return renderAdapter{}, false
+	}
 }
 
 func newRenderCmd() *cobra.Command {
@@ -38,7 +73,7 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name")
+	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (codex or oh-my-pi)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
 	cmd.Flags().BoolVar(&options.preview, "preview", false, "write inert preview artifacts despite applicability blockers")
@@ -55,8 +90,13 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	if err := validateRenderOptions(options); err != nil {
 		return err
 	}
-	target := codex.TargetBuild{Name: options.target, Version: options.targetVersion, EvidenceSHA256: codex.EvidenceSHA256}
-	result := codex.NewResult(name, target)
+	adapter, found := renderAdapterFor(options.target)
+	target := render.TargetBuild{Name: options.target, Version: options.targetVersion}
+	if !found {
+		return finishRender(cmd, render.UnknownTarget(name, target), options, false)
+	}
+	target.EvidenceSHA256 = adapter.evidenceSHA256
+	result := adapter.newResult(name, target)
 	profiles, diagnostics := loadSelectedProfiles(options.profiles, name)
 	bindingsData, err := os.ReadFile(options.bindings)
 	if err != nil {
@@ -68,14 +108,14 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	}
 	bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)
 	diagnostics = append(diagnostics, bindingDiagnostics...)
-	_, found := profiles[name]
-	if !found {
+	_, profileFound := profiles[name]
+	if !profileFound {
 		diagnostics.Add(profilemango.SeverityError, "render.profile_missing", "profile", "requested profile is not present in the selected repository", 0, 0)
 	}
 	var resolved profilemango.ResolvedProfile
 	var route profilemango.RouteBinding
-	var resources []codex.Resource
-	if found {
+	var resources []render.Resource
+	if profileFound {
 		var resolveDiagnostics profilemango.Diagnostics
 		resolved, resolveDiagnostics = profilemango.Resolve(profiles, name)
 		diagnostics = append(diagnostics, resolveDiagnostics...)
@@ -96,7 +136,7 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		result.Diagnostics = diagnostics.Sorted()
 		return finishRender(cmd, result, options, false)
 	}
-	result = codex.Render(codex.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
+	result = adapter.render(render.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
 	result.Diagnostics = append(result.Diagnostics, diagnostics...)
 	result.Diagnostics = result.Diagnostics.Sorted()
 	return finishRender(cmd, result, options, true)
@@ -185,20 +225,20 @@ func safeProfileName(name string) bool {
 	return name != "" && name != "." && name != ".." && filepath.Base(name) == name && !strings.ContainsAny(name, "/\\")
 }
 
-func readResourceContents(root string, digests []profilemango.ResourceDigest, diagnostics profilemango.Diagnostics) ([]codex.Resource, profilemango.Diagnostics) {
-	resources := make([]codex.Resource, 0, len(digests))
+func readResourceContents(root string, digests []profilemango.ResourceDigest, diagnostics profilemango.Diagnostics) ([]render.Resource, profilemango.Diagnostics) {
+	resources := make([]render.Resource, 0, len(digests))
 	for _, digest := range digests {
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(digest.Path)))
 		if err != nil {
 			diagnostics.Add(profilemango.SeverityError, "resource.read", digest.Path, err.Error(), 0, 0)
 			continue
 		}
-		resources = append(resources, codex.Resource{Digest: digest, Content: data})
+		resources = append(resources, render.Resource{Digest: digest, Content: data})
 	}
 	return resources, diagnostics
 }
 
-func finishRender(cmd *cobra.Command, result codex.Result, options renderOptions, canStage bool) error {
+func finishRender(cmd *cobra.Command, result render.Result, options renderOptions, canStage bool) error {
 	result = result.Report(options.preview)
 	if canStage && options.preview {
 		if err := stageRender(options.out, result); err != nil {
@@ -222,7 +262,7 @@ func finishRender(cmd *cobra.Command, result codex.Result, options renderOptions
 	return nil
 }
 
-func stageRender(destination string, result codex.Result) error {
+func stageRender(destination string, result render.Result) error {
 	report, err := result.ReportJSON(true)
 	if err != nil {
 		return err
@@ -234,7 +274,7 @@ func stageRender(destination string, result codex.Result) error {
 	return staging.Write(destination, files)
 }
 
-func writeRenderOutput(cmd *cobra.Command, result codex.Result, jsonOutput bool) error {
+func writeRenderOutput(cmd *cobra.Command, result render.Result, jsonOutput bool) error {
 	resultJSON, err := result.ReportJSON(result.Preview)
 	if err != nil {
 		return err
