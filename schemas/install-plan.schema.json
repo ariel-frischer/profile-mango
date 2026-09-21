@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profilemango.dev/schemas/install-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "planID", "profile", "status", "backup", "override", "inputSHA256", "targets"],
+  "properties": {
+    "apiVersion": {"const": "profilemango.dev/install-plan/v1alpha1"},
+    "kind": {"const": "InstallPlan"},
+    "planID": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile": {"type": "string"},
+    "status": {"enum": ["ready", "noop", "blocked"]},
+    "backup": {"type": "boolean"},
+    "override": {"type": "boolean"},
+    "inputSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "targets": {"type": "array", "items": {"$ref": "#/$defs/targetPlan"}},
+    "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {"name": {"type": "string"}, "version": {"type": "string"}}
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "version", "adapterVersion", "installable", "status", "reason"],
+      "properties": {
+        "target": {"type": "string"},
+        "version": {"type": "string"},
+        "adapterVersion": {"type": "string"},
+        "evidenceSHA256": {"type": "string"},
+        "installable": {"type": "boolean"},
+        "status": {"type": "string"},
+        "reason": {"type": "string"}
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string"},
+        "before": {"type": "string"},
+        "after": {"type": "string"},
+        "sensitive": {"type": "boolean"}
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "action", "afterSHA256", "owned"],
+      "properties": {
+        "path": {"type": "string"},
+        "action": {"enum": ["create", "update", "override", "noop"]},
+        "beforeSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "afterSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "owned": {"type": "boolean"},
+        "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}}
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "message"],
+      "properties": {
+        "severity": {"enum": ["error", "warning"]},
+        "code": {"type": "string"},
+        "path": {"type": "string"},
+        "message": {"type": "string"},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": "integer", "minimum": 1}
+      }
+    },
+    "targetPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "metadata", "status"],
+      "properties": {
+        "target": {"$ref": "#/$defs/target"},
+        "metadata": {"$ref": "#/$defs/metadata"},
+        "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable"]},
+        "reason": {"type": "string"},
+        "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+        "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
+        "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
+      }
+    }
+  }
+}

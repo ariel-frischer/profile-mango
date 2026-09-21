@@ -1,0 +1,64 @@
+package schemas_test
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+
+	"github.com/santhosh-tekuri/jsonschema/v6"
+)
+
+func TestInstallSchemasAcceptAndRejectBoundedContracts(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		schema  string
+		valid   string
+		invalid string
+	}{
+		"plan": {
+			schema:  "install-plan.schema.json",
+			valid:   `{"apiVersion":"profilemango.dev/install-plan/v1alpha1","kind":"InstallPlan","planID":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","profile":"route-only","status":"blocked","backup":true,"override":false,"inputSHA256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","targets":[{"target":{"name":"codex","version":"0.154.0"},"metadata":{"target":"codex","version":"0.154.0","adapterVersion":"profilemango.dev/codex/v1alpha1","evidenceSHA256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","installable":false,"status":"blocked","reason":"production target installation is blocked"},"status":"blocked"}]}`,
+			invalid: `{"apiVersion":"profilemango.dev/install-plan/v1alpha1","kind":"InstallPlan","planID":"short","profile":"route-only","status":"blocked","backup":true,"override":false,"inputSHA256":"short","targets":[]}`,
+		},
+		"manifest": {
+			schema:  "install-manifest.schema.json",
+			valid:   `{"apiVersion":"profilemango.dev/install-manifest/v1alpha1","kind":"InstallManifest","owner":"profile-mango","generation":1,"profile":"route-only","target":{"name":"fake","version":"1"},"planID":"","files":[{"path":"config","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fields":["config.route"]}]}`,
+			invalid: `{"apiVersion":"profilemango.dev/install-manifest/v1alpha1","kind":"InstallManifest","owner":"other","generation":0,"profile":"route-only","target":{"name":"fake","version":"1"},"planID":"","files":[]}`,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			schema := compileInstallSchema(t, test.schema)
+			if err := schema.Validate(loadDocument(t, test.valid, false)); err != nil {
+				t.Fatalf("valid install document rejected: %v", err)
+			}
+			if err := schema.Validate(loadDocument(t, test.invalid, false)); err == nil {
+				t.Fatal("invalid install document accepted")
+			}
+		})
+	}
+}
+
+func compileInstallSchema(t *testing.T, filename string) *jsonschema.Schema {
+	t.Helper()
+	compiler := jsonschema.NewCompiler()
+	compiler.DefaultDraft(jsonschema.Draft2020)
+	path := filename
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document any
+	if err := json.Unmarshal(data, &document); err != nil {
+		t.Fatal(err)
+	}
+	url := schemaBaseURL + filename
+	if err := compiler.AddResource(url, document); err != nil {
+		t.Fatal(err)
+	}
+	schema, err := compiler.Compile(url)
+	if err != nil {
+		t.Fatalf("compile %s: %v", filename, err)
+	}
+	return schema
+}
