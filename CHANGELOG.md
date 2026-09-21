@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - CI formatting checks inspect tracked Go sources without scanning the restored module cache
+- Cross-target inert preview acceptance, early experimental identity reporting, and race-safe no-replace staging
 
 ## [0.0.1] - 2026-01-01
 

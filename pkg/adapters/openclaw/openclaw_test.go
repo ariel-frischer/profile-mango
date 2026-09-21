@@ -150,6 +150,18 @@ func TestRenderRejectsUnsupportedThinkingLevel(t *testing.T) {
 	if result.Applicable || !hasCode(result.Diagnostics, "openclaw.route.effort_unsupported") {
 		t.Fatalf("unsupported thinking level was not blocking: %#v", result)
 	}
+	foundEffort := false
+	for _, capability := range result.Capabilities {
+		if capability.Field == "route.effort" && capability.Status != StatusBlocking {
+			t.Fatalf("unsupported thinking level capability was not blocking: %#v", capability)
+		}
+		if capability.Field == "route.effort" {
+			foundEffort = true
+		}
+	}
+	if !foundEffort {
+		t.Fatal("unsupported thinking level capability was missing")
+	}
 	if artifactByPath(result.Artifacts, "preview/route-only.config.json5.preview").Path != "" {
 		t.Fatal("unsupported thinking level emitted a candidate config")
 	}

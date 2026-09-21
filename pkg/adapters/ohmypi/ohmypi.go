@@ -80,11 +80,11 @@ func Render(input Input) Result {
 }
 
 func addSupportBlockers(result *Result, profile profilemango.ResolvedProfile) {
-	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.route.authentication_unverified", "route.authentication", "Oh My Pi authentication identity and credential handling are not verified; credentials are never inferred", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.route.authentication_unverified", "route.authentication", "Oh My Pi authentication identity and credential handling are not verified; no safe automated remedy is known. Establish exact-source, credential-free route-identity evidence before applying output; credentials are never inferred", 0, 0)
 	result.AddCapability("route.authentication", StatusBlocking, "authentication identity and credential handling are not verified")
-	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.config.inspector_unsafe", "target.config-inspection", "the pinned config inspector initializes settings, project discovery, and migration paths; no safe isolated inspection was accepted", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.config.inspector_unsafe", "target.config-inspection", "the pinned config inspector initializes settings, project discovery, and migration paths; no safe isolated inspection was accepted. No safe automated remedy is known without first bounding those effects", 0, 0)
 	result.AddCapability("target.config-inspection", StatusBlocking, "config path/list effects are not safe to claim")
-	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.target.artifact_unavailable", "target.artifact", "the exact standalone build is blocked by the missing pinned native addon", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.target.artifact_unavailable", "target.artifact", "the exact standalone build is blocked by the missing pinned native addon; no safe automated remedy is known without the exact addon", 0, 0)
 	result.AddCapability("target.artifact", StatusBlocking, "compiled Oh My Pi artifact is unavailable")
 	if profile.Permissions != nil {
 		result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.security.permissions_unverified", "spec.permissions", "Oh My Pi permission equivalence and runtime enforcement are not verified", 0, 0)

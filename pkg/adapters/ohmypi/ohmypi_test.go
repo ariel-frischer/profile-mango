@@ -11,6 +11,7 @@ import (
 
 func TestRenderTable(t *testing.T) {
 	t.Parallel()
+	mode, network, shell := "read-only", "allow", "deny"
 	tests := map[string]struct {
 		profile   profilemango.ResolvedProfile
 		resources []Resource
@@ -32,6 +33,30 @@ func TestRenderTable(t *testing.T) {
 			paths: []string{
 				"preview/route-only.config.yml.preview",
 				"resources/instructions/system.md",
+			},
+		},
+		"constrained": {
+			profile: profilemango.ResolvedProfile{
+				Metadata:     profilemango.Metadata{Name: "read-only"},
+				Permissions:  &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell},
+				Tools:        &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}},
+				Instructions: []string{"instructions/research.md"},
+				Skills:       []string{"skills/research/SKILL.md"},
+			},
+			resources: []Resource{
+				ResourceFromContent("instructions/research.md", "instruction", []byte("research\n")),
+				ResourceFromContent("skills/research/SKILL.md", "skill", []byte("skill\n")),
+			},
+			codes: []string{
+				"ohmypi.permissions.mode_unverified", "ohmypi.permissions.network_unverified",
+				"ohmypi.permissions.shell_unverified", "ohmypi.security.permissions_unverified",
+				"ohmypi.security.tools_unverified", "ohmypi.skills.delivery_unverified",
+				"ohmypi.tools.allowlist_unverified",
+			},
+			paths: []string{
+				"preview/read-only.config.yml.preview",
+				"resources/instructions/research.md",
+				"resources/skills/research/SKILL.md",
 			},
 		},
 		"unsupported-version": {

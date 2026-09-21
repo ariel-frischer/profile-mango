@@ -53,16 +53,18 @@ func ResourceFromContent(resourcePath, kind string, content []byte) Resource {
 
 // NewResult creates a blocked report with exact custom-fork evidence metadata.
 func NewResult(profileName string, target TargetBuild) Result {
-	return render.NewResult(profileName, target, AdapterVersion, Evidence{
+	result := render.NewResult(profileName, target, AdapterVersion, Evidence{
 		Target: TargetName, Version: TargetVersion, SHA256: EvidenceSHA256,
 		Source: EvidenceSource, Level: EvidenceLevel,
 	})
+	result.Diagnostics.Add(profilemango.SeverityWarning, "arieljcode.experimental_only", "target", experimentalMessage(), 0, 0)
+	result.AddCapability("target.status", StatusBlocking, experimentalMessage())
+	return result
 }
 
 // Render emits an inert TOML candidate and never claims target applicability.
 func Render(input Input) Result {
 	result := NewResult(input.Profile.Metadata.Name, input.Target)
-	result.Diagnostics.Add(profilemango.SeverityWarning, "arieljcode.experimental_only", "target", experimentalMessage(), 0, 0)
 	result.Diagnostics = append(result.Diagnostics, targetDiagnostics(input.Target)...)
 	addTargetCapabilities(&result, input.Target)
 	result.Diagnostics = append(result.Diagnostics, routeDiagnostics(input.Route)...)
@@ -95,7 +97,6 @@ func experimentalMessage() string {
 }
 
 func addTargetCapabilities(result *Result, target TargetBuild) {
-	result.AddCapability("target.status", StatusBlocking, experimentalMessage())
 	if target.Name != TargetName || target.Version != TargetVersion || target.EvidenceSHA256 != EvidenceSHA256 {
 		result.AddCapability("target.version", StatusBlocking, "the exact tested custom-fork build, commit, and SHA-256 are not qualified")
 		return
@@ -223,7 +224,7 @@ func routeDiagnostics(route profilemango.RouteBinding) profilemango.Diagnostics 
 		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.transport_unsupported", "route.transport", "only the native transport has a candidate route mapping", 0, 0)
 	}
 	if route.Authentication != "" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.authentication_unverified", "route.authentication", "authentication identity is not verified; route authentication is never emitted", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.authentication_unverified", "route.authentication", "authentication identity is not verified; no safe automated remedy is known. Establish exact-build, credential-free route-identity evidence before applying output; route authentication is never emitted", 0, 0)
 	}
 	return diagnostics
 }

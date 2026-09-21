@@ -74,8 +74,8 @@ func Render(input Input) Result {
 	targetBlocked := targetDiagnostics(input.Target)
 	result.Diagnostics = append(result.Diagnostics, targetBlocked...)
 	addTargetCapabilities(&result, input.Target)
-	result.Diagnostics.Add(profilemango.SeverityError, "codex.route.authentication_unverified", "route.authentication", "Codex authentication route is not verified by the pinned evidence; credentials and route identity are never inferred", 0, 0)
-	result.AddCapability("route.authentication", StatusBlocking, "authentication identity is not verified")
+	result.Diagnostics.Add(profilemango.SeverityError, "codex.route.authentication_unverified", "route.authentication", "Codex authentication route is not verified by the pinned evidence; no safe automated remedy is known. Establish exact-build, credential-free route-identity evidence before applying output; credentials and route identity are never inferred", 0, 0)
+	result.AddCapability("route.authentication", StatusBlocking, "no safe automated remedy is known; exact-build route identity evidence is required")
 	permissionDiagnostics(&result, input.Profile.Permissions)
 	if input.Profile.Permissions != nil {
 		result.Diagnostics.Add(profilemango.SeverityError, "codex.security.permissions_unverified", "spec.permissions", "Codex permission equivalence and runtime enforcement are not verified", 0, 0)

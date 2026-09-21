@@ -4,7 +4,8 @@
 branch `dev`, commit `ed9b93b894454619f73ccddd24c2ff7a3c98ddc3`. No canonical
 public release was established. **Status:** experimental-only local comparison
 target; not an intended supported MVP target, public compatibility promise, or
-supported capability. No adapter ships.
+supported capability. An exact-build inert `ariel-jcode` preview adapter exists,
+but it is not public support.
 
 This reference covers only Ariel's custom Jcode fork. The named profile commands
 and `[profiles.<name>]` configuration described below are fork-specific
@@ -55,7 +56,7 @@ overrides, hooks, extensions, MCP, and runtime enforcement are unverified.
 ## Candidate inspection and gaps
 
 The local custom-fork source documents `jcode version` and these custom-fork
-commands:
+commands as candidate inspection surfaces:
 
 - `jcode profile list`
 - `jcode profile show <name>`
@@ -64,9 +65,12 @@ commands:
 - `jcode provider current --json`
 - `jcode model list --provider`
 
-These commands were executed only against the retained synthetic configuration
-in the isolated exact-build probe. No live profile, target home, credential
-store, shared socket, session, or provider state was inspected.
+The retained isolated exact-build probe actually executed only `jcode --version`,
+`jcode profile --help`, and the synthetic `profile list`, `profile show`,
+`profile current`, and `profile resolve` commands. It did not execute
+`jcode provider current --json` or `jcode model list --provider`; those remain
+documented candidates, not executed evidence. No live profile, target home,
+credential store, shared socket, session, or provider state was inspected.
 
 There is no retained runtime evidence here for exact skill order, auth-store
 behavior, tool enforcement, or installed/source parity. A future experimental

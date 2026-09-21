@@ -66,13 +66,7 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
-- A Claude Code `2.1.278` preview renderer that emits a deterministic,
-  documentation-context JSON `model` candidate, resource copies, and a versioned
-  report only into an explicit staging directory. Its immutable npm artifact,
-  release commit, opaque startup effects, mutable documentation boundary, and
-  native applicability gaps remain explicit in every report.
-
-**No applicable target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel custom Jcode fork renderers always report current profiles as non-applicable and never install output. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel custom Jcode fork renderers always report current profiles as non-applicable and never install output. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 

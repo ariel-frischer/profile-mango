@@ -180,7 +180,7 @@ func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
 
 func routeDiagnostics(route profilemango.RouteBinding) profilemango.Diagnostics {
 	var diagnostics profilemango.Diagnostics
-	diagnostics.Add(profilemango.SeverityError, "claudecode.route.authentication_unverified", "route.authentication", "authentication identity and credential handling are unverified; credentials are never inferred", 0, 0)
+	diagnostics.Add(profilemango.SeverityError, "claudecode.route.authentication_unverified", "route.authentication", "authentication identity and credential handling are unverified; no safe automated remedy is known. Establish exact-release, credential-free route-identity evidence before applying output; credentials are never inferred", 0, 0)
 	if route.Provider == "" || route.Transport == "" || route.Authentication == "" || route.Model == "" || route.Effort == "" {
 		diagnostics.Add(profilemango.SeverityError, "claudecode.route.incomplete", "route", "provider, transport, authentication, model, and effort are required", 0, 0)
 	}

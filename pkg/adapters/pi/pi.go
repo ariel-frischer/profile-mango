@@ -95,11 +95,11 @@ func addEvidenceBlockers(result *Result) {
 		code, path, field, message string
 	}{
 		{"pi.config.acceptance_unverified", "target.config.acceptance", "config.acceptance", "JSON settings candidate syntax is source-grounded but native parser acceptance is unverified"},
-		{"pi.config.inspector_unsafe", "target.config-inspection", "config.inspection", "Pi startup and config/model inspection load target state, project resources, and extensions; no safe isolated execution was accepted"},
+		{"pi.config.inspector_unsafe", "target.config-inspection", "config.inspection", "Pi startup and config/model inspection load target state, project resources, and extensions; no safe isolated execution was accepted. No safe automated remedy is known without first bounding those effects"},
 		{"pi.config.effective_state_unverified", "target.config.effective-state", "config.effective-state", "no safe command emits merged effective settings with per-field provenance"},
 		{"pi.config.precedence_unverified", "target.config.precedence", "config.precedence", "documented settings precedence was not runtime-observed for this exact release"},
 		{"pi.extensions.discovery_unverified", "target.extensions", "extensions", "extension and package discovery and execution were not observed in an isolated exact-release run"},
-		{"pi.route.authentication_unverified", "route.authentication", "route.authentication", "authentication identity and credential handling are unverified; credentials are never inferred"},
+		{"pi.route.authentication_unverified", "route.authentication", "route.authentication", "authentication identity and credential handling are unverified; no safe automated remedy is known. Establish exact-release, credential-free route-identity evidence before applying output; credentials are never inferred"},
 		{"pi.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "route, permission, tool, instruction, skill, extension, and policy enforcement was not observed"},
 	}
 	for _, blocker := range blockers {
