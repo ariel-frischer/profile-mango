@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact Codex 0.154.0 inert preview rendering with fail-closed applicability diagnostics and explicit staging
 - Exact Oh My Pi 18.2.6 inert preview rendering with source/build blockers, deterministic YAML candidates, and explicit fail-closed dispatch
 - Exact OpenClaw 2026.9.5 inert preview rendering with source/archive provenance, deterministic JSON5 candidates, and explicit config-inspection and applicability blockers
+- Exact Hermes Agent 0.21.3 inert preview rendering for source release v2026.9.14 with source/build provenance, deterministic YAML candidates, and explicit inspector and applicability blockers
 - Target-neutral render report and resource boundary shared by Codex and Oh My Pi
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
