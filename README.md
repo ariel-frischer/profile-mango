@@ -21,6 +21,9 @@ M0 includes:
 
 M0 intentionally excludes applicable adapters, application, import, drift repair, credentials, provider calls, target-home inspection, roles, MCP projection, and identity management. The later Codex preview renderer writes only to an explicit staging directory and does not weaken those safety boundaries.
 
+The separately scoped M1 project-scaffolding workflow adds an offline,
+deterministic `init [directory]` command without changing the M0 safety boundary.
+
 ## Support policy
 
 Codex is the first intended public adapter target. The shipped Codex 0.154.0 boundary is preview-only: it has version-qualified evidence and golden rendering tests, always reports current profiles as non-applicable, and emits no active target configuration.
@@ -68,6 +71,12 @@ routes:
 ```bash
 make build
 
+# Create profiles/default/profile.yaml and safe local binding examples in the current directory.
+./bin/profile-mango init
+
+# Or create the same package in an explicit destination.
+./bin/profile-mango init ./my-profile-project
+
 ./bin/profile-mango validate profiles/research/profile.yaml \
   --bindings bindings/local.yaml
 
@@ -86,6 +95,19 @@ make build
 ```
 
 Validation and preview rendering read only explicitly supplied files. They do not inspect agent homes, resolve credentials, run subprocesses, or use the network. Preview output is conspicuously inert and is never installed automatically.
+
+`init` creates only these absent paths and never overwrites existing files:
+
+```text
+profiles/default/profile.yaml
+bindings/local.example.yaml
+bindings/.gitignore
+```
+
+The example binding records route identity only. Credentials remain target-owned,
+and `bindings/local.yaml` is ignored for machine-local values. The root
+`profile-mango init` command is separate from `profile-mango config init`, which
+initializes user-level CLI configuration.
 
 ## Library
 

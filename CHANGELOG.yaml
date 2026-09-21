@@ -7,6 +7,7 @@ versions:
             - Version-qualified local agent configuration references with deterministic source provenance
             - Automated offline clean-install and Draft 2020-12 schema validation evidence for M0
             - Exact Codex 0.154.0 inert preview rendering with fail-closed applicability diagnostics and explicit staging
+            - Deterministic profile scaffolding with profile-mango init
         changed:
             - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
         fixed:
