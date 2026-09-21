@@ -7,7 +7,7 @@
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
 </pre>
 
-**Define portable coding-agent behavior once, then see exactly what each target can preserve.**
+**Unified Agent Profiles**
 
 </div>
 
