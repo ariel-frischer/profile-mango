@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
+.PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run check-agent-sources go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -66,6 +66,9 @@ bin: build ## Alias for build
 
 run: ## Run main package
 	go run ${LDFLAGS} ./cmd/profile-mango/
+
+check-agent-sources: ## Check documented agent sources without writing changes
+	go run ./cmd/profile-mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)

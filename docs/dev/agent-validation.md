@@ -86,25 +86,46 @@ insufficient. The populated [agent configuration references](agents/README.md)
 are indexed in `docs/index.md` and linked from the agent instructions. They remain
 documentation provenance, not executed evidence or a compatibility claim.
 
-## Refresh deliberately, not automatically
+## On-demand source drift check
 
-**ap-a07** owns a later on-demand local workflow or skill:
+From the repository root, run the read-only check when reviewing upstream changes:
 
-1. Compare the recorded sources and releases with upstream using ordinary document
-   fetches, not target inference, paid APIs or installed-agent upgrades.
-2. Report unchanged sources, meaningful configuration changes, new releases,
-   relocated sources and fetch failures separately. A failed fetch is not unchanged.
-   Hash differences flag investigation; cosmetic page churn is not a compatibility
-   regression, and equal docs hashes do not prove unchanged target behavior.
-3. Identify affected capabilities and the smallest relevant no-inference probes.
-   Leave uncertain effects explicitly unknown.
-4. Review source/reference changes and retain old provenance. Update local references
-   intentionally, then promote support evidence only after the appropriate checks.
+```bash
+make check-agent-sources
+# or select one target and request structured output
+go run ./cmd/profile-mango agents check --target codex --json
+```
 
-No automatic personal-config edits, adapter rewrites, support-range expansion or
-background scheduler. Start with an operator-invoked check before adding support
-for a new target version and before releases that change compatibility claims.
-Occasional maintenance checks are useful, but no fixed cadence is required yet.
+The command reads [`agents/sources.json`](agents/sources.json), fetches only
+HTTP(S) sources, bounds request time, response size, and redirects, and never
+writes the manifest, references, evidence ledger, adapter mappings, installed
+agents, configurations, credentials, or support records. Use `--manifest` to
+check an explicitly selected copy and `--target` for one manifest target.
+
+Each source is reported as one of these states:
+
+- **unchanged** — the fetched body matches an existing manifest hash. This is
+  source evidence only, not target compatibility evidence.
+- **changed** — a hashed body differs. Content drift is not a compatibility
+  regression or support promotion; review the diff and run targeted native
+  probes.
+- **unversioned** — the source is reachable but has no manifest hash. The
+  report preserves its target version context without claiming unchanged
+  content.
+- **unavailable** — the request failed or returned a non-success status. It is
+  never treated as unchanged, and the command exits nonzero when any source is
+  unavailable.
+- **relocated** — a redirect was followed or surfaced. Review the redirect and
+  source diff before changing provenance.
+
+Non-public local snapshot locators are reported as `not_checked`; the command
+does not inspect personal agent repositories or homes. A successful check does
+not promote a release to supported or tested status. To refresh intentionally,
+review the source diff and exact version/revision, update the reference pack in
+a separate reviewed change, retain prior provenance/evidence in history and the
+ledger, and run the relevant no-inference probes before making any support
+claim. A manually chosen cadence such as after an upstream release or monthly
+is sufficient; this project does not install a scheduler or background service.
 
 ## Work ownership and order
 

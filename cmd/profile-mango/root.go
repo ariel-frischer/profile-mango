@@ -38,6 +38,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(newValidateCmd())
+	rootCmd.AddCommand(newAgentsCmd())
 }
 func selectedConfigPath() string {
 	return config.Path(configPathOverride)
