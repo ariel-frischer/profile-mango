@@ -89,14 +89,14 @@ func Render(input Input) Result {
 
 func addEvidenceBlockers(result *Result) {
 	blockers := []struct{ code, field, message string }{
-		{"hermes.target.artifact_unavailable", "target.artifact", "no exact Hermes runtime artifact was built or observed"},
+		{"hermes.target.artifact_unavailable", "target.artifact", "no exact Hermes runtime artifact was built or observed; no safe automated remedy is known without an exact supported Python build"},
 		{"hermes.config.acceptance_unverified", "config.acceptance", "YAML candidate fields are source-grounded, but native parser acceptance is unverified"},
-		{"hermes.config.inspector_unsafe", "config.inspection", "candidate inspectors load dotenv, config, credential, profile, plugin, and state paths; no safe isolated execution was accepted"},
+		{"hermes.config.inspector_unsafe", "config.inspection", "candidate inspectors load dotenv, config, credential, profile, plugin, and state paths; no safe isolated execution was accepted. No safe automated remedy is known without first bounding those effects"},
 		{"hermes.config.effective_state_unverified", "config.effective-state", "no safe merged effective state report with per-field provenance was established"},
 		{"hermes.config.precedence_unverified", "config.precedence", "documented precedence was not runtime-observed for this exact release"},
 		{"hermes.context.discovery_unverified", "context", "SOUL.md and project context discovery and precedence are target-owned and unverified"},
 		{"hermes.runtime.enforcement_unverified", "runtime.enforcement", "route, permission, tool, context, and policy enforcement was not observed"},
-		{"hermes.route.authentication_unverified", "route.authentication", "authentication identity and credential handling are unverified; credentials are never inferred"},
+		{"hermes.route.authentication_unverified", "route.authentication", "authentication identity and credential handling are unverified; no safe automated remedy is known. Establish exact-source, credential-free route-identity evidence before applying output; credentials are never inferred"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.field, blocker.message, 0, 0)

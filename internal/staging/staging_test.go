@@ -53,9 +53,42 @@ func TestWriteRejectsExistingDirectoryWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestWriteDoesNotReplaceDestinationCreatedBeforeCommit(t *testing.T) {
+	destination := filepath.Join(t.TempDir(), "bundle")
+	originalCommit := commitDirectory
+	commitDirectory = func(source, target string) error {
+		if err := os.Mkdir(target, 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(target, "marker"), []byte("keep"), 0o644); err != nil {
+			return err
+		}
+		return originalCommit(source, target)
+	}
+	defer func() { commitDirectory = originalCommit }()
+
+	err := Write(destination, []File{{Path: "render.json", Content: []byte("new")}})
+	if err == nil {
+		t.Fatal("staging succeeded after destination was created before commit")
+	}
+	marker, readErr := os.ReadFile(filepath.Join(destination, "marker"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if string(marker) != "keep" {
+		t.Fatalf("concurrent destination was changed: %q", marker)
+	}
+	if _, statErr := os.Stat(filepath.Join(destination, "render.json")); !os.IsNotExist(statErr) {
+		t.Fatalf("staging wrote into concurrent destination: %v", statErr)
+	}
+}
+
 func TestWriteRejectsInvalidInputWithoutCreatingDestination(t *testing.T) {
 	t.Parallel()
 	destination := filepath.Join(t.TempDir(), "bundle")
+	if err := os.Mkdir(destination, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	tests := map[string][]File{
 		"escape":   {{Path: "../escape", Content: []byte("bad")}},
 		"absolute": {{Path: "/escape", Content: []byte("bad")}},

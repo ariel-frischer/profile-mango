@@ -13,6 +13,8 @@ const (
 	MaxTotalBytes int64 = 32 << 20
 )
 
+var commitDirectory = renameNoReplace
+
 // File is one relative regular file to place in a new staging directory.
 type File struct {
 	Path    string
@@ -41,7 +43,7 @@ func Stage(destination string, files []File) error {
 	if err := writeFiles(temporary, files); err != nil {
 		return err
 	}
-	if err := os.Rename(temporary, destination); err != nil {
+	if err := commitDirectory(temporary, destination); err != nil {
 		return fmt.Errorf("commit staging directory: %w", err)
 	}
 	committed = true

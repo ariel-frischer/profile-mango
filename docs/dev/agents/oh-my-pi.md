@@ -83,7 +83,8 @@ synthetic secret sentinels before it can add runtime evidence.
 ## Adapter boundary
 
 The CLI target is `oh-my-pi` with the exact version `18.2.6`. The renderer emits
-`preview/<profile>.config.yml.preview` and content-addressed resource copies only.
+`preview/<profile>.config.yml.preview` and digest-verified resource copies that
+preserve their original relative paths.
 Every report is `applicable: false` and includes explicit blockers for:
 
 - authentication identity and credential handling

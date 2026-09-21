@@ -29,9 +29,66 @@ func TestCleanOfflineInstallAndInstalledBinary(t *testing.T) {
 	fixtures := filepath.Join(repoRoot, "pkg", "profilemango", "testdata", "fixtures")
 	bindings := filepath.Join(fixtures, "bindings.yaml")
 	testInstalledCommands(t, installedBinary, repoRoot, fixtures, bindings, env)
+	testInstalledRenderPreviews(t, installedBinary, repoRoot, fixtures, bindings, env)
 	testUnsupportedProfile(t, installedBinary, repoRoot, fixtures, bindings, env)
 	if _, err := os.Stat(filepath.Join(tempRoot, "home", ".profile-mango")); !os.IsNotExist(err) {
 		t.Fatalf("read-only installed commands created profile home: %v", err)
+	}
+}
+
+func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindings string, env []string) {
+	t.Helper()
+	resourceRoot := filepath.Dir(fixtures)
+	targets := map[string]struct {
+		version      string
+		candidate    string
+		blocker      string
+		evidenceHash string
+	}{
+		"claude-code": {version: "2.1.278", candidate: "preview/route-only.settings.json.preview", blocker: "claudecode.config.acceptance_unverified", evidenceHash: "d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7"},
+		"codex":       {version: "0.154.0", candidate: "preview/route-only.config.toml.preview", blocker: "codex.route.authentication_unverified", evidenceHash: "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"},
+		"pi":          {version: "0.86.1", candidate: "preview/route-only.settings.json.preview", blocker: "pi.config.acceptance_unverified", evidenceHash: "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a"},
+		"oh-my-pi":    {version: "18.2.6", candidate: "preview/route-only.config.yml.preview", blocker: "ohmypi.config.inspector_unsafe", evidenceHash: "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e"},
+		"openclaw":    {version: "2026.9.5", candidate: "preview/route-only.config.json5.preview", blocker: "openclaw.config.inspector_unsafe", evidenceHash: "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4"},
+		"hermes":      {version: "0.21.3", candidate: "preview/route-only.config.yaml.preview", blocker: "hermes.config.inspector_unsafe", evidenceHash: "71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47"},
+		"ariel-jcode": {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "arieljcode.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
+	}
+	for name, target := range targets {
+		t.Run(name, func(t *testing.T) {
+			out := filepath.Join(t.TempDir(), "preview")
+			result := runCommand(binary, repoRoot, env, "render", "route-only", "--profiles", fixtures, "--resource-root", resourceRoot, "--bindings", bindings, "--target", name, "--target-version", target.version, "--out", out, "--preview", "--json")
+			if result.err == nil {
+				t.Fatal("blocked preview unexpectedly succeeded")
+			}
+			var report struct {
+				Target        string `json:"target"`
+				TargetVersion string `json:"targetVersion"`
+				Applicable    bool   `json:"applicable"`
+				Preview       bool   `json:"preview"`
+				Evidence      struct {
+					SHA256 string `json:"sha256"`
+				} `json:"evidence"`
+			}
+			if err := json.Unmarshal([]byte(result.stdout), &report); err != nil {
+				t.Fatalf("render report: %v\n%s", err, result.stdout)
+			}
+			if report.Target != name || report.TargetVersion != target.version || report.Applicable || !report.Preview || report.Evidence.SHA256 != target.evidenceHash {
+				t.Fatalf("unexpected report: %#v", report)
+			}
+			if !strings.Contains(result.stderr, target.blocker) {
+				t.Fatalf("missing target blocker %q:\n%s", target.blocker, result.stderr)
+			}
+			assertInstalledFile(t, out, "render.json")
+			assertInstalledFile(t, out, target.candidate)
+			assertInstalledFile(t, out, "resources/fixtures/route-only/instructions/system.md")
+		})
+	}
+}
+
+func assertInstalledFile(t *testing.T, root, relative string) {
+	t.Helper()
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(relative))); err != nil {
+		t.Fatalf("missing installed render artifact %s: %v", relative, err)
 	}
 }
 

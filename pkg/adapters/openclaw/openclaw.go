@@ -87,13 +87,13 @@ func addEvidenceBlockers(result *Result) {
 	blockers := []struct {
 		code, path, field, message string
 	}{
-		{"openclaw.target.artifact_unavailable", "target.artifact", "target.artifact", "no exact OpenClaw runtime artifact was built or observed"},
+		{"openclaw.target.artifact_unavailable", "target.artifact", "target.artifact", "no exact OpenClaw runtime artifact was built or observed; no safe automated remedy is known without an exact pinned runtime artifact"},
 		{"openclaw.config.acceptance_unverified", "target.config.acceptance", "config.acceptance", "JSON5 candidate syntax is source-grounded but native parser acceptance is unverified"},
-		{"openclaw.config.inspector_unsafe", "target.config-inspection", "config.inspection", "config validation reads plugin, state, dotenv, and include paths; no safe isolated execution was established"},
+		{"openclaw.config.inspector_unsafe", "target.config-inspection", "config.inspection", "config validation reads plugin, state, dotenv, and include paths; no safe isolated execution was established. No safe automated remedy is known without first bounding those effects"},
 		{"openclaw.config.effective_state_unverified", "target.config.effective-state", "config.effective-state", "no safe command emits merged effective state with per-field provenance"},
 		{"openclaw.config.precedence_unverified", "target.config.precedence", "config.precedence", "configuration precedence is documented but not runtime-observed for this exact build"},
 		{"openclaw.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "runtime route, permission, tool, and policy enforcement was not observed"},
-		{"openclaw.route.authentication_unverified", "route.authentication", "route.authentication", "authentication identity and credential handling are unverified; credentials are never inferred"},
+		{"openclaw.route.authentication_unverified", "route.authentication", "route.authentication", "authentication identity and credential handling are unverified; no safe automated remedy is known. Establish exact-source, credential-free route-identity evidence before applying output; credentials are never inferred"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.path, blocker.message, 0, 0)
@@ -112,11 +112,13 @@ func addTargetCapabilities(result *Result, target TargetBuild) {
 }
 
 func addRouteCapabilities(result *Result, route profilemango.RouteBinding) {
-	for _, field := range []string{"provider", "model", "effort"} {
+	for _, field := range []string{"provider", "model"} {
 		result.AddCapability("route."+field, StatusPartial, "documented provider/model and thinking candidate syntax only")
 	}
 	if !validThinkingLevel(route.Effort) && route.Effort != "" {
 		result.AddCapability("route.effort", StatusBlocking, "effort is not an OpenClaw thinking level")
+	} else {
+		result.AddCapability("route.effort", StatusPartial, "documented thinking candidate syntax only")
 	}
 	result.AddCapability("route.transport", StatusBlocking, "OpenClaw transport mapping is not qualified")
 }

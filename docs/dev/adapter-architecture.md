@@ -17,6 +17,7 @@ flowchart LR
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
     DISPATCH --> ARIEL[Ariel custom Jcode adapter]
+    CLAUDE --> CONTRACT
     CODEX --> CONTRACT[target-neutral render contract]
     PI --> CONTRACT
     OMP --> CONTRACT
@@ -52,8 +53,8 @@ authentication identity, delivery, precedence, permissions, tools, or enforcemen
 A preview artifact is an inert candidate only. `applicable` remains false whenever a
 required property is unverified, and the command returns nonzero. Candidate config
 files use `preview/` paths and report metadata excludes artifact bytes. Resource
-copies are content-addressed and validated against the canonical digest before they
-are staged.
+copies preserve their original relative paths and are validated against the
+canonical digest before they are staged.
 
 ## Current target boundary
 

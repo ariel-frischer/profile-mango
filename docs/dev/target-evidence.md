@@ -176,7 +176,7 @@ environments.
 | Runtime enforcement | No authorized session/provider observation | Blocking |
 
 The adapter therefore always sets `applicable: false`. It emits only an inert
-JSON `model` candidate and content-addressed resource previews through the
+JSON `model` candidate and digest-verified, path-addressed resource previews through the
 shared render contract. It never emits credentials, provider/authentication
 values, target-home files, active settings paths, or enforcement claims.
 
@@ -440,7 +440,8 @@ child, personal home, or target-home operation was invoked.
 | Instruction/skill delivery | Context-file and skill precedence is documented, but no safe native delivery observation exists | Blocking |
 
 The adapter consequently emits only deterministic inert YAML candidates and
-content-addressed resource copies. Reports remain `applicable: false`, include
+digest-verified, path-addressed resource copies that preserve original relative paths.
+Reports remain `applicable: false`, include
 the source, build, and config blockers above, and return nonzero. It never writes
 `~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
@@ -521,7 +522,8 @@ repository probe harness was not broadened.
 | Runtime enforcement | No Hermes runtime artifact or session was built or launched | Blocking unknown |
 
 The Hermes adapter emits only a deterministic inert YAML candidate and
-content-addressed resource copies. The candidate uses no credential, auth,
+digest-verified, path-addressed resource copies that preserve original relative paths.
+The candidate uses no credential, auth,
 memory, session, profile, or active target-home path. Reports remain
 `applicable: false`, include target-owned diagnostics, and return nonzero.
 
@@ -654,8 +656,8 @@ comments identify it as the **Ariel custom Jcode fork, experimental-only**.
 Candidate syntax is limited to the exact-build-observed provider, model,
 reasoning effort, a `none` tool profile paired with canonical closed allow and
 deny selectors, empty-skill mode, canonical skill selectors, and instruction
-presence/character-count metadata. Resource bytes remain separate inert
-content-addressed artifacts. The adapter does not emit authentication,
+presence/character-count metadata. Resource bytes remain separate inert,
+digest-verified artifacts addressed by their original relative paths. The adapter does not emit authentication,
 provider profiles, credentials, `agents_md_path`, arbitrary target keys,
 non-empty target skill modes, or skill exclusions because the canonical input
 does not express those fields with exact-build evidence.

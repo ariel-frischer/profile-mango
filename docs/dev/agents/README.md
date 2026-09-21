@@ -3,7 +3,8 @@
 These contributor references summarize configuration surfaces for the intended
 MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
 bases for isolated probes and adapter work, not a compatibility matrix. Codex,
-Pi, Oh My Pi, OpenClaw, and Hermes now have exact-version, preview-only renderers;
+Claude Code, Pi, Oh My Pi, OpenClaw, and Hermes now have exact-version,
+preview-only renderers;
 no target has an applicable installer or enforcement claim.
 
 The [source manifest](sources.json) records deterministic provenance and keeps

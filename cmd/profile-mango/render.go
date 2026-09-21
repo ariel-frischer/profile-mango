@@ -156,11 +156,17 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	profiles, diagnostics := loadSelectedProfiles(options.profiles, name)
 	bindingsData, err := os.ReadFile(options.bindings)
 	if err != nil {
+		message := fmt.Sprintf("read bindings %s: %v", options.bindings, err)
 		if options.usesHome && os.IsNotExist(err) {
 			example := filepath.Join(filepath.Dir(options.bindings), "local.example.yaml")
-			return fmt.Errorf("read global bindings %s (copy %s to this path first): %w", options.bindings, example, err)
+			message = fmt.Sprintf("read global bindings %s (copy %s to this path first): %v", options.bindings, example, err)
 		}
-		return fmt.Errorf("read bindings %s: %w", options.bindings, err)
+		result.Diagnostics.Add(profilemango.SeverityError, "render.bindings.read", "bindings", message, 0, 0)
+		result = result.Report(options.preview)
+		if writeErr := writeRenderOutput(cmd, result, options.jsonOutput); writeErr != nil {
+			return writeErr
+		}
+		return fmt.Errorf("%s", message)
 	}
 	bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)
 	diagnostics = append(diagnostics, bindingDiagnostics...)
@@ -189,7 +195,8 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		}
 	}
 	if diagnostics.HasErrors() {
-		result.Diagnostics = diagnostics.Sorted()
+		result.Diagnostics = append(result.Diagnostics, diagnostics...)
+		result.Diagnostics = result.Diagnostics.Sorted()
 		return finishRender(cmd, result, options, false)
 	}
 	result = adapter.render(render.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
