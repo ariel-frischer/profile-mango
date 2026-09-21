@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profilemango.dev/schemas/install-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "owner", "generation", "profile", "target", "planID", "files"],
+  "properties": {
+    "apiVersion": {"const": "profilemango.dev/install-manifest/v1alpha1"},
+    "kind": {"const": "InstallManifest"},
+    "owner": {"const": "profile-mango"},
+    "generation": {"type": "integer", "minimum": 1},
+    "profile": {"type": "string"},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {"name": {"type": "string"}, "version": {"type": "string"}}
+    },
+    "planID": {"type": "string"},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "fields": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "fields": {"type": "array", "items": {"type": "string"}}
+  }
+}

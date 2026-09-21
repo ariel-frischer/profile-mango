@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -62,11 +62,22 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   and a versioned report only into an explicit staging directory. Its Python
   build requirement, source provenance, unsafe config-inspector paths, and
   native applicability gaps remain explicit in every report.
+- An OpenCode `1.18.31` inert JSONC preview renderer pinned to immutable release
+  and source hashes. It emits only the exact-release source-grounded `model`
+  candidate in `provider/model` form. Native parsing, effective state,
+  authentication identity, effort, delivery, precedence, installation, and
+  enforcement remain blocked.
+- A mock-only install planner/application engine with deterministic plan IDs,
+  hash-bound consent, bounded synthetic file snapshots, backups, stale checks,
+  atomic replacement, ownership evidence, and blocked production target adapters.
+  Successful application tests use fake adapters and temporary files only. It does
+  not inspect or modify global agent configuration; real validation is deferred to
+  `ap-6fu.11` and fresh explicit user approval.
 - An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
-**No applicable target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel custom Jcode fork renderers always report current profiles as non-applicable and never install output. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable production target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers always report current profiles as non-applicable and never install output into a real target. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The offline core, validation, inert render paths, and mock-only install tests do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Install plan/manifest types and fake-adapter application evidence do not establish production target delivery or enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -81,6 +92,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
+| OpenCode | Intended MVP target | Exact `1.18.31` inert JSONC preview renderer; native acceptance, effective state, auth, effort, install applicability, and enforcement remain blocked |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer

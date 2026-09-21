@@ -2,11 +2,11 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, mock-only install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 inert preview-renderer boundaries. No production-target application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters and synthetic temporary files only. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider. No OpenClaw, Hermes, Claude Code,
-or Pi command was executed.
+did not start a session or initialize a provider. No OpenCode, OpenClaw, Hermes,
+Claude Code, or Pi command was executed.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -24,9 +24,12 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. Claude Code, Pi, Oh My Pi,
+Codex is the first intended public adapter candidate. OpenCode, Claude Code, Pi, Oh My Pi,
 and OpenClaw have exact source/version inert preview renderers, but no applicable
-support. Ariel's custom Jcode fork
+support. Production installation remains blocked for every target while the install
+engine is exercised only through fake adapters and synthetic temporary files. Real
+native/install validation is deferred to `ap-6fu.11` and requires fresh explicit
+user approval. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -40,6 +43,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive hashes, mutable official schema/docs snapshots, deterministic inert JSONC renderer tests; no native command executed | Inert preview renderer only; native parsing, effective state, auth identity, install applicability, and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
@@ -355,6 +359,45 @@ The probe prints these field-specific results as
 `codex-permissions-tools=enforcement-unverified`, and
 `codex-instruction-skill-delivery=unverified`. These are explicit gaps, not
 inferred support claims. The adapter therefore remains non-applicable.
+
+## OpenCode v1.18.31 source and preview-renderer evidence
+
+The official immutable GitHub release `v1.18.31`, published 2026-09-14, points to
+commit `a97622c801f4ca571530ddc51076af659a9c32cd`. The tag archive has SHA-256
+`76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896`, and the
+release metadata records SHA-256
+`e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4` for the
+Linux x64 artifact. No release binary was downloaded or executed.
+
+Pinned source review covered the configuration loader and v1 config/provider
+schemas. Their SHA-256 values are:
+
+| Item | SHA-256 |
+| --- | --- |
+| `packages/opencode/src/config/config.ts` | `87a9071af1ddb04d65947dba49be3fb4c94ecf63e120f17ce46ee81ff25dd45a` |
+| `packages/core/src/v1/config/config.ts` | `b99bcbd98df6da79e59cda482363f759cea9d4b9792c6c8e83b6a8d686138d30` |
+| `packages/core/src/v1/config/provider.ts` | `c496dea619e8e9d2d09b7a2353f2e62bff6a2276471c161c3988059a1b6ac303` |
+| mutable `https://opencode.ai/config.json` snapshot | `e8cb6e287a3852ee3403f4803be5ad6b19db94948037eaa9672125c333427922` |
+
+The exact source establishes JSON/JSONC configuration, the `model` field in
+`provider/model` form, provider/model option surfaces, and merged global, custom,
+project, `.opencode`, inline, and managed configuration layers. Mutable official
+documentation separately identifies `~/.config/opencode/opencode.json`,
+`OPENCODE_CONFIG`, project `opencode.json`, and the target-owned credential store
+`~/.local/share/opencode/auth.json`. Mutable documentation is context, not release
+proof.
+
+The renderer emits only an inert JSONC candidate for the evidenced `model` syntax.
+It does not emit provider options, credentials, effort settings, permission/tool
+policy, instructions, skills, plugins, or MCP configuration. Authentication
+identity, native parsing, effective-state provenance, full precedence, delivery,
+and enforcement remain blocking. OpenCode is therefore excluded from production
+installation and `--all` applicability.
+
+No OpenCode command was executed and no installed or global OpenCode state was
+read. Native and install validation is deferred to `ap-6fu.11`, which requires
+fresh explicit user approval. The install engine is tested only with fake adapters
+and synthetic temporary files in this delivery.
 
 ## Codex preview-renderer evidence
 

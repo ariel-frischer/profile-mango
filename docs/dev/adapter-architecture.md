@@ -16,6 +16,7 @@ flowchart LR
     DISPATCH --> OMP[Oh My Pi adapter]
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
+    DISPATCH --> OPENCODE[OpenCode adapter]
     DISPATCH --> ARIEL[Ariel custom Jcode adapter]
     CLAUDE --> CONTRACT
     CODEX --> CONTRACT[target-neutral render contract]
@@ -23,6 +24,7 @@ flowchart LR
     OMP --> CONTRACT
     OPENCLAW --> CONTRACT
     HERMES --> CONTRACT
+    OPENCODE --> CONTRACT
     ARIEL --> CONTRACT
     CONTRACT --> STAGE[atomic inert staging]
 ```
@@ -33,7 +35,8 @@ flowchart LR
   input/resource types, evidence, capabilities, artifacts, report serialization,
   stable sorting, safe artifact paths, and resource-byte validation.
 - `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/pi`,
-  `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, `pkg/adapters/hermes`, and
+  `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, `pkg/adapters/hermes`,
+  `pkg/adapters/opencode`, and
   `pkg/adapters/arieljcode` own exact evidence pins, target syntax, capability
   mapping, target-specific diagnostics, and applicability. The Ariel package is
   experimental-only and is not an upstream Jcode adapter.
@@ -59,7 +62,7 @@ canonical digest before they are staged.
 ## Current target boundary
 
 Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
-OpenClaw `2026.9.5`, and Hermes Agent `0.21.3` each have deterministic inert
+OpenClaw `2026.9.5`, Hermes Agent `0.21.3`, and OpenCode `1.18.31` each have deterministic inert
 preview renderers. Ariel's custom Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
 also has a deterministic inert TOML renderer under the explicit target identity
 `ariel-jcode`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
@@ -69,9 +72,14 @@ Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default
 and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `agents.defaults.thinkingDefault`. Hermes uses source-grounded YAML fields for
-`model.provider`, `model.default`, and `agent.reasoning_effort`. None of these
-adapters claims native applicability, installs output, reads a target home, accesses
-credentials, starts a session, calls a provider, or uses a network connection.
+`model.provider`, `model.default`, and `agent.reasoning_effort`. OpenCode emits only
+the exact-release source-grounded JSONC `model` field in `provider/model` form;
+effort, authentication, delivery, precedence, and enforcement remain blocked. None of these
+adapters claims native applicability, installs output into a production target, reads a target home, accesses
+credentials, starts a session, calls a provider, or uses a network connection during
+ordinary render/install operation. The install engine is exercised with fake adapters
+and synthetic temporary files only; every production adapter remains install-blocked
+pending `ap-6fu.11` and fresh user approval.
 
 The Ariel renderer uses only the exact retained synthetic profile-resolution
 evidence for provider/model/effort, closed tool selectors, empty-skill mode,

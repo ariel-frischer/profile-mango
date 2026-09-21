@@ -29,6 +29,7 @@ func init() {
 	rootCmd.AddCommand(newValidateCmd())
 	rootCmd.AddCommand(newAgentsCmd())
 	rootCmd.AddCommand(newRenderCmd())
+	rootCmd.AddCommand(newInstallCmd())
 }
 
 func selectedHome() (string, error) {
