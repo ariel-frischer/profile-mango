@@ -74,6 +74,19 @@ The custom-fork profile fixtures and commands are not evidence for upstream
 Jcode, and successful parsing does not establish authentication, permissions,
 network policy, tool enforcement, or runtime behavior.
 
+OpenClaw `v2026.9.5` is intentionally not added to this native probe harness.
+Source review of `openclaw.mjs`, the `config validate --json` handler, config
+snapshot/plugin metadata loading, and state-read helpers did not establish a
+bounded no-write inspector. The candidate command can resolve dotenv and config
+environment substitutions, resolve `$include` inputs, discover installed
+plugin/workspace state, inspect SQLite state, and run migration-capable
+normalization. The source also contains recovery-capable helpers, although this
+handler does not pass an explicit suspicious-recovery opt-in. `OPENCLAW_CONFIG_READONLY=1`
+protects the target config policy but does not prove those other effects are
+absent. No OpenClaw command was run; its adapter records source/build-input
+evidence and keeps native acceptance, effective state, delivery, precedence,
+authentication, permissions, tools, skills, and runtime enforcement blocked.
+
 ## Record support by version and capability
 
 Keep these facts distinct in the reference/evidence records:
@@ -96,9 +109,10 @@ required-but-unknown properties continue to block applicability.
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
 this guide does not add a product schema or CLI contract. No applicable public
-target adapter is shipped today. Codex and Oh My Pi preview rendering remain
-non-applicable, with Oh My Pi additionally blocked on its standalone native
-artifact and safe config inspection.
+target adapter is shipped today. Codex, Oh My Pi, and OpenClaw preview rendering
+remain non-applicable. Oh My Pi is additionally blocked on its standalone native
+artifact and safe config inspection; OpenClaw is blocked on its missing runtime
+artifact and unaccepted config inspection path.
 
 ## Keep useful configuration references locally
 

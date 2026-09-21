@@ -26,7 +26,7 @@ and commits are reproducible locators, not proof of target behavior.
 - [Claude Code](claude-code.md) — intended MVP target; untested.
 - [Pi](pi.md) — intended MVP target variant; qualified independently.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
-- [OpenClaw](openclaw.md) — intended MVP target; untested.
+- [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
 - [Hermes](hermes.md) — intended MVP target; untested.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target.
 
