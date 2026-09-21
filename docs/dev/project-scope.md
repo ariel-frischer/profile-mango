@@ -17,11 +17,9 @@ behavioral profiles, and contributors maintaining target integrations. Their
 problems are duplicated configuration, uncertain precedence, hidden capability
 gaps, and accidental changes to permissions or model/authentication routes.
 
-## Verified current delivery: M0
+## Verified current delivery
 
-As of 2026-09-20, the [README](../../README.md) describes a private M0 contract
-prototype. The [canonical domain](../../pkg/profilemango/types.go) and
-[schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -33,12 +31,10 @@ prototype. The [canonical domain](../../pkg/profilemango/types.go) and
   plus positive, constrained, unsupported, and golden fixtures.
 - An offline `validate` command and a Go library. Route bindings describe
   provider, transport, authentication mode, model, and effort, not credentials.
+- A Codex CLI `0.154.0` preview renderer that emits deterministic candidate syntax,
+  resource copies, and a versioned report only into an explicit staging directory.
 
-**No adapters are shipped.** M0 does not render, install, apply, launch, or modify
-agents. It does not inspect target homes, access credentials, run target
-subprocesses, or call providers or the network. Plan and manifest types are
-contracts, not evidence of an application engine. Canonical policy resolution
-does not prove that a target enforces that policy.
+**No applicable target adapter is shipped.** The Codex renderer always reports current profiles as non-applicable and never installs output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -47,7 +43,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
-| Codex | First intended public adapter | No adapter; version-qualified candidate evidence only |
+| Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | No adapter; compatibility not established |
 | Pi / Oh My Pi | Intended MVP target family; evaluate each variant separately | No adapter; compatibility not established for either |
 | OpenClaw | Intended MVP target | No adapter; compatibility not established |
@@ -92,7 +88,7 @@ does not promise roles, MCP projection, or any other expansion.
 
 ## Non-goals and boundaries
 
-**Current M0 exclusions:** adapters, rendering, application, import, drift repair,
+**Current exclusions:** applicable installation or application, import, drift repair,
 credential handling, provider calls, target-home inspection, roles, MCP projection,
 and identity management. These are milestone boundaries, not all permanent bans.
 
@@ -103,10 +99,9 @@ target can prove. Centralized hosting, a marketplace, and governance machinery
 are not prerequisites for using or contributing to the core. An exhaustive
 universal agent schema and premature plugin infrastructure are not goals.
 
-This work, **ap-e3j**, owns principles and scope only. **ap-3pa** owns Codex
-implementation, **ap-3kw** owns no-model compatibility probes, and **ap-sha** owns
-clean offline install validation. This document neither implements nor closes
-those outcomes.
+This work, **ap-e3j**, owns principles and scope only. **ap-3pa** owns the
+Codex preview adapter, **ap-3kw** owns no-model compatibility probes, and **ap-sha**
+owns clean offline install validation.
 
 ## Observable success criteria
 

@@ -1,0 +1,7 @@
+# profile-mango: INERT PREVIEW ONLY
+# NON-APPLICABLE: candidate syntax for Codex CLI 0.154.0.
+# This is not an active configuration. Authentication, delivery, and enforcement are unverified.
+
+model_provider = "openai"
+model = "gpt-5.6"
+model_reasoning_effort = "high"
