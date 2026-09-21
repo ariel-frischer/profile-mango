@@ -73,13 +73,16 @@ and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `agents.defaults.thinkingDefault`. Hermes uses source-grounded YAML fields for
 `model.provider`, `model.default`, and `agent.reasoning_effort`. OpenCode emits only
-the exact-release source-grounded JSONC `model` field in `provider/model` form;
-effort, authentication, delivery, precedence, and enforcement remain blocked. None of these
-adapters claims native applicability, installs output into a production target, reads a target home, accesses
-credentials, starts a session, calls a provider, or uses a network connection during
-ordinary render/install operation. The install engine is exercised with fake adapters
-and synthetic temporary files only; every production adapter remains install-blocked
-pending `ap-6fu.11` and fresh user approval.
+the exact-release JSONC `model` field in `provider/model` form. The exact `1.18.31`
+binary accepted the corrected candidate and emitted it in merged configuration;
+full precedence/provenance, effort, authentication, delivery, installation, and
+enforcement remain blocked. None of these adapters claims native applicability,
+installs output into a production target, reads a target home, accesses credentials,
+starts a session, calls a provider, or uses a network connection during ordinary
+render/install operation. The separate OpenCode developer probe is explicit,
+network-blocked, scratch-only, non-TUI, and restores its independent backup. The
+install engine is exercised with fake adapters and synthetic temporary files only;
+every production adapter remains install-blocked.
 
 The Ariel renderer uses only the exact retained synthetic profile-resolution
 evidence for provider/model/effort, closed tool selectors, empty-skill mode,

@@ -87,6 +87,28 @@ secret-exclusion tests. It remains non-applicable and does not justify a new
 native probe, a target-home read, or a support claim. The current session Jcode
 binary must never substitute for the retained exact artifact.
 
+[`scripts/opencode-config-probe.sh`](../../scripts/opencode-config-probe.sh)
+separately validates OpenCode `1.18.31`. It requires direct absolute paths to the
+exact extracted binary and a Profile Mango JSONC candidate through
+`PROFILE_MANGO_OPENCODE_BIN` and `PROFILE_MANGO_OPENCODE_CANDIDATE`. The script
+rejects any binary other than SHA-256
+`f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`.
+It clears the environment, isolates all HOME/XDG/config/data/cache/state,
+managed-config, database, project, and temporary paths, supplies empty auth
+content, disables project config, model fetching, auto-update, pruning, default
+plugins, external plugins, and LSP downloads, blocks network access, and uses a
+bounded timeout. It never invokes the default TUI or `run` command.
+
+The probe checks version/help, native JSONC acceptance, merged model output,
+inline-over-global precedence, explicit custom-file consumption and preservation,
+malformed input, unknown-key behavior, and scratch-state writes. It inventories
+state, creates an independent backup, restores after success or failure, and requires the
+restored recursive type/mode/size/SHA-256 inventory to match the baseline. The
+result establishes exact-version candidate parsing and partial merged-state and
+precedence behavior. It does not establish zero-write inspection, general
+per-field provenance, production installation, authentication, delivery,
+permissions, tools, plugins, MCP, provider behavior, or runtime enforcement.
+
 OpenClaw `v2026.9.5` and Hermes Agent `0.21.3` are intentionally not added to
 this native probe harness.
 Source review of `openclaw.mjs`, the `config validate --json` handler, config

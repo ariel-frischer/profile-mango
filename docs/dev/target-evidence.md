@@ -2,11 +2,13 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, mock-only install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 inert preview-renderer boundaries. No production-target application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters and synthetic temporary files only. The only target processes executed were bounded
+**Scope:** M0 contract evidence, mock-only install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 inert preview-renderer boundaries. No production-target application, live target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters and synthetic temporary files only. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
-list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider. No OpenCode, OpenClaw, Hermes,
-Claude Code, or Pi command was executed.
+list`, Ariel custom-fork profile inspection, and OpenCode `debug config` commands
+in synthetic homes. They did not start a TUI/session or initialize a provider.
+No OpenClaw, Hermes, Claude Code, or Pi command was executed. The OpenCode probe
+used blocked network and disposable state, then restored its backup with a matching
+recursive inventory.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -26,10 +28,11 @@ versions, installed binaries and tested support must remain distinct.
 
 Codex is the first intended public adapter candidate. OpenCode, Claude Code, Pi, Oh My Pi,
 and OpenClaw have exact source/version inert preview renderers, but no applicable
-support. Production installation remains blocked for every target while the install
-engine is exercised only through fake adapters and synthetic temporary files. Real
-native/install validation is deferred to `ap-6fu.11` and requires fresh explicit
-user approval. Ariel's custom Jcode fork
+support. OpenCode additionally has exact-version model-candidate parser acceptance
+and partial merged-state/precedence evidence. Production installation remains
+blocked for every target while the install engine is exercised only through fake
+adapters and synthetic temporary files. Native probes require explicit approval,
+disposable state, and evidence-level limits. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -43,7 +46,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive hashes, mutable official schema/docs snapshots, deterministic inert JSONC renderer tests; no native command executed | Inert preview renderer only; native parsing, effective state, auth identity, install applicability, and enforcement remain blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive/extracted-binary hashes, isolated network-blocked `debug config` probe, backup/restore inventory, and deterministic inert JSONC renderer tests | Inert preview renderer with native model-candidate acceptance and partial merged-state/precedence evidence; auth identity, full precedence/provenance, install applicability, delivery, and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
@@ -360,14 +363,15 @@ The probe prints these field-specific results as
 `codex-instruction-skill-delivery=unverified`. These are explicit gaps, not
 inferred support claims. The adapter therefore remains non-applicable.
 
-## OpenCode v1.18.31 source and preview-renderer evidence
+## OpenCode v1.18.31 native config and preview-renderer evidence
 
 The official immutable GitHub release `v1.18.31`, published 2026-09-14, points to
 commit `a97622c801f4ca571530ddc51076af659a9c32cd`. The tag archive has SHA-256
 `76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896`, and the
 release metadata records SHA-256
 `e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4` for the
-Linux x64 artifact. No release binary was downloaded or executed.
+Linux x64 release archive. The extracted direct binary has SHA-256
+`f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`.
 
 Pinned source review covered the configuration loader and v1 config/provider
 schemas. Their SHA-256 values are:
@@ -387,17 +391,38 @@ documentation separately identifies `~/.config/opencode/opencode.json`,
 `~/.local/share/opencode/auth.json`. Mutable documentation is context, not release
 proof.
 
-The renderer emits only an inert JSONC candidate for the evidenced `model` syntax.
-It does not emit provider options, credentials, effort settings, permission/tool
-policy, instructions, skills, plugins, or MCP configuration. Authentication
-identity, native parsing, effective-state provenance, full precedence, delivery,
-and enforcement remain blocking. OpenCode is therefore excluded from production
-installation and `--all` applicability.
+With explicit user approval under `ap-6fu.11`, the exact release binary was run
+through `scripts/opencode-config-probe.sh` in a task-owned bubblewrap sandbox. The
+probe cleared the environment, isolated every HOME/XDG/config/data/cache/state,
+project, managed-config, database, and temporary path, supplied empty auth content,
+disabled model fetching, auto-update, pruning, default plugins, external plugins,
+project config, and LSP downloads, blocked network access, and bounded commands
+with timeouts. It never started the TUI, a prompt, a provider session, or a live
+agent home.
 
-No OpenCode command was executed and no installed or global OpenCode state was
-read. Native and install validation is deferred to `ap-6fu.11`, which requires
-fresh explicit user approval. The install engine is tested only with fake adapters
-and synthetic temporary files in this delivery.
+The first native probe rejected the generated candidate because its unquoted
+`model` property was not valid JSONC. The renderer was corrected to emit
+`"model"`. The repeated exact-binary probe then established:
+
+- `--version` returned `1.18.31` and the direct binary matched the pinned hash;
+- the deterministic Profile Mango candidate was accepted by `debug config`;
+- merged output contained `"model": "openai/gpt-5.6"`;
+- inline content overrode a global sentinel model;
+- an explicit `OPENCODE_CONFIG` candidate file was consumed;
+- the target inserted `$schema` into that file, proving the inspector is writeful;
+- malformed JSONC was rejected;
+- an unknown key was accepted and omitted from resolved output;
+- target-owned scratch directories, logs, locks, `.gitignore`, and metadata were
+  created; and
+- an independent backup was restored after testing, with recursive type, mode,
+  size, and SHA-256 inventory matching the pre-test state byte-for-byte.
+
+This is exact-version native parser acceptance and partial merged-state/precedence
+evidence for the model candidate. It does not establish general per-field
+provenance, authentication identity, effort, transport, instruction or skill
+delivery, permissions, tools, plugins, MCP, runtime enforcement, or safe Profile
+Mango installation. OpenCode remains excluded from production installation and
+`--all` applicability. No installed or global OpenCode state was read or modified.
 
 ## Codex preview-renderer evidence
 
@@ -780,6 +805,10 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   inspection, and enforcement remain blocked pending safe exact-artifact
   inspection paths. OpenClaw and Hermes retain their source-qualified inert
   boundaries.
+- OpenCode `1.18.31` native model-candidate parsing and partial merged-state
+  behavior are observed. Production patch preservation, complete precedence and
+  provenance, authentication identity, effort, delivery, permissions, tools,
+  plugins, MCP, and runtime enforcement remain deferred.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.

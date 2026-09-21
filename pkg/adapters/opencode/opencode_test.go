@@ -25,10 +25,12 @@ func TestRenderTable(t *testing.T) {
 			},
 			resources: []Resource{ResourceFromContent("instructions/system.md", "instruction", []byte("system\n"))},
 			codes: []string{
-				"opencode.config.acceptance_unverified",
-				"opencode.config.effective_state_unverified",
-				"opencode.config.precedence_unverified",
+				"opencode.config.effective_state_partial",
+				"opencode.config.inspector_writeful",
+				"opencode.config.precedence_partial",
+				"opencode.config.unknown_keys_ignored",
 				"opencode.extensions.plugins_mcp_unverified",
+				"opencode.install.validation_deferred",
 				"opencode.instructions.delivery_unverified",
 				"opencode.route.authentication_unverified",
 				"opencode.route.effort_unverified",
@@ -131,8 +133,9 @@ func TestRenderRouteGoldenAndStableReport(t *testing.T) {
 	if string(firstReport) != string(secondReport) {
 		t.Fatal("render report is not deterministic")
 	}
-	if !strings.Contains(string(firstReport), EvidenceSHA256) || !strings.Contains(string(firstReport), AdapterVersion) || !strings.Contains(string(firstReport), "ap-6fu.11") {
-		t.Fatal("report omitted exact evidence, adapter metadata, or deferred validation boundary")
+	if !strings.Contains(string(firstReport), EvidenceSHA256) || !strings.Contains(string(firstReport), AdapterVersion) ||
+		!strings.Contains(string(firstReport), EvidenceLevel) || !strings.Contains(string(firstReport), "opencode.install.validation_deferred") {
+		t.Fatal("report omitted exact evidence, adapter metadata, native validation level, or install boundary")
 	}
 	if strings.Contains(string(golden), "oauth") || strings.Contains(string(golden), "credential") {
 		t.Fatal("candidate config leaked authentication details")
@@ -142,12 +145,28 @@ func TestRenderRouteGoldenAndStableReport(t *testing.T) {
 func TestRenderCandidateMapsOnlyProviderModel(t *testing.T) {
 	artifact := artifactByPath(Render(Input{Profile: testProfile(), Route: testRoute(), Target: DefaultTarget()}).Artifacts, "preview/route-only.opencode.jsonc.preview")
 	content := string(artifact.Content)
-	if artifact.Path == "" || !strings.Contains(content, `model: "openai/gpt-5.6",`) {
+	if artifact.Path == "" || !strings.Contains(content, `"model": "openai/gpt-5.6",`) {
 		t.Fatalf("candidate omitted provider/model route: %s", content)
 	}
 	for _, forbidden := range []string{"provider:", "effort:", "authentication:", "permissions:", "tools:", "options:", "auth.json"} {
 		if strings.Contains(content, forbidden) {
 			t.Fatalf("candidate emitted unsupported key %q: %s", forbidden, content)
+		}
+	}
+}
+
+func TestRenderReportsNativeValidationCapabilities(t *testing.T) {
+	result := Render(Input{Profile: testProfile(), Route: testRoute(), Target: DefaultTarget()})
+	want := map[string]string{
+		"config.acceptance":      StatusSupported,
+		"config.inspection":      StatusPartial,
+		"config.effective-state": StatusPartial,
+		"config.precedence":      StatusPartial,
+		"install":                StatusBlocking,
+	}
+	for field, status := range want {
+		if actual, ok := capabilityStatus(result, field); !ok || actual != status {
+			t.Errorf("capability %q = %q, %v; want %q, true", field, actual, ok, status)
 		}
 	}
 }
@@ -281,4 +300,13 @@ func hasCode(diagnostics profilemango.Diagnostics, code string) bool {
 		}
 	}
 	return false
+}
+
+func capabilityStatus(result Result, field string) (string, bool) {
+	for _, capability := range result.Capabilities {
+		if capability.Field == field {
+			return capability.Status, true
+		}
+	}
+	return "", false
 }

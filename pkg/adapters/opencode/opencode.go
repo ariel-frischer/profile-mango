@@ -16,6 +16,7 @@ const (
 	SourceCommit              = "a97622c801f4ca571530ddc51076af659a9c32cd"
 	SourceArchiveSHA256       = "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896"
 	LinuxX64AssetSHA256       = "e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4"
+	LinuxX64BinarySHA256      = "f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11"
 	ReleaseAssetSHA256        = LinuxX64AssetSHA256
 	ConfigSourceSHA256        = "87a9071af1ddb04d65947dba49be3fb4c94ecf63e120f17ce46ee81ff25dd45a"
 	CoreConfigSourceSHA256    = "b99bcbd98df6da79e59cda482363f759cea9d4b9792c6c8e83b6a8d686138d30"
@@ -24,7 +25,7 @@ const (
 	EvidenceSHA256            = SourceArchiveSHA256
 	OpenCodeEvidenceSHA256    = EvidenceSHA256
 	EvidenceSource            = "docs/dev/target-evidence.md"
-	EvidenceLevel             = "immutable-source-and-package-review"
+	EvidenceLevel             = "isolated-native-config-acceptance"
 	AdapterVersion            = "profilemango.dev/opencode/v1alpha1"
 	RenderAPIVersion          = render.APIVersion
 	RenderKind                = render.Kind
@@ -94,25 +95,33 @@ func Render(input Input) Result {
 }
 
 func addEvidenceBlockers(result *Result) {
+	addNativeValidationCapabilities(result)
 	blockers := []struct {
 		code, path, field, message string
 	}{
-		{"opencode.config.acceptance_unverified", "target.config.acceptance", "config.acceptance", "JSONC candidate syntax is source-grounded but native parser acceptance is unverified; no safe automated remedy is known without separately approved isolated validation"},
-		{"opencode.config.inspector_unsafe", "target.config-inspection", "config.inspection", "config inspection and startup effects were not bounded in an isolated exact-release run"},
-		{"opencode.config.effective_state_unverified", "target.config.effective-state", "config.effective-state", "no safe command emits merged effective configuration with per-field provenance"},
-		{"opencode.config.precedence_unverified", "target.config.precedence", "config.precedence", "global, project, and custom JSON or JSONC precedence was not runtime-observed for this exact release"},
 		{"opencode.extensions.plugins_mcp_unverified", "target.extensions.plugins-mcp", "extensions.plugins-mcp", "plugin and MCP discovery, configuration, and enforcement were not observed"},
 		{"opencode.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "route, permission, tool, instruction, skill, plugin, MCP, and policy enforcement was not observed"},
-		{"opencode.install.validation_deferred", "target.install", "install", "production installation remains blocked; validation is deferred to ap-6fu.11 and fresh explicit user approval"},
+		{"opencode.install.validation_deferred", "target.install", "install", "production installation remains blocked; no safe automated remedy is known until Profile Mango patch preservation and restore behavior are validated for this exact target"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.path, blocker.message, 0, 0)
 		result.AddCapability(blocker.field, StatusBlocking, blocker.message)
 	}
-	result.AddCapability("config.fidelity", StatusPartial, "the model field is emitted as an immutable-source-grounded inert candidate only")
-	result.AddCapability("delivery", StatusBlocking, "target-owned config and instruction or skill delivery is unverified")
+	result.AddCapability("config.fidelity", StatusPartial, "the exact model candidate is natively accepted; other portable fields remain unverified")
+	result.AddCapability("delivery", StatusBlocking, "target-owned instruction or skill delivery is unverified")
 	result.AddCapability("permissions", StatusBlocking, "permission mapping and runtime enforcement are unverified")
 	result.AddCapability("tools", StatusBlocking, "tool, plugin, and MCP enforcement is unverified")
+}
+
+func addNativeValidationCapabilities(result *Result) {
+	result.AddCapability("config.acceptance", StatusSupported, "OpenCode 1.18.31 natively accepted the deterministic JSONC model candidate in an isolated exact-binary probe")
+	result.AddCapability("config.inspection", StatusPartial, "debug config emitted merged configuration but created target-owned scratch state and is not a zero-write inspector")
+	result.AddCapability("config.effective-state", StatusPartial, "merged model output was observed without general per-field provenance")
+	result.AddCapability("config.precedence", StatusPartial, "inline config precedence over global state and explicit custom-file consumption were observed; project and managed precedence remain incomplete")
+	result.Diagnostics.Add(profilemango.SeverityWarning, "opencode.config.inspector_writeful", "target.config-inspection", "debug config is usable only in disposable isolated state because it creates directories, logs, locks, metadata, and gitignore files", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityWarning, "opencode.config.effective_state_partial", "target.config.effective-state", "merged configuration was observed without general per-field provenance", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityWarning, "opencode.config.precedence_partial", "target.config.precedence", "inline-over-global precedence and explicit custom-file consumption were observed; other layers remain unverified", 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityWarning, "opencode.config.unknown_keys_ignored", "target.config.acceptance", "unknown configuration keys were accepted and omitted from resolved output", 0, 0)
 }
 
 func addTargetCapabilities(result *Result, target TargetBuild) {
@@ -120,8 +129,8 @@ func addTargetCapabilities(result *Result, target TargetBuild) {
 		result.AddCapability("target.version", StatusBlocking, "exact OpenCode v1.18.31 source and release evidence is not qualified")
 		return
 	}
-	result.AddCapability("target.artifact", StatusSupported, "immutable OpenCode source archive and Linux x64 release asset hashes are pinned")
-	result.AddCapability("target.version", StatusSupported, "exact OpenCode v1.18.31 source commit and release tag are pinned")
+	result.AddCapability("target.artifact", StatusSupported, "immutable OpenCode source archive, Linux x64 release archive, and extracted binary hashes are pinned")
+	result.AddCapability("target.version", StatusSupported, "exact OpenCode v1.18.31 source commit, release tag, and isolated binary identity are pinned")
 }
 
 func addRouteCapabilities(result *Result) {
@@ -201,7 +210,7 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 		return Artifact{}
 	}
 	model := strconv.Quote(route.Provider + "/" + route.Model)
-	content := []byte(fmt.Sprintf("// profile-mango: INERT PREVIEW ONLY\n// NON-APPLICABLE: candidate syntax for OpenCode %s.\n// This is not an active OpenCode config.json or config.jsonc. Authentication, provider options, effort, delivery, precedence, plugins, MCP, and enforcement are unverified.\n\n{\n  model: %s,\n}\n", TargetVersion, model))
+	content := []byte(fmt.Sprintf("// profile-mango: INERT PREVIEW ONLY\n// NON-APPLICABLE: candidate syntax for OpenCode %s.\n// This is not an active OpenCode config.json or config.jsonc. Authentication, provider options, effort, delivery, precedence, plugins, MCP, and enforcement are unverified.\n\n{\n  \"model\": %s,\n}\n", TargetVersion, model))
 	return render.NewArtifact("preview/"+profile.Metadata.Name+".opencode.jsonc.preview", "candidate-config", content)
 }
 
