@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together
 - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
 - GitLab pipelines now run only when a human starts them from the web UI
+- Human-readable CLI output now uses semantic terminal colors with automatic non-TTY suppression and --no-color/NO_COLOR opt-outs, while JSON, completion, and path output remain ANSI-free
 
 ### Removed
 

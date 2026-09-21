@@ -166,6 +166,28 @@ func TestFormatJSONIsStructured(t *testing.T) {
 	}
 }
 
+func TestFormatTextStyledFormatsOnlyStatuses(t *testing.T) {
+	report := Report{
+		ManifestPath: "sources.json",
+		Targets: []TargetReport{{
+			ID: "codex",
+			Sources: []SourceReport{{
+				URL:   "https://example.test/source",
+				State: StatusChanged,
+			}},
+		}},
+		Summary: Summary{Changed: 1},
+	}
+	var output strings.Builder
+	formatStatus := func(status Status) string { return "<" + string(status) + ">" }
+	if err := FormatTextStyled(&output, report, formatStatus); err != nil {
+		t.Fatalf("FormatTextStyled() error = %v", err)
+	}
+	if got := output.String(); !strings.Contains(got, "state=<changed>") || strings.Contains(got, "summary: <") {
+		t.Fatalf("styled text report = %q", got)
+	}
+}
+
 func writeManifest(t *testing.T, manifest Manifest) string {
 	t.Helper()
 	data, err := json.MarshalIndent(manifest, "", "  ")

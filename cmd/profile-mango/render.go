@@ -347,8 +347,9 @@ func writeRenderOutput(cmd *cobra.Command, result render.Result, jsonOutput bool
 			return fmt.Errorf("write render report: %w", err)
 		}
 	}
+	styles := stylesFor(cmd.ErrOrStderr(), !jsonOutput)
 	for _, diagnostic := range result.Diagnostics.Sorted() {
-		if _, err := fmt.Fprintln(cmd.ErrOrStderr(), diagnosticLine(diagnostic)); err != nil {
+		if _, err := fmt.Fprintln(cmd.ErrOrStderr(), styledDiagnosticLine(diagnostic, styles)); err != nil {
 			return fmt.Errorf("write diagnostic: %w", err)
 		}
 	}

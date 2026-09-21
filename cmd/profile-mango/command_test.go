@@ -17,12 +17,21 @@ func executeCommand(t *testing.T, args ...string) string {
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
 	resetHomeFlag()
+	resetColorFlag()
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
+}
+
+func resetColorFlag() {
+	noColor = false
+	if flag := rootCmd.PersistentFlags().Lookup("no-color"); flag != nil {
+		_ = flag.Value.Set("false")
+		flag.Changed = false
+	}
 }
 
 func resetHomeFlag() {
@@ -42,7 +51,17 @@ func TestVersionAliasSmoke(t *testing.T) {
 }
 
 func TestHelpCommandSmoke(t *testing.T) {
-	executeCommand(t, "help")
+	output := executeCommand(t, "help")
+	if strings.Contains(output, "\x1b[") {
+		t.Fatalf("buffered help contains ANSI escapes")
+	}
+}
+
+func TestNoColorFlagOutputIsPlain(t *testing.T) {
+	output := executeCommand(t, "--no-color", "version")
+	if strings.Contains(output, "\x1b[") {
+		t.Fatalf("--no-color output contains ANSI escapes")
+	}
 }
 
 func TestRootCommandOmitsRemovedConfigSurface(t *testing.T) {
@@ -95,7 +114,10 @@ func TestAgentsCheckHelpSmoke(t *testing.T) {
 func TestCompletionCommandSmoke(t *testing.T) {
 	for _, shell := range []string{"bash", "zsh", "fish", "powershell"} {
 		t.Run(shell, func(t *testing.T) {
-			executeCommand(t, "completion", shell)
+			output := executeCommand(t, "completion", shell)
+			if strings.Contains(output, "\x1b[") {
+				t.Fatalf("completion output contains ANSI escapes")
+			}
 		})
 	}
 }
@@ -106,5 +128,8 @@ func TestValidateCommandSmoke(t *testing.T) {
 	out := executeCommand(t, "validate", profile, "--bindings", bindings, "--json")
 	if !strings.Contains(out, `"valid": true`) {
 		t.Fatalf("validate output = %q", out)
+	}
+	if strings.Contains(out, "\x1b[") {
+		t.Fatalf("validate JSON contains ANSI escapes: %q", out)
 	}
 }
