@@ -183,7 +183,7 @@
     },
     {
       "id": "jcode",
-      "name": "Ariel Jcode",
+      "name": "Ariel custom Jcode fork",
       "reference": "jcode.md",
       "product_status": "experimental_only_not_publicly_supported",
       "documentation_basis": "local_source_snapshot",

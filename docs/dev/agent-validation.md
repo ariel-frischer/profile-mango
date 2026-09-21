@@ -40,6 +40,32 @@ and mark native acceptance or effective state **unverified**. Do not replace the
 missing check with a billable prompt. Explicitly authorized runtime observation is
 a separate evidence level and must never be implied by these no-inference checks.
 
+## Repository probe harness
+
+[`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh) retains the
+smallest repeatable native probe used for the Codex `0.154.0` build and Ariel's
+custom Jcode fork build. It requires explicit direct executable paths through
+`PROFILE_MANGO_CODEX_BIN` and `PROFILE_MANGO_JCODE_BIN`; it never resolves a
+launcher or reads a personal target home. Each invocation creates synthetic
+`HOME`, `XDG_CONFIG_HOME`, `CODEX_HOME`, custom-fork Jcode config, and private
+socket paths, clears the child environment with `env -i`, requests update and
+telemetry suppression through the target's documented flags/environment, unshares
+the network with bubblewrap, and uses a bounded timeout. It runs only
+version/help, Codex feature-list, and custom-fork profile inspection commands.
+
+Run it only with exact direct binaries and a task-owned probe root:
+
+```bash
+PROFILE_MANGO_CODEX_BIN=/path/to/codex \
+PROFILE_MANGO_JCODE_BIN=/path/to/ariel-custom-jcode \
+PROFILE_MANGO_PROBE_ROOT="$PWD/.probe" \
+./scripts/agent-config-probe.sh
+```
+
+The custom-fork profile fixtures and commands are not evidence for upstream
+Jcode, and successful parsing does not establish authentication, permissions,
+network policy, tool enforcement, or runtime behavior.
+
 ## Record support by version and capability
 
 Keep these facts distinct in the reference/evidence records:
@@ -68,8 +94,9 @@ is shipped today.
 
 The planned location is `docs/dev/agents/`, maintained by **ap-8vz**. It is tracked
 contributor documentation, not private material. Cover Codex, Claude Code, Pi and
-Oh My Pi as separately qualified variants, OpenClaw, Hermes, and experimental-only
-Ariel Jcode. Keep experimental details out of public support promises.
+Oh My Pi as separately qualified variants, OpenClaw, Hermes, and Ariel's
+experimental-only custom Jcode fork. Keep experimental details out of public
+support promises.
 
 Each concise reference should cover the configuration formats and paths, selection
 and precedence, model/provider/authentication/effort fields, permissions and tools,

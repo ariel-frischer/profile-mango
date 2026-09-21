@@ -1,7 +1,7 @@
 # Agent configuration references
 
 These contributor references summarize configuration surfaces for the intended
-MVP targets and Ariel's experimental-only Jcode fork. They are documentation
+MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
 bases for later isolated probes and adapter work, not a compatibility matrix.
 No adapter currently ships.
 
@@ -29,7 +29,7 @@ and commits are reproducible locators, not proof of target behavior.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — intended MVP target; untested.
 - [Hermes](hermes.md) — intended MVP target; untested.
-- [Ariel Jcode](jcode.md) — experimental-only local comparison target.
+- [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target.
 
 Candidate inspection commands below have not been executed for this reference
 pack. Before a future probe, verify the exact target revision and command effects,
