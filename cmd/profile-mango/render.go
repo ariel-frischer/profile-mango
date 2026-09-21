@@ -14,6 +14,7 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
@@ -89,6 +90,16 @@ func renderAdapterFor(name string) (renderAdapter, bool) {
 				return hermes.Render(input)
 			},
 		}, true
+	case opencode.TargetName:
+		return renderAdapter{
+			evidenceSHA256: opencode.EvidenceSHA256,
+			newResult: func(profileName string, target render.TargetBuild) render.Result {
+				return opencode.NewResult(profileName, target)
+			},
+			render: func(input render.Input) render.Result {
+				return opencode.Render(input)
+			},
+		}, true
 	case pi.TargetName:
 		return renderAdapter{
 			evidenceSHA256: pi.EvidenceSHA256,
@@ -129,7 +140,7 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, or ariel-jcode experimental-only)")
+	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, opencode, or ariel-jcode experimental-only)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
 	cmd.Flags().BoolVar(&options.preview, "preview", false, "write inert preview artifacts despite applicability blockers")

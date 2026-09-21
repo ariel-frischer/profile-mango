@@ -145,17 +145,45 @@ profile-mango render <profile-name> \
 ```
 
 Current target names are `claude-code`, `codex`, `pi`, `oh-my-pi`, `openclaw`,
-and `hermes`. `ariel-jcode` is experimental-only for Ariel's custom Jcode fork,
+`hermes`, and `opencode`. `ariel-jcode` is experimental-only for Ariel's custom Jcode fork,
 not upstream Jcode or a supported public target.
 
-All current target renderers are non-applicable previews. Expect blocking
+All current production target renderers are non-applicable previews. Expect blocking
 diagnostics and a nonzero exit status even when preview artifacts are written.
-Never present preview syntax as installed, enforced, or natively accepted.
+A mock-only install engine may plan blocked production targets and exercise apply
+semantics through fake adapters and synthetic temporary files. It must not read or
+modify global agent configuration. Real target validation is deferred to
+`ap-6fu.11` and requires fresh explicit user approval.
+Never present preview syntax or mock application evidence as installed, enforced,
+or natively accepted.
+
+## Plan-first install
+
+Production targets currently support deterministic blocked planning only. Use exact
+target versions and explicit project inputs when inspecting the plan:
+
+```bash
+profile-mango install <profile-name> \
+  --profiles ./profiles \
+  --resource-root . \
+  --bindings ./bindings/local.yaml \
+  --target codex@0.154.0 \
+  --target opencode@1.18.31 \
+  --json
+```
+
+Expect a nonzero exit and `blocked` status before any target configuration read.
+Do not add `--apply` for a production target. Hash-bound apply, backups, stale
+checks, journals, and recovery are tested only with fake adapters and synthetic
+temporary files.
 
 ## Safety boundary
 
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access
   credentials, call providers, or launch target agents.
+- `install` must remain plan-only for production targets in the current build.
+  Successful mutation tests use fake adapters and `t.TempDir` state only; do not
+  point it at a real Codex, Claude Code, OpenCode, Jcode, or other agent path.
 - `render` writes only beneath the new path supplied by `--out` and never applies
   the candidate.
 - `profile-mango agents check` is separate: it performs an explicit network drift

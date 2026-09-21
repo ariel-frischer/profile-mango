@@ -26,7 +26,7 @@ func TestLoadRepositoryManifest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadManifest() error = %v", err)
 	}
-	if manifest.SchemaVersion != 1 || len(manifest.Targets) != 7 {
+	if manifest.SchemaVersion != 1 || len(manifest.Targets) != 8 {
 		t.Fatalf("manifest shape = version %d, %d targets", manifest.SchemaVersion, len(manifest.Targets))
 	}
 	if manifest.Targets[0].Sources[0].URL == "" {

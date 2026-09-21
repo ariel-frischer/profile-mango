@@ -234,6 +234,40 @@
       ]
     },
     {
+      "id": "opencode",
+      "name": "OpenCode",
+      "reference": "opencode.md",
+      "product_status": "exact_version_inert_preview_renderer_native_blocked",
+      "documentation_basis": "immutable_release_source_with_mutable_official_docs",
+      "installed_observation": "none; no installed OpenCode binary or user configuration was inspected",
+      "tested_evidence": "deterministic inert renderer tests; no native command executed",
+      "supported_capability": "inert preview rendering only",
+      "version_context": {
+        "kind": "immutable_release_and_source_review",
+        "version": "v1.18.31",
+        "commit": "a97622c801f4ca571530ddc51076af659a9c32cd",
+        "source_archive_sha256": "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896",
+        "linux_x64_asset_sha256": "e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4",
+        "config_loader_sha256": "87a9071af1ddb04d65947dba49be3fb4c94ecf63e120f17ce46ee81ff25dd45a",
+        "config_schema_source_sha256": "b99bcbd98df6da79e59cda482363f759cea9d4b9792c6c8e83b6a8d686138d30",
+        "provider_schema_source_sha256": "c496dea619e8e9d2d09b7a2353f2e62bff6a2276471c161c3988059a1b6ac303",
+        "mutable_config_schema_snapshot_sha256": "e8cb6e287a3852ee3403f4803be5ad6b19db94948037eaa9672125c333427922",
+        "platform": "release metadata and source reviewed from Linux x86_64",
+        "native_execution": "not run; deferred to ap-6fu.11 and fresh user approval",
+        "note": "Model syntax and configuration precedence are source-grounded. Native parsing, effective state, authentication identity, installation, and enforcement remain blocked."
+      },
+      "sources": [
+        { "url": "https://github.com/anomalyco/opencode/releases/tag/v1.18.31", "kind": "immutable_release" },
+        { "url": "https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/config/config.ts", "kind": "release_pinned_source_config_loader" },
+        { "url": "https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/core/src/v1/config/config.ts", "kind": "release_pinned_source_config_schema" },
+        { "url": "https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/core/src/v1/config/provider.ts", "kind": "release_pinned_source_provider_schema" },
+        { "url": "https://opencode.ai/config.json", "kind": "mutable_unversioned_schema", "sha256": "e8cb6e287a3852ee3403f4803be5ad6b19db94948037eaa9672125c333427922" },
+        { "url": "https://opencode.ai/docs/config/", "kind": "mutable_unversioned_documentation", "sha256": "c68d296de4c6f313557fca5a9d5e68dd38d484fd62775eae219d13ab2ae91250" },
+        { "url": "https://opencode.ai/docs/models/", "kind": "mutable_unversioned_documentation", "sha256": "1b76ec84eb3c3a1dbab0d5dcb85880f70a820e7c8bdd463a81c7c8cf33504243" },
+        { "url": "https://opencode.ai/docs/providers/", "kind": "mutable_unversioned_documentation", "sha256": "18e9884200b173122ba4a40d44ff1e3ce9ab779398752c8da19be3e9a43ee92b" }
+      ]
+    },
+    {
       "id": "jcode",
       "name": "Ariel custom Jcode fork",
       "reference": "jcode.md",

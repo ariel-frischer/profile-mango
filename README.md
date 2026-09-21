@@ -35,7 +35,7 @@ between coding agents:
   kept separate from target-owned credentials.
 
 Instead of rewriting the same setup in Codex TOML, Claude Code JSON, Pi settings,
-OpenClaw JSON5, Hermes YAML, and every other agent-specific format, you define the
+OpenClaw JSON5, Hermes YAML, OpenCode JSONC, and every other agent-specific format, you define the
 shared intent once and select a named profile. Target adapters translate the
 parts each agent understands and report anything they cannot faithfully deliver
 or enforce. The intended workflow is to switch profiles across agents without
@@ -46,14 +46,16 @@ the target. This includes unrelated channels, gateways, UI preferences, telemetr
 updates, session databases, and other product-specific operations. Credentials and
 authentication stores always remain target-owned.
 
-The current prototype validates and resolves these bundles and produces
-deterministic, inspectable **inert previews**. It does not yet install them into
-the agents, as described in the status boundary below.
+The current prototype validates and resolves these bundles, produces deterministic,
+inspectable **inert previews**, and includes a mock-only install planner/application
+engine. Every production target remains install-blocked. Successful apply, backup,
+stale-state, and recovery checks use fake adapters and synthetic temporary files;
+they do not inspect or modify a real agent configuration.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
 > are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Pi
-> `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, and Hermes Agent `0.21.3`
-> have exact-version, explicitly inert preview renderers, but no generated output is applicable or
+> `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, Hermes Agent `0.21.3`,
+> and OpenCode `1.18.31` have exact-version, explicitly inert preview renderers, but no generated output is applicable or
 > installed because authentication, delivery, precedence, and enforcement remain
 > unverified. Claude Code is blocked by opaque startup and diagnostic effects.
 > Pi is blocked by startup settings/auth/model/session effects, migrations,
@@ -62,6 +64,11 @@ the agents, as described in the status boundary below.
 > unsafe config-inspector effects. OpenClaw is blocked by source-only runtime
 > evidence and an unsafe config-inspection path. Hermes is blocked by its exact
 > Python build requirement, missing runtime artifact, and unsafe inspector paths.
+> OpenCode is pinned to immutable release/source evidence, but native parsing,
+> effective state, authentication identity, effort, precedence, and enforcement are
+> unverified. Production installation is blocked for every target. No global agent
+> configuration is read or changed; real validation is deferred to Bead
+> `ap-6fu.11` and requires fresh explicit user approval.
 
 ## Install
 
@@ -232,6 +239,31 @@ does not prove which authentication route will be used. `profile-mango` keeps
 those distinctions explicit and blocks required properties that are unsupported
 or unknown.
 
+## Plan-first install boundary
+
+`install` accepts repeatable exact `target@version` selections or `--all`, resolves
+the same explicit profile inputs as `render`, and emits a deterministic plan ID.
+Production adapters currently stop before reading their configuration path, so this
+command reports a blocked plan and exits nonzero without touching Codex, Claude
+Code, OpenCode, Jcode, or another installed agent:
+
+```bash
+profile-mango install route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target codex@0.154.0 \
+  --target opencode@1.18.31 \
+  --json
+```
+
+The application engine supports hash-bound consent, create-only backups, stale
+snapshot rejection, ownership manifests, atomic per-file replacement, journals,
+and guarded recovery in fake-adapter tests using synthetic temporary files. A
+non-interactive apply requires `--apply --yes --expect-plan <sha256>`. There is no
+unbound force path. Production application remains disabled until `ap-6fu.11` is
+separately approved and completed.
+
 ## Inert Codex preview
 
 The current Codex adapter renders only a candidate into a new explicit staging
@@ -371,6 +403,29 @@ The candidate contains only the route model. It emits no provider, transport,
 authentication, effort, credentials, active target files, or enforcement claims.
 The immutable npm package hashes, release commit, launcher effect review, and
 blocked native command boundary are recorded in the [target evidence ledger](docs/dev/target-evidence.md).
+
+## Inert OpenCode preview
+
+OpenCode `1.18.31` has an exact-release inert JSONC renderer. It emits only the
+source-grounded `model` candidate in `provider/model` form under `preview/` and
+exits nonzero because native parsing, authentication identity, effort, delivery,
+precedence, installation, and enforcement remain blocked:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target opencode \
+  --target-version 1.18.31 \
+  --out ./opencode-preview \
+  --preview --json
+```
+
+The command does not execute OpenCode, read `~/.config/opencode`, inspect
+`~/.local/share/opencode/auth.json`, or install the candidate. Native and real
+installation validation is deferred to `ap-6fu.11` and requires fresh explicit
+user approval.
 
 ## Experimental Ariel custom Jcode fork preview
 

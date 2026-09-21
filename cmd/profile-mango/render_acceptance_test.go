@@ -14,6 +14,7 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
@@ -30,7 +31,7 @@ type acceptanceTarget struct {
 	experimentalOnly bool
 }
 
-func sevenAcceptanceTargets() map[string]acceptanceTarget {
+func acceptanceTargets() map[string]acceptanceTarget {
 	return map[string]acceptanceTarget{
 		claudecode.TargetName: {
 			name: claudecode.TargetName, version: claudecode.TargetVersion, evidence: claudecode.EvidenceSHA256,
@@ -57,6 +58,11 @@ func sevenAcceptanceTargets() map[string]acceptanceTarget {
 			candidatePath: "preview/route-only.config.json5.preview", codePrefix: "openclaw",
 			previewBlocker: "openclaw.config.inspector_unsafe", render: openclaw.Render,
 		},
+		opencode.TargetName: {
+			name: opencode.TargetName, version: opencode.TargetVersion, evidence: opencode.EvidenceSHA256,
+			candidatePath: "preview/route-only.opencode.jsonc.preview", codePrefix: "opencode",
+			previewBlocker: "opencode.config.acceptance_unverified", render: opencode.Render,
+		},
 		hermes.TargetName: {
 			name: hermes.TargetName, version: hermes.TargetVersion, evidence: hermes.EvidenceSHA256,
 			candidatePath: "preview/route-only.config.yaml.preview", codePrefix: "hermes",
@@ -70,8 +76,8 @@ func sevenAcceptanceTargets() map[string]acceptanceTarget {
 	}
 }
 
-func TestRenderSevenTargetAcceptanceMatrix(t *testing.T) {
-	for name, target := range sevenAcceptanceTargets() {
+func TestRenderTargetAcceptanceMatrix(t *testing.T) {
+	for name, target := range acceptanceTargets() {
 		t.Run(name, func(t *testing.T) {
 			assertStableAcceptanceReports(t, target)
 			assertAcceptanceEvidenceRejection(t, target)
@@ -81,7 +87,7 @@ func TestRenderSevenTargetAcceptanceMatrix(t *testing.T) {
 }
 
 func TestRenderArielIdentityOnEarlyFailures(t *testing.T) {
-	target := sevenAcceptanceTargets()[arieljcode.TargetName]
+	target := acceptanceTargets()[arieljcode.TargetName]
 	profiles := t.TempDir()
 	resources := t.TempDir()
 	bindings := writeBindingsFixture(t)

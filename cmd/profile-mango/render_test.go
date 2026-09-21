@@ -309,7 +309,7 @@ func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 func TestRenderHelpListsKnownTargets(t *testing.T) {
 	cmd := newRenderCmd()
 	flag := cmd.Flag("target")
-	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, hermes, or ariel-jcode experimental-only") || !strings.Contains(cmd.Long, "Ariel custom Jcode fork") || !strings.Contains(cmd.Long, "experimental-only") {
+	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, hermes, opencode, or ariel-jcode experimental-only") || !strings.Contains(cmd.Long, "Ariel custom Jcode fork") || !strings.Contains(cmd.Long, "experimental-only") {
 		t.Fatalf("target help does not list explicit adapters: %#v", flag)
 	}
 }
