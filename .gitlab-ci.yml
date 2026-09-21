@@ -21,7 +21,7 @@ lint:
   extends: .go-cache
   script:
     - test -z "$(git ls-files -- '*.go' | xargs gofmt -s -l)"
-    - go vet ./...
+    - make lint
 
 
 changelog-check:
@@ -43,6 +43,7 @@ test:
   image: golang:1.25
   extends: .go-cache
   script:
+    - make test
     - go test -race -coverprofile=coverage.out ./...
     - go tool cover -func=coverage.out
   coverage: '/total:\s+\(statements\)\s+(\d+\.\d+)%/'
@@ -83,4 +84,3 @@ release:
         echo "Release $VERSION" > .release/notes.md
       fi
     - curl -sL https://goreleaser.com/static/run | bash -s -- release --clean --release-notes=.release/notes.md
-
