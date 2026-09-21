@@ -1,6 +1,7 @@
 # Documentation index
 
 - [`dev/agent-validation.md`](dev/agent-validation.md) - No-inference native checks, version-qualified support, local references, and the read-only upstream source drift check.
+- [`dev/ap-i2v-agent-skill-plan.md`](dev/ap-i2v-agent-skill-plan.md) - Implementation and validation plan for the bundled npx-installable profile-mango agent skill.
 - [`dev/adapter-architecture.md`](dev/adapter-architecture.md) - Target-neutral render boundary, explicit dispatch, and inert adapter failure behavior.
 - [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and Ariel's experimental-only custom Jcode fork.
 - [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert JSON preview syntax, and blocked native inspection.

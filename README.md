@@ -51,6 +51,22 @@ explicitly authorized GitLab release access. It does not edit shell profiles:
 Set `PROFILE_MANGO_VERSION` to select a release and
 `PROFILE_MANGO_INSTALL_DIR` to change the default `~/.local/bin` destination.
 
+### Install the agent skill
+
+The bundled [`profile-mango` agent skill](.agents/skills/profile-mango/SKILL.md) teaches
+coding agents the safe scaffolding, profile authoring, validation, and inert
+preview workflow. Install it with the same one-liner used by other skills-based
+CLI repositories:
+
+```bash
+npx skills add ariel-frischer/profile-mango
+```
+
+The repository is still private, so the GitHub shorthand above becomes usable
+after `ariel-frischer/profile-mango` is published publicly. Until then, the
+repository-owned skill remains available directly from
+`.agents/skills/profile-mango/SKILL.md` in an authorized checkout.
+
 ## Usage
 
 Create a deterministic starter package in the global profile home, or choose an

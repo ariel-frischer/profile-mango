@@ -42,6 +42,12 @@ Thumbs.db
 
 # Agent Skills (npx skills add)
 .agents/
+!.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/profile-mango/
+!.agents/skills/profile-mango/SKILL.md
 skills-lock.json
 
 # Agent worktrees and local task/index state
