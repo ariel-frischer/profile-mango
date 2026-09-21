@@ -30,7 +30,7 @@ func TestRenderTable(t *testing.T) {
 				"opencode.config.precedence_partial",
 				"opencode.config.unknown_keys_ignored",
 				"opencode.extensions.plugins_mcp_unverified",
-				"opencode.install.validation_deferred",
+				"opencode.install.model_only",
 				"opencode.instructions.delivery_unverified",
 				"opencode.route.authentication_unverified",
 				"opencode.route.effort_unverified",
@@ -134,7 +134,7 @@ func TestRenderRouteGoldenAndStableReport(t *testing.T) {
 		t.Fatal("render report is not deterministic")
 	}
 	if !strings.Contains(string(firstReport), EvidenceSHA256) || !strings.Contains(string(firstReport), AdapterVersion) ||
-		!strings.Contains(string(firstReport), EvidenceLevel) || !strings.Contains(string(firstReport), "opencode.install.validation_deferred") {
+		!strings.Contains(string(firstReport), EvidenceLevel) || !strings.Contains(string(firstReport), "opencode.install.model_only") {
 		t.Fatal("report omitted exact evidence, adapter metadata, native validation level, or install boundary")
 	}
 	if strings.Contains(string(golden), "oauth") || strings.Contains(string(golden), "credential") {

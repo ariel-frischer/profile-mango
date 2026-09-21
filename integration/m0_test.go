@@ -51,7 +51,7 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 		"pi":          {version: "0.86.1", candidate: "preview/route-only.settings.json.preview", blocker: "pi.config.acceptance_unverified", evidenceHash: "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a"},
 		"oh-my-pi":    {version: "18.2.6", candidate: "preview/route-only.config.yml.preview", blocker: "ohmypi.config.inspector_unsafe", evidenceHash: "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e"},
 		"openclaw":    {version: "2026.9.5", candidate: "preview/route-only.config.json5.preview", blocker: "openclaw.config.inspector_unsafe", evidenceHash: "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4"},
-		"opencode":    {version: "1.18.31", candidate: "preview/route-only.opencode.jsonc.preview", blocker: "opencode.install.validation_deferred", evidenceHash: "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896"},
+		"opencode":    {version: "1.18.31", candidate: "preview/route-only.opencode.jsonc.preview", blocker: "opencode.runtime.enforcement_unverified", evidenceHash: "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896"},
 		"hermes":      {version: "0.21.3", candidate: "preview/route-only.config.yaml.preview", blocker: "hermes.config.inspector_unsafe", evidenceHash: "71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47"},
 		"ariel-jcode": {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "arieljcode.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
 	}

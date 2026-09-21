@@ -83,6 +83,7 @@
         "metadata": {"$ref": "#/$defs/metadata"},
         "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable"]},
         "reason": {"type": "string"},
+		"destinationSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
         "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
         "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}

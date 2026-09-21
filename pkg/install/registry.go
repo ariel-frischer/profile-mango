@@ -9,7 +9,6 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 )
 
@@ -82,7 +81,7 @@ func DefaultRegistry() *Registry {
 		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(openclaw.TargetName, openclaw.TargetVersion, openclaw.AdapterVersion, openclaw.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(pi.TargetName, pi.TargetVersion, pi.AdapterVersion, pi.EvidenceSHA256, blockedReason)},
-		blockedAdapter{metadata: blockedMetadata(opencode.TargetName, opencode.TargetVersion, opencode.AdapterVersion, opencode.EvidenceSHA256, blockedReason)},
+		openCodeAdapter{},
 	)
 }
 

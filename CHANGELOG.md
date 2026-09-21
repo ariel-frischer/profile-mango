@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
 - Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
+- Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
 
 ### Changed
 

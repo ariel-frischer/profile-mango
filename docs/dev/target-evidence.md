@@ -2,7 +2,7 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, mock-only install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 inert preview-renderer boundaries. No production-target application, live target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters and synthetic temporary files only. The only target processes executed were bounded
+**Scope:** M0 contract evidence, transactional install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 adapter boundaries. OpenCode alone has a narrowly install-capable top-level `model` field at one explicit caller-supplied path; all validation used synthetic or copied disposable state. No live target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters plus the exact OpenCode model-only adapter against synthetic temporary files. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, Ariel custom-fork profile inspection, and OpenCode `debug config` commands
 in synthetic homes. They did not start a TUI/session or initialize a provider.
@@ -27,12 +27,13 @@ versions, installed binaries and tested support must remain distinct.
 ## Product boundary
 
 Codex is the first intended public adapter candidate. OpenCode, Claude Code, Pi, Oh My Pi,
-and OpenClaw have exact source/version inert preview renderers, but no applicable
-support. OpenCode additionally has exact-version model-candidate parser acceptance
-and partial merged-state/precedence evidence. Production installation remains
-blocked for every target while the install engine is exercised only through fake
-adapters and synthetic temporary files. Native probes require explicit approval,
-disposable state, and evidence-level limits. Ariel's custom Jcode fork
+and OpenClaw have exact source/version inert preview renderers. OpenCode additionally
+has exact-version model-candidate parser acceptance, partial merged-state/precedence
+evidence, and lossless transactional application of only the top-level `model` field
+at one explicit path. Every other target remains install-blocked, and OpenCode full
+profile applicability, auth identity, delivery, and runtime enforcement remain
+blocked. Native probes require explicit approval, disposable state, and evidence-level
+limits. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -46,7 +47,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive/extracted-binary hashes, isolated network-blocked `debug config` probe, backup/restore inventory, and deterministic inert JSONC renderer tests | Inert preview renderer with native model-candidate acceptance and partial merged-state/precedence evidence; auth identity, full precedence/provenance, install applicability, delivery, and enforcement remain blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive/extracted-binary hashes, isolated network-blocked `debug config` probe, lossless JSONC patch tests, transactional disposable-path apply/reapply/recovery checks, backup/restore inventory, and deterministic inert renderer tests | Top-level `model` field installable at one explicit path with destination-bound consent and transactional safeguards; auth identity, provider options, full precedence/provenance, delivery, permissions, tools, plugins, MCP, and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |

@@ -47,16 +47,18 @@ updates, session databases, and other product-specific operations. Credentials a
 authentication stores always remain target-owned.
 
 The current prototype validates and resolves these bundles, produces deterministic,
-inspectable **inert previews**, and includes a mock-only install planner/application
-engine. Every production target remains install-blocked. Successful apply, backup,
-stale-state, and recovery checks use fake adapters and synthetic temporary files;
-they do not inspect or modify a real agent configuration.
+inspectable inert previews, and can transactionally apply only the exact OpenCode
+`1.18.31` top-level `model` field at one explicit path. Every other production target
+and every broader OpenCode profile capability remain install-blocked.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
 > are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Pi
 > `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, Hermes Agent `0.21.3`,
-> and OpenCode `1.18.31` have exact-version, explicitly inert preview renderers, but no generated output is applicable or
-> installed because authentication, delivery, precedence, and enforcement remain
+> and OpenCode `1.18.31` have exact-version inert preview renderers. OpenCode alone
+> also supports lossless transactional application of the top-level `model` field to
+> one explicit caller-supplied path, with destination-bound consent, backup, stale
+> checks, journaling, rollback, and guarded recovery. Full-profile output remains
+> non-applicable because authentication, delivery, precedence, and enforcement are
 > unverified. Claude Code is blocked by opaque startup and diagnostic effects.
 > Pi is blocked by startup settings/auth/model/session effects, migrations,
 > discovery, package/update subprocesses, network-capable model/catalog paths, and
@@ -68,10 +70,10 @@ they do not inspect or modify a real agent configuration.
 > corrected JSONC `model` candidate is natively accepted by exact `1.18.31`, and
 > partial merged-state and inline-over-global precedence were observed in an
 > approved synthetic network-blocked probe. The inspector is writeful, ignores
-> unknown keys, and provides no general per-field provenance. Production
-> installation, authentication identity, effort, delivery, permissions, tools,
-> plugins, MCP, and enforcement remain blocked. No global agent configuration was
-> read or changed; the disposable backup was restored and verified byte-for-byte.
+> unknown keys, and provides no general per-field provenance. Authentication
+> identity, effort, delivery, permissions, tools, plugins, MCP, full precedence, and
+> enforcement remain blocked. No global agent configuration was read or changed;
+> disposable backups were restored and verified byte-for-byte.
 
 ## Install
 
@@ -246,27 +248,33 @@ or unknown.
 
 `install` accepts repeatable exact `target@version` selections or `--all`, resolves
 the same explicit profile inputs as `render`, and emits a deterministic plan ID.
-Production adapters currently stop before reading their configuration path, so this
-command reports a blocked plan and exits nonzero without touching Codex, Claude
-Code, OpenCode, Jcode, or another installed agent:
+Every target except OpenCode remains blocked before reading its config path. OpenCode
+`1.18.31` can plan only the top-level `model` field at one explicit path, and profiles
+with permissions, tools, instructions, or skills remain blocked.
 
 ```bash
 profile-mango install route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
-  --target codex@0.154.0 \
   --target opencode@1.18.31 \
-  --json
+  --config-path opencode=/explicit/disposable/opencode.jsonc \
+  --override --json
 ```
 
-The application engine supports hash-bound consent, create-only backups, stale
-snapshot rejection, ownership manifests, atomic per-file replacement, journals,
-and guarded recovery in fake-adapter tests using synthetic temporary files. A
-non-interactive apply requires `--apply --yes --expect-plan <sha256>`. There is no
-unbound force path. Production application remains disabled because no public adapter
-has demonstrated Profile Mango patch preservation, ownership, and recovery against
-the exact target.
+Review the plan, then repeat the same explicit inputs with
+`--apply --yes --expect-plan <planID>`. `--override` is accepted only because this
+adapter replaces or inserts the single top-level model field from the current
+snapshot. Comments, unknown keys, unrelated bytes, modes, provider options, and
+credential-shaped target-owned state are preserved.
+
+The application engine supports destination-bound consent, create-only backups,
+stale snapshot rejection, ownership manifests, atomic per-file replacement,
+journals, rollback, and guarded recovery. A non-interactive apply requires
+`--apply --yes --expect-plan <sha256>`. There is no unbound force path. OpenCode
+model application does not run OpenCode or inspect auth stores, sessions, plugins,
+MCP, providers, or the network. Any live configuration path still requires separate
+path-specific user approval after a disposable backup/restore rehearsal.
 
 ## Representative profiles
 
@@ -274,7 +282,9 @@ the exact target.
 `daily`, `review`, and `research` profiles modeled on common named Jcode workflows
 without reading or copying live Jcode configuration. Installed-binary integration
 tests validate each profile and render it through every public adapter. Every
-render remains inert and every production install plan remains blocked.
+render remains inert. Install plans remain blocked for all representative profiles
+that carry instructions, skills, permissions, or tools; only a route-only OpenCode
+model profile can use the narrow install subset.
 
 ## Inert Codex preview
 

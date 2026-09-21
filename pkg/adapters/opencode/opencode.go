@@ -101,13 +101,15 @@ func addEvidenceBlockers(result *Result) {
 	}{
 		{"opencode.extensions.plugins_mcp_unverified", "target.extensions.plugins-mcp", "extensions.plugins-mcp", "plugin and MCP discovery, configuration, and enforcement were not observed"},
 		{"opencode.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "route, permission, tool, instruction, skill, plugin, MCP, and policy enforcement was not observed"},
-		{"opencode.install.validation_deferred", "target.install", "install", "production installation remains blocked; no safe automated remedy is known until Profile Mango patch preservation and restore behavior are validated for this exact target"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.path, blocker.message, 0, 0)
 		result.AddCapability(blocker.field, StatusBlocking, blocker.message)
 	}
 	result.AddCapability("config.fidelity", StatusPartial, "the exact model candidate is natively accepted; other portable fields remain unverified")
+	result.AddCapability("install", StatusBlocking, "general target installation remains blocked; only the exact top-level model field has a narrow adapter")
+	result.AddCapability("install.model", StatusSupported, "the exact top-level model field can be losslessly patched at one explicit path with transactional safeguards")
+	result.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.model_only", "target.install.model", "only the exact top-level model field is installable; no safe automated remedy is known for other profile and target fields, which remain blocked or unmanaged", 0, 0)
 	result.AddCapability("delivery", StatusBlocking, "target-owned instruction or skill delivery is unverified")
 	result.AddCapability("permissions", StatusBlocking, "permission mapping and runtime enforcement are unverified")
 	result.AddCapability("tools", StatusBlocking, "tool, plugin, and MCP enforcement is unverified")

@@ -1,10 +1,10 @@
 # OpenCode configuration reference
 
 **Reference date:** 2026-09-21. **Status:** profile-mango has an exact-version,
-inert preview renderer for OpenCode `v1.18.31`. The deterministic JSONC `model`
-candidate has isolated native parser and merged-config evidence. Production
-installation, authentication identity, full precedence, delivery, and runtime
-enforcement remain blocked.
+inert preview renderer and a narrowly install-capable top-level `model` field adapter
+for OpenCode `v1.18.31`. The deterministic JSONC `model` candidate has isolated
+native parser and merged-config evidence. Authentication identity, full precedence,
+delivery, provider options, and runtime enforcement remain blocked.
 
 ## Immutable release evidence
 
@@ -98,17 +98,34 @@ native transport:
 
 The candidate is written under
 `preview/<profile>.opencode.jsonc.preview` by the caller's explicit preview staging
-flow. Native parsing of that exact field is supported for `1.18.31`; full profile
-fidelity and production installation are not. The renderer remains
+flow. Native parsing and lossless explicit-path application of that exact field are
+supported for `1.18.31`; full profile fidelity is not. The renderer remains
 `applicable: false` and does not emit effort, authentication, credentials, provider
 options, transport, permissions, tools, instructions, skills, plugins, or MCP
 configuration.
+
+## Narrow install-capable subset
+
+`profile-mango install` can patch only the top-level `model` field in one explicit
+OpenCode config file. It requires exact target `opencode@1.18.31`, native transport,
+and a profile with no permission, tool, instruction, or skill requirements. Existing
+unowned or externally edited files require the adapter-approved `--override` flag.
+The planner binds consent to a digest of the normalized config and manifest paths,
+while omitting raw absolute paths from public plan JSON.
+
+The patcher validates a top-level JSONC object, replaces only the model string span
+or inserts one deterministic property, and fails closed on malformed input,
+duplicate or non-string model fields, unsupported encoding, or ambiguous syntax.
+Comments, unknown keys, unrelated bytes, modes, provider options, and
+credential-shaped target-owned state are preserved. Application reuses create-only
+backups, stale-source and stale-target checks, atomic replacement, ownership
+manifests, journals, rollback, and guarded recovery. It never reads an auth store or
+runs OpenCode.
 
 ## Remaining blockers
 
 The following remain blocking or partial for this exact release:
 
-- production patching, unrelated-state preservation, ownership, and recovery
 - complete global/project/custom/managed precedence and per-field provenance
 - authentication identity and credential selection
 - effort and transport mapping

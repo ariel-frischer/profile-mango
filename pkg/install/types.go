@@ -173,17 +173,18 @@ type FilePlan struct {
 }
 
 type TargetPlan struct {
-	Target       Target                   `json:"target"`
-	Metadata     AdapterMetadata          `json:"metadata"`
-	Status       string                   `json:"status"`
-	Reason       string                   `json:"reason,omitempty"`
-	Files        []FilePlan               `json:"files,omitempty"`
-	Fields       []FieldChange            `json:"fields,omitempty"`
-	Diagnostics  profilemango.Diagnostics `json:"diagnostics,omitempty"`
-	ConfigPath   string                   `json:"-"`
-	ManifestPath string                   `json:"-"`
-	changes      []installfs.Change       `json:"-"`
-	checks       []installfs.Change       `json:"-"`
+	Target            Target                   `json:"target"`
+	Metadata          AdapterMetadata          `json:"metadata"`
+	Status            string                   `json:"status"`
+	Reason            string                   `json:"reason,omitempty"`
+	DestinationSHA256 string                   `json:"destinationSHA256,omitempty"`
+	Files             []FilePlan               `json:"files,omitempty"`
+	Fields            []FieldChange            `json:"fields,omitempty"`
+	Diagnostics       profilemango.Diagnostics `json:"diagnostics,omitempty"`
+	ConfigPath        string                   `json:"-"`
+	ManifestPath      string                   `json:"-"`
+	changes           []installfs.Change       `json:"-"`
+	checks            []installfs.Change       `json:"-"`
 }
 
 type Plan struct {
