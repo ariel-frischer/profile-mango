@@ -70,9 +70,22 @@ runtime-override cases are asserted. Route, authentication, project/profile
 precedence, permission/tool enforcement, and instruction/skill delivery remain
 explicit gaps unless a version-qualified safe inspector is established.
 
+For the Ariel custom-fork path, the probe likewise hashes the direct executable
+and rejects any build other than `jcode v0.83.909-dev (ca8017a3a)` with SHA-256
+`392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992` before
+running the retained synthetic profile commands. This gate qualifies the
+fixture identity only. The commands still do not establish runtime enforcement,
+authentication, delivery, precedence, child overrides, hooks, extensions, MCP,
+or upstream Jcode compatibility.
+
 The custom-fork profile fixtures and commands are not evidence for upstream
 Jcode, and successful parsing does not establish authentication, permissions,
-network policy, tool enforcement, or runtime behavior.
+network policy, tool enforcement, or runtime behavior. The experimental
+`ariel-jcode` adapter reuses this retained exact-build evidence and adds only
+offline deterministic renderer, strict projection-boundary, resource, and
+secret-exclusion tests. It remains non-applicable and does not justify a new
+native probe, a target-home read, or a support claim. The current session Jcode
+binary must never substitute for the retained exact artifact.
 
 OpenClaw `v2026.9.5` and Hermes Agent `0.21.3` are intentionally not added to
 this native probe harness.

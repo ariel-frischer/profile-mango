@@ -240,7 +240,7 @@
       "product_status": "experimental_only_not_publicly_supported",
       "documentation_basis": "local_source_snapshot",
       "installed_observation": "recorded_separately_in_target_evidence",
-      "tested_evidence": "none_for_reference_pack",
+      "tested_evidence": "isolated_synthetic_profile_resolution_and_inert_adapter_tests",
       "supported_capability": "none",
       "version_context": {
         "kind": "local_snapshot",

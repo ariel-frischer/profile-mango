@@ -11,4 +11,4 @@
 - [`dev/m0-validation.md`](dev/m0-validation.md) - Reproducible offline clean-install, installed-binary, and Draft 2020-12 contract evidence for M0.
 - [Project constitution](../.autospec/constitution.yaml) - Durable principles and lightweight governance for relevant project work.
 - [`dev/project-scope.md`](dev/project-scope.md) - North star, current M0, intended MVP targets, boundaries, success criteria, and proposed defaults.
-- [`dev/target-evidence.md`](dev/target-evidence.md) — Target evidence levels, exact inert preview-renderer boundaries for Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and Hermes, support policy, and deferred verification.
+- [`dev/target-evidence.md`](dev/target-evidence.md) — Target evidence levels, exact inert preview-renderer boundaries for Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel's experimental-only custom Jcode fork, support policy, and deferred verification.
