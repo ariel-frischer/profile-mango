@@ -16,10 +16,10 @@ coding-agent behavior. It separates shared intent from machine-local routes,
 resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
-> **Status:** private prototype. The shipped M0 workflow is offline and pure.
-> Codex CLI `0.154.0` has an exact-version, explicitly inert preview renderer,
-> but no generated output is applicable or installed because authentication,
-> delivery, and enforcement remain unverified.
+> **Status:** private prototype. Shipped validation and M1 project scaffolding
+> are offline and pure. Codex CLI `0.154.0` has an exact-version, explicitly
+> inert preview renderer, but no generated output is applicable or installed
+> because authentication, delivery, and enforcement remain unverified.
 
 ## Install
 
@@ -44,6 +44,30 @@ Set `PROFILE_MANGO_VERSION` to select a release and
 `PROFILE_MANGO_INSTALL_DIR` to change the default `~/.local/bin` destination.
 
 ## Usage
+
+Create a deterministic starter package in the current directory or an explicit
+destination:
+
+```console
+$ profile-mango init
+Created profile scaffold in .
+
+$ profile-mango init ./my-profile-project
+Created profile scaffold in my-profile-project
+```
+
+The command creates only absent paths and never overwrites existing files:
+
+```text
+profiles/default/profile.yaml
+bindings/local.example.yaml
+bindings/.gitignore
+```
+
+The example binding records route identity only. Credentials remain target-owned,
+and `bindings/local.yaml` is ignored for machine-local values. Root
+`profile-mango init` is separate from `profile-mango config init`, which creates
+user-level CLI configuration.
 
 Validate a tracked example entirely offline:
 
@@ -101,6 +125,8 @@ routes:
   versions, missing parents, cycles, and escaping resource paths fail closed.
 - **Deterministic resolution:** one-parent inheritance, explicit merge rules,
   closed tool allowlists, and deny-wins behavior produce reproducible results.
+- **Deterministic scaffolding:** `init [directory]` creates a strictly valid
+  starter profile and safe machine-local binding guidance without overwriting.
 - **Portable resources:** instructions and skills are resolved and hashed without
   reading outside the explicitly supplied resource root.
 - **Machine-local routing:** bindings describe provider, transport,
@@ -154,6 +180,7 @@ level and unresolved boundaries.
 profile-mango agents      Inspect documented agent sources without changing local state
 profile-mango completion  Generate shell completion scripts
 profile-mango config      Manage user-level configuration
+profile-mango init        Create a deterministic starter profile package
 profile-mango render      Render an inert, version-qualified candidate
 profile-mango validate    Validate one PolicyProfile offline
 profile-mango version     Display version information

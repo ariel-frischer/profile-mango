@@ -36,6 +36,7 @@ func init() {
 	rootCmd.SetHelpFunc(colorizedHelp)
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(newInitCmd())
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(newValidateCmd())
 	rootCmd.AddCommand(newAgentsCmd())

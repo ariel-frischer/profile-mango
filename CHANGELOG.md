@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Version-qualified local agent configuration references with deterministic source provenance
 - Automated offline clean-install and Draft 2020-12 schema validation evidence for M0
 - Exact Codex 0.154.0 inert preview rendering with fail-closed applicability diagnostics and explicit staging
+- Deterministic profile scaffolding with profile-mango init
 
 ### Changed
 

@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. A separately scoped M1 project-scaffolding workflow adds an offline starter package. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -31,6 +31,9 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus an ex
   plus positive, constrained, unsupported, and golden fixtures.
 - An offline `validate` command and a Go library. Route bindings describe
   provider, transport, authentication mode, model, and effort, not credentials.
+- The M1 root `init [directory]` command creates a deterministic starter package
+  with a strict profile, a safe route-binding example, and an ignored
+  machine-local binding path. It never overwrites existing paths.
 - A Codex CLI `0.154.0` preview renderer that emits deterministic candidate syntax,
   resource copies, and a versioned report only into an explicit staging directory.
 
@@ -90,7 +93,10 @@ does not promise roles, MCP projection, or any other expansion.
 
 **Current exclusions:** applicable installation or application, import, drift repair,
 credential handling, provider calls, target-home inspection, roles, MCP projection,
-and identity management. These are milestone boundaries, not all permanent bans.
+and identity management. `init` scaffolds portable files and a route-identity
+example only. It does not create user-level configuration, resolve credentials,
+inspect target homes, or call providers. These are milestone boundaries, not all
+permanent bans.
 
 **Long-term product boundaries:** profile-mango is not a replacement agent runtime,
 a model/provider service, or a credential store. It does not promise identical
