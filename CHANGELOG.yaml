@@ -11,6 +11,8 @@ versions:
         changed:
             - Successful profile-mango init output now shows the ANSI README logo
             - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
+        removed:
+            - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:
             - CI formatting checks inspect tracked Go sources without scanning the restored module cache
     0.0.1:

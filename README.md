@@ -69,9 +69,7 @@ bindings/.gitignore
 ```
 
 The example binding records route identity only. Credentials remain target-owned,
-and `bindings/local.yaml` is ignored for machine-local values. Root
-`profile-mango init` is separate from `profile-mango config init`, which creates
-user-level CLI configuration.
+and `bindings/local.yaml` is ignored for machine-local values.
 
 Validate a tracked example entirely offline:
 
@@ -183,16 +181,11 @@ level and unresolved boundaries.
 ```text
 profile-mango agents      Inspect documented agent sources without changing local state
 profile-mango completion  Generate shell completion scripts
-profile-mango config      Manage user-level configuration
 profile-mango init        Create a deterministic starter profile package
 profile-mango render      Render an inert, version-qualified candidate
 profile-mango validate    Validate one PolicyProfile offline
 profile-mango version     Display version information
 ```
-
-User configuration defaults to `~/.config/profile-mango/config.yaml`. Resolution
-order is the root `--config` flag, then `PROFILE_MANGO_CONFIG`, then the default
-path. Run `profile-mango config keys` to list supported settings.
 
 ## Library
 
@@ -219,6 +212,7 @@ boundary is preview-only and always reports current profiles as non-applicable.
 No applicable adapter, installation engine, import, drift repair, credential
 handling, provider call, target-home inspection, role projection, MCP projection,
 or identity management is shipped.
+User-level preference storage and home resolution are not shipped.
 
 Other intended targets and experimental comparison evidence are documented as
 roadmap or developer material, not as current compatibility claims. See
@@ -243,7 +237,6 @@ Useful CLI smoke checks:
 ```bash
 go run ./cmd/profile-mango --help
 go run ./cmd/profile-mango version
-go run ./cmd/profile-mango config keys
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and

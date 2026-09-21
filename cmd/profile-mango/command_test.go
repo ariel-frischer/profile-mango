@@ -15,12 +15,6 @@ func executeCommand(t *testing.T, args ...string) string {
 	rootCmd.SetErr(&out)
 	rootCmd.SetArgs(args)
 
-	configPathOverride = ""
-	if flag := rootCmd.PersistentFlags().Lookup("config"); flag != nil {
-		_ = flag.Value.Set("")
-		flag.Changed = false
-	}
-
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
@@ -37,6 +31,20 @@ func TestVersionAliasSmoke(t *testing.T) {
 
 func TestHelpCommandSmoke(t *testing.T) {
 	executeCommand(t, "help")
+}
+
+func TestRootCommandOmitsRemovedConfigSurface(t *testing.T) {
+	for _, command := range rootCmd.Commands() {
+		if command.Name() == "config" {
+			t.Fatal("root command still registers removed config command")
+		}
+	}
+	if flag := rootCmd.PersistentFlags().Lookup("config"); flag != nil {
+		t.Fatal("root command still registers removed --config flag")
+	}
+	if flag := rootCmd.PersistentFlags().Lookup("no-color"); flag == nil {
+		t.Fatal("root command omitted preserved --no-color flag")
+	}
 }
 
 func TestAgentsCheckHelpSmoke(t *testing.T) {
@@ -57,26 +65,5 @@ func TestValidateCommandSmoke(t *testing.T) {
 	out := executeCommand(t, "validate", profile, "--bindings", bindings, "--json")
 	if !strings.Contains(out, `"valid": true`) {
 		t.Fatalf("validate output = %q", out)
-	}
-}
-
-func TestConfigPathCommandSmoke(t *testing.T) {
-	want := filepath.Join(t.TempDir(), "from-env.yaml")
-	t.Setenv("PROFILE_MANGO_CONFIG", want)
-
-	out := executeCommand(t, "config", "path")
-	if strings.TrimSpace(out) != want {
-		t.Fatalf("config path = %q, want %q", strings.TrimSpace(out), want)
-	}
-}
-
-func TestConfigPathFlagOverride(t *testing.T) {
-	envPath := filepath.Join(t.TempDir(), "from-env.yaml")
-	flagPath := filepath.Join(t.TempDir(), "from-flag.yaml")
-	t.Setenv("PROFILE_MANGO_CONFIG", envPath)
-
-	out := executeCommand(t, "--config", flagPath, "config", "path")
-	if strings.TrimSpace(out) != flagPath {
-		t.Fatalf("config path = %q, want %q", strings.TrimSpace(out), flagPath)
 	}
 }

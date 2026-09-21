@@ -42,7 +42,6 @@ CLI smoke checks:
 ```bash
 go run ./cmd/profile-mango --help
 go run ./cmd/profile-mango version
-go run ./cmd/profile-mango config keys
 go run ./cmd/profile-mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
 ```
 
@@ -53,12 +52,10 @@ cmd/profile-mango/      # CLI entry point (cobra)
   main.go             # binary entry point
   root.go             # root command, persistent flags, command wiring
   version.go          # version subcommand
-  config.go           # user config subcommands
   validate.go         # offline strict profile/binding validation
   help.go             # custom help formatting
 internal/
   version/            # version info injected via ldflags
-  config/             # YAML config load/save/path helpers
 pkg/profilemango/      # pure canonical domain, parsing, resolution, resource hashing
   testdata/fixtures/  # route-only, constrained, and unsupported fixtures
   testdata/golden/    # deterministic resolved output
@@ -71,14 +68,6 @@ CHANGELOG.md          # generated changelog output
 .chlog.yaml           # changelog config
 ```
 
-## Config Behavior
-
-- User config lives at `~/.config/profile-mango/config.yaml` by default.
-- Path priority: root `--config`, then `$PROFILE_MANGO_CONFIG`, then the default path.
-- Config commands: `init`, `show`, `path`, `edit`, `get`, `set`, `toggle`, `keys`.
-- Missing config files load as empty config; CLI flags should still win over config defaults.
-
-
 ## M0 Safety Boundary
 
 - M0 is offline and pure: no target homes, credentials, subprocesses, providers, or network access.
@@ -88,7 +77,7 @@ CHANGELOG.md          # generated changelog output
 
 ## Testing Guidance
 
-- Prefer table tests with `map[string]struct{}` for command/config behavior.
+- Prefer table tests with `map[string]struct{}` for command behavior.
 - Toolchain versions are pinned in `mise.toml`; run `mise install` before canonical lint/build checks.
 - Run `chlog check` after changelog edits.
 - Run `make test` for normal validation; use `make test-coverage` when touching shared packages.
