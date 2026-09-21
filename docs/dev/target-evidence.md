@@ -115,20 +115,45 @@ The same command is exercised by the opt-in `integration_test.go` test
 revision for this evidence.
 
 The exact tested build was `codex-cli 0.154.0`, SHA-256
-`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`. The
+`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`. Before
+running any Codex target command, the probe hashes the resolved direct
+executable and fails closed if this exact hash does not match. The
 positive/negative feature sentinels established that the binary consumed the
 synthetic config layer:
 
 - no feature file: `apps` resolved to `true`;
 - synthetic `[features] apps = false`: `apps` resolved to `false`;
+- the same synthetic `apps = false` layer with `--enable apps`: `apps` resolved
+  to `true`;
+- the same synthetic `apps = false` layer with `--disable apps`: `apps` resolved
+  to `false`;
 - malformed synthetic TOML: `codex features list` rejected it with a TOML parse
   error.
 
-This is native feature-config parsing evidence only. It does not establish that
-Codex consumes or enforces profile route, model, reasoning-effort, sandbox,
-approval, tool, skill, instruction, or authentication fields. The effective
-configuration and field-provenance inspector remains unavailable, and
-`--strict-config` remains excluded because it participates in startup.
+This is native feature-config parsing and feature-runtime-precedence evidence
+only. It does not establish that Codex consumes or enforces profile route,
+model, reasoning-effort, sandbox, approval, tool, skill, instruction, or
+authentication fields. The effective configuration and field-provenance
+inspector remains unavailable, and `--strict-config` remains excluded because
+it participates in startup.
+
+The exact-version capability result is therefore:
+
+| Capability | Evidence result | Applicability consequence |
+| --- | --- | --- |
+| Route provider/model/effort | The help surface advertises route-related options, but no safe command established consumption or effective values for these fields | Unverified and blocking |
+| Authentication identity | No credential-free state or route identity was observed | Unverified and blocking |
+| Precedence | Feature-file versus runtime feature overrides were observed; profile, project, and route precedence were not | Partial evidence only, blocking for canonical route claims |
+| Permissions/tools | Help advertises sandbox and approval controls, but no runtime enforcement check was safe to run | Unverified and blocking |
+| Instruction/skill delivery | No safe native delivery or provenance inspector was established without starting a session | Unverified and blocking |
+
+The probe prints these field-specific results as
+`codex-route-provider-model-effort=unverified`,
+`codex-authentication-identity=unverified`,
+`codex-precedence=feature-runtime-override-observed-route-project-unverified`,
+`codex-permissions-tools=enforcement-unverified`, and
+`codex-instruction-skill-delivery=unverified`. These are explicit gaps, not
+inferred support claims. The adapter therefore remains non-applicable.
 
 ## Codex preview-renderer evidence
 
