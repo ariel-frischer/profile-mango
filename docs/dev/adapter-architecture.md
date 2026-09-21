@@ -10,6 +10,7 @@ application engine.
 flowchart LR
     CLI[render CLI] --> LOAD[profile/binding/resource loading]
     CLI --> DISPATCH[explicit target switch]
+    DISPATCH --> CLAUDE[Claude Code adapter]
     DISPATCH --> CODEX[Codex adapter]
     DISPATCH --> OMP[Oh My Pi adapter]
     DISPATCH --> OPENCLAW[OpenClaw adapter]
@@ -26,7 +27,7 @@ flowchart LR
 - `pkg/render` owns the smallest two-consumer boundary: `TargetBuild`, pure
   input/resource types, evidence, capabilities, artifacts, report serialization,
   stable sorting, safe artifact paths, and resource-byte validation.
-- `pkg/adapters/codex`, `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, and
+- `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, and
   `pkg/adapters/hermes` own exact evidence pins, target syntax, capability mapping,
   target-specific diagnostics, and applicability.
 - `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
@@ -50,8 +51,10 @@ are staged.
 
 ## Current target boundary
 
-Codex `0.154.0`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, and Hermes Agent `0.21.3`
-each have deterministic inert preview renderers. Codex uses TOML candidate syntax.
+Claude Code `2.1.278`, Codex `0.154.0`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`,
+and Hermes Agent `0.21.3` each have deterministic inert preview renderers. Claude
+Code emits a documentation-context JSON `model` candidate. Codex uses TOML
+candidate syntax.
 Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
 and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
@@ -59,6 +62,12 @@ for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `model.provider`, `model.default`, and `agent.reasoning_effort`. None of these
 adapters claims native applicability, installs output, reads a target home, accesses
 credentials, starts a session, calls a provider, or uses a network connection.
+
+Claude Code's immutable npm package and release commit are pinned, but its opaque
+native startup and diagnostic paths were not proven side-effect-free. No native
+Claude Code command was run. The adapter keeps native acceptance, effective state,
+precedence, route/auth, permissions/tools, CLAUDE.md, skills, and enforcement
+blocked rather than treating mutable documentation as release evidence.
 
 Oh My Pi's source-level version observation is exact, but the standalone build is
 currently blocked by its missing pinned native addon and the reviewed `config`

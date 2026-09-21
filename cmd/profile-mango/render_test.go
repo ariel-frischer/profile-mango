@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
@@ -80,6 +81,38 @@ func TestRenderPreviewWritesOnlyInertArtifacts(t *testing.T) {
 	}
 	if !strings.Contains(string(reportData), codex.EvidenceSHA256) {
 		t.Fatal("render.json omitted exact evidence hash")
+	}
+}
+
+func TestRenderClaudeCodePreviewUsesTargetDispatch(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", claudecode.TargetName, "--target-version", claudecode.TargetVersion, "--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("blocked Claude Code preview unexpectedly succeeded")
+	}
+	var report render.Result
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
+	}
+	if report.Target != claudecode.TargetName || report.AdapterVersion != claudecode.AdapterVersion || !report.Preview || report.Applicable {
+		t.Fatalf("unexpected Claude Code report: %#v", report)
+	}
+	if !strings.Contains(stderr, "claudecode.config.acceptance_unverified") {
+		t.Fatalf("Claude Code support blocker missing: %s", stderr)
+	}
+	assertRenderFile(t, out, "render.json")
+	assertRenderFile(t, out, "preview/route-only.settings.json.preview")
+	assertRenderFile(t, out, "resources/instructions/system.md")
+	config, readErr := os.ReadFile(filepath.Join(out, "preview", "route-only.settings.json.preview"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if strings.Contains(string(config), "oauth") || strings.Contains(string(config), "secret") || strings.Contains(string(config), "openai") {
+		t.Fatalf("candidate config leaked authentication data: %s", config)
 	}
 }
 
@@ -207,7 +240,7 @@ func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 
 func TestRenderHelpListsKnownTargets(t *testing.T) {
 	flag := newRenderCmd().Flag("target")
-	if flag == nil || !strings.Contains(flag.Usage, "codex, oh-my-pi, openclaw, or hermes") {
+	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, oh-my-pi, openclaw, or hermes") {
 		t.Fatalf("target help does not list explicit adapters: %#v", flag)
 	}
 }

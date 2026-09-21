@@ -99,6 +99,15 @@ established, so no Hermes command was run and the probe harness was not
 broadened. Smart approvals are excluded because they invoke an auxiliary model
 and do not cover file writes.
 
+Claude Code `v2.1.278` is intentionally not added to the native probe harness.
+The immutable npm wrapper and Linux x64 package were acquired and hashed, but the
+opaque native startup path exposes update, telemetry, discovery, plugin, hook,
+MCP, state, subprocess, and session surfaces. `doctor` advertises repair-capable
+checks, `/status` is session-oriented, and no release-qualified schema or
+effective-config inspector was established. No Claude Code command was run, so
+native acceptance, effective state, precedence, route/authentication,
+permissions/tools, CLAUDE.md, skills, and runtime enforcement remain blocked.
+
 ## Record support by version and capability
 
 Keep these facts distinct in the reference/evidence records:
@@ -121,8 +130,10 @@ required-but-unknown properties continue to block applicability.
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
 this guide does not add a product schema or CLI contract. No applicable public
-target adapter is shipped today. Codex, Oh My Pi, OpenClaw, and Hermes preview
-rendering remain non-applicable. Oh My Pi is additionally blocked on its
+target adapter is shipped today. Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes
+preview rendering remain non-applicable. Claude Code is additionally blocked on
+opaque startup/diagnostic effects and unverified native acceptance. Oh My Pi is
+blocked on its
 standalone native artifact and safe config inspection; OpenClaw is blocked on
 its missing runtime artifact and unaccepted config inspection path; Hermes is
 blocked on its Python runtime/build requirement and unsafe candidate inspector
