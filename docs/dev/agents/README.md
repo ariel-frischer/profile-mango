@@ -3,7 +3,7 @@
 These contributor references summarize configuration surfaces for the intended
 MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
 bases for isolated probes and adapter work, not a compatibility matrix. Codex,
-Oh My Pi, OpenClaw, and Hermes now have exact-version, preview-only renderers;
+Pi, Oh My Pi, OpenClaw, and Hermes now have exact-version, preview-only renderers;
 no target has an applicable installer or enforcement claim.
 
 The [source manifest](sources.json) records deterministic provenance and keeps
@@ -26,14 +26,15 @@ and commits are reproducible locators, not proof of target behavior.
 
 - [Codex](codex.md) — exact Codex 0.154.0 inert preview renderer; native applicability remains blocked.
 - [Claude Code](claude-code.md) — exact v2.1.278 immutable-package inert preview renderer; native acceptance remains blocked.
-- [Pi](pi.md) — intended MVP target variant; qualified independently.
+- [Pi](pi.md) — exact Pi `0.86.1` inert JSON preview renderer; native applicability remains blocked.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
 - [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer; native applicability remains blocked.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target.
 
-Candidate inspection commands below have not been executed for this reference
-pack. Before a future probe, verify the exact target revision and command effects,
+Pi native commands were not executed during its exact-release qualification because
+startup and metadata paths were not proven bounded. Before any future probe, verify
+the exact target revision and command effects,
 then use a synthetic home/project, sanitized environment, no real credentials,
 blocked network, bounded execution, and private sockets where relevant. Follow
 the [validation strategy](../agent-validation.md); record executed results only

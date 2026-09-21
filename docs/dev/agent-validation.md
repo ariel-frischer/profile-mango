@@ -130,14 +130,15 @@ required-but-unknown properties continue to block applicability.
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
 this guide does not add a product schema or CLI contract. No applicable public
-target adapter is shipped today. Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes
-preview rendering remain non-applicable. Claude Code is additionally blocked on
-opaque startup/diagnostic effects and unverified native acceptance. Oh My Pi is
-blocked on its
-standalone native artifact and safe config inspection; OpenClaw is blocked on
-its missing runtime artifact and unaccepted config inspection path; Hermes is
-blocked on its Python runtime/build requirement and unsafe candidate inspector
-paths.
+target adapter is shipped today. Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and
+Hermes preview rendering remain non-applicable. Claude Code is additionally blocked
+on opaque startup/diagnostic effects and unverified native acceptance. Pi is blocked
+on startup settings/auth/model/session effects, migrations, project and extension
+discovery, package/update subprocesses, network-capable model/catalog paths, and
+writes that were not proven bounded. Oh My Pi is blocked on its standalone native
+artifact and safe config inspection; OpenClaw is blocked on its missing runtime
+artifact and unaccepted config inspection path; Hermes is blocked on its Python
+runtime/build requirement and unsafe candidate inspector paths.
 
 ## Keep useful configuration references locally
 

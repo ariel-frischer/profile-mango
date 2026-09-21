@@ -12,10 +12,12 @@ flowchart LR
     CLI --> DISPATCH[explicit target switch]
     DISPATCH --> CLAUDE[Claude Code adapter]
     DISPATCH --> CODEX[Codex adapter]
+    DISPATCH --> PI[Pi adapter]
     DISPATCH --> OMP[Oh My Pi adapter]
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
     CODEX --> CONTRACT[target-neutral render contract]
+    PI --> CONTRACT
     OMP --> CONTRACT
     OPENCLAW --> CONTRACT
     HERMES --> CONTRACT
@@ -24,12 +26,13 @@ flowchart LR
 
 - `pkg/profilemango` owns canonical parsing, inheritance, route bindings, and
   resource digests.
-- `pkg/render` owns the smallest two-consumer boundary: `TargetBuild`, pure
+- `pkg/render` owns the target-neutral boundary: `TargetBuild`, pure
   input/resource types, evidence, capabilities, artifacts, report serialization,
   stable sorting, safe artifact paths, and resource-byte validation.
-- `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, and
-  `pkg/adapters/hermes` own exact evidence pins, target syntax, capability mapping,
-  target-specific diagnostics, and applicability.
+- `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/pi`,
+  `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, and `pkg/adapters/hermes` own
+  exact evidence pins, target syntax, capability mapping, target-specific
+  diagnostics, and applicability.
 - `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
 - `internal/staging` creates only a new explicit output directory and never writes
@@ -51,10 +54,11 @@ are staged.
 
 ## Current target boundary
 
-Claude Code `2.1.278`, Codex `0.154.0`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`,
-and Hermes Agent `0.21.3` each have deterministic inert preview renderers. Claude
-Code emits a documentation-context JSON `model` candidate. Codex uses TOML
-candidate syntax.
+Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
+OpenClaw `2026.9.5`, and Hermes Agent `0.21.3` each have deterministic inert
+preview renderers. Claude Code emits a documentation-context JSON `model`
+candidate. Codex uses TOML candidate syntax. Pi uses exact source-grounded JSON
+settings keys `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`.
 Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
 and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
@@ -89,3 +93,13 @@ is outside its `>=3.11,<3.14` requirement and no runtime was built. The reviewed
 plugin, gateway, and session state before or during inspection, so no native
 Hermes command was accepted as a safe M0 probe. See [target evidence](target-evidence.md)
 and the [Hermes reference](agents/hermes.md).
+
+Pi's exact `v0.86.1` source commit, npm package tarball, registry integrity, and
+bundled `dist/bundle/cli.js` entrypoint hashes are pinned. Static review found
+startup settings/auth/model/session paths, project and extension discovery,
+migrations, package/update subprocesses, network-capable model/catalog paths, and
+write surfaces. No Pi native command was run because those paths were not proven
+bounded in a credential-free, no-write, noninteractive isolation. Native config
+acceptance, effective state, precedence, authentication, delivery, and
+enforcement remain blocking. See [target evidence](target-evidence.md) and the
+[Pi reference](agents/pi.md).

@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -43,6 +43,12 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
+- A Pi `0.86.1` preview renderer that emits deterministic source-grounded JSON
+  settings candidates for `defaultProvider`, `defaultModel`, and
+  `defaultThinkingLevel`, resource copies, and a versioned report only into an
+  explicit staging directory. Its immutable source/package provenance, unsafe
+  startup/config inspection effects, and native applicability gaps remain explicit
+  in every report.
 - An Oh My Pi `18.2.6` preview renderer that emits deterministic candidate YAML,
   resource copies, and a versioned report only into an explicit staging directory.
   Its source-level target evidence, native build blocker, and unsafe config-inspector
@@ -62,7 +68,7 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   release commit, opaque startup effects, mutable documentation boundary, and
   native applicability gaps remain explicit in every report.
 
-**No applicable target adapter is shipped.** The Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and Hermes renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -73,7 +79,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | --- | --- | --- |
 | Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` inert JSON preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
-| Pi | Intended MVP target | No adapter; compatibility not established |
+| Pi | Intended MVP target | Exact `0.86.1` inert JSON settings preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
@@ -181,3 +187,4 @@ None blocks establishing the principles above.
 | What comes after deterministic rendering: manual placement or managed application? | Prefer inspectable output and explicit effects first. Decide application/import/drift workflows separately with ownership and rollback evidence. |
 | How should target-version support evolve? | Start with individually tested versions and a small reproducible fixture set; claim ranges only when evidence supports them. |
 | What is the public schema namespace? | Verify ownership of the current `profilemango.dev` identifier before public release, and rename if unavailable as the evidence ledger notes. |
+mango.dev` identifier before public release, and rename if unavailable as the evidence ledger notes. |
