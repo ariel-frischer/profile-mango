@@ -61,7 +61,7 @@ func acceptanceTargets() map[string]acceptanceTarget {
 		opencode.TargetName: {
 			name: opencode.TargetName, version: opencode.TargetVersion, evidence: opencode.EvidenceSHA256,
 			candidatePath: "preview/route-only.opencode.jsonc.preview", codePrefix: "opencode",
-			previewBlocker: "opencode.config.acceptance_unverified", render: opencode.Render,
+			previewBlocker: "opencode.install.validation_deferred", render: opencode.Render,
 		},
 		hermes.TargetName: {
 			name: hermes.TargetName, version: hermes.TargetVersion, evidence: hermes.EvidenceSHA256,

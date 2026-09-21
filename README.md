@@ -64,11 +64,14 @@ they do not inspect or modify a real agent configuration.
 > unsafe config-inspector effects. OpenClaw is blocked by source-only runtime
 > evidence and an unsafe config-inspection path. Hermes is blocked by its exact
 > Python build requirement, missing runtime artifact, and unsafe inspector paths.
-> OpenCode is pinned to immutable release/source evidence, but native parsing,
-> effective state, authentication identity, effort, precedence, and enforcement are
-> unverified. Production installation is blocked for every target. No global agent
-> configuration is read or changed; real validation is deferred to Bead
-> `ap-6fu.11` and requires fresh explicit user approval.
+> OpenCode is pinned to immutable release/source/archive/binary evidence. Its
+> corrected JSONC `model` candidate is natively accepted by exact `1.18.31`, and
+> partial merged-state and inline-over-global precedence were observed in an
+> approved synthetic network-blocked probe. The inspector is writeful, ignores
+> unknown keys, and provides no general per-field provenance. Production
+> installation, authentication identity, effort, delivery, permissions, tools,
+> plugins, MCP, and enforcement remain blocked. No global agent configuration was
+> read or changed; the disposable backup was restored and verified byte-for-byte.
 
 ## Install
 
@@ -261,8 +264,17 @@ The application engine supports hash-bound consent, create-only backups, stale
 snapshot rejection, ownership manifests, atomic per-file replacement, journals,
 and guarded recovery in fake-adapter tests using synthetic temporary files. A
 non-interactive apply requires `--apply --yes --expect-plan <sha256>`. There is no
-unbound force path. Production application remains disabled until `ap-6fu.11` is
-separately approved and completed.
+unbound force path. Production application remains disabled because no public adapter
+has demonstrated Profile Mango patch preservation, ownership, and recovery against
+the exact target.
+
+## Representative profiles
+
+[`examples/jcode-like/`](examples/jcode-like/) contains credential-free `base`,
+`daily`, `review`, and `research` profiles modeled on common named Jcode workflows
+without reading or copying live Jcode configuration. Installed-binary integration
+tests validate each profile and render it through every public adapter. Every
+render remains inert and every production install plan remains blocked.
 
 ## Inert Codex preview
 
@@ -407,9 +419,11 @@ blocked native command boundary are recorded in the [target evidence ledger](doc
 ## Inert OpenCode preview
 
 OpenCode `1.18.31` has an exact-release inert JSONC renderer. It emits only the
-source-grounded `model` candidate in `provider/model` form under `preview/` and
-exits nonzero because native parsing, authentication identity, effort, delivery,
-precedence, installation, and enforcement remain blocked:
+`model` candidate in `provider/model` form under `preview/`. The exact binary
+natively accepted that corrected candidate and emitted the model in merged config,
+but rendering still exits nonzero because installation, authentication identity,
+effort, full precedence/provenance, delivery, permissions, tools, plugins, MCP,
+and enforcement remain blocked:
 
 ```bash
 profile-mango render route-only \
@@ -422,10 +436,13 @@ profile-mango render route-only \
   --preview --json
 ```
 
-The command does not execute OpenCode, read `~/.config/opencode`, inspect
-`~/.local/share/opencode/auth.json`, or install the candidate. Native and real
-installation validation is deferred to `ap-6fu.11` and requires fresh explicit
-user approval.
+The render command itself does not execute OpenCode, read `~/.config/opencode`,
+inspect `~/.local/share/opencode/auth.json`, or install the candidate. Separately,
+the approved `scripts/opencode-config-probe.sh` ran only the exact direct binary's
+version, help, and `debug config` paths inside synthetic scratch with blocked
+network and no TUI/session/provider/credentials. It observed target-owned scratch
+writes, restored an independent backup, and verified the restored inventory
+byte-for-byte. See the [target evidence ledger](docs/dev/target-evidence.md).
 
 ## Experimental Ariel custom Jcode fork preview
 

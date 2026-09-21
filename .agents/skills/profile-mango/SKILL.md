@@ -152,10 +152,11 @@ All current production target renderers are non-applicable previews. Expect bloc
 diagnostics and a nonzero exit status even when preview artifacts are written.
 A mock-only install engine may plan blocked production targets and exercise apply
 semantics through fake adapters and synthetic temporary files. It must not read or
-modify global agent configuration. Real target validation is deferred to
-`ap-6fu.11` and requires fresh explicit user approval.
-Never present preview syntax or mock application evidence as installed, enforced,
-or natively accepted.
+modify global agent configuration. OpenCode `1.18.31` has separate approved
+isolated evidence that the exact JSONC model candidate parses and appears in merged
+output; this does not make the renderer applicable or the installer production-
+ready. Never present preview syntax, native parsing, or mock application evidence
+as installed or enforced.
 
 ## Plan-first install
 
@@ -186,6 +187,9 @@ temporary files.
   point it at a real Codex, Claude Code, OpenCode, Jcode, or other agent path.
 - `render` writes only beneath the new path supplied by `--out` and never applies
   the candidate.
+- `scripts/opencode-config-probe.sh` is an opt-in exact-binary developer probe. Run
+  it only with explicit authorization, synthetic scratch state, blocked network,
+  no TUI/session/provider credentials, and retained backup/restore evidence.
 - `profile-mango agents check` is separate: it performs an explicit network drift
   check against documented sources. Do not run it when offline operation is
   required.

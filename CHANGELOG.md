@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Target-neutral render report and resource boundary shared by inert target adapters
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
+- Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
 
 ### Changed
 
@@ -41,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - CI formatting checks inspect tracked Go sources without scanning the restored module cache
 - Cross-target inert preview acceptance, early experimental identity reporting, and race-safe no-replace staging
+- Quote the OpenCode JSONC model key after exact 1.18.31 native parsing rejected the prior candidate
 
 ## [0.0.1] - 2026-01-01
 

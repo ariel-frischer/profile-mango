@@ -31,14 +31,14 @@ and commits are reproducible locators, not proof of target behavior.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
 - [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer; native applicability remains blocked.
-- [OpenCode](opencode.md) — exact OpenCode 1.18.31 inert JSONC preview renderer; native and install applicability remain blocked.
+- [OpenCode](opencode.md) — exact OpenCode 1.18.31 inert JSONC preview renderer with isolated native parser and partial merged-config evidence; production installation and runtime enforcement remain blocked.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target with an exact-build inert preview renderer; native applicability remains blocked.
 
-Pi and OpenCode native commands were not executed during exact-release qualification because
-their startup and metadata paths were not accepted as bounded for this work. Before any future probe, verify
-the exact target revision and command effects, obtain the explicit approval required by
-`ap-6fu.11`,
-then use a synthetic home/project, sanitized environment, no real credentials,
-blocked network, bounded execution, and private sockets where relevant. Follow
-the [validation strategy](../agent-validation.md); record executed results only
-in the [target evidence ledger](../target-evidence.md).
+Pi native commands were not executed because its startup and metadata paths were
+not accepted as bounded. OpenCode `1.18.31` was executed only through the
+approved synthetic, network-blocked, non-TUI probe documented in the
+[validation strategy](../agent-validation.md). That evidence proves the exact
+JSONC model candidate parses and appears in merged output, while write-free
+inspection, production installation, authentication, delivery, and enforcement
+remain unverified. Record executed results only in the
+[target evidence ledger](../target-evidence.md).

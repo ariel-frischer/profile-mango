@@ -1,8 +1,10 @@
 # OpenCode configuration reference
 
 **Reference date:** 2026-09-21. **Status:** profile-mango has an exact-version,
-inert preview renderer for OpenCode `v1.18.31`; native applicability, installation,
-and runtime enforcement remain blocked.
+inert preview renderer for OpenCode `v1.18.31`. The deterministic JSONC `model`
+candidate has isolated native parser and merged-config evidence. Production
+installation, authentication identity, full precedence, delivery, and runtime
+enforcement remain blocked.
 
 ## Immutable release evidence
 
@@ -13,7 +15,8 @@ release tag `v1.18.31`, commit
 - source repository: <https://github.com/anomalyco/opencode>
 - source tag: <https://github.com/anomalyco/opencode/tree/v1.18.31>
 - source archive SHA-256: `76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896`
-- Linux x64 release asset SHA-256: `e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4`
+- Linux x64 release archive SHA-256: `e9312be75ed803b7415fc2aeabda1f4fe938912a39673762dc0c38c0e11ebde4`
+- extracted Linux x64 binary SHA-256: `f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`
 
 The source review retained these exact file hashes:
 
@@ -23,43 +26,65 @@ The source review retained these exact file hashes:
 | `packages/core/src/v1/config/config.ts` | `b99bcbd98df6da79e59cda482363f759cea9d4b9792c6c8e83b6a8d686138d30` |
 | `packages/core/src/v1/config/provider.ts` | `c496dea619e8e9d2d09b7a2353f2e62bff6a2276471c161c3988059a1b6ac303` |
 
-These immutable release and source hashes are separate from the mutable official
-documentation and schema snapshot below. A tag, source hash, or static source
-review does not prove native parser acceptance, effective configuration, or
-runtime enforcement.
+The immutable release, source, archive, and extracted-binary hashes are separate
+from the mutable official documentation and schema snapshot below.
 
 ## Configuration paths, syntax, and precedence
 
-The reviewed source and official documentation describe JSON and JSONC
-configuration layers. The relevant surfaces are:
+The reviewed source and official documentation describe JSON and JSONC layers:
 
-- the global user configuration under `${XDG_CONFIG_HOME:-~/.config}/opencode/`,
-  conventionally `opencode.json` or `opencode.jsonc`
-- the project configuration at the project root, conventionally
-  `opencode.json` or `opencode.jsonc`
-- an explicitly selected custom configuration path supported by the target
+- global user configuration under `${XDG_CONFIG_HOME:-~/.config}/opencode/`
+- project `opencode.json` or `opencode.jsonc`
+- `OPENCODE_CONFIG` for an explicit custom file
+- `OPENCODE_CONFIG_DIR` for an explicit configuration directory
+- `OPENCODE_CONFIG_CONTENT` for an inline final layer
 
-OpenCode merges the global, project, and custom layers with target-defined
-precedence. The exact winning value and per-field provenance were not observed
-for this release. The adapter therefore never chooses an active destination,
-merges target files, or presents a candidate as effective state.
+The exact source loads global state, an explicit custom file, project state,
+`.opencode` and custom-directory state, inline content, and managed configuration.
+The isolated probe observed inline content overriding a global model and observed
+an explicit custom file being consumed. It did not establish every project,
+managed, or nested-directory precedence interaction, and the resolved output does
+not provide general per-field provenance.
 
-The source establishes that the `model` value uses the string form
-`"provider/model"`. Provider configuration is a separate configuration surface.
-The source and schema also expose instruction, permission, and tool-related keys.
-Those facts establish candidate syntax only. They do not establish that a
-portable permission policy, closed tool set, instruction or skill delivery,
-provider option, or runtime policy is preserved or enforced.
+The source and native probe establish that `model` uses `"provider/model"`.
+Provider configuration remains a separate surface. Target-owned credentials remain
+separate and were replaced with synthetic empty auth content during the probe. The
+adapter never reads, writes, copies, or emits a real auth store, credential,
+provider option, authentication identity, effort, or transport setting.
 
-Target-owned credentials are separate from configuration at
-`~/.local/share/opencode/auth.json`. The adapter never reads, writes, copies, or
-emits that file, credentials, authentication identity, provider options, or
-transport settings.
+## Isolated native validation
+
+The exact extracted Linux x64 binary was run only through
+[`scripts/opencode-config-probe.sh`](../../../scripts/opencode-config-probe.sh).
+The probe used a task-owned synthetic home/project, isolated every XDG path,
+provided empty auth content and an in-memory database, disabled project config,
+model fetching, auto-update, pruning, default plugins, LSP downloads, and external
+plugins, blocked network access with bubblewrap, and bounded every command with a
+timeout. No agentic TUI, prompt, provider session, live target home, or credential
+was used.
+
+Observed results:
+
+- `--version` returned `1.18.31`; the direct binary matched the pinned SHA-256.
+- `--help` exposed the non-TUI `debug config` command.
+- `debug config` natively accepted the deterministic Profile Mango JSONC candidate
+  and emitted `"model": "openai/gpt-5.6"` in merged output.
+- inline content overrode a global sentinel model.
+- an explicit `OPENCODE_CONFIG` candidate file was consumed.
+- the explicit candidate file remained byte-identical after inspection.
+- malformed JSONC was rejected.
+- a schema-unknown key was accepted and omitted from resolved output.
+- the command created target-owned scratch directories, logs, locks, `.gitignore`,
+  and metadata. The independent backup was restored after testing, and recursive
+  type, mode, size, and SHA-256 inventory matched byte-for-byte.
+
+The command therefore provides exact-version parser acceptance and partial merged
+state/precedence evidence, not a safe zero-write inspector or enforcement proof.
 
 ## Inert adapter boundary
 
-`pkg/adapters/opencode` emits only this deterministic preview candidate when the
-route is complete and uses the native transport:
+The adapter emits this deterministic candidate when the route is complete and uses
+native transport:
 
 ```jsonc
 // profile-mango: INERT PREVIEW ONLY
@@ -67,30 +92,24 @@ route is complete and uses the native transport:
 // This is not an active OpenCode config.json or config.jsonc. Authentication, provider options, effort, delivery, precedence, plugins, MCP, and enforcement are unverified.
 
 {
-  model: "provider/model",
+  "model": "provider/model",
 }
 ```
 
 The candidate is written under
-`preview/<profile>.opencode.jsonc.preview` by the caller's explicit preview
-staging flow. It contains only the canonical provider/model string. It does not
-emit effort, authentication identity, credentials, provider options, transport,
-permissions, tools, instructions, skills, plugins, MCP configuration, or active
-configuration paths. The render report always sets `applicable: false` and keeps
-these capabilities blocking or partial as appropriate.
+`preview/<profile>.opencode.jsonc.preview` by the caller's explicit preview staging
+flow. Native parsing of that exact field is supported for `1.18.31`; full profile
+fidelity and production installation are not. The renderer remains
+`applicable: false` and does not emit effort, authentication, credentials, provider
+options, transport, permissions, tools, instructions, skills, plugins, or MCP
+configuration.
 
-The renderer is pure and inert. It does not inspect target homes, credentials,
-installed binaries, sessions, providers, plugins, MCP servers, or the network.
-Resource bytes are validated and copied only as inert preview artifacts under
-caller-controlled staging; resource delivery and precedence remain unverified.
+## Remaining blockers
 
-## Evidence gaps and deferred validation
+The following remain blocking or partial for this exact release:
 
-The following remain blocking for this exact release:
-
-- native JSON or JSONC parser acceptance
-- merged effective configuration and per-field provenance
-- global, project, and custom precedence
+- production patching, unrelated-state preservation, ownership, and recovery
+- complete global/project/custom/managed precedence and per-field provenance
 - authentication identity and credential selection
 - effort and transport mapping
 - permission and tool equivalence or enforcement
@@ -98,18 +117,9 @@ The following remain blocking for this exact release:
 - plugin and MCP discovery or enforcement
 - runtime route and policy enforcement
 
-The official mutable configuration schema snapshot used during source review has
-SHA-256 `e8cb6e287a3852ee3403f4803be5ad6b19db94948037eaa9672125c333427922`.
-That snapshot and current documentation are explicitly mutable and are not
-immutable release evidence. Re-fetch and re-hash them before relying on later
-claims.
-
-Native execution, isolated parser or effective-state checks, and real
-installation are deferred to Bead `ap-6fu.11` and require fresh explicit user
-approval. That work must use the exact release artifact, synthetic isolated
-paths, no personal configuration or credentials, blocked network, bounded
-execution, and recovery checks. No OpenCode binary or target configuration was
-executed or inspected for this adapter.
+The mutable configuration schema snapshot used during source review has SHA-256
+`e8cb6e287a3852ee3403f4803be5ad6b19db94948037eaa9672125c333427922`.
+It remains context, not immutable release evidence.
 
 ## Pinned references
 
