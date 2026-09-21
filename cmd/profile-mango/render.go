@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/staging"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -65,6 +66,16 @@ func renderAdapterFor(name string) (renderAdapter, bool) {
 				return openclaw.Render(input)
 			},
 		}, true
+	case hermes.TargetName:
+		return renderAdapter{
+			evidenceSHA256: hermes.EvidenceSHA256,
+			newResult: func(profileName string, target render.TargetBuild) render.Result {
+				return hermes.NewResult(profileName, target)
+			},
+			render: func(input render.Input) render.Result {
+				return hermes.Render(input)
+			},
+		}, true
 	default:
 		return renderAdapter{}, false
 	}
@@ -84,7 +95,7 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (codex, oh-my-pi, or openclaw)")
+	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (codex, oh-my-pi, openclaw, or hermes)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
 	cmd.Flags().BoolVar(&options.preview, "preview", false, "write inert preview artifacts despite applicability blockers")

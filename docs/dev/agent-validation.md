@@ -74,7 +74,8 @@ The custom-fork profile fixtures and commands are not evidence for upstream
 Jcode, and successful parsing does not establish authentication, permissions,
 network policy, tool enforcement, or runtime behavior.
 
-OpenClaw `v2026.9.5` is intentionally not added to this native probe harness.
+OpenClaw `v2026.9.5` and Hermes Agent `0.21.3` are intentionally not added to
+this native probe harness.
 Source review of `openclaw.mjs`, the `config validate --json` handler, config
 snapshot/plugin metadata loading, and state-read helpers did not establish a
 bounded no-write inspector. The candidate command can resolve dotenv and config
@@ -86,6 +87,17 @@ protects the target config policy but does not prove those other effects are
 absent. No OpenClaw command was run; its adapter records source/build-input
 evidence and keeps native acceptance, effective state, delivery, precedence,
 authentication, permissions, tools, skills, and runtime enforcement blocked.
+
+Hermes source release `v2026.9.14` was reviewed before considering
+`hermes config get model --json`, `hermes status`, or `hermes profile show`.
+The launcher loads `HERMES_HOME/.env` and project dotenv data, parses effective
+configuration, configures logging, and may create or secure the Hermes home.
+The candidate commands read credential/auth, profile, plugin, gateway, skills,
+context, and session state; `status --deep` can contact a provider endpoint and
+inspect a local socket. No bounded credential-free, no-write execution was
+established, so no Hermes command was run and the probe harness was not
+broadened. Smart approvals are excluded because they invoke an auxiliary model
+and do not cover file writes.
 
 ## Record support by version and capability
 
@@ -109,10 +121,12 @@ required-but-unknown properties continue to block applicability.
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
 this guide does not add a product schema or CLI contract. No applicable public
-target adapter is shipped today. Codex, Oh My Pi, and OpenClaw preview rendering
-remain non-applicable. Oh My Pi is additionally blocked on its standalone native
-artifact and safe config inspection; OpenClaw is blocked on its missing runtime
-artifact and unaccepted config inspection path.
+target adapter is shipped today. Codex, Oh My Pi, OpenClaw, and Hermes preview
+rendering remain non-applicable. Oh My Pi is additionally blocked on its
+standalone native artifact and safe config inspection; OpenClaw is blocked on
+its missing runtime artifact and unaccepted config inspection path; Hermes is
+blocked on its Python runtime/build requirement and unsafe candidate inspector
+paths.
 
 ## Keep useful configuration references locally
 

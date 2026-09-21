@@ -17,12 +17,14 @@ resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
-> are offline and pure. Codex CLI `0.154.0`, Oh My Pi `18.2.6`, and OpenClaw
-> `2026.9.5` have exact-version, explicitly inert preview renderers, but no
-> generated output is applicable or installed because authentication, delivery,
-> precedence, and enforcement remain unverified. Oh My Pi is blocked by its
-> missing standalone native addon and unsafe config-inspector effects. OpenClaw
-> is blocked by source-only runtime evidence and an unsafe config-inspection path.
+> are offline and pure. Codex CLI `0.154.0`, Oh My Pi `18.2.6`, OpenClaw
+> `2026.9.5`, and Hermes Agent `0.21.3` have exact-version, explicitly inert
+> preview renderers, but no generated output is applicable or installed because
+> authentication, delivery, precedence, and enforcement remain unverified. Oh
+> My Pi is blocked by its missing standalone native addon and unsafe
+> config-inspector effects. OpenClaw is blocked by source-only runtime evidence
+> and an unsafe config-inspection path. Hermes is blocked by its exact Python
+> build requirement, missing runtime artifact, and unsafe inspector paths.
 
 ## Install
 
@@ -244,6 +246,30 @@ The OpenClaw candidate contains only source-grounded `agents.defaults.model` and
 references, active target paths, or enforcement claims. The exact source/archive
 hashes, config command effect review, and blocked native acceptance boundary are
 recorded in the [target evidence ledger](docs/dev/target-evidence.md).
+
+## Inert Hermes preview
+
+The same explicit package can render a deterministic Hermes Agent `0.21.3`
+candidate from source release `v2026.9.14`. The output is YAML syntax under
+`preview/`, never `~/.hermes`, and the command exits nonzero because the report
+is non-applicable:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target hermes \
+  --target-version 0.21.3 \
+  --out ./hermes-preview \
+  --preview --json
+```
+
+The Hermes candidate contains only source-grounded `model.provider`,
+`model.default`, and `agent.reasoning_effort` fields. It emits no credentials,
+auth state, memory/session paths, or active target files. The exact source
+hashes, entrypoint effect review, Python requirement, and blocked native
+acceptance boundary are recorded in the [target evidence ledger](docs/dev/target-evidence.md).
 
 ## Commands
 

@@ -2,7 +2,9 @@
 
 These contributor references summarize configuration surfaces for the intended
 MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
-bases for isolated probes and adapter work, not a compatibility matrix. Codex now has an exact-version, preview-only renderer; no target has an applicable installer or enforcement claim.
+bases for isolated probes and adapter work, not a compatibility matrix. Codex,
+Oh My Pi, OpenClaw, and Hermes now have exact-version, preview-only renderers;
+no target has an applicable installer or enforcement claim.
 
 The [source manifest](sources.json) records deterministic provenance and keeps
 four states separate:
@@ -27,7 +29,7 @@ and commits are reproducible locators, not proof of target behavior.
 - [Pi](pi.md) — intended MVP target variant; qualified independently.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
-- [Hermes](hermes.md) — intended MVP target; untested.
+- [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer; native applicability remains blocked.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target.
 
 Candidate inspection commands below have not been executed for this reference

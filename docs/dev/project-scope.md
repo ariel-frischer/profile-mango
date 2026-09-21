@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Codex, Oh My Pi, and OpenClaw preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Codex, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -51,8 +51,13 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   JSON5 candidate syntax, resource copies, and a versioned report only into an
   explicit staging directory. Its source/archive provenance, missing runtime
   artifact, and unsafe config-inspector path remain explicit in every report.
+- A Hermes Agent `0.21.3` preview renderer for source release `v2026.9.14` that
+  emits deterministic source-grounded YAML candidate syntax, resource copies,
+  and a versioned report only into an explicit staging directory. Its Python
+  build requirement, source provenance, unsafe config-inspector paths, and
+  native applicability gaps remain explicit in every report.
 
-**No applicable target adapter is shipped.** The Codex, Oh My Pi, and OpenClaw renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable target adapter is shipped.** The Codex, Oh My Pi, OpenClaw, and Hermes renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -66,7 +71,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Pi | Intended MVP target | No adapter; compatibility not established |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
-| Hermes | Intended MVP target | No adapter; compatibility not established |
+| Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer

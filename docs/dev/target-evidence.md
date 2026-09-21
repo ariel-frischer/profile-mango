@@ -2,10 +2,11 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, and OpenClaw 2026.9.5 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider. No OpenClaw command was executed.
+did not start a session or initialize a provider. No OpenClaw or Hermes command
+was executed.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -41,6 +42,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
+| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`) | immutable source archive/build metadata hashes, entrypoint/config/status/profile effect review, and deterministic inert YAML preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, permissions, tools, skills, context, and enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
@@ -310,6 +312,87 @@ the source, build, and config blockers above, and return nonzero. It never write
 `~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
 
+## Hermes Agent v0.21.3 evidence
+
+### Immutable source, build inputs, and platform
+
+The task-owned checkout verified annotated tag object
+`7a963716b81be13ba513d4f127633b7da493aff2`, commit
+`345cd2b057a452236de401d3534b8502a7465e8d`, and tree
+`6e14b9791cdc5a47068685e9429dd5d6bdc5ef5f`. The deterministic source archive
+`git archive --format=tar --prefix=hermes-agent-v2026.9.14/ HEAD` has SHA-256
+`71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47`.
+`pyproject.toml`, `uv.lock`, `setup.py`, `hermes_cli/main.py`, and
+`hermes_cli/__init__.py` have SHA-256 values
+`a674c321c63c3bfd9fa099fab5957a64092416f7771680b370a4d77e992744ba`,
+`4426ffd292c32cd8edda5779db49951833e87c73cab7cee845e7afe92ecb17b9`,
+`d476dd1c28d707acd72f1d0551d7178123832ae18b6e201ca1ac48cd040653ae`,
+`d21135792593599715c194999a97621cb86b09180b19e51db58d1910f1bdabf3`, and
+`0d78a58a9f27f32adfdac959e89767cecde93a424bcfbd39d64fb95f6cf13e6c`.
+
+The annotated tag message and both source version declarations identify Hermes
+Agent `v0.21.3`, release date `2026.9.14`. The source requires Python
+`>=3.11,<3.14`. The review platform was Linux 7.2.5-3-omarchy x86_64 on
+Omarchy 4.0.4. The active system runtime was Python `3.14.7`, binary SHA-256
+`d78f9cf7178ecff09963551399855543c297f37ac207e626228bfe43cb26a70c`, outside
+the source requirement. A compatible mise-managed Python `3.12.13` was present
+but not activated. No Hermes dependency install or runtime artifact build was run.
+
+### Source/effect review and execution decision
+
+Review covered the `hermes` launcher, `hermes_cli/main.py`, `config.py`,
+`config_defaults.py`, `env_loader.py`, `hermes_constants.py`, `profile_cmd.py`,
+`profiles.py`, `status.py`, `status_auth.py`, `auth.py`,
+`agent/prompt_builder.py`, and `agent/agent_init.py` before considering any
+command. The source review established these effects:
+
+- The launcher imports the main CLI, loads `HERMES_HOME/.env` and the project
+  `.env`, parses effective configuration, configures file logging, and may
+  create or secure Hermes-home directories before dispatch.
+- `hermes config get <key> --json` dispatches to `get_config_value`, which reads
+  `.env` keys directly or calls `load_config` for YAML values. Config loading
+  can normalize, cache, back up malformed YAML, and perform home/path setup.
+- `hermes status` reads `.env`, merged config, provider/auth status, `auth.json`
+  through provider helpers, plugin/platform discovery, gateway/PID state,
+  cron files, and session databases. `status --deep` can make an HTTP request
+  when an OpenRouter key is present and probes a local TCP socket.
+- `hermes profile show` resolves a profile under `HERMES_HOME`, reads its
+  `config.yaml`, gateway state, distribution metadata, aliases, skill count,
+  `.env`, and `SOUL.md` presence. Profile helpers also contain subprocess and
+  service-management paths that were not part of a bounded inspector contract.
+- Context and skill construction reads `SOUL.md`, `.hermes.md`/`HERMES.md`,
+  root-to-current-directory `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, and
+  `HERMES_HOME/skills`. Auth helpers resolve profile/global `auth.json` paths,
+  and dotenv loading can evaluate configured external secret sources.
+
+No bounded, credential-free, no-write execution was established even with
+synthetic `HERMES_HOME` and project paths, sanitized environment, blocked
+network, and a timeout. No Hermes command was run. Smart approvals were not
+used because they invoke an auxiliary model and do not cover file writes. No
+session, provider, credential, profile mutation, update, telemetry, hook,
+plugin, subprocess, target-home, or personal Hermes state was accessed. The
+repository probe harness was not broadened.
+
+### Capability classification
+
+| Portable property | Hermes Agent v0.21.3 evidence | M0 applicability consequence |
+| --- | --- | --- |
+| Config syntax fidelity | Source and release docs identify YAML `model.provider`, `model.default`, and `agent.reasoning_effort` fields | Partial inert candidate fidelity; native parser acceptance is unverified |
+| Effective state | `config get` loads merged config without a safe per-field provenance contract; `status` also reads state and auth surfaces | Blocking unknown |
+| Config/runtime precedence | Docs describe CLI, YAML, dotenv, defaults, and managed policy layers, but no exact isolated observation was safe | Blocking unknown |
+| Provider/model/effort | Candidate fields are source-grounded; provider resolution, fallback selection, and effort use are not observed | Syntax partial; effective route remains blocking |
+| Authentication | `auth.json`, dotenv, provider environment, and OAuth paths are target-owned; no credential-free route identity was established | Authentication-required mappings are non-applicable |
+| Permissions/tools | `toolsets`, terminal backends, approvals, plugins, and command policies are documented, but closed allowlists, network/shell behavior, and bypasses were not observed | Blocking unknown |
+| Instructions/context | Hermes discovers SOUL and project context files with target-owned precedence and threat scanning | Delivery and precedence remain blocking |
+| Skills | Skills primarily live under `HERMES_HOME/skills` and are discovered into the prompt/tool surface | Delivery, rediscovery, and enforcement remain blocking |
+| Runtime enforcement | No Hermes runtime artifact or session was built or launched | Blocking unknown |
+
+The Hermes adapter emits only a deterministic inert YAML candidate and
+content-addressed resource copies. The candidate uses no credential, auth,
+memory, session, profile, or active target-home path. Reports remain
+`applicable: false`, include target-owned diagnostics, and return nonzero.
+
+
 ## Experimental Ariel custom Jcode fork evidence
 
 All profile commands, profile fixtures, and profile observations in this section
@@ -446,8 +529,8 @@ No candidate field is classified as runtime-enforced by M0. The route/instructio
 
 The minimum contract can proceed without public Jcode support and without pretending Codex is already supported. M0 establishes deterministic canonical semantics and records that:
 
-- Codex is the first public M1 adapter candidate, and Oh My Pi and OpenClaw now
-  have exact source-qualified inert preview renderers.
+- Codex is the first public M1 adapter candidate, and Oh My Pi, OpenClaw, and
+  Hermes now have exact source-qualified inert preview renderers.
 - Ariel's custom Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
@@ -481,9 +564,9 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code, Pi, and Hermes remain roadmap research, not M0 targets. OpenClaw
-  has a source-qualified inert preview boundary, but native applicability remains
-  blocked pending a safe exact-artifact inspection path.
+- Claude Code and Pi remain roadmap research, not M0 targets. OpenClaw and Hermes
+  have source-qualified inert preview boundaries, but native applicability remains
+  blocked pending safe exact-artifact inspection paths.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.

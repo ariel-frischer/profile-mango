@@ -1,9 +1,26 @@
 # Hermes configuration reference
 
-**Reference date:** 2026-09-20. **Documentation pin:** repository release
+**Reference date:** 2026-09-21. **Source pin:** repository release
 `v2026.9.14` (Hermes Agent `v0.21.3`), commit
-`345cd2b057a452236de401d3534b8502a7465e8d`. **Status:** intended MVP target;
-not installed, tested, or supported by profile-mango, and no adapter ships.
+`345cd2b057a452236de401d3534b8502a7465e8d`. **Status:** exact-version inert
+preview renderer; native applicability remains blocked.
+
+## Exact source observation
+
+The task-owned checkout verified annotated tag object
+`7a963716b81be13ba513d4f127633b7da493aff2`, commit
+`345cd2b057a452236de401d3534b8502a7465e8d`, and tree
+`6e14b9791cdc5a47068685e9429dd5d6bdc5ef5f`. The deterministic source archive
+has SHA-256
+`71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47`.
+`pyproject.toml` declares project version `0.21.3` and Python
+`>=3.11,<3.14`; `hermes_cli/__init__.py` independently declares version
+`0.21.3` and release date `2026.9.14`. The source and build metadata hashes,
+runtime, and platform are recorded in the [target evidence ledger](../target-evidence.md).
+
+The review platform was Linux x86_64 on Omarchy kernel
+`7.2.5-3-omarchy`. The available system Python was `3.14.7`, outside the
+source requirement, so no Hermes dependency install or runtime build was run.
 
 ## Configuration and precedence
 
@@ -27,10 +44,30 @@ primarily live under `HERMES_HOME/skills`.
 
 `hermes config get model --json`, `hermes status`, and `hermes profile show` are
 candidate selection/state inspectors. No complete redacted effective-config and
-provenance report is documented. These commands were not executed. Future probes
-must review exact-version effects, use an isolated `HERMES_HOME` and project,
-synthetic data, no real credentials, and blocked provider access. Do not exercise
-smart approvals, mutate profiles, or start an agent session.
+provenance report is documented. Source review found that the launcher loads
+`HERMES_HOME/.env` and the project `.env`, parses effective config, configures
+logging, and can create or secure the Hermes home before dispatch. `config get`
+then calls `load_config`; `status` reads dotenv, config, auth/provider state,
+plugins, gateway state, and session databases, while `--deep` can use the
+network and a local socket. `profile show` reads profile config, gateway/PID
+state, distribution metadata, aliases, skills, `.env`, and `SOUL.md` paths.
+
+Those effects were not bounded as credential-free and no-write even with
+synthetic homes and blocked network. The commands were not executed. No
+smart approvals, profile mutations, sessions, providers, credentials, target
+homes, or auxiliary-model calls were used. Future probes must establish all
+of those effects before execution.
+
+## Inert preview boundary
+
+`profile-mango render <name> --target hermes --target-version 0.21.3` emits a
+deterministic `preview/<name>.config.yaml.preview` candidate through the
+versioned render report. Its source-grounded YAML fields are `model.provider`,
+`model.default`, and `agent.reasoning_effort`. It never copies authentication
+values, writes `~/.hermes`, reads target state, or claims applicability. The
+report keeps native config acceptance, effective state, precedence,
+authentication, delivery, permissions, tools, skills, context, and runtime
+enforcement blocking.
 
 Pinned sources: [configuration][configuration], [profiles][profiles],
 [models][models], [providers][providers], [fallbacks][fallbacks], [tools][tools],
