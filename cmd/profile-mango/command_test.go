@@ -39,6 +39,10 @@ func TestHelpCommandSmoke(t *testing.T) {
 	executeCommand(t, "help")
 }
 
+func TestAgentsCheckHelpSmoke(t *testing.T) {
+	executeCommand(t, "agents", "check", "--help")
+}
+
 func TestCompletionCommandSmoke(t *testing.T) {
 	for _, shell := range []string{"bash", "zsh", "fish", "powershell"} {
 		t.Run(shell, func(t *testing.T) {
