@@ -13,7 +13,7 @@
       "id": "codex",
       "name": "Codex",
       "reference": "codex.md",
-      "product_status": "first_public_adapter_candidate_no_adapter",
+      "product_status": "first_public_adapter_candidate_inert_preview_renderer",
       "documentation_basis": "mutable_unversioned_official_docs",
       "installed_observation": "recorded_separately_in_target_evidence",
       "tested_evidence": "none_for_reference_pack",

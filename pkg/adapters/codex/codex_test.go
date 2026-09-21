@@ -161,7 +161,7 @@ func artifactByPath(artifacts []Artifact, wanted string) Artifact {
 func assertNoActiveArtifacts(t *testing.T, artifacts []Artifact) {
 	t.Helper()
 	for _, artifact := range artifacts {
-		if artifact.Path == "config.toml" || artifact.Path == "AGENTS.md" || strings.HasPrefix(artifact.Path, "skills/") {
+		if artifact.Path == "config.toml" || artifact.Path == "AGENTS.md" || artifact.Path == "plan.json" || artifact.Path == "manifest.json" || strings.HasPrefix(artifact.Path, "skills/") {
 			t.Fatalf("active artifact emitted: %s", artifact.Path)
 		}
 	}
