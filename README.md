@@ -16,6 +16,28 @@ coding-agent behavior. It separates shared intent from machine-local routes,
 resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
+## What is a profile?
+
+A profile is a user-owned bundle of the behavior and resources you want to carry
+between coding agents:
+
+- **Instructions:** reusable agent guidance, including files such as `AGENTS.md`.
+- **Skills:** `SKILL.md` packages and their supporting resources.
+- **Policy:** permissions, tool allow/deny rules, and other behavioral requirements.
+- **Routing intent:** provider, transport, authentication mode, model, and effort,
+  kept separate from target-owned credentials.
+
+Instead of rewriting the same setup in Codex TOML, Claude Code JSON, Pi settings,
+OpenClaw JSON5, Hermes YAML, and every other agent-specific format, you define the
+shared intent once and select a named profile. Target adapters translate the
+parts each agent understands and report anything they cannot faithfully deliver
+or enforce. The intended workflow is to switch profiles across agents without
+maintaining a separate copy of your instructions, skills, and policy for each one.
+
+The current prototype validates and resolves these bundles and produces
+deterministic, inspectable **inert previews**. It does not yet install them into
+the agents, as described in the status boundary below.
+
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
 > are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Pi
 > `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, and Hermes Agent `0.21.3`
