@@ -9,8 +9,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
+
+const expectedReadmeLogo = `█▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
+█▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█`
 
 const expectedStarterProfile = `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -60,6 +64,69 @@ func TestInitCommandScaffoldsDefaultAndExplicitDestinations(t *testing.T) {
 			}
 			assertStarterTree(t, test.destination)
 		})
+	}
+}
+
+func TestWriteInitLogoColorModes(t *testing.T) {
+	original := color.NoColor
+	t.Cleanup(func() { color.NoColor = original })
+	tests := map[string]struct {
+		noColor  bool
+		wantANSI bool
+	}{
+		"ansi enabled":  {wantANSI: true},
+		"ansi disabled": {noColor: true},
+	}
+
+	for _, name := range []string{"ansi enabled", "ansi disabled"} {
+		t.Run(name, func(t *testing.T) {
+			color.NoColor = tests[name].noColor
+			var output bytes.Buffer
+			if err := writeInitLogo(&output); err != nil {
+				t.Fatalf("writeInitLogo: %v", err)
+			}
+			got := output.String()
+			if strings.Contains(got, "\x1b[") != tests[name].wantANSI {
+				t.Fatalf("ANSI presence in %q, want %t", got, tests[name].wantANSI)
+			}
+			if stripANSI(got) != expectedReadmeLogo+"\n" {
+				t.Fatalf("visible logo = %q, want %q", stripANSI(got), expectedReadmeLogo+"\n")
+			}
+		})
+	}
+}
+
+func TestInitCommandOutputIncludesLogo(t *testing.T) {
+	original := color.NoColor
+	color.NoColor = true
+	t.Cleanup(func() { color.NoColor = original })
+	destination := filepath.Join(t.TempDir(), "project")
+
+	output, err := executeCommandResult(t, "init", destination)
+	if err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	want := expectedReadmeLogo + "\nCreated profile scaffold in " + destination + "\n"
+	if output != want {
+		t.Fatalf("init output = %q, want %q", output, want)
+	}
+}
+
+func TestInitCommandFailureOmitsLogo(t *testing.T) {
+	destination := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(destination, "profiles", "default"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(destination, "profiles", "default", "profile.yaml"), []byte("existing"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	output, err := executeCommandResult(t, "init", destination)
+	if err == nil {
+		t.Fatal("init succeeded despite conflict")
+	}
+	if strings.Contains(output, "█▀█") || strings.Contains(output, "Created profile scaffold") {
+		t.Fatalf("failed init emitted success output: %q", output)
 	}
 }
 
@@ -310,4 +377,18 @@ func snapshotTree(root string) map[string]treeEntry {
 		return nil
 	})
 	return entries
+}
+
+func stripANSI(value string) string {
+	for {
+		start := strings.Index(value, "\x1b[")
+		if start < 0 {
+			return value
+		}
+		end := strings.IndexByte(value[start:], 'm')
+		if end < 0 {
+			return value
+		}
+		value = value[:start] + value[start+end+1:]
+	}
 }

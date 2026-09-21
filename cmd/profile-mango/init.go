@@ -62,6 +62,9 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if err := writeInitFiles(destination, files); err != nil {
 		return err
 	}
+	if err := writeInitLogo(cmd.OutOrStdout()); err != nil {
+		return err
+	}
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created profile scaffold in %s\n", filepath.Clean(destination)); err != nil {
 		return fmt.Errorf("reporting initialized directory: %w", err)
 	}
