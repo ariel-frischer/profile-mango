@@ -1,33 +1,67 @@
 # profile-mango
 
-Define portable coding-agent behavior once, resolve it deterministically, and know which properties a target can or cannot preserve.
+<div align="center">
 
-> **Status:** private prototype. M0 validation remains offline and pure. An exact-version Codex 0.154.0 adapter can now produce an explicitly inert preview, but no generated output is applicable or installed because authentication, delivery, and enforcement remain unverified.
+<pre>
+█▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
+█▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
+</pre>
 
-## Why
+**Define portable coding-agent behavior once, then see exactly what each target can preserve.**
 
-Coding-agent configuration mixes portable intent with target-specific syntax, authentication routes, and enforcement boundaries. `profile-mango` provides a strict canonical model for the portable part while failing closed on ambiguous input.
+</div>
 
-M0 includes:
+`profile-mango` is a strict profile format, Go library, and CLI for portable
+coding-agent behavior. It separates shared intent from machine-local routes,
+resolves profiles deterministically, and fails closed when a target cannot prove
+that it preserves a requirement.
 
-- strict `PolicyProfile` and local route-binding parsing
-- stable, field-aware diagnostics
-- one-parent inheritance with explicit merge rules
-- closed tool allowlists and deny-wins resolution
-- safe instruction and skill resource hashing
-- versioned plan and ownership-manifest contracts
-- JSON Schemas and positive, constrained, and unsupported fixtures
-- an offline `validate` command
+> **Status:** private prototype. The shipped M0 workflow is offline and pure.
+> Codex CLI `0.154.0` has an exact-version, explicitly inert preview renderer,
+> but no generated output is applicable or installed because authentication,
+> delivery, and enforcement remain unverified.
 
-M0 intentionally excludes applicable adapters, application, import, drift repair, credentials, provider calls, target-home inspection, roles, MCP projection, and identity management. The later Codex preview renderer writes only to an explicit staging directory and does not weaken those safety boundaries.
+## Install
 
-## Support policy
+Build and install from source:
 
-Codex is the first intended public adapter target. The shipped Codex 0.154.0 boundary is preview-only: it has version-qualified evidence and golden rendering tests, always reports current profiles as non-applicable, and emits no active target configuration.
+```bash
+git clone git@gitlab.com:ariel-frischer/profile-mango.git
+cd profile-mango
+make install
+make install-global
+profile-mango version
+```
 
-Experimental comparison targets are documented only in developer evidence. They are not part of the public compatibility promise.
+The repository also contains a checksum-verifying private release installer for
+explicitly authorized GitLab release access. It does not edit shell profiles:
 
-## Profile
+```bash
+./install.sh
+```
+
+Set `PROFILE_MANGO_VERSION` to select a release and
+`PROFILE_MANGO_INSTALL_DIR` to change the default `~/.local/bin` destination.
+
+## Usage
+
+Validate a tracked example entirely offline:
+
+```console
+$ profile-mango validate \
+    pkg/profilemango/testdata/fixtures/route-only/profile.yaml \
+    --bindings pkg/profilemango/testdata/fixtures/bindings.yaml
+route-only is valid
+```
+
+Use `--json` for a stable machine-readable result:
+
+```bash
+profile-mango validate profile.yaml --bindings local-bindings.yaml --json
+```
+
+A profile carries portable intent while a local binding identifies a route
+without containing credentials:
 
 ```yaml
 apiVersion: profilemango.dev/v1alpha1
@@ -51,8 +85,6 @@ spec:
     - skills/research/SKILL.md
 ```
 
-Machine-local bindings contain route identity, never tokens:
-
 ```yaml
 routes:
   research-primary:
@@ -63,31 +95,77 @@ routes:
     effort: high
 ```
 
-## CLI
+## Features
+
+- **Strict contracts:** unknown keys, duplicate keys, nulls, unsupported
+  versions, missing parents, cycles, and escaping resource paths fail closed.
+- **Deterministic resolution:** one-parent inheritance, explicit merge rules,
+  closed tool allowlists, and deny-wins behavior produce reproducible results.
+- **Portable resources:** instructions and skills are resolved and hashed without
+  reading outside the explicitly supplied resource root.
+- **Machine-local routing:** bindings describe provider, transport,
+  authentication mode, model, and effort, never tokens or credentials.
+- **Inspectability:** stable diagnostics and versioned profile, binding, plan,
+  render, and ownership-manifest schemas make limitations visible.
+- **Offline operation:** validation does not inspect agent homes, run target
+  subprocesses, access credentials, call providers, or use the network.
+
+## Why this exists
+
+Agent configuration mixes three different concerns:
+
+1. **Portable intent:** permissions, tools, instructions, skills, and route
+   requirements that should retain meaning across targets.
+2. **Target delivery:** syntax, file locations, precedence, and resource
+   placement that differ between agents.
+3. **Enforcement evidence:** what the tested target version can actually prove,
+   including authentication routes and bypass surfaces.
+
+Treating syntax translation as compatibility hides meaningful gaps. A read-only
+instruction is not the same as enforced read-only access, and selecting a model
+does not prove which authentication route will be used. `profile-mango` keeps
+those distinctions explicit and blocks required properties that are unsupported
+or unknown.
+
+## Inert Codex preview
+
+The current Codex adapter renders only a candidate into a new explicit staging
+directory. This verified fixture command writes preview artifacts, reports
+blocking diagnostics, and exits nonzero because the output is not applicable:
 
 ```bash
-make build
-
-./bin/profile-mango validate profiles/research/profile.yaml \
-  --bindings bindings/local.yaml
-
-./bin/profile-mango validate profiles/research/profile.yaml --json
-
-# Writes only an inert preview to a new explicit directory, then exits nonzero
-# because current authentication, delivery, and enforcement requirements block applicability.
-./bin/profile-mango render research \
-  --profiles profiles \
-  --resource-root . \
-  --bindings bindings/local.yaml \
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
   --target codex \
   --target-version 0.154.0 \
   --out ./codex-preview \
   --preview --json
 ```
 
-Validation and preview rendering read only explicitly supplied files. They do not inspect agent homes, resolve credentials, run subprocesses, or use the network. Preview output is conspicuously inert and is never installed automatically.
+The command never installs the preview or modifies Codex configuration. See the
+[target evidence ledger](docs/dev/target-evidence.md) for the exact evidence
+level and unresolved boundaries.
+
+## Commands
+
+```text
+profile-mango agents      Inspect documented agent sources without changing local state
+profile-mango completion  Generate shell completion scripts
+profile-mango config      Manage user-level configuration
+profile-mango render      Render an inert, version-qualified candidate
+profile-mango validate    Validate one PolicyProfile offline
+profile-mango version     Display version information
+```
+
+User configuration defaults to `~/.config/profile-mango/config.yaml`. Resolution
+order is the root `--config` flag, then `PROFILE_MANGO_CONFIG`, then the default
+path. Run `profile-mango config keys` to list supported settings.
 
 ## Library
+
+The canonical domain is available as a Go library:
 
 ```go
 profile, diagnostics := profilemango.ParseProfile(profileYAML)
@@ -95,17 +173,59 @@ resolved, diagnostics := profilemango.Resolve(profiles, "research")
 resources, diagnostics := profilemango.DigestResources(packageRoot, resolved)
 ```
 
-See [`schemas/`](schemas/) for the versioned contracts and [`docs/dev/target-evidence.md`](docs/dev/target-evidence.md) for the evidence boundary.
+Module path:
+
+```text
+gitlab.com/ariel-frischer/profile-mango/pkg/profilemango
+```
+
+Versioned JSON Schemas live in [`schemas/`](schemas/).
+
+## Support boundary
+
+Codex is the first intended public adapter target. The shipped Codex `0.154.0`
+boundary is preview-only and always reports current profiles as non-applicable.
+No applicable adapter, installation engine, import, drift repair, credential
+handling, provider call, target-home inspection, role projection, MCP projection,
+or identity management is shipped.
+
+Other intended targets and experimental comparison evidence are documented as
+roadmap or developer material, not as current compatibility claims. See
+[project scope](docs/dev/project-scope.md) for the precise distinction.
 
 ## Development
 
+The project uses Go `1.25.5`, pinned with [`mise.toml`](mise.toml).
+
 ```bash
+mise install
+make install
 make test
 make test-coverage
 make lint
 make format
 make build
 ```
+
+Useful CLI smoke checks:
+
+```bash
+go run ./cmd/profile-mango --help
+go run ./cmd/profile-mango version
+go run ./cmd/profile-mango config keys
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and
+[SECURITY.md](SECURITY.md) for reporting security issues.
+
+## Documentation
+
+- [Documentation index](docs/index.md)
+- [Project scope and goals](docs/dev/project-scope.md)
+- [M0 validation evidence](docs/dev/m0-validation.md)
+- [Target evidence ledger](docs/dev/target-evidence.md)
+- [Agent reference pack](docs/dev/agents/README.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
