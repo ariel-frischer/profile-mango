@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-v test-coverage lint lint-go format clean build bin run go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
+.PHONY: help install i test test-go test-installer test-v test-coverage lint lint-go lint-shell format clean build bin run go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -31,8 +31,13 @@ go-install: ## Install profile-mango to GOPATH/bin
 
 install-global: go-install ## Alias for go-install
 
-test: ## Run tests
+test: test-go test-installer ## Run Go and installer tests
+
+test-go: ## Run Go tests
 	go test ./...
+
+test-installer: ## Run offline installer fixture tests
+	sh tests/install_test.sh
 
 test-v: ## Run tests (verbose)
 	go test -v ./...
@@ -40,7 +45,7 @@ test-v: ## Run tests (verbose)
 test-coverage: ## Run tests with coverage
 	go test -race -coverprofile=coverage.out ./...
 
-lint: lint-go ## Run all linters
+lint: lint-go lint-shell ## Run all linters
 
 lint-go: ## Run Go linters
 	@if command -v mise >/dev/null 2>&1 && [ -f mise.toml ]; then \
@@ -50,6 +55,14 @@ lint-go: ## Run Go linters
 	else \
 		echo "golangci-lint not installed, running go vet"; \
 		go vet ./...; \
+		fi
+
+lint-shell: ## Check POSIX shell scripts
+	@if command -v shellcheck >/dev/null 2>&1; then \
+		shellcheck --shell=sh install.sh tests/install_test.sh; \
+	else \
+		sh -n install.sh && sh -n tests/install_test.sh; \
+		echo "shellcheck not installed, ran sh -n"; \
 	fi
 
 format: ## Format code
