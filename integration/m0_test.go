@@ -30,16 +30,21 @@ func TestCleanOfflineInstallAndInstalledBinary(t *testing.T) {
 	bindings := filepath.Join(fixtures, "bindings.yaml")
 	testInstalledCommands(t, installedBinary, repoRoot, fixtures, bindings, env)
 	testUnsupportedProfile(t, installedBinary, repoRoot, fixtures, bindings, env)
+	if _, err := os.Stat(filepath.Join(tempRoot, "home", ".profile-mango")); !os.IsNotExist(err) {
+		t.Fatalf("read-only installed commands created profile home: %v", err)
+	}
 }
 
 func testInstalledCommands(t *testing.T, binary, repoRoot, fixtures, bindings string, env []string) {
 	t.Helper()
+	profileHome := filepath.Join(filepath.Dir(filepath.Dir(binary)), "home", ".profile-mango")
 	tests := map[string]struct {
 		args       []string
 		contains   []string
 		notContain []string
 	}{
-		"help":       {args: []string{"--help"}, contains: []string{"profile-mango", "validate", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
+		"help":       {args: []string{"--help"}, contains: []string{"profile-mango", "home", "validate", "--home", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
+		"home":       {args: []string{"home"}, contains: []string{profileHome}},
 		"version":    {args: []string{"version", "--plain"}, contains: []string{"profile-mango dev", "go: "}},
 		"route-only": {args: validateArgs(filepath.Join(fixtures, "route-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "route-only"`}},
 		"read-only":  {args: validateArgs(filepath.Join(fixtures, "read-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "read-only"`}},

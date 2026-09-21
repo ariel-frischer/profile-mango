@@ -42,6 +42,7 @@ CLI smoke checks:
 ```bash
 go run ./cmd/profile-mango --help
 go run ./cmd/profile-mango version
+go run ./cmd/profile-mango home
 go run ./cmd/profile-mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
 ```
 
@@ -54,7 +55,9 @@ cmd/profile-mango/      # CLI entry point (cobra)
   version.go          # version subcommand
   validate.go         # offline strict profile/binding validation
   help.go             # custom help formatting
+  home.go             # effective global profile-home inspection
 internal/
+  profilehome/        # --home/env/user-home resolution
   version/            # version info injected via ldflags
 pkg/profilemango/      # pure canonical domain, parsing, resolution, resource hashing
   testdata/fixtures/  # route-only, constrained, and unsupported fixtures
@@ -67,6 +70,15 @@ CHANGELOG.yaml        # changelog source
 CHANGELOG.md          # generated changelog output
 .chlog.yaml           # changelog config
 ```
+
+## Profile Home Behavior
+
+- The default application home is `<user-home>/.profile-mango` on every OS.
+- Path priority: root `--home`, then `$PROFILE_MANGO_HOME`, then the default.
+- `profile-mango home` prints the absolute effective path without creating it.
+- Root `init` scaffolds the effective home; `init .` or `init <directory>` scaffolds an explicit project package.
+- Render inputs default to `<home>/profiles`, `<home>`, and `<home>/bindings/local.yaml`. Explicit project rendering must provide `--profiles`, `--resource-root`, and `--bindings` together.
+- The binary never creates the home implicitly during installation or read-only commands.
 
 ## M0 Safety Boundary
 

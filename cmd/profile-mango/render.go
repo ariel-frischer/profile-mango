@@ -21,6 +21,7 @@ type renderOptions struct {
 	out           string
 	preview       bool
 	jsonOutput    bool
+	usesHome      bool
 }
 
 func newRenderCmd() *cobra.Command {
@@ -34,9 +35,9 @@ func newRenderCmd() *cobra.Command {
 			return runRender(cmd, args[0], options)
 		},
 	}
-	cmd.Flags().StringVar(&options.profiles, "profiles", "", "explicit profile repository root")
-	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "explicit resource package root")
-	cmd.Flags().StringVar(&options.bindings, "bindings", "", "explicit local route bindings file")
+	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
+	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
+	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
@@ -46,6 +47,11 @@ func newRenderCmd() *cobra.Command {
 }
 
 func runRender(cmd *cobra.Command, name string, options renderOptions) error {
+	resolvedOptions, err := resolveRenderInputs(options)
+	if err != nil {
+		return err
+	}
+	options = resolvedOptions
 	if err := validateRenderOptions(options); err != nil {
 		return err
 	}
@@ -54,13 +60,17 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	profiles, diagnostics := loadSelectedProfiles(options.profiles, name)
 	bindingsData, err := os.ReadFile(options.bindings)
 	if err != nil {
-		return fmt.Errorf("read bindings: %w", err)
+		if options.usesHome && os.IsNotExist(err) {
+			example := filepath.Join(filepath.Dir(options.bindings), "local.example.yaml")
+			return fmt.Errorf("read global bindings %s (copy %s to this path first): %w", options.bindings, example, err)
+		}
+		return fmt.Errorf("read bindings %s: %w", options.bindings, err)
 	}
 	bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)
 	diagnostics = append(diagnostics, bindingDiagnostics...)
 	_, found := profiles[name]
 	if !found {
-		diagnostics.Add(profilemango.SeverityError, "render.profile_missing", "profile", "requested profile is not present in the explicit repository", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "render.profile_missing", "profile", "requested profile is not present in the selected repository", 0, 0)
 	}
 	var resolved profilemango.ResolvedProfile
 	var route profilemango.RouteBinding
@@ -92,14 +102,36 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	return finishRender(cmd, result, options, true)
 }
 
+func resolveRenderInputs(options renderOptions) (renderOptions, error) {
+	values := []string{options.profiles, options.resourceRoot, options.bindings}
+	explicit := 0
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			explicit++
+		}
+	}
+	if explicit == len(values) {
+		return options, nil
+	}
+	if explicit != 0 {
+		return renderOptions{}, fmt.Errorf("set --profiles, --resource-root, and --bindings together, or omit all three to use the profile home")
+	}
+	home, err := selectedHome()
+	if err != nil {
+		return renderOptions{}, err
+	}
+	options.profiles = filepath.Join(home, "profiles")
+	options.resourceRoot = home
+	options.bindings = filepath.Join(home, "bindings", "local.yaml")
+	options.usesHome = true
+	return options, nil
+}
+
 func validateRenderOptions(options renderOptions) error {
 	values := []struct {
 		flag  string
 		value string
 	}{
-		{flag: "--profiles", value: options.profiles},
-		{flag: "--resource-root", value: options.resourceRoot},
-		{flag: "--bindings", value: options.bindings},
 		{flag: "--target", value: options.target},
 		{flag: "--target-version", value: options.targetVersion},
 		{flag: "--out", value: options.out},

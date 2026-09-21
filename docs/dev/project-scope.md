@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. A separately scoped M1 project-scaffolding workflow adds an offline starter package. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus an exact-version, explicitly inert Codex preview renderer. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -33,9 +33,16 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus an ex
   provider, transport, authentication mode, model, and effort, not credentials.
 - The M1 root `init [directory]` command creates a deterministic starter package
   with a strict profile, a safe route-binding example, and an ignored
-  machine-local binding path. It never overwrites existing paths.
+  machine-local binding path. With no directory it uses the effective application
+  home; `init .` and `init <directory>` remain explicit project workflows. It never
+  overwrites existing paths.
+- The effective application home resolves by root `--home`, then
+  `PROFILE_MANGO_HOME`, then `<user-home>/.profile-mango`; `home` prints it without
+  creating it.
 - A Codex CLI `0.154.0` preview renderer that emits deterministic candidate syntax,
   resource copies, and a versioned report only into an explicit staging directory.
+  Its profile, resource, and binding inputs default coherently from the application
+  home, while explicit project inputs must be supplied as a complete set.
 
 **No applicable target adapter is shipped.** The Codex renderer always reports current profiles as non-applicable and never installs output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
@@ -92,11 +99,11 @@ does not promise roles, MCP projection, or any other expansion.
 ## Non-goals and boundaries
 
 **Current exclusions:** applicable installation or application, import, drift repair,
-user-level preference storage, home resolution, credential handling, provider calls,
+user-level preference storage, credential handling, provider calls,
 target-home inspection, roles, MCP projection, and identity management. `init`
-scaffolds portable files and a route-identity example only. It does not resolve
-credentials, inspect target homes, or call providers. These are milestone
-boundaries, not all permanent bans.
+scaffolds portable files and a route-identity example only. Home resolution selects
+only profile-mango-owned inputs; it does not resolve credentials, inspect target
+homes, or call providers. These are milestone boundaries, not all permanent bans.
 
 **Long-term product boundaries:** profile-mango is not a replacement agent runtime,
 a model/provider service, or a credential store. It does not promise identical

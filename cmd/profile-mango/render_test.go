@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 )
 
@@ -96,11 +97,52 @@ func TestRenderRejectsInvalidProfileWithoutPreviewOutput(t *testing.T) {
 	}
 }
 
-func TestRenderRequiresExplicitFlags(t *testing.T) {
+func TestRenderRequiresTargetFlagsWhenUsingHomeDefaults(t *testing.T) {
+	t.Setenv(profilehome.EnvHome, t.TempDir())
 	cmd := newRenderCmd()
 	cmd.SetArgs([]string{"route-only"})
-	if err := cmd.Execute(); err == nil || !strings.Contains(err.Error(), "--profiles is required") {
+	if err := cmd.Execute(); err == nil || !strings.Contains(err.Error(), "--target is required") {
 		t.Fatalf("missing explicit flag error = %v", err)
+	}
+}
+
+func TestRenderRejectsPartialRepositoryOverrides(t *testing.T) {
+	cmd := newRenderCmd()
+	cmd.SetArgs([]string{"route-only", "--profiles", t.TempDir()})
+	if err := cmd.Execute(); err == nil || !strings.Contains(err.Error(), "set --profiles, --resource-root, and --bindings together") {
+		t.Fatalf("partial repository override error = %v", err)
+	}
+}
+
+func TestRenderUsesHomeRepositoryDefaults(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv(profilehome.EnvHome, home)
+	writeFile(t, filepath.Join(home, "profiles", "route-only", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: codex-oauth\n  instructions:\n    append: [instructions/system.md]\n")
+	writeFile(t, filepath.Join(home, "instructions", "system.md"), "system\n")
+	writeFile(t, filepath.Join(home, "bindings", "local.yaml"), "routes:\n  codex-oauth:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n")
+	out := filepath.Join(t.TempDir(), "candidate")
+
+	_, _, err := executeRenderForTest(t, []string{
+		"route-only", "--target", codex.TargetName, "--target-version", codex.TargetVersion,
+		"--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("blocked home preview unexpectedly succeeded")
+	}
+	assertRenderFile(t, out, "preview/route-only.config.toml.preview")
+	assertRenderFile(t, out, "resources/instructions/system.md")
+}
+
+func TestRenderMissingHomeBindingsIsActionable(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv(profilehome.EnvHome, home)
+	writeFile(t, filepath.Join(home, "profiles", "default", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: default\nspec:\n  routeRef: local\n")
+	_, _, err := executeRenderForTest(t, []string{
+		"default", "--target", codex.TargetName, "--target-version", codex.TargetVersion,
+		"--out", filepath.Join(t.TempDir(), "candidate"),
+	})
+	if err == nil || !strings.Contains(err.Error(), "copy") || !strings.Contains(err.Error(), "local.example.yaml") {
+		t.Fatalf("missing home bindings error = %v", err)
 	}
 }
 
@@ -134,6 +176,7 @@ func TestRenderPreservesExistingOutput(t *testing.T) {
 
 func executeRenderForTest(t *testing.T, args []string) (string, string, error) {
 	t.Helper()
+	homePathOverride = ""
 	cmd := newRenderCmd()
 	var stdout, stderr bytes.Buffer
 	cmd.SetOut(&stdout)

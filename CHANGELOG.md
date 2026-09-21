@@ -14,10 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Automated offline clean-install and Draft 2020-12 schema validation evidence for M0
 - Exact Codex 0.154.0 inert preview rendering with fail-closed applicability diagnostics and explicit staging
 - Deterministic profile scaffolding with profile-mango init
+- A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
 
 ### Changed
 
 - Successful profile-mango init output now shows the ANSI README logo
+- Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together
 - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
 
 ### Removed

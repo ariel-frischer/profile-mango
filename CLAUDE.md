@@ -26,13 +26,22 @@ make format         # Format code
 
 ```
 cmd/profile-mango/      # CLI entry point (cobra)
+  home.go             # effective profile-home inspection
   validate.go         # offline strict validation
+internal/profilehome/  # --home/env/user-home resolution
 internal/version/      # Version info (ldflags)
 pkg/profilemango/      # pure domain, parser, resolver, resource digests
 schemas/               # versioned contracts
 docs/dev/              # target evidence and support policy
 assets/                # Demo content (GIFs, screenshots)
 ```
+
+## Profile Home Behavior
+
+- The default application home is `<user-home>/.profile-mango` on every OS.
+- Precedence is root `--home`, then `$PROFILE_MANGO_HOME`, then the default.
+- `home` is read-only; root `init` scaffolds the home, while an explicit directory creates a project package.
+- Render inputs default coherently from the home; explicit project inputs are an all-or-none trio.
 
 ## Coding Standards
 
