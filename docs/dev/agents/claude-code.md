@@ -1,10 +1,36 @@
 # Claude Code configuration reference
 
-**Reference date:** 2026-09-20. **Documentation:** official mutable,
-unversioned pages. **Release context:** `v2.1.278`, commit
+**Reference date:** 2026-09-20 local / 2026-09-21 UTC. **Documentation:** official
+mutable, unversioned pages. **Release context:** `v2.1.278`, commit
 `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`. The release pin does not version
-the documentation. **Status:** intended MVP target; not installed, tested, or
-supported by profile-mango, and no adapter ships.
+the documentation. **Status:** profile-mango ships an exact-version inert preview
+renderer only; native acceptance and effective-state support remain blocked.
+
+## Immutable artifact and release context
+
+The immutable GitHub release tag `v2.1.278` resolves to commit
+`bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` and is marked immutable. The npm
+wrapper package `@anthropic-ai/claude-code@2.1.278` was acquired from its exact
+registry tarball and has SHA-256
+`08c6dfcf3dafcfd30e09b2926c596e274f0fa20844a5801ada7f1c8e6227157e` and
+registry integrity `sha512-mfNRqC0GaEXqmP97NiwJBeYBmRuqe2VzgLUreUUaEhyJxJWx2Z6ClW1tBOncGNNXdhj6EY4LPvUIWP+oq311CA==`.
+The pre-postinstall wrapper `bin/claude.exe` stub is SHA-256
+`6d7abae055d3b598281300a6c835086dec81bf3048f8a2294c5d3e50c8830d7b`.
+The Linux x64 native package `@anthropic-ai/claude-code-linux-x64@2.1.278` has
+SHA-256 `d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7`
+and registry integrity
+`sha512-q3r+5aLGAet1MGMkCH2xPsuIW9A40ws4zftURxhYwDenheCKvXc7Gr1jBwvEhYG8uQwgY3YsfNwnvIsh1Bjmeg==`.
+The extracted native ELF is SHA-256
+`5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab`.
+
+The package declares Node.js `>=22.0.0`; the native package is Linux x64 and
+glibc-only. Review ran on Linux x86_64 with glibc `2.44`, Node `v24.21.0`, and
+npm `11.19.0`. The npm postinstall copies or hardlinks the native binary into
+the wrapper path and changes its mode, so no lifecycle script was run during
+qualification.
+
+These hashes and the release commit are artifact/release evidence, not proof
+that mutable documentation describes this release.
 
 ## Configuration and precedence
 
@@ -19,6 +45,10 @@ selection. Authentication may use Anthropic or documented cloud-provider routes.
 Effort has CLI, environment, settings, and model-specific surfaces. These facts
 do not prove an effective route or authentication mode.
 
+The inert adapter emits only the route model as a documentation-context
+`model` candidate in `preview/<profile>.settings.json.preview`. It never emits
+provider, transport, authentication, credentials, or effort values.
+
 ## Permissions, instructions, and skills
 
 Permissions include allow, ask, and deny rules plus multiple permission modes;
@@ -32,11 +62,35 @@ override and discovery layer.
 
 ## Candidate inspection and gaps
 
-`/status` and `claude doctor` are documented, but neither is established as a
-noninteractive, complete, secret-free effective-config report with per-key
-provenance. The published [settings schema][schema] may lag the CLI. A future
-probe must first bound command effects, then use an isolated home/project, no
-credentials, blocked network, and no session startup.
+The immutable native artifact was reviewed before considering `--version`,
+`--help`, `claude doctor`, `/status`, config, or schema paths. The wrapper and
+embedded strings expose update, telemetry, credentials/cloud routes and SDKs,
+project/user discovery, plugins, hooks, MCP, state/migration, subprocess, and
+session surfaces. `claude doctor` advertises installation, extension, memory,
+hook, update, and permission checks and may fix issues. `/status` is session-oriented,
+and no release-qualified schema or effective-config command was established.
+No native command was run because side-effect-free startup was not proven. A
+future probe must first bound effects, then use a synthetic home/project,
+sanitized environment, no credentials, blocked network, and no session startup.
+
+## Capability classification
+
+| Portable property | Evidence level | Applicability consequence |
+| --- | --- | --- |
+| Config fidelity | Partial; only a documentation-context `model` candidate is emitted | Candidate preview only |
+| Native acceptance | Unverified; no safe exact-release parser probe | Blocking |
+| Effective state | Unverified; no merged per-key report | Blocking |
+| Precedence | Documentation-context only; not observed for the release | Blocking |
+| Model | Partial candidate syntax only | Blocking route acceptance |
+| Effort | No release-qualified mapping | Blocking |
+| Provider and transport | No release-qualified route mapping | Blocking |
+| Authentication | No credential-free identity proof | Blocking |
+| Permissions | Documentation describes modes, but equivalence and enforcement are untested | Blocking |
+| Tools | Tool expansion and closed-allowlist enforcement are untested | Blocking |
+| `CLAUDE.md` instructions | Hierarchy and delivery are unverified | Blocking |
+| Skills | Discovery, precedence, and execution are unverified | Blocking |
+| Plugins, hooks, and MCP | Discovery, precedence, and enforcement are unverified | Blocking |
+| Runtime enforcement | No authorized session or provider observation | Blocking |
 
 Primary sources: [settings][settings], [model configuration][model],
 [CLI reference][cli], [authentication][auth], [permissions][permissions],

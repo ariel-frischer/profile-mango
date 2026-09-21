@@ -17,11 +17,12 @@ resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
-> are offline and pure. Codex CLI `0.154.0`, Oh My Pi `18.2.6`, OpenClaw
-> `2026.9.5`, and Hermes Agent `0.21.3` have exact-version, explicitly inert
-> preview renderers, but no generated output is applicable or installed because
-> authentication, delivery, precedence, and enforcement remain unverified. Oh
-> My Pi is blocked by its missing standalone native addon and unsafe
+> are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Oh My Pi
+> `18.2.6`, OpenClaw `2026.9.5`, and Hermes Agent `0.21.3` have exact-version,
+> explicitly inert preview renderers, but no generated output is applicable or
+> installed because authentication, delivery, precedence, and enforcement remain
+> unverified. Claude Code is blocked by opaque startup and diagnostic effects.
+> Oh My Pi is blocked by its missing standalone native addon and unsafe
 > config-inspector effects. OpenClaw is blocked by source-only runtime evidence
 > and an unsafe config-inspection path. Hermes is blocked by its exact Python
 > build requirement, missing runtime artifact, and unsafe inspector paths.
@@ -271,6 +272,29 @@ auth state, memory/session paths, or active target files. The exact source
 hashes, entrypoint effect review, Python requirement, and blocked native
 acceptance boundary are recorded in the [target evidence ledger](docs/dev/target-evidence.md).
 
+## Inert Claude Code preview
+
+The same explicit package can render a deterministic Claude Code `2.1.278`
+candidate. The output is a documentation-context JSON settings preview under
+`preview/`, never `~/.claude`, and the command exits nonzero because the report
+is non-applicable:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target claude-code \
+  --target-version 2.1.278 \
+  --out ./claude-code-preview \
+  --preview --json
+```
+
+The candidate contains only the route model. It emits no provider, transport,
+authentication, effort, credentials, active target files, or enforcement claims.
+The immutable npm package hashes, release commit, launcher effect review, and
+blocked native command boundary are recorded in the [target evidence ledger](docs/dev/target-evidence.md).
+
 ## Commands
 
 ```text
@@ -303,8 +327,9 @@ Versioned JSON Schemas live in [`schemas/`](schemas/).
 
 ## Support boundary
 
-Codex is the first intended public adapter target. The shipped Codex `0.154.0`,
-Oh My Pi `18.2.6`, and OpenClaw `2026.9.5` boundaries are preview-only and always
+Codex is the first intended public adapter target. The shipped Claude Code
+`2.1.278`, Codex `0.154.0`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, and Hermes
+`0.21.3` boundaries are preview-only and always
 report current profiles as non-applicable. No applicable adapter, installation
 engine, import, drift repair, credential handling, provider call, target-home
 inspection, role projection, MCP projection, or identity management is shipped.

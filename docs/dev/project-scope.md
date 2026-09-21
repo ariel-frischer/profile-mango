@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Codex, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -56,8 +56,13 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   and a versioned report only into an explicit staging directory. Its Python
   build requirement, source provenance, unsafe config-inspector paths, and
   native applicability gaps remain explicit in every report.
+- A Claude Code `2.1.278` preview renderer that emits a deterministic,
+  documentation-context JSON `model` candidate, resource copies, and a versioned
+  report only into an explicit staging directory. Its immutable npm artifact,
+  release commit, opaque startup effects, mutable documentation boundary, and
+  native applicability gaps remain explicit in every report.
 
-**No applicable target adapter is shipped.** The Codex, Oh My Pi, OpenClaw, and Hermes renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
+**No applicable target adapter is shipped.** The Claude Code, Codex, Oh My Pi, OpenClaw, and Hermes renderers always report current profiles as non-applicable and never install output. The project does not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Plan, manifest, and render types are contracts, not evidence of an application engine or target enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -67,7 +72,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
 | Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
-| Claude Code | Intended MVP target | No adapter; compatibility not established |
+| Claude Code | Intended MVP target | Exact `2.1.278` inert JSON preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | No adapter; compatibility not established |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |

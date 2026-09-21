@@ -25,7 +25,7 @@ and commits are reproducible locators, not proof of target behavior.
 ## Targets
 
 - [Codex](codex.md) — exact Codex 0.154.0 inert preview renderer; native applicability remains blocked.
-- [Claude Code](claude-code.md) — intended MVP target; untested.
+- [Claude Code](claude-code.md) — exact v2.1.278 immutable-package inert preview renderer; native acceptance remains blocked.
 - [Pi](pi.md) — intended MVP target variant; qualified independently.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.

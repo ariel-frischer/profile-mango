@@ -2,11 +2,11 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider. No OpenClaw or Hermes command
-was executed.
+did not start a session or initialize a provider. No OpenClaw, Hermes, or Claude Code
+command was executed.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -24,8 +24,9 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. Oh My Pi and OpenClaw have
-exact source/version inert preview renderers, but no applicable support. Ariel's custom Jcode fork
+Codex is the first intended public adapter candidate. Claude Code, Oh My Pi, and
+OpenClaw have exact source/version inert preview renderers, but no applicable
+support. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
 surface for named policy profiles.
@@ -41,11 +42,79 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | --- | --- | --- | --- |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
+| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`) | immutable source archive/build metadata hashes, entrypoint/config/status/profile effect review, and deterministic inert YAML preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, permissions, tools, skills, context, and enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
+
+## Claude Code v2.1.278 evidence
+
+### Immutable artifact, release, and platform
+
+The immutable GitHub release `v2.1.278` resolves through `refs/tags/v2.1.278`
+to commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`; the release API marks it
+immutable. The exact npm wrapper tarball
+`@anthropic-ai/claude-code@2.1.278` has SHA-256
+`08c6dfcf3dafcfd30e09b2926c596e274f0fa20844a5801ada7f1c8e6227157e` and
+integrity `sha512-mfNRqC0GaEXqmP97NiwJBeYBmRuqe2VzgLUreUUaEhyJxJWx2Z6ClW1tBOncGNNXdhj6EY4LPvUIWP+oq311CA==`.
+The pre-postinstall wrapper `bin/claude.exe` stub is SHA-256
+`6d7abae055d3b598281300a6c835086dec81bf3048f8a2294c5d3e50c8830d7b`.
+The exact Linux x64 glibc package
+`@anthropic-ai/claude-code-linux-x64@2.1.278` has SHA-256
+`d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7` and
+integrity `sha512-q3r+5aLGAet1MGMkCH2xPsuIW9A40ws4zftURxhYwDenheCKvXc7Gr1jBwvEhYG8uQwgY3YsfNwnvIsh1Bjmeg==`.
+The extracted native ELF is SHA-256
+`5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab`.
+
+The wrapper declares Node.js `>=22.0.0`; qualification observed Node `v24.21.0`,
+npm `11.19.0`, Linux x86_64, and glibc `2.44`. The native ELF is dynamically
+linked against the normal glibc runtime libraries. The npm postinstall copies or
+hardlinks the native binary into the wrapper path and changes its mode. It was
+not executed.
+
+### Launcher and candidate-command effect review
+
+The wrapper launcher resolves the platform package and spawns the native binary.
+Static review of the wrapper, installer, ELF headers, dynamic dependencies, and
+embedded release-artifact strings found update/autoupdate, telemetry, credentials
+and cloud-provider routes/SDKs, project/user discovery, plugins, hooks, MCP,
+state/migration, subprocess, and session surfaces. The artifact's `doctor` path advertises
+installation, extensions, memory, hooks, updates, and permissions checks and may
+fix issues. `/status` is session-oriented. No release-qualified schema or
+effective-config command with per-key provenance was established.
+
+Accordingly, `--version`, `--help`, `doctor`, `/status`, config, and schema paths
+were reviewed but not executed. The opaque startup path was not proven
+side-effect-free, so no personal `~/.claude`, login, session, slash command,
+plugin, hook, MCP, credential, provider, or network operation was used. This is
+an explicit native evidence gap, not a claim that the commands are unsafe in all
+environments.
+
+### Capability classification
+
+| Portable property | Evidence | Applicability consequence |
+| --- | --- | --- |
+| Fidelity | Documentation-context `model` candidate only | Partial preview fidelity |
+| Native acceptance | No safe exact-release parser probe | Blocking |
+| Effective state | No merged per-key report | Blocking |
+| Precedence | Mutable docs only; no exact-release observation | Blocking |
+| Model | Candidate field only | Partial; required route acceptance remains blocked |
+| Effort | No release-qualified mapping | Blocking |
+| Provider and transport | No release-qualified mapping | Blocking |
+| Authentication | No credential-free identity proof | Blocking |
+| Permissions | No equivalence or runtime enforcement evidence | Blocking |
+| Tools | No closed-allowlist or runtime enforcement evidence | Blocking |
+| `CLAUDE.md` instructions | Hierarchy and delivery unverified | Blocking |
+| Skills | Discovery, precedence, and execution unverified | Blocking |
+| Plugins, hooks, and MCP | Discovery, precedence, and enforcement unverified | Blocking |
+| Runtime enforcement | No authorized session/provider observation | Blocking |
+
+The adapter therefore always sets `applicable: false`. It emits only an inert
+JSON `model` candidate and content-addressed resource previews through the
+shared render contract. It never emits credentials, provider/authentication
+values, target-home files, active settings paths, or enforcement claims.
 
 ## OpenClaw v2026.9.5 evidence
 
@@ -529,8 +598,8 @@ No candidate field is classified as runtime-enforced by M0. The route/instructio
 
 The minimum contract can proceed without public Jcode support and without pretending Codex is already supported. M0 establishes deterministic canonical semantics and records that:
 
-- Codex is the first public M1 adapter candidate, and Oh My Pi, OpenClaw, and
-  Hermes now have exact source-qualified inert preview renderers.
+- Codex is the first public M1 adapter candidate, and Claude Code, Oh My Pi,
+  OpenClaw, and Hermes now have exact source-qualified inert preview renderers.
 - Ariel's custom Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
@@ -564,9 +633,10 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code and Pi remain roadmap research, not M0 targets. OpenClaw and Hermes
-  have source-qualified inert preview boundaries, but native applicability remains
-  blocked pending safe exact-artifact inspection paths.
+- Claude Code's v2.1.278 package is now qualified for an inert preview boundary,
+  but native acceptance, effective-state inspection, and enforcement remain
+  blocked pending a safe exact-artifact inspection path. Pi remains roadmap
+  research. OpenClaw and Hermes retain their source-qualified inert boundaries.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.
