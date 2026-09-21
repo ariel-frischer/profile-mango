@@ -51,7 +51,6 @@ type jsoncScanner struct {
 	data      []byte
 	pos       int
 	rootOpen  int
-	rootClose int
 	firstKey  int
 	model     *modelSpan
 	triviaErr error
@@ -123,60 +122,72 @@ func (scanner *jsoncScanner) parseObject(top bool) error {
 	keys := map[string]struct{}{}
 	scanner.skipTrivia()
 	if scanner.consume('}') {
-		if top {
-			scanner.rootClose = scanner.pos - 1
-		}
 		return nil
 	}
 	for {
-		keyStart := scanner.pos
-		key, _, _, err := scanner.parseString()
-		if err != nil {
+		if err := scanner.parseObjectEntry(top, keys); err != nil {
 			return err
 		}
-		if _, found := keys[key]; found {
-			return scanner.errorf("duplicate JSONC object key %q", key)
-		}
-		keys[key] = struct{}{}
-		scanner.skipTrivia()
-		if !scanner.consume(':') {
-			return scanner.errorf("expected colon after object key")
-		}
-		scanner.skipTrivia()
-		if top && key == "model" {
-			if scanner.pos >= len(scanner.data) || scanner.data[scanner.pos] != '"' {
-				return scanner.errorf("top-level model must be a string")
-			}
-			start := scanner.pos
-			value, _, end, err := scanner.parseString()
-			if err != nil {
-				return err
-			}
-			scanner.model = &modelSpan{start: start, end: end, value: value}
-		} else if err := scanner.parseValue(); err != nil {
+		done, err := scanner.finishObjectEntry()
+		if done || err != nil {
 			return err
-		}
-		if top && scanner.firstKey < 0 {
-			scanner.firstKey = keyStart
-		}
-		scanner.skipTrivia()
-		if scanner.consume('}') {
-			if top {
-				scanner.rootClose = scanner.pos - 1
-			}
-			return nil
-		}
-		if !scanner.consume(',') {
-			return scanner.errorf("expected comma or object close")
-		}
-		scanner.skipTrivia()
-		if scanner.consume('}') {
-			if top {
-				scanner.rootClose = scanner.pos - 1
-			}
-			return nil
 		}
 	}
+}
+
+func (scanner *jsoncScanner) parseObjectEntry(top bool, keys map[string]struct{}) error {
+	keyStart := scanner.pos
+	key, _, _, err := scanner.parseString()
+	if err != nil {
+		return err
+	}
+	if _, found := keys[key]; found {
+		return scanner.errorf("duplicate JSONC object key %q", key)
+	}
+	keys[key] = struct{}{}
+	scanner.skipTrivia()
+	if !scanner.consume(':') {
+		return scanner.errorf("expected colon after object key")
+	}
+	scanner.skipTrivia()
+	if err := scanner.parseObjectValue(top, key); err != nil {
+		return err
+	}
+	if top && scanner.firstKey < 0 {
+		scanner.firstKey = keyStart
+	}
+	return nil
+}
+
+func (scanner *jsoncScanner) parseObjectValue(top bool, key string) error {
+	if !top || key != "model" {
+		return scanner.parseValue()
+	}
+	if scanner.pos >= len(scanner.data) || scanner.data[scanner.pos] != '"' {
+		return scanner.errorf("top-level model must be a string")
+	}
+	start := scanner.pos
+	value, _, end, err := scanner.parseString()
+	if err != nil {
+		return err
+	}
+	scanner.model = &modelSpan{start: start, end: end, value: value}
+	return nil
+}
+
+func (scanner *jsoncScanner) finishObjectEntry() (bool, error) {
+	scanner.skipTrivia()
+	if scanner.consume('}') {
+		return true, nil
+	}
+	if !scanner.consume(',') {
+		return false, scanner.errorf("expected comma or object close")
+	}
+	scanner.skipTrivia()
+	if scanner.consume('}') {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (scanner *jsoncScanner) parseArray() error {
