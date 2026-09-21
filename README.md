@@ -322,6 +322,32 @@ authentication, effort, credentials, active target files, or enforcement claims.
 The immutable npm package hashes, release commit, launcher effect review, and
 blocked native command boundary are recorded in the [target evidence ledger](docs/dev/target-evidence.md).
 
+## Experimental Ariel custom Jcode fork preview
+
+The explicit `ariel-jcode` target is an **experimental-only** renderer for
+Ariel's custom Jcode fork build `jcode v0.83.909-dev (ca8017a3a)`. It is not
+upstream Jcode, is not a supported public target, and is not included in the
+support list below. The candidate is deterministic TOML syntax under `preview/`
+and the command exits nonzero because the report remains non-applicable:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target ariel-jcode \
+  --target-version '0.83.909-dev (ca8017a3a)' \
+  --out ./ariel-jcode-preview \
+  --preview --json
+```
+
+The preview uses only retained exact-build synthetic profile-resolution evidence
+for provider/model/effort, observed tool selectors, skill selectors, and
+instruction metadata. It never reads a Jcode home or emits credentials,
+provider profiles, arbitrary target keys, or active target files. The source
+documentation snapshot and all native applicability gaps remain separate in the
+[target evidence ledger](docs/dev/target-evidence.md).
+
 ## Commands
 
 ```text

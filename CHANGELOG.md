@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact Hermes Agent 0.21.3 inert preview rendering for source release v2026.9.14 with source/build provenance, deterministic YAML candidates, and explicit inspector and applicability blockers
 - Exact Claude Code 2.1.278 inert preview rendering with immutable npm artifact provenance, deterministic JSON candidates, and explicit native inspection and applicability blockers
 - Exact Pi 0.86.1 inert JSON settings preview rendering with immutable source/package provenance, deterministic candidates, and explicit native inspection and applicability blockers
+- Experimental-only Ariel custom Jcode fork inert TOML preview rendering pinned to the exact tested 0.83.909-dev (ca8017a3a) build and SHA-256, with strict projection and non-applicability diagnostics
 - Target-neutral render report and resource boundary shared by inert target adapters
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection

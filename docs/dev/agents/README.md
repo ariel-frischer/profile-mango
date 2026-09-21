@@ -30,7 +30,7 @@ and commits are reproducible locators, not proof of target behavior.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
 - [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer; native applicability remains blocked.
-- [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target.
+- [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target with an exact-build inert preview renderer; native applicability remains blocked.
 
 Pi native commands were not executed during its exact-release qualification because
 startup and metadata paths were not proven bounded. Before any future probe, verify

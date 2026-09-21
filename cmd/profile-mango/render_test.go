@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
@@ -114,6 +115,40 @@ func TestRenderClaudeCodePreviewUsesTargetDispatch(t *testing.T) {
 	}
 	if strings.Contains(string(config), "oauth") || strings.Contains(string(config), "secret") || strings.Contains(string(config), "openai") {
 		t.Fatalf("candidate config leaked authentication data: %s", config)
+	}
+}
+
+func TestRenderArielJcodePreviewUsesExperimentalDispatch(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", arieljcode.TargetName, "--target-version", arieljcode.TargetVersion, "--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("blocked Ariel custom Jcode preview unexpectedly succeeded")
+	}
+	var report render.Result
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
+	}
+	if report.Target != arieljcode.TargetName || report.AdapterVersion != arieljcode.AdapterVersion || !report.Preview || report.Applicable {
+		t.Fatalf("unexpected Ariel custom Jcode report: %#v", report)
+	}
+	if !strings.Contains(stderr, "arieljcode.experimental_only") || !strings.Contains(stderr, "arieljcode.route.authentication_unverified") {
+		t.Fatalf("experimental blockers missing: %s", stderr)
+	}
+	assertRenderFile(t, out, "render.json")
+	assertRenderFile(t, out, "preview/route-only.config.toml.preview")
+	assertRenderFile(t, out, "resources/instructions/system.md")
+	config, readErr := os.ReadFile(filepath.Join(out, "preview", "route-only.config.toml.preview"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	for _, forbidden := range []string{"oauth", "credential", "secret", "authentication", "provider_profile", "agents_md_path"} {
+		if strings.Contains(strings.ToLower(string(config)), forbidden) {
+			t.Fatalf("candidate config leaked forbidden field %q: %s", forbidden, config)
+		}
 	}
 }
 
@@ -272,8 +307,9 @@ func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 }
 
 func TestRenderHelpListsKnownTargets(t *testing.T) {
-	flag := newRenderCmd().Flag("target")
-	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, or hermes") {
+	cmd := newRenderCmd()
+	flag := cmd.Flag("target")
+	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, hermes, or ariel-jcode experimental-only") || !strings.Contains(cmd.Long, "Ariel custom Jcode fork") || !strings.Contains(cmd.Long, "experimental-only") {
 		t.Fatalf("target help does not list explicit adapters: %#v", flag)
 	}
 }

@@ -16,11 +16,13 @@ flowchart LR
     DISPATCH --> OMP[Oh My Pi adapter]
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
+    DISPATCH --> ARIEL[Ariel custom Jcode adapter]
     CODEX --> CONTRACT[target-neutral render contract]
     PI --> CONTRACT
     OMP --> CONTRACT
     OPENCLAW --> CONTRACT
     HERMES --> CONTRACT
+    ARIEL --> CONTRACT
     CONTRACT --> STAGE[atomic inert staging]
 ```
 
@@ -30,9 +32,10 @@ flowchart LR
   input/resource types, evidence, capabilities, artifacts, report serialization,
   stable sorting, safe artifact paths, and resource-byte validation.
 - `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/pi`,
-  `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, and `pkg/adapters/hermes` own
-  exact evidence pins, target syntax, capability mapping, target-specific
-  diagnostics, and applicability.
+  `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, `pkg/adapters/hermes`, and
+  `pkg/adapters/arieljcode` own exact evidence pins, target syntax, capability
+  mapping, target-specific diagnostics, and applicability. The Ariel package is
+  experimental-only and is not an upstream Jcode adapter.
 - `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
 - `internal/staging` creates only a new explicit output directory and never writes
@@ -56,7 +59,9 @@ are staged.
 
 Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
 OpenClaw `2026.9.5`, and Hermes Agent `0.21.3` each have deterministic inert
-preview renderers. Claude Code emits a documentation-context JSON `model`
+preview renderers. Ariel's custom Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
+also has a deterministic inert TOML renderer under the explicit target identity
+`ariel-jcode`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
 candidate. Codex uses TOML candidate syntax. Pi uses exact source-grounded JSON
 settings keys `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`.
 Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
@@ -66,6 +71,14 @@ for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `model.provider`, `model.default`, and `agent.reasoning_effort`. None of these
 adapters claims native applicability, installs output, reads a target home, accesses
 credentials, starts a session, calls a provider, or uses a network connection.
+
+The Ariel renderer uses only the exact retained synthetic profile-resolution
+evidence for provider/model/effort, closed tool selectors, empty-skill mode,
+canonical skill selectors, and instruction metadata. It rejects unsupported
+canonical policy shapes and does not accept arbitrary target-owned keys. The
+tested build hash and the separate documentation snapshot are recorded in the
+[target evidence ledger](target-evidence.md); neither establishes upstream
+Jcode compatibility.
 
 Claude Code's immutable npm package and release commit are pinned, but its opaque
 native startup and diagnostic paths were not proven side-effect-free. No native

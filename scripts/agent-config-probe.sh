@@ -8,6 +8,8 @@ readonly jcode_requested="${PROFILE_MANGO_JCODE_BIN:-}"
 readonly keep_probe="${PROFILE_MANGO_KEEP_PROBE:-0}"
 readonly codex_expected_version='codex-cli 0.154.0'
 readonly codex_expected_sha256='3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022'
+readonly jcode_expected_version='jcode v0.83.909-dev (ca8017a3a)'
+readonly jcode_expected_sha256='392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992'
 
 die() {
 	printf 'probe error: %s\n' "$*" >&2
@@ -119,6 +121,8 @@ timeout_bin="$(command -v timeout || true)"
 
 codex_sha256="$(sha256sum "$codex_bin" | awk '{print $1}')"
 assert_equal "$codex_sha256" "$codex_expected_sha256"
+jcode_sha256="$(sha256sum "$jcode_bin" | awk '{print $1}')"
+assert_equal "$jcode_sha256" "$jcode_expected_sha256"
 
 if [[ -n "$requested_root" ]]; then
 	[[ "$requested_root" == /* ]] || die "PROFILE_MANGO_PROBE_ROOT must be absolute"
@@ -220,7 +224,7 @@ jcode_current="$(sandbox "$jcode_positive" jcode \
 jcode_tool_override="$(sandbox "$jcode_positive" jcode \
 	--no-update --no-selfdev --socket /state/runtime/jcode.sock --quiet \
 	--profile sentinel --tool-profile minimal profile resolve sentinel --json)"
-assert_contains "$jcode_version" 'jcode v0.83.909-dev (ca8017a3a)'
+assert_equal "$jcode_version" "$jcode_expected_version"
 assert_contains "$jcode_help" 'Resolve a named profile'
 assert_contains "$jcode_list" '"name": "sentinel"'
 assert_contains "$jcode_list" '"name": "alternate"'
@@ -274,7 +278,7 @@ printf 'codex-precedence=feature-runtime-override-observed-route-project-unverif
 printf 'codex-permissions-tools=enforcement-unverified\n'
 printf 'codex-instruction-skill-delivery=unverified\n'
 printf 'jcode-version=%s\n' "$jcode_version"
-printf 'jcode-sha256=%s\n' "$(sha256sum "$jcode_bin" | awk '{print $1}')"
+printf 'jcode-sha256=%s\n' "$jcode_sha256"
 printf 'jcode-profile-fields=provider-model-effort-tools-skills-instruction-presence\n'
 printf 'jcode-tool-profile-override=observed\n'
 printf 'jcode-malformed-config=rejected\n'

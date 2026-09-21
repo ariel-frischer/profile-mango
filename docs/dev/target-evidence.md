@@ -46,7 +46,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`) | immutable source archive/build metadata hashes, entrypoint/config/status/profile effect review, and deterministic inert YAML preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, permissions, tools, skills, context, and enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1` | immutable source archives and npm package/integrity hashes, bundled entrypoint identity, static startup/config effect review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native config acceptance, effective state, precedence, auth, delivery, extensions, permissions/tools, and enforcement remain blocked |
-| Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
+| Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
 The observations are version-qualified snapshots, not compatibility ranges.
 
@@ -641,6 +641,38 @@ custom-fork profile parser is not demonstrated to reject unknown profile keys.
 Do not treat it as upstream Jcode behavior or as evidence of fail-closed
 validation for a future adapter.
 
+### Experimental inert adapter boundary
+
+The `pkg/adapters/arieljcode` package is pinned to target identity
+`ariel-jcode`, tested build `jcode v0.83.909-dev (ca8017a3a)`, commit
+`ca8017a3a`, and SHA-256
+`392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992`. It emits
+only a deterministic inert TOML preview under `preview/` and keeps
+`applicable: false` unconditionally. The report, diagnostic, and candidate
+comments identify it as the **Ariel custom Jcode fork, experimental-only**.
+
+Candidate syntax is limited to the exact-build-observed provider, model,
+reasoning effort, a `none` tool profile paired with canonical closed allow and
+deny selectors, empty-skill mode, canonical skill selectors, and instruction
+presence/character-count metadata. Resource bytes remain separate inert
+content-addressed artifacts. The adapter does not emit authentication,
+provider profiles, credentials, `agents_md_path`, arbitrary target keys,
+non-empty target skill modes, or skill exclusions because the canonical input
+does not express those fields with exact-build evidence.
+
+The target parser accepted and omitted an unknown profile key in the retained
+probe. The adapter therefore uses an explicit projection allowlist and rejects
+unsupported canonical policy shapes rather than passing through unknown target
+fields. Adapter tests and the retained probe regression assertions cover this
+boundary. No new native Jcode probe ran for this adapter because the exact
+retained binary artifact was not re-verified in this worktree; the current
+session Jcode binary and personal target state were not inspected.
+
+The source documentation snapshot `ed9b93b894454619f73ccddd24c2ff7a3c98ddc3`
+remains separate from the tested build and is not evidence of upstream Jcode
+compatibility. Authentication, discovery, delivery, precedence, child
+overrides, hooks, extensions, MCP, and runtime enforcement remain blocking.
+
 ## Portable-field classification
 
 `fidelity` describes whether the target has a corresponding concept. `delivery` describes whether M0 has an approved deterministic destination. `enforcement` describes what has actually been demonstrated. `unknown` and `unsupported` block applicability when the field is required.
@@ -667,7 +699,7 @@ The minimum contract can proceed without public Jcode support and without preten
 - Ariel's custom Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
-- no target artifact, launch recipe, or live-state mutation is part of M0
+- no target artifact is applied, no launch recipe is emitted, and no live-state mutation is part of M0
 
 This satisfies the M0 evidence requirement by classifying unknowns and unsupported mappings rather than filling them from memory or weakening the portable policy.
 

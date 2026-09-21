@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/staging"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
@@ -98,6 +99,16 @@ func renderAdapterFor(name string) (renderAdapter, bool) {
 				return pi.Render(input)
 			},
 		}, true
+	case arieljcode.TargetName:
+		return renderAdapter{
+			evidenceSHA256: arieljcode.EvidenceSHA256,
+			newResult: func(profileName string, target render.TargetBuild) render.Result {
+				return arieljcode.NewResult(profileName, target)
+			},
+			render: func(input render.Input) render.Result {
+				return arieljcode.Render(input)
+			},
+		}, true
 	default:
 		return renderAdapter{}, false
 	}
@@ -108,6 +119,7 @@ func newRenderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "render <name>",
 		Short:        "Render an inert, version-qualified candidate without accessing agent homes",
+		Long:         "Render an inert, version-qualified candidate without accessing agent homes. The ariel-jcode target is the Ariel custom Jcode fork and is experimental-only, not upstream Jcode or a supported public target.",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -117,7 +129,7 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (claude-code, codex, pi, oh-my-pi, openclaw, or hermes)")
+	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, or ariel-jcode experimental-only)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
 	cmd.Flags().BoolVar(&options.preview, "preview", false, "write inert preview artifacts despite applicability blockers")
