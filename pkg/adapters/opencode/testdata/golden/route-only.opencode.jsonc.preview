@@ -1,0 +1,7 @@
+// profile-mango: INERT PREVIEW ONLY
+// NON-APPLICABLE: candidate syntax for OpenCode 1.18.31.
+// This is not an active OpenCode config.json or config.jsonc. Authentication, provider options, effort, delivery, precedence, plugins, MCP, and enforcement are unverified.
+
+{
+  model: "openai/gpt-5.6",
+}
