@@ -64,7 +64,7 @@ func TestRenderPreviewWritesOnlyInertArtifacts(t *testing.T) {
 	} {
 		assertRenderFile(t, out, relative)
 	}
-	for _, forbidden := range []string{"config.toml", "AGENTS.md", "skills"} {
+	for _, forbidden := range []string{"config.toml", "AGENTS.md", "plan.json", "manifest.json", "skills"} {
 		if _, statErr := os.Stat(filepath.Join(out, forbidden)); !os.IsNotExist(statErr) {
 			t.Fatalf("forbidden active artifact exists: %s", forbidden)
 		}

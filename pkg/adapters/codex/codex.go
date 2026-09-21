@@ -166,7 +166,6 @@ func Render(input Input) Result {
 	if !hasCodePrefix(resourceDiagnostics, "codex.resource.") {
 		result.Artifacts = append(result.Artifacts, candidateArtifact(input.Profile, input.Route))
 		result.Artifacts = append(result.Artifacts, resourceArtifacts...)
-		result.Artifacts = append(result.Artifacts, metadataArtifacts(input)...)
 	}
 	result.Artifacts = sortedArtifacts(result.Artifacts)
 	result.Diagnostics = result.Diagnostics.Sorted()
@@ -181,39 +180,6 @@ func hasCodePrefix(diagnostics profilemango.Diagnostics, prefix string) bool {
 		}
 	}
 	return false
-}
-
-func metadataArtifacts(input Input) []Artifact {
-	resources := make([]profilemango.ResourceDigest, 0, len(input.Resources))
-	for _, resource := range input.Resources {
-		resources = append(resources, resource.Digest)
-	}
-	sort.Slice(resources, func(i, j int) bool { return resources[i].Path < resources[j].Path })
-	plan, err := profilemango.BuildPlan(input.Profile, TargetName, profilemango.Bindings{Routes: map[string]profilemango.RouteBinding{input.Profile.RouteRef: input.Route}}, resources)
-	if err != nil {
-		return nil
-	}
-	manifest := profilemango.Manifest{
-		APIVersion: profilemango.ManifestVersion,
-		Kind:       "Manifest",
-		Owner:      "profile-mango",
-		Generation: 1,
-		Profile:    input.Profile.Metadata.Name,
-		Target:     TargetName,
-		Resources:  resources,
-	}
-	planData, err := profilemango.CanonicalJSON(plan)
-	if err != nil {
-		return nil
-	}
-	manifestData, err := profilemango.CanonicalJSON(manifest)
-	if err != nil {
-		return nil
-	}
-	return []Artifact{
-		newArtifact("plan.json", "plan", planData),
-		newArtifact("manifest.json", "manifest", manifestData),
-	}
 }
 
 func addTargetCapabilities(result *Result, target TargetBuild) {
