@@ -80,9 +80,11 @@ CHANGELOG.md          # generated changelog output
 - Render inputs default to `<home>/profiles`, `<home>`, and `<home>/bindings/local.yaml`. Explicit project rendering must provide `--profiles`, `--resource-root`, and `--bindings` together.
 - The binary never creates the home implicitly during installation or read-only commands.
 
-## M0 Safety Boundary
+## Target Safety Boundary
 
-- M0 is offline and pure: no target homes, credentials, subprocesses, providers, or network access.
+- The canonical M0 core, validation, and render paths remain offline and pure: no target homes, credentials, subprocesses, providers, or network access.
+- OpenCode `1.18.31` alone permits transactional application of the top-level `model` field at one explicit caller-supplied path. Use only synthetic or separately approved disposable state unless new path-specific user approval is recorded.
+- The OpenCode installer must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Every broader capability and every other production target remains blocked.
 - Codex is the first intended public adapter target; only an exact-version inert preview renderer exists, and native applicability remains blocked.
 - Jcode is developer-only experimental evidence, not a supported product target or README promise.
 - Unknown keys, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed.

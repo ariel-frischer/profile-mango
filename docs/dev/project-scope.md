@@ -62,24 +62,26 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   and a versioned report only into an explicit staging directory. Its Python
   build requirement, source provenance, unsafe config-inspector paths, and
   native applicability gaps remain explicit in every report.
-- An OpenCode `1.18.31` inert JSONC preview renderer pinned to immutable release,
-  source, archive, and extracted-binary hashes. The corrected exact model candidate
-  is natively accepted, appears in merged output, and has partial inline-over-global
-  precedence evidence from an approved isolated probe. The inspector is writeful,
-  accepts and ignores unknown keys, and lacks general per-field provenance.
-  Installation, authentication identity, effort, delivery, permissions, tools,
-  plugins, MCP, and enforcement remain blocked.
-- A mock-only install planner/application engine with deterministic plan IDs,
-  hash-bound consent, bounded synthetic file snapshots, backups, stale checks,
-  atomic replacement, ownership evidence, and blocked production target adapters.
-  Successful application tests use fake adapters and temporary files only. It does
-  not inspect or modify global agent configuration. Approved native validation
-  remains separate from production installation and uses disposable target state.
+- An OpenCode `1.18.31` inert JSONC preview renderer plus a narrowly
+  install-capable top-level `model` field adapter, pinned to immutable release,
+  source, archive, and extracted-binary hashes. The exact model candidate is
+  natively accepted and appears in merged output. Installation requires one explicit
+  path, destination-bound consent, and transactional safeguards, while preserving
+  unrelated JSONC bytes and target-owned credential/provider state. Authentication
+  identity, effort, delivery, permissions, tools, plugins, MCP, full precedence,
+  and enforcement remain blocked.
+- A transactional install planner/application engine with deterministic,
+  destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
+  stale checks, atomic replacement, ownership evidence, journals, rollback, and
+  guarded recovery. OpenCode `1.18.31` alone enables the exact top-level `model`
+  field at one explicit path; every other production target remains blocked.
+  Validation uses fake adapters and synthetic or copied disposable OpenCode state.
+  It never implicitly inspects or modifies global agent configuration.
 - An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
-**No applicable production target adapter is shipped.** The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers always report current profiles as non-applicable and never install output into a real target. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The ordinary offline core, validation, inert render paths, and mock-only install tests do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. The separate opt-in OpenCode probe runs only the pinned exact binary in disposable network-blocked state. Install plan/manifest types, native parsing, and fake-adapter application evidence do not establish production target delivery or enforcement.
+**No full-profile production target adapter is shipped.** OpenCode `1.18.31` supports only lossless application of the top-level `model` field to one explicit path. The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers still report full profiles as non-applicable. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The ordinary offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. The OpenCode model-only installer reads and writes only its explicit caller-supplied config and adjacent transaction paths. The separate opt-in OpenCode probe runs only the pinned exact binary in disposable network-blocked state. Model-field application evidence does not establish authentication, full-profile delivery, or runtime enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -94,7 +96,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
-| OpenCode | Intended MVP target | Exact `1.18.31` inert JSONC preview renderer; model candidate native acceptance and partial merged-state/precedence observed; auth, effort, delivery, install applicability, and enforcement remain blocked |
+| OpenCode | Intended MVP target | Exact `1.18.31`; top-level model field installable at one explicit path with lossless JSONC preservation and transactional safeguards; auth, effort, delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer
@@ -135,9 +137,11 @@ does not promise roles, MCP projection, or any other expansion.
 
 ## Non-goals and boundaries
 
-**Current exclusions:** applicable installation or application, import, drift repair,
-user-level preference storage, credential handling, provider calls,
-target-home inspection, roles, MCP projection, and identity management. `init`
+**Current exclusions:** full-profile application, import, generalized drift repair,
+user-level preference storage, credential handling, provider calls, implicit
+target-home inspection, roles, MCP projection, and identity management. The only
+install-capable target field is OpenCode `1.18.31` top-level `model` at one explicit
+path. `init`
 scaffolds portable files and a route-identity example only. Home resolution selects
 only profile-mango-owned inputs; it does not resolve credentials, inspect target
 homes, or call providers. These are milestone boundaries, not all permanent bans.

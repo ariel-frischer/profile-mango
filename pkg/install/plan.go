@@ -226,6 +226,10 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("inspect manifest path: %v", err), "install.manifest_path_unsafe")
 	}
+	targetPlan.DestinationSHA256, err = hashValue([]string{config.Path, manifestSnapshot.Path})
+	if err != nil {
+		return blockedTargetPlan(targetPlan, fmt.Sprintf("hash install destination: %v", err), "install.destination_hash_failed")
+	}
 	ownership, err := decodeManifest(manifestSnapshot.Content, targetRequest.Target)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.manifest_invalid")

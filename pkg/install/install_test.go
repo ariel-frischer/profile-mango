@@ -2,6 +2,7 @@ package install
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -158,6 +159,138 @@ func TestPlanJSONOmitsSyntheticAbsolutePaths(t *testing.T) {
 	if strings.Contains(string(data), root) {
 		t.Fatalf("plan leaked synthetic absolute path: %s", data)
 	}
+}
+
+func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	config := request.Targets[0].ConfigPath
+	before := "{\n  // keep target-owned state\n  \"model\" : \"sentinel/old\",\n  \"provider\": {\"sentinel\": {\"options\": {\"apiKey\": \"SYNTHETIC\"}}},\n  \"unknown\": true,\n}\n"
+	writeInstallTestFile(t, config, before)
+	if err := os.Chmod(config, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionOverride {
+		t.Fatalf("plan = %#v", plan)
+	}
+	if plan.Targets[0].DestinationSHA256 == "" || len(plan.Targets[0].Fields) != 1 || plan.Targets[0].Fields[0].Path != "config.model" {
+		t.Fatalf("target plan = %#v", plan.Targets[0])
+	}
+	data, err := plan.JSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), root) || !strings.Contains(string(data), `"destinationSHA256"`) {
+		t.Fatalf("public plan destination boundary = %s", data)
+	}
+
+	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+		t.Fatal(err)
+	}
+	want := strings.Replace(before, `"sentinel/old"`, `"openai/gpt-5.6"`, 1)
+	assertInstallTestFile(t, config, want)
+	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	info, err := os.Stat(config)
+	if err != nil || info.Mode().Perm() != 0o600 {
+		t.Fatalf("config mode = %v, err = %v", info.Mode().Perm(), err)
+	}
+	journalData, err := os.ReadFile(installfs.JournalPath(config, plan.PlanID))
+	if err != nil || !strings.Contains(string(journalData), `"status": "committed"`) {
+		t.Fatalf("journal = %s, err = %v", journalData, err)
+	}
+	manifestData, err := os.ReadFile(config + ".profile-mango.manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := decodeManifest(manifestData, Target{Name: "opencode", Version: "1.18.31"})
+	if err != nil || len(manifest.Files) != 1 || strings.Join(manifest.Files[0].Fields, ",") != "config.model" {
+		t.Fatalf("manifest = %#v, err = %v", manifest, err)
+	}
+
+	reapply, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reapply.Status != StatusNoop || reapply.Targets[0].Files[0].Action != ActionNoop {
+		t.Fatalf("reapply = %#v", reapply)
+	}
+}
+
+func TestOpenCodePlanBindsDestinationAndRejectsStaleApply(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	first := request.Targets[0].ConfigPath
+	writeInstallTestFile(t, first, `{ "model": "old/model" }`)
+	firstPlan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	second := filepath.Join(root, "other", "opencode.jsonc")
+	if err := os.MkdirAll(filepath.Dir(second), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeInstallTestFile(t, second, `{ "model": "old/model" }`)
+	secondRequest := request
+	secondRequest.Targets = []TargetRequest{{Target: request.Targets[0].Target, ConfigPath: second}}
+	secondPlan, err := BuildPlan(secondRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if firstPlan.PlanID == secondPlan.PlanID || firstPlan.Targets[0].DestinationSHA256 == secondPlan.Targets[0].DestinationSHA256 {
+		t.Fatal("plan consent was not bound to the explicit destination")
+	}
+
+	writeInstallTestFile(t, first, `{ "model": "third-party/edit" }`)
+	if _, err := ApplyPlan(firstPlan, ApplyOptions{ExpectedPlanID: firstPlan.PlanID}); !errors.Is(err, installfs.ErrStale) {
+		t.Fatalf("stale apply error = %v", err)
+	}
+	assertInstallTestFile(t, first, `{ "model": "third-party/edit" }`)
+}
+
+func TestOpenCodeInstallBlocksUnverifiedProfileRequirements(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
+	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: route-only
+spec:
+  routeRef: primary
+  permissions:
+    mode: read-only
+`)
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "permission requirements") {
+		t.Fatalf("plan = %#v", plan)
+	}
+}
+
+func openCodeTestRequest(t *testing.T) (Request, string) {
+	t.Helper()
+	request, root := testRequest(t, DefaultRegistry())
+	bindings := `routes:
+  primary:
+    provider: openai
+    transport: native
+    authentication: oauth
+    model: gpt-5.6
+    effort: high
+`
+	writeInstallTestFile(t, request.BindingsPath, bindings)
+	config := filepath.Join(root, "target", "opencode.jsonc")
+	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	request.Override = true
+	request.Targets = []TargetRequest{{Target: Target{Name: "opencode", Version: "1.18.31"}, ConfigPath: config}}
+	return request, root
 }
 
 func testAdapterFor(name, version, content string, allow bool) testAdapter {

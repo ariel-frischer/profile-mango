@@ -148,43 +148,44 @@ Current target names are `claude-code`, `codex`, `pi`, `oh-my-pi`, `openclaw`,
 `hermes`, and `opencode`. `ariel-jcode` is experimental-only for Ariel's custom Jcode fork,
 not upstream Jcode or a supported public target.
 
-All current production target renderers are non-applicable previews. Expect blocking
+All current target renderers remain non-applicable previews. Expect blocking
 diagnostics and a nonzero exit status even when preview artifacts are written.
-A mock-only install engine may plan blocked production targets and exercise apply
-semantics through fake adapters and synthetic temporary files. It must not read or
-modify global agent configuration. OpenCode `1.18.31` has separate approved
-isolated evidence that the exact JSONC model candidate parses and appears in merged
-output; this does not make the renderer applicable or the installer production-
-ready. Never present preview syntax, native parsing, or mock application evidence
-as installed or enforced.
+OpenCode `1.18.31` separately supports lossless transactional application of only
+the top-level `model` field at one explicit path. This does not make the renderer or
+full profile applicable. Never present preview syntax, model-field application, or
+native parsing as authentication, delivery, or enforcement.
 
 ## Plan-first install
 
-Production targets currently support deterministic blocked planning only. Use exact
-target versions and explicit project inputs when inspecting the plan:
+All production targets except OpenCode support deterministic blocked planning only.
+OpenCode requires exact version `1.18.31`, a route-only profile, and one explicit
+config path. Plan first against synthetic or separately approved disposable state:
 
 ```bash
 profile-mango install <profile-name> \
   --profiles ./profiles \
   --resource-root . \
   --bindings ./bindings/local.yaml \
-  --target codex@0.154.0 \
   --target opencode@1.18.31 \
-  --json
+  --config-path opencode=/explicit/disposable/opencode.jsonc \
+  --override --json
 ```
 
-Expect a nonzero exit and `blocked` status before any target configuration read.
-Do not add `--apply` for a production target. Hash-bound apply, backups, stale
-checks, journals, and recovery are tested only with fake adapters and synthetic
-temporary files.
+Review the destination digest, field diff, file hashes, and plan ID. Apply only by
+repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
+unowned or externally edited files require `--override`; there is no general force
+path. Never use a live path without new path-specific user approval after a verified
+disposable backup/restore rehearsal.
 
 ## Safety boundary
 
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access
   credentials, call providers, or launch target agents.
-- `install` must remain plan-only for production targets in the current build.
-  Successful mutation tests use fake adapters and `t.TempDir` state only; do not
-  point it at a real Codex, Claude Code, OpenCode, Jcode, or other agent path.
+- `install` remains plan-only for every production target except the exact
+  OpenCode `1.18.31` top-level model subset. That subset may touch only the explicit
+  config path and adjacent Profile Mango manifest, backup, journal, and lock paths.
+  It must not read auth stores, sessions, plugins, MCP, providers, or the network.
+  Do not point it at a live config without new path-specific user approval.
 - `render` writes only beneath the new path supplied by `--out` and never applies
   the candidate.
 - `scripts/opencode-config-probe.sh` is an opt-in exact-binary developer probe. Run

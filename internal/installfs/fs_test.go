@@ -93,6 +93,36 @@ func TestRecoverRestoresIncompleteJournal(t *testing.T) {
 	assertTestFile(t, second, "old-second")
 }
 
+func TestRecoverRejectsThirdPartyEdit(t *testing.T) {
+	root := t.TempDir()
+	first := filepath.Join(root, "first")
+	second := filepath.Join(root, "second")
+	writeTestFile(t, first, "old-first")
+	writeTestFile(t, second, "old-second")
+	firstBefore, err := SnapshotFile(first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondBefore, err := SnapshotFile(second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = Apply([]Change{
+		{Path: first, Before: firstBefore, Content: []byte("new-first")},
+		{Path: second, Before: secondBefore, Content: []byte("new-second")},
+	}, ApplyOptions{PlanID: "guarded-recovery", Backup: true, FaultAfter: 1, LeaveJournal: true})
+	if err == nil {
+		t.Fatal("fault was not reported")
+	}
+	writeTestFile(t, first, "third-party")
+	journal := JournalPath(first, "guarded-recovery")
+	if err := Recover(journal); err == nil {
+		t.Fatal("recovery overwrote third-party state")
+	}
+	assertTestFile(t, first, "third-party")
+	assertTestFile(t, second, "old-second")
+}
+
 func TestApplyRejectsStaleSnapshotBeforeWrites(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "config")

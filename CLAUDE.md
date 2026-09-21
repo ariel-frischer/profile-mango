@@ -50,9 +50,9 @@ assets/                # Demo content (GIFs, screenshots)
 - Map-based table tests: `map[string]struct{}`
 - Accept interfaces, return concrete types
 
-## M0 Safety Boundary
+## Target Safety Boundary
 
-M0 is offline only. Do not add target-home inspection, credential access, subprocess execution, network calls, or live application without a later accepted Bead. Codex is the first intended public target. Jcode remains experimental developer evidence and is not a supported product target.
+The canonical M0 core, validation, and render paths remain offline and pure. OpenCode `1.18.31` alone permits transactional application of the top-level `model` field at one explicit caller-supplied path, using synthetic or separately approved disposable state unless new path-specific user approval is recorded. It must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Every broader capability and every other production target remains blocked. Codex is the first intended public target. Jcode remains experimental developer evidence and is not a supported product target.
 
 ## Post-Feature Checklist
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -105,5 +106,55 @@ func TestInstallConsentRequiresTerminalOrHash(t *testing.T) {
 	}
 	if got := options.expectPlanOrPlanID(install.Plan{PlanID: "other"}); got != "plan" {
 		t.Fatalf("expected plan = %q", got)
+	}
+}
+
+func TestInstallOpenCodeModelAtExplicitDisposablePath(t *testing.T) {
+	root := t.TempDir()
+	profiles := filepath.Join(root, "profiles")
+	if err := os.MkdirAll(filepath.Join(profiles, "route-only"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(profiles, "route-only", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: route\n")
+	bindings := filepath.Join(root, "bindings.yaml")
+	writeFile(t, bindings, "routes:\n  route:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n")
+	config := filepath.Join(root, "target", "opencode.jsonc")
+	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	before := "{\n  // keep\n  \"model\": \"old/model\",\n  \"unknown\": true,\n}\n"
+	writeFile(t, config, before)
+	options := installOptions{
+		profiles: profiles, resourceRoot: root, bindings: bindings,
+		targets: []string{"opencode@1.18.31"}, configs: []string{"opencode=" + config},
+		override: true, jsonOutput: true,
+	}
+	var planOutput bytes.Buffer
+	planCommand := &cobra.Command{}
+	planCommand.SetOut(&planOutput)
+	if err := runInstall(planCommand, "route-only", options); err != nil {
+		t.Fatal(err)
+	}
+	var plan install.Plan
+	if err := json.Unmarshal(planOutput.Bytes(), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != install.StatusReady || plan.PlanID == "" {
+		t.Fatalf("plan = %#v", plan)
+	}
+
+	options.apply, options.yes, options.expectPlan = true, true, plan.PlanID
+	applyCommand := &cobra.Command{}
+	applyCommand.SetOut(&bytes.Buffer{})
+	if err := runInstall(applyCommand, "route-only", options); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := strings.Replace(before, `"old/model"`, `"openai/gpt-5.6"`, 1)
+	if string(data) != want {
+		t.Fatalf("config = %q, want %q", data, want)
 	}
 }
