@@ -45,7 +45,7 @@ file or fetching the network.
 
 Passing canonical parsing or schema validation establishes only that an input
 conforms to the M0 contract. The constrained read-only fixture remains valid
-canonical input, but no adapter exists in M0, so this evidence does not establish
-target applicability, delivery, or enforcement. Required unsupported or unknown
-target capabilities still block future application as described in the
-[target evidence ledger](target-evidence.md).
+canonical input, but this evidence does not establish target applicability, delivery,
+or enforcement. The separate Codex preview renderer remains explicitly
+non-applicable, and required unsupported or unknown target capabilities still block
+future application as described in the [target evidence ledger](target-evidence.md).

@@ -87,8 +87,7 @@ required-but-unknown properties continue to block applicability.
 
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
-this guide does not add a product schema or CLI contract. No public target adapter
-is shipped today.
+this guide does not add a product schema or CLI contract. No applicable public target adapter is shipped today; Codex preview rendering remains non-applicable.
 
 ## Keep useful configuration references locally
 
