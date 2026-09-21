@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact OpenClaw 2026.9.5 inert preview rendering with source/archive provenance, deterministic JSON5 candidates, and explicit config-inspection and applicability blockers
 - Exact Hermes Agent 0.21.3 inert preview rendering for source release v2026.9.14 with source/build provenance, deterministic YAML candidates, and explicit inspector and applicability blockers
 - Exact Claude Code 2.1.278 inert preview rendering with immutable npm artifact provenance, deterministic JSON candidates, and explicit native inspection and applicability blockers
-- Target-neutral render report and resource boundary shared by Codex and Oh My Pi
+- Exact Pi 0.86.1 inert JSON settings preview rendering with immutable source/package provenance, deterministic candidates, and explicit native inspection and applicability blockers
+- Target-neutral render report and resource boundary shared by inert target adapters
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
 

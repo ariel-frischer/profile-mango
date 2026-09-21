@@ -14,6 +14,7 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
 )
 
@@ -212,6 +213,38 @@ func TestRenderHermesPreviewUsesTargetDispatch(t *testing.T) {
 	}
 }
 
+func TestRenderPiPreviewUsesTargetDispatch(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", pi.TargetName, "--target-version", pi.TargetVersion, "--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("blocked Pi preview unexpectedly succeeded")
+	}
+	var report render.Result
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
+	}
+	if report.Target != pi.TargetName || report.AdapterVersion != pi.AdapterVersion || !report.Preview || report.Applicable {
+		t.Fatalf("unexpected Pi report: %#v", report)
+	}
+	if !strings.Contains(stderr, "pi.config.acceptance_unverified") {
+		t.Fatalf("Pi support blocker missing: %s", stderr)
+	}
+	assertRenderFile(t, out, "render.json")
+	assertRenderFile(t, out, "preview/route-only.settings.json.preview")
+	assertRenderFile(t, out, "resources/instructions/system.md")
+	config, readErr := os.ReadFile(filepath.Join(out, "preview", "route-only.settings.json.preview"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if strings.Contains(string(config), "oauth") || strings.Contains(string(config), "secret") || strings.Contains(string(config), "authentication") {
+		t.Fatalf("candidate config leaked authentication data: %s", config)
+	}
+}
+
 func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "candidate")
 	stdout, stderr, err := executeRenderForTest(t, []string{
@@ -240,7 +273,7 @@ func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 
 func TestRenderHelpListsKnownTargets(t *testing.T) {
 	flag := newRenderCmd().Flag("target")
-	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, oh-my-pi, openclaw, or hermes") {
+	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, or hermes") {
 		t.Fatalf("target help does not list explicit adapters: %#v", flag)
 	}
 }

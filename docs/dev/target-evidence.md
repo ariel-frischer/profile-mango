@@ -2,11 +2,11 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, and Hermes Agent 0.21.3 inert preview-renderer boundaries. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
 `--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
 list`, and Ariel custom-fork profile inspection commands in synthetic homes. They
-did not start a session or initialize a provider. No OpenClaw, Hermes, or Claude Code
-command was executed.
+did not start a session or initialize a provider. No OpenClaw, Hermes, Claude Code,
+or Pi command was executed.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -24,8 +24,8 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. Claude Code, Oh My Pi, and
-OpenClaw have exact source/version inert preview renderers, but no applicable
+Codex is the first intended public adapter candidate. Claude Code, Pi, Oh My Pi,
+and OpenClaw have exact source/version inert preview renderers, but no applicable
 support. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
@@ -45,9 +45,73 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`) | immutable source archive/build metadata hashes, entrypoint/config/status/profile effect review, and deterministic inert YAML preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, permissions, tools, skills, context, and enforcement remain blocked |
+| Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1` | immutable source archives and npm package/integrity hashes, bundled entrypoint identity, static startup/config effect review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native config acceptance, effective state, precedence, auth, delivery, extensions, permissions/tools, and enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
+
+## Pi v0.86.1 evidence
+
+### Immutable artifact, release, and platform
+
+The immutable Git tag `v0.86.1` for `earendil-works/pi` resolved with
+`git ls-remote https://github.com/earendil-works/pi.git refs/tags/v0.86.1` to
+commit `13cbf77df2396303013a41646bcfa77b4271ae56`. The retrieved tag archive
+`https://github.com/earendil-works/pi/archive/refs/tags/v0.86.1.tar.gz` has
+SHA-256 `16d65ce53bfab1ae24d625538d434c341c4789d34b352d8c6ef699cf1d1d567d`.
+The commit-pinned archive
+`https://github.com/earendil-works/pi/archive/13cbf77df2396303013a41646bcfa77b4271ae56.tar.gz`
+has SHA-256 `016d83312289ca9b8d3a9d2a5ad804b265277c659472833cfd602cdceecf3818`.
+
+The exact npm package `@earendil-works/pi-coding-agent@0.86.1` has registry
+metadata SHA-256 `8e8e5cf99a033e9aae1db15e8455f819e1921b7c8351b1044acdab9525c14fd7`
+and tarball SHA-256
+`8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a`. Its
+registry integrity is
+`sha512-vZBuNfJnruxZyemZ3O05V0S/Ylze08ahFTIQ1Mik++gVdOevPl89gt/Uv0U97BPAJaj9cj6Vf9rcIgKtUrd0BA==`.
+The integrity was recomputed from the retrieved tarball. The package declares
+Node.js `>=22.19.0`, its `bin.pi` entrypoint is `dist/bundle/cli.js`, and the
+extracted entrypoint SHA-256 is
+`e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774`.
+Qualification used Linux x86_64, Node.js `v24.21.0`, and npm `11.19.0`. This is
+immutable source/package review, not an installed Pi observation.
+
+### Static effect review and native execution boundary
+
+The exact release source review covered the CLI, startup, settings, migrations,
+authentication storage, model runtime, session services, package manager,
+resource loader, extensions, and the version-pinned settings/providers/models/
+security/skills documentation. The default agent directory is `~/.pi/agent` or
+the `PI_CODING_AGENT_DIR` override, with settings, `auth.json`, `models.json`,
+`models-store.json`, sessions, prompts, tools, and debug logs. Startup constructs
+settings and HTTP services, runs cleanup and migrations, and can read, rename,
+create, or rewrite target files. Runtime setup loads project settings and trust
+state, context files, extensions, skills, prompts, themes, packages, providers,
+auth state, models, and session state. Package/config/update paths can use npm or
+git subprocesses, network refreshes, and writes. First-time setup can persist
+theme and analytics settings.
+
+No Pi native command was run. Considered invocations included `pi --version`,
+`pi --help`, `pi --list-models`, `pi config --help`, `pi config -l`,
+`pi update --models`, and noninteractive print/model paths. The source review did
+not establish a bounded, no-write, credential-free, no-provider, no-extension,
+noninteractive invocation. A synthetic `HOME` alone would not isolate all agent,
+project, XDG, package, session, and extension paths. Native acceptance, effective
+state, precedence, delivery, authentication, and enforcement remain unverified.
+This is an explicit evidence gap, not a claim that every invocation is unsafe in
+every environment.
+
+### Inert adapter boundary
+
+The Pi adapter emits only an inert JSON settings candidate at
+`preview/<profile>.settings.json.preview` with the exact source-grounded keys
+`defaultProvider`, `defaultModel`, and `defaultThinkingLevel`. It never emits
+credentials, authentication files, model-store data, provider URLs, sessions,
+transport, or resource paths in the candidate. Reports separate candidate syntax,
+native acceptance, effective state, precedence, route authentication, extension
+discovery, delivery, permissions/tools, and runtime enforcement. `applicable` is
+always false, and validated canonical resources are copied only into explicit
+inert staging output.
 
 ## Claude Code v2.1.278 evidence
 
@@ -598,7 +662,7 @@ No candidate field is classified as runtime-enforced by M0. The route/instructio
 
 The minimum contract can proceed without public Jcode support and without pretending Codex is already supported. M0 establishes deterministic canonical semantics and records that:
 
-- Codex is the first public M1 adapter candidate, and Claude Code, Oh My Pi,
+- Codex is the first public M1 adapter candidate, and Claude Code, Pi, Oh My Pi,
   OpenClaw, and Hermes now have exact source-qualified inert preview renderers.
 - Ariel's custom Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
@@ -615,6 +679,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Reproducible harness: [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
   and its opt-in integration test `TestAgentConfigProbe`.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
+- Pi v0.86.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
 - Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
 - OpenClaw v2026.9.5 source and documentation: [`openclaw.mjs`](https://github.com/openclaw/openclaw/blob/v2026.9.5/openclaw.mjs), [`config-cli.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/cli/config-cli.ts), [`io.snapshot.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/io.snapshot.ts), [`configuration.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md), and [`config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md). The exact source review did not execute config inspection because plugin/state/include and migration effects were not bounded.
 - Bundled Ariel custom Jcode fork documentation for source snapshot `ed9b93b89`:
@@ -633,10 +698,11 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code's v2.1.278 package is now qualified for an inert preview boundary,
-  but native acceptance, effective-state inspection, and enforcement remain
-  blocked pending a safe exact-artifact inspection path. Pi remains roadmap
-  research. OpenClaw and Hermes retain their source-qualified inert boundaries.
+- Claude Code's v2.1.278 package and Pi's v0.86.1 source/package release are
+  qualified for inert preview boundaries, but native acceptance, effective-state
+  inspection, and enforcement remain blocked pending safe exact-artifact
+  inspection paths. OpenClaw and Hermes retain their source-qualified inert
+  boundaries.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.
