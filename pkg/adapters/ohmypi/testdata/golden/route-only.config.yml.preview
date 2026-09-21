@@ -1,0 +1,7 @@
+# profile-mango: INERT PREVIEW ONLY
+# NON-APPLICABLE: candidate syntax for Oh My Pi 18.2.6.
+# This is not an active configuration. Authentication, delivery, and enforcement are unverified.
+
+modelRoles:
+  default: "openai/gpt-5.6"
+defaultThinkingLevel: "high"

@@ -1,7 +1,9 @@
 # Documentation index
 
 - [`dev/agent-validation.md`](dev/agent-validation.md) - No-inference native checks, version-qualified support, local references, and the read-only upstream source drift check.
+- [`dev/adapter-architecture.md`](dev/adapter-architecture.md) - Target-neutral render boundary, explicit dispatch, and inert adapter failure behavior.
 - [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and Ariel's experimental-only custom Jcode fork.
+- [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source evidence, configuration effects, and blocked native support boundary.
 - [`dev/m0-validation.md`](dev/m0-validation.md) - Reproducible offline clean-install, installed-binary, and Draft 2020-12 contract evidence for M0.
 - [Project constitution](../.autospec/constitution.yaml) - Durable principles and lightweight governance for relevant project work.
 - [`dev/project-scope.md`](dev/project-scope.md) - North star, current M0, intended MVP targets, boundaries, success criteria, and proposed defaults.

@@ -10,6 +10,8 @@ import (
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 func TestRenderNoPreviewDoesNotWrite(t *testing.T) {
@@ -76,6 +78,71 @@ func TestRenderPreviewWritesOnlyInertArtifacts(t *testing.T) {
 	}
 	if !strings.Contains(string(reportData), codex.EvidenceSHA256) {
 		t.Fatal("render.json omitted exact evidence hash")
+	}
+}
+
+func TestRenderOhMyPiPreviewUsesTargetDispatch(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", ohmypi.TargetName, "--target-version", ohmypi.TargetVersion, "--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("blocked Oh My Pi preview unexpectedly succeeded")
+	}
+	var report render.Result
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
+	}
+	if report.Target != ohmypi.TargetName || report.AdapterVersion != ohmypi.AdapterVersion || !report.Preview || report.Applicable {
+		t.Fatalf("unexpected Oh My Pi report: %#v", report)
+	}
+	if !strings.Contains(stderr, "ohmypi.config.inspector_unsafe") {
+		t.Fatalf("support blocker missing: %s", stderr)
+	}
+	assertRenderFile(t, out, "render.json")
+	assertRenderFile(t, out, "preview/route-only.config.yml.preview")
+	assertRenderFile(t, out, "resources/instructions/system.md")
+	config, readErr := os.ReadFile(filepath.Join(out, "preview", "route-only.config.yml.preview"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if strings.Contains(string(config), "oauth") || strings.Contains(string(config), "secret") {
+		t.Fatalf("candidate config leaked authentication data: %s", config)
+	}
+}
+
+func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"missing", "--profiles", filepath.Join(t.TempDir(), "missing-profiles"),
+		"--resource-root", filepath.Join(t.TempDir(), "missing-resources"),
+		"--bindings", filepath.Join(t.TempDir(), "missing-bindings.yaml"),
+		"--target", "unknown", "--target-version", "1.0.0", "--out", out, "--preview", "--json",
+	})
+	if err == nil {
+		t.Fatal("unknown target unexpectedly succeeded")
+	}
+	var report render.Result
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
+	}
+	if len(report.Artifacts) != 0 || strings.Contains(stdout, "codex") || strings.Contains(stdout, "ohmypi") {
+		t.Fatalf("unknown target received target-specific output: %#v\n%s", report, stdout)
+	}
+	if !strings.Contains(stderr, "render.target.unsupported") {
+		t.Fatalf("unknown target diagnostic missing: %s", stderr)
+	}
+	if _, statErr := os.Stat(out); !os.IsNotExist(statErr) {
+		t.Fatalf("unknown target created output: %v", statErr)
+	}
+}
+
+func TestRenderHelpListsKnownTargets(t *testing.T) {
+	flag := newRenderCmd().Flag("target")
+	if flag == nil || !strings.Contains(flag.Usage, "codex or oh-my-pi") {
+		t.Fatalf("target help does not list explicit adapters: %#v", flag)
 	}
 }
 

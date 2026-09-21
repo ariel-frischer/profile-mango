@@ -7,6 +7,8 @@ versions:
             - Version-qualified local agent configuration references with deterministic source provenance
             - Automated offline clean-install and Draft 2020-12 schema validation evidence for M0
             - Exact Codex 0.154.0 inert preview rendering with fail-closed applicability diagnostics and explicit staging
+            - Exact Oh My Pi 18.2.6 inert preview rendering with source/build blockers, deterministic YAML candidates, and explicit fail-closed dispatch
+            - Target-neutral render report and resource boundary shared by Codex and Oh My Pi
             - Deterministic profile scaffolding with profile-mango init
             - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
         changed:

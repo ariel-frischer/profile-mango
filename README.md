@@ -17,9 +17,11 @@ resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
-> are offline and pure. Codex CLI `0.154.0` has an exact-version, explicitly
-> inert preview renderer, but no generated output is applicable or installed
-> because authentication, delivery, and enforcement remain unverified.
+> are offline and pure. Codex CLI `0.154.0` and Oh My Pi `18.2.6` have exact-
+> version, explicitly inert preview renderers, but no generated output is
+> applicable or installed because authentication, delivery, and enforcement
+> remain unverified. Oh My Pi native support is also blocked by its missing
+> standalone native addon and unsafe config-inspector effects.
 
 ## Install
 
@@ -198,6 +200,27 @@ The command never installs the preview or modifies Codex configuration. See the
 [target evidence ledger](docs/dev/target-evidence.md) for the exact evidence
 level and unresolved boundaries.
 
+## Inert Oh My Pi preview
+
+The same explicit package can render a deterministic Oh My Pi `18.2.6` candidate.
+The output is YAML syntax under `preview/`, never `~/.omp`, and the command exits
+nonzero because the report is non-applicable:
+
+```bash
+profile-mango render route-only \
+  --profiles pkg/profilemango/testdata/fixtures \
+  --resource-root pkg/profilemango/testdata \
+  --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
+  --target oh-my-pi \
+  --target-version 18.2.6 \
+  --out ./oh-my-pi-preview \
+  --preview --json
+```
+
+The Oh My Pi adapter emits no credentials or active target-home files. Its source
+version, build blocker, config-inspector effects, and capability gaps are recorded
+in the [target evidence ledger](docs/dev/target-evidence.md).
+
 ## Commands
 
 ```text
@@ -205,7 +228,7 @@ profile-mango agents      Inspect documented agent sources without changing loca
 profile-mango completion  Generate shell completion scripts
 profile-mango home        Print the effective profile package home
 profile-mango init        Create a deterministic starter profile package
-profile-mango render      Render an inert, version-qualified candidate
+profile-mango render      Render an inert, version-qualified candidate for a known target
 profile-mango validate    Validate one PolicyProfile offline
 profile-mango version     Display version information
 ```
@@ -231,8 +254,8 @@ Versioned JSON Schemas live in [`schemas/`](schemas/).
 ## Support boundary
 
 Codex is the first intended public adapter target. The shipped Codex `0.154.0`
-boundary is preview-only and always reports current profiles as non-applicable.
-No applicable adapter, installation engine, import, drift repair, credential
+and Oh My Pi `18.2.6` boundaries are preview-only and always report current
+profiles as non-applicable. No applicable adapter, installation engine, import, drift repair, credential
 handling, provider call, target-home inspection, role projection, MCP projection,
 or identity management is shipped. User-level preference storage is not shipped;
 the application home stores profile packages and route identity only.
@@ -272,6 +295,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and
 - [Project scope and goals](docs/dev/project-scope.md)
 - [M0 validation evidence](docs/dev/m0-validation.md)
 - [Target evidence ledger](docs/dev/target-evidence.md)
+- [Adapter architecture](docs/dev/adapter-architecture.md)
+- [Oh My Pi configuration reference](docs/dev/agents/oh-my-pi.md)
 - [Agent reference pack](docs/dev/agents/README.md)
 - [Changelog](CHANGELOG.md)
 
