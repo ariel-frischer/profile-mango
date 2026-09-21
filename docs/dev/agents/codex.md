@@ -1,19 +1,14 @@
 # Codex configuration reference
 
-**Reference date:** 2026-09-20. **Status:** first intended public adapter
-candidate; no adapter or supported capability. The official configuration pages
-and schema are mutable and unversioned. Their recorded hashes in
-[`sources.json`](sources.json) are retrieval snapshots, not a mapping to Codex
-`0.154.0`; that version is a separate installed observation in the
-[evidence ledger](../target-evidence.md).
+**Reference date:** 2026-09-21. **Status:** exact-version inert preview support for Codex CLI `0.154.0`; native applicability is blocked. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and it always reports `applicable: false` because authentication, delivery, precedence, and enforcement remain unverified.
 
 ## Configuration and precedence
 
 Official docs describe user configuration at `${CODEX_HOME}/config.toml`
 (`~/.codex/config.toml` by default), project `.codex/config.toml` layers, named
 profiles, and runtime overrides. Target-owned authentication is separate from a
-portable profile. A later adapter must prove precedence and route identity for
-the exact tested build rather than treating a rendered file as effective state.
+portable profile. The preview adapter does not select a live destination or claim
+that its candidate syntax becomes effective state.
 
 See the unversioned official [basic configuration][basic],
 [advanced configuration][advanced], [configuration reference][reference], and
@@ -31,6 +26,19 @@ Codex reads scoped `AGENTS.md` instructions and discovers skills from documented
 system, administrator, user, and repository locations. Instruction delivery is
 not a permission boundary, and skill visibility is not proven skill exclusion.
 See [AGENTS.md guidance][agents] and [skill guidance][skills].
+
+## Preview renderer boundary
+
+`profile-mango render <name> --target codex --target-version 0.154.0` is an
+offline compiler boundary, not an installer. Without `--preview`, applicability
+blockers produce diagnostics and no output. With `--preview`, the command may
+atomically create a new explicit `--out` directory containing `render.json`,
+a `preview/<name>.config.toml.preview` candidate, and inert resource copies. It
+still exits nonzero while blockers remain.
+
+The report pins the tested Codex build hash, lists field-level capabilities and
+blocking diagnostics, and records deterministic artifact digests. No target home,
+credentials, subprocess, provider, or network is accessed.
 
 ## Candidate inspection and gaps
 

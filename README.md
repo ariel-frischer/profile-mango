@@ -2,7 +2,7 @@
 
 Define portable coding-agent behavior once, resolve it deterministically, and know which properties a target can or cannot preserve.
 
-> **Status:** private M0 contract prototype. It validates and resolves profiles offline. It does not render, install, launch, or modify any coding agent.
+> **Status:** private prototype. M0 validation remains offline and pure. An exact-version Codex 0.154.0 adapter can now produce an explicitly inert preview, but no generated output is applicable or installed because authentication, delivery, and enforcement remain unverified.
 
 ## Why
 
@@ -19,11 +19,11 @@ M0 includes:
 - JSON Schemas and positive, constrained, and unsupported fixtures
 - an offline `validate` command
 
-M0 intentionally excludes adapters, rendering, application, import, drift repair, credentials, provider calls, target-home inspection, roles, MCP projection, and identity management.
+M0 intentionally excludes applicable adapters, application, import, drift repair, credentials, provider calls, target-home inspection, roles, MCP projection, and identity management. The later Codex preview renderer writes only to an explicit staging directory and does not weaken those safety boundaries.
 
 ## Support policy
 
-Codex is the first intended public adapter target, but no adapter is shipped in M0. Target support begins only after version-qualified capability evidence and golden rendering tests exist.
+Codex is the first intended public adapter target. The shipped Codex 0.154.0 boundary is preview-only: it has version-qualified evidence and golden rendering tests, always reports current profiles as non-applicable, and emits no active target configuration.
 
 Experimental comparison targets are documented only in developer evidence. They are not part of the public compatibility promise.
 
@@ -72,9 +72,20 @@ make build
   --bindings bindings/local.yaml
 
 ./bin/profile-mango validate profiles/research/profile.yaml --json
+
+# Writes only an inert preview to a new explicit directory, then exits nonzero
+# because current authentication, delivery, and enforcement requirements block applicability.
+./bin/profile-mango render research \
+  --profiles profiles \
+  --resource-root . \
+  --bindings bindings/local.yaml \
+  --target codex \
+  --target-version 0.154.0 \
+  --out ./codex-preview \
+  --preview --json
 ```
 
-Validation reads only the explicitly supplied files. It does not inspect agent homes, resolve credentials, run subprocesses, or use the network.
+Validation and preview rendering read only explicitly supplied files. They do not inspect agent homes, resolve credentials, run subprocesses, or use the network. Preview output is conspicuously inert and is never installed automatically.
 
 ## Library
 

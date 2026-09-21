@@ -82,7 +82,7 @@ CHANGELOG.md          # generated changelog output
 ## M0 Safety Boundary
 
 - M0 is offline and pure: no target homes, credentials, subprocesses, providers, or network access.
-- Codex is the first intended public adapter target, but no adapter exists yet.
+- Codex is the first intended public adapter target; only an exact-version inert preview renderer exists, and native applicability remains blocked.
 - Jcode is developer-only experimental evidence, not a supported product target or README promise.
 - Unknown keys, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed.
 

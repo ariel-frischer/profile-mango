@@ -2,8 +2,7 @@
 
 These contributor references summarize configuration surfaces for the intended
 MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
-bases for later isolated probes and adapter work, not a compatibility matrix.
-No adapter currently ships.
+bases for isolated probes and adapter work, not a compatibility matrix. Codex now has an exact-version, preview-only renderer; no target has an applicable installer or enforcement claim.
 
 The [source manifest](sources.json) records deterministic provenance and keeps
 four states separate:
@@ -23,7 +22,7 @@ and commits are reproducible locators, not proof of target behavior.
 
 ## Targets
 
-- [Codex](codex.md) — first intended public adapter candidate; no adapter yet.
+- [Codex](codex.md) — exact Codex 0.154.0 inert preview renderer; native applicability remains blocked.
 - [Claude Code](claude-code.md) — intended MVP target; untested.
 - [Pi](pi.md) — intended MVP target variant; qualified independently.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.

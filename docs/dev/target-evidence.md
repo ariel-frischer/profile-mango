@@ -2,10 +2,7 @@
 
 **Evidence date:** 2026-09-20 local / 2026-09-21 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence plus isolated native-inspector evidence. No adapter,
-rendering, application, target-home read, credential read, target session launch,
-provider/model launch or request, provider initialization, hook/extension/child
-launch, or live-state mutation. The only target processes executed were bounded
+**Scope:** M0 contract evidence, isolated native-inspector evidence, and the exact Codex 0.154.0 inert preview-renderer boundary. No application, target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. The only target processes executed were bounded
 `--version`, `--help`, Codex `features list`, and Ariel custom-fork profile
 inspection commands in synthetic homes; they did not start a session or initialize
 a provider.
@@ -38,9 +35,9 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 ## Pinned local observations
 
-| Target | Observed build | Evidence source | M0 status |
+| Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| Codex CLI | `codex-cli 0.154.0` | local `codex --version` and `codex --help`; official `/openai/codex` configuration loader and types | First public M1 adapter candidate; no adapter ships in M0 |
+| Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated direct-binary probe, local `jcode --version` and `jcode profile --help`; bundled `README.md` and `docs/WRAPPERS.md` | Experimental developer comparison only |
 
 The observations are version-qualified snapshots, not compatibility ranges.
@@ -132,6 +129,21 @@ Codex consumes or enforces profile route, model, reasoning-effort, sandbox,
 approval, tool, skill, instruction, or authentication fields. The effective
 configuration and field-provenance inspector remains unavailable, and
 `--strict-config` remains excluded because it participates in startup.
+
+## Codex preview-renderer evidence
+
+The first adapter boundary is pinned to `codex-cli 0.154.0` and binary SHA-256
+`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`.
+Golden and negative tests demonstrate deterministic candidate TOML, resource
+copies, report metadata, no-write behavior without `--preview`, atomic writes to
+a new explicit staging directory with `--preview`, and rejection of unsupported
+versions, invalid resources, permissions, and closed tool requirements.
+
+This is preview-rendering support only. Every report remains `applicable: false`,
+and the command returns nonzero while authentication, delivery, precedence, or
+enforcement is unverified. The preview never contains active `config.toml`,
+`AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
+paths.
 
 ## Experimental Ariel custom Jcode fork evidence
 
