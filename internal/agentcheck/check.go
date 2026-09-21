@@ -468,11 +468,15 @@ func validateSources(target Target) error {
 }
 
 func FormatText(w io.Writer, report Report) error {
+	return FormatTextStyled(w, report, nil)
+}
+
+func FormatTextStyled(w io.Writer, report Report, formatStatus func(Status) string) error {
 	if _, err := fmt.Fprintf(w, "manifest: %s\nretrieved_at: %s\n", report.ManifestPath, report.RetrievedAt); err != nil {
 		return err
 	}
 	for _, target := range report.Targets {
-		if err := formatTarget(w, target); err != nil {
+		if err := formatTarget(w, target, formatStatus); err != nil {
 			return err
 		}
 	}
@@ -480,7 +484,7 @@ func FormatText(w io.Writer, report Report) error {
 	return err
 }
 
-func formatTarget(w io.Writer, target TargetReport) error {
+func formatTarget(w io.Writer, target TargetReport, formatStatus func(Status) string) error {
 	if _, err := fmt.Fprintf(w, "target: %s (%s) product_status=%s version_context=%s\n", target.ID, target.Name, target.ProductStatus, formatContext(target.VersionContext)); err != nil {
 		return err
 	}
@@ -489,7 +493,11 @@ func formatTarget(w io.Writer, target TargetReport) error {
 		if location == "" {
 			location = source.Locator
 		}
-		if _, err := fmt.Fprintf(w, "  source: %s kind=%s category=%s state=%s\n", location, source.Kind, source.ChangedArea, source.State); err != nil {
+		state := string(source.State)
+		if formatStatus != nil {
+			state = formatStatus(source.State)
+		}
+		if _, err := fmt.Fprintf(w, "  source: %s kind=%s category=%s state=%s\n", location, source.Kind, source.ChangedArea, state); err != nil {
 			return err
 		}
 		if err := formatSourceDetails(w, source); err != nil {

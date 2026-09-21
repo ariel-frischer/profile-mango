@@ -43,8 +43,12 @@ func newAgentsCheckCmd() *cobra.Command {
 				if err := agentcheck.FormatJSON(cmd.OutOrStdout(), report); err != nil {
 					return err
 				}
-			} else if err := agentcheck.FormatText(cmd.OutOrStdout(), report); err != nil {
-				return err
+			} else {
+				styles := stylesFor(cmd.OutOrStdout(), true)
+				formatStatus := func(status agentcheck.Status) string { return styledAgentStatus(status, styles) }
+				if err := agentcheck.FormatTextStyled(cmd.OutOrStdout(), report, formatStatus); err != nil {
+					return err
+				}
 			}
 			if report.Summary.Unavailable > 0 {
 				return unavailableError(report.Summary.Unavailable)

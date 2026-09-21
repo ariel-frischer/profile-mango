@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fatih/color"
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
@@ -98,39 +97,17 @@ func TestInitCommandDefaultsToEffectiveHome(t *testing.T) {
 	}
 }
 
-func TestWriteInitLogoColorModes(t *testing.T) {
-	original := color.NoColor
-	t.Cleanup(func() { color.NoColor = original })
-	tests := map[string]struct {
-		noColor  bool
-		wantANSI bool
-	}{
-		"ansi enabled":  {wantANSI: true},
-		"ansi disabled": {noColor: true},
+func TestWriteInitLogoNonTerminalIsPlain(t *testing.T) {
+	var output bytes.Buffer
+	if err := writeInitLogo(&output); err != nil {
+		t.Fatalf("writeInitLogo: %v", err)
 	}
-
-	for _, name := range []string{"ansi enabled", "ansi disabled"} {
-		t.Run(name, func(t *testing.T) {
-			color.NoColor = tests[name].noColor
-			var output bytes.Buffer
-			if err := writeInitLogo(&output); err != nil {
-				t.Fatalf("writeInitLogo: %v", err)
-			}
-			got := output.String()
-			if strings.Contains(got, "\x1b[") != tests[name].wantANSI {
-				t.Fatalf("ANSI presence in %q, want %t", got, tests[name].wantANSI)
-			}
-			if stripANSI(got) != expectedReadmeLogo+"\n" {
-				t.Fatalf("visible logo = %q, want %q", stripANSI(got), expectedReadmeLogo+"\n")
-			}
-		})
+	if got := output.String(); got != expectedReadmeLogo+"\n" {
+		t.Fatalf("logo = %q, want %q", got, expectedReadmeLogo+"\n")
 	}
 }
 
 func TestInitCommandOutputIncludesLogo(t *testing.T) {
-	original := color.NoColor
-	color.NoColor = true
-	t.Cleanup(func() { color.NoColor = original })
 	destination := filepath.Join(t.TempDir(), "project")
 
 	output, err := executeCommandResult(t, "init", destination)
@@ -388,18 +365,4 @@ func snapshotTree(root string) map[string]treeEntry {
 		return nil
 	})
 	return entries
-}
-
-func stripANSI(value string) string {
-	for {
-		start := strings.Index(value, "\x1b[")
-		if start < 0 {
-			return value
-		}
-		end := strings.IndexByte(value[start:], 'm')
-		if end < 0 {
-			return value
-		}
-		value = value[:start] + value[start+end+1:]
-	}
 }

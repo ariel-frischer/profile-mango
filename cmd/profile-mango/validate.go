@@ -38,15 +38,17 @@ func newValidateCmd() *cobra.Command {
 			if jsonOutput {
 				return printValidationJSON(cmd, profile, diagnostics)
 			}
+			errStyles := stylesFor(cmd.ErrOrStderr(), true)
 			for _, diagnostic := range diagnostics.Sorted() {
-				if _, err := fmt.Fprintln(cmd.ErrOrStderr(), diagnosticLine(diagnostic)); err != nil {
+				if _, err := fmt.Fprintln(cmd.ErrOrStderr(), styledDiagnosticLine(diagnostic, errStyles)); err != nil {
 					return fmt.Errorf("write diagnostic: %w", err)
 				}
 			}
 			if diagnostics.HasErrors() {
 				return fmt.Errorf("validation failed")
 			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s is valid\n", profile.Metadata.Name); err != nil {
+			styles := stylesFor(cmd.OutOrStdout(), true)
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", styles.path(profile.Metadata.Name), styles.success("is valid")); err != nil {
 				return fmt.Errorf("write validation result: %w", err)
 			}
 			return nil
