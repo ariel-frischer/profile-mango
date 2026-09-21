@@ -16,6 +16,13 @@ coding-agent behavior. It separates shared intent from machine-local routes,
 resolves profiles deterministically, and fails closed when a target cannot prove
 that it preserves a requirement.
 
+Profile Mango manages **profiles**, not every setting exposed by every agent. A
+profile contains reusable behavior and resources that should travel between coding
+agents. Adapters use native configuration only where needed to deliver that profile
+and make unsupported or target-specific differences visible. They are not intended
+to become general-purpose configuration managers for Codex, Claude Code, OpenClaw,
+Hermes, or other targets.
+
 ## What is a profile?
 
 A profile is a user-owned bundle of the behavior and resources you want to carry
@@ -33,6 +40,11 @@ shared intent once and select a named profile. Target adapters translate the
 parts each agent understands and report anything they cannot faithfully deliver
 or enforce. The intended workflow is to switch profiles across agents without
 maintaining a separate copy of your instructions, skills, and policy for each one.
+
+Settings with no meaningful role in a portable coding-agent profile remain owned by
+the target. This includes unrelated channels, gateways, UI preferences, telemetry,
+updates, session databases, and other product-specific operations. Credentials and
+authentication stores always remain target-owned.
 
 The current prototype validates and resolves these bundles and produces
 deterministic, inspectable **inert previews**. It does not yet install them into
@@ -428,8 +440,9 @@ User-level preference storage is not shipped; the application home stores profil
 packages and route identity only.
 
 Other intended targets and experimental comparison evidence are documented as
-roadmap or developer material, not as current compatibility claims. See
-[project scope](docs/dev/project-scope.md) for the precise distinction.
+roadmap or developer material, not as current compatibility claims. See the
+[roadmap](ROADMAP.md) for product direction and
+[project scope](docs/dev/project-scope.md) for the precise current boundary.
 
 ## Development
 
@@ -458,6 +471,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and
 
 ## Documentation
 
+- [Roadmap](ROADMAP.md)
 - [Documentation index](docs/index.md)
 - [Project scope and goals](docs/dev/project-scope.md)
 - [M0 validation evidence](docs/dev/m0-validation.md)
