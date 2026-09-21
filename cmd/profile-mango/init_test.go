@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
+	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
@@ -45,7 +46,8 @@ func TestInitCommandScaffoldsDefaultAndExplicitDestinations(t *testing.T) {
 		chdir       string
 		destination string
 	}{
-		"default directory": {
+		"explicit current directory": {
+			args:        []string{"."},
 			chdir:       t.TempDir(),
 			destination: ".",
 		},
@@ -60,6 +62,35 @@ func TestInitCommandScaffoldsDefaultAndExplicitDestinations(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Chdir(test.chdir)
 			if _, err := executeCommandResult(t, append([]string{"init"}, test.args...)...); err != nil {
+				t.Fatalf("init failed: %v", err)
+			}
+			assertStarterTree(t, test.destination)
+		})
+	}
+}
+
+func TestInitCommandDefaultsToEffectiveHome(t *testing.T) {
+	root := t.TempDir()
+	tests := map[string]struct {
+		args            []string
+		environmentHome string
+		destination     string
+	}{
+		"environment": {
+			args:            []string{"init"},
+			environmentHome: filepath.Join(root, "environment"),
+			destination:     filepath.Join(root, "environment"),
+		},
+		"flag": {
+			args:            []string{"--home", filepath.Join(root, "flag"), "init"},
+			environmentHome: filepath.Join(root, "environment-unused"),
+			destination:     filepath.Join(root, "flag"),
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv(profilehome.EnvHome, test.environmentHome)
+			if _, err := executeCommandResult(t, test.args...); err != nil {
 				t.Fatalf("init failed: %v", err)
 			}
 			assertStarterTree(t, test.destination)
@@ -255,6 +286,7 @@ func TestInitCommandArgumentHandling(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			root := t.TempDir()
 			t.Chdir(root)
+			t.Setenv(profilehome.EnvHome, filepath.Join(root, "global-home"))
 			before := snapshotTree(root)
 			_, err := executeCommandResult(t, test.args...)
 			if (err != nil) != test.wantErr {
@@ -278,6 +310,7 @@ func executeCommandResult(t *testing.T, args ...string) (string, error) {
 	var out bytes.Buffer
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
+	resetHomeFlag()
 	rootCmd.SetArgs(args)
 	err := rootCmd.Execute()
 	return out.String(), err

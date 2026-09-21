@@ -48,9 +48,9 @@ func newInitCmd() *cobra.Command {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	destination := "."
-	if len(args) == 1 {
-		destination = args[0]
+	destination, err := initDestination(args)
+	if err != nil {
+		return err
 	}
 	files := starterFiles()
 	if err := validateStarterFiles(files); err != nil {
@@ -69,6 +69,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("reporting initialized directory: %w", err)
 	}
 	return nil
+}
+
+func initDestination(args []string) (string, error) {
+	if len(args) == 1 {
+		return args[0], nil
+	}
+	return selectedHome()
 }
 
 func starterFiles() []starterFile {

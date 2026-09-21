@@ -17,7 +17,8 @@ directories. It sets `GOTOOLCHAIN=local` and `GOPROXY=off`, reuses the already
 populated `GOMODCACHE`, runs local `go build` and `go install`, and then invokes
 only the installed `profile-mango` binary. It verifies:
 
-- root help, plain version output, and the config-key listing;
+- root help, plain version output, and the effective profile-home path without
+  creating it;
 - JSON validation success for the route-only and constrained read-only fixtures;
 - JSON validation failure for the unsupported fixture, with one stable
   `yaml.strict` diagnostic.

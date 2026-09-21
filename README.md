@@ -45,11 +45,16 @@ Set `PROFILE_MANGO_VERSION` to select a release and
 
 ## Usage
 
-Create a deterministic starter package in the current directory or an explicit
-destination:
+Create a deterministic starter package in the global profile home, or choose an
+explicit project destination:
 
 ```console
 $ profile-mango init
+█▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
+█▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
+Created profile scaffold in /home/alice/.profile-mango
+
+$ profile-mango init .
 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
 Created profile scaffold in .
@@ -60,7 +65,8 @@ $ profile-mango init ./my-profile-project
 Created profile scaffold in my-profile-project
 ```
 
-The command creates only absent paths and never overwrites existing files:
+The command creates only absent paths and never overwrites existing files. The
+same package layout is used beneath the global home or an explicit destination:
 
 ```text
 profiles/default/profile.yaml
@@ -69,7 +75,19 @@ bindings/.gitignore
 ```
 
 The example binding records route identity only. Credentials remain target-owned,
-and `bindings/local.yaml` is ignored for machine-local values.
+and `bindings/local.yaml` is ignored for machine-local values. Copy the example
+before rendering from the global home:
+
+```bash
+cp ~/.profile-mango/bindings/local.example.yaml \
+   ~/.profile-mango/bindings/local.yaml
+```
+
+The default home is `~/.profile-mango` on Linux and macOS and
+`%USERPROFILE%\.profile-mango` on Windows. Override the whole package with the
+root `--home` flag or `PROFILE_MANGO_HOME`; the flag wins. `profile-mango home`
+prints the effective absolute path without creating it. Instructions and skills
+may live under `instructions/` and `skills/` in the same package.
 
 Validate a tracked example entirely offline:
 
@@ -127,8 +145,9 @@ routes:
   versions, missing parents, cycles, and escaping resource paths fail closed.
 - **Deterministic resolution:** one-parent inheritance, explicit merge rules,
   closed tool allowlists, and deny-wins behavior produce reproducible results.
-- **Deterministic scaffolding:** `init [directory]` creates a strictly valid
-  starter profile and safe machine-local binding guidance without overwriting.
+- **Deterministic scaffolding:** `init` creates the global home package, while
+  `init .` or `init <directory>` creates an explicit project package without
+  overwriting existing files.
 - **Portable resources:** instructions and skills are resolved and hashed without
   reading outside the explicitly supplied resource root.
 - **Machine-local routing:** bindings describe provider, transport,
@@ -158,7 +177,10 @@ or unknown.
 ## Inert Codex preview
 
 The current Codex adapter renders only a candidate into a new explicit staging
-directory. This verified fixture command writes preview artifacts, reports
+directory. Render input defaults come from the effective profile home. Supplying
+one project input flag requires all three of `--profiles`, `--resource-root`, and
+`--bindings`, preventing accidental global/project mixing. This verified fixture
+command uses an explicit project package, writes preview artifacts, reports
 blocking diagnostics, and exits nonzero because the output is not applicable:
 
 ```bash
@@ -181,6 +203,7 @@ level and unresolved boundaries.
 ```text
 profile-mango agents      Inspect documented agent sources without changing local state
 profile-mango completion  Generate shell completion scripts
+profile-mango home        Print the effective profile package home
 profile-mango init        Create a deterministic starter profile package
 profile-mango render      Render an inert, version-qualified candidate
 profile-mango validate    Validate one PolicyProfile offline
@@ -211,8 +234,8 @@ Codex is the first intended public adapter target. The shipped Codex `0.154.0`
 boundary is preview-only and always reports current profiles as non-applicable.
 No applicable adapter, installation engine, import, drift repair, credential
 handling, provider call, target-home inspection, role projection, MCP projection,
-or identity management is shipped.
-User-level preference storage and home resolution are not shipped.
+or identity management is shipped. User-level preference storage is not shipped;
+the application home stores profile packages and route identity only.
 
 Other intended targets and experimental comparison evidence are documented as
 roadmap or developer material, not as current compatibility claims. See
@@ -237,6 +260,7 @@ Useful CLI smoke checks:
 ```bash
 go run ./cmd/profile-mango --help
 go run ./cmd/profile-mango version
+go run ./cmd/profile-mango home
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and

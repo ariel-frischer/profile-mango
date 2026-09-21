@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 )
 
 func executeCommand(t *testing.T, args ...string) string {
@@ -13,12 +16,21 @@ func executeCommand(t *testing.T, args ...string) string {
 	var out bytes.Buffer
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
+	resetHomeFlag()
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
+}
+
+func resetHomeFlag() {
+	homePathOverride = ""
+	if flag := rootCmd.PersistentFlags().Lookup("home"); flag != nil {
+		_ = flag.Value.Set("")
+		flag.Changed = false
+	}
 }
 
 func TestVersionCommandSmoke(t *testing.T) {
@@ -44,6 +56,35 @@ func TestRootCommandOmitsRemovedConfigSurface(t *testing.T) {
 	}
 	if flag := rootCmd.PersistentFlags().Lookup("no-color"); flag == nil {
 		t.Fatal("root command omitted preserved --no-color flag")
+	}
+	if flag := rootCmd.PersistentFlags().Lookup("home"); flag == nil {
+		t.Fatal("root command omitted --home flag")
+	}
+}
+
+func TestHomeCommandPrecedenceAndNoMutation(t *testing.T) {
+	root := t.TempDir()
+	environmentHome := filepath.Join(root, "environment")
+	flagHome := filepath.Join(root, "flag")
+	t.Setenv(profilehome.EnvHome, environmentHome)
+
+	tests := map[string]struct {
+		args []string
+		want string
+	}{
+		"environment": {args: []string{"home"}, want: environmentHome},
+		"flag":        {args: []string{"--home", flagHome, "home"}, want: flagHome},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			out := executeCommand(t, test.args...)
+			if strings.TrimSpace(out) != test.want {
+				t.Fatalf("home = %q, want %q", strings.TrimSpace(out), test.want)
+			}
+			if _, err := os.Stat(test.want); !os.IsNotExist(err) {
+				t.Fatalf("home command mutated %s: %v", test.want, err)
+			}
+		})
 	}
 }
 
