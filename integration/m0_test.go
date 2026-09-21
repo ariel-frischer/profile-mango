@@ -35,14 +35,14 @@ func TestCleanOfflineInstallAndInstalledBinary(t *testing.T) {
 func testInstalledCommands(t *testing.T, binary, repoRoot, fixtures, bindings string, env []string) {
 	t.Helper()
 	tests := map[string]struct {
-		args     []string
-		contains []string
+		args       []string
+		contains   []string
+		notContain []string
 	}{
-		"help":        {args: []string{"--help"}, contains: []string{"profile-mango", "validate"}},
-		"version":     {args: []string{"version", "--plain"}, contains: []string{"profile-mango dev", "go: "}},
-		"config keys": {args: []string{"config", "keys"}, contains: []string{"display.theme", "no_color", "output_format"}},
-		"route-only":  {args: validateArgs(filepath.Join(fixtures, "route-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "route-only"`}},
-		"read-only":   {args: validateArgs(filepath.Join(fixtures, "read-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "read-only"`}},
+		"help":       {args: []string{"--help"}, contains: []string{"profile-mango", "validate", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
+		"version":    {args: []string{"version", "--plain"}, contains: []string{"profile-mango dev", "go: "}},
+		"route-only": {args: validateArgs(filepath.Join(fixtures, "route-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "route-only"`}},
+		"read-only":  {args: validateArgs(filepath.Join(fixtures, "read-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "read-only"`}},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -53,6 +53,11 @@ func testInstalledCommands(t *testing.T, binary, repoRoot, fixtures, bindings st
 			for _, want := range test.contains {
 				if !strings.Contains(result.stdout, want) {
 					t.Fatalf("stdout missing %q:\n%s", want, result.stdout)
+				}
+			}
+			for _, unwanted := range test.notContain {
+				if strings.Contains(result.stdout, unwanted) {
+					t.Fatalf("stdout contains removed surface %q:\n%s", unwanted, result.stdout)
 				}
 			}
 		})

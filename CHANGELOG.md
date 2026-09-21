@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Successful profile-mango init output now shows the ANSI README logo
 - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
 
+### Removed
+
+- Removed the unused private-prototype user configuration commands and root `--config` override
+
 ### Fixed
 
 - CI formatting checks inspect tracked Go sources without scanning the restored module cache

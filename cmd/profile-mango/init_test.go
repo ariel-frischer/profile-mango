@@ -267,23 +267,6 @@ func TestInitCommandArgumentHandling(t *testing.T) {
 	}
 }
 
-func TestInitAndConfigInitRemainDistinctCommands(t *testing.T) {
-	initCommand, _, err := rootCmd.Find([]string{"init"})
-	if err != nil {
-		t.Fatalf("find root init: %v", err)
-	}
-	if initCommand == nil || initCommand.Use != "init [directory]" {
-		t.Fatalf("root init command = %#v, want Use init [directory]", initCommand)
-	}
-	configInit, _, err := rootCmd.Find([]string{"config", "init"})
-	if err != nil {
-		t.Fatalf("find config init: %v", err)
-	}
-	if configInit == nil || configInit == initCommand || configInit.Use != "init" {
-		t.Fatalf("config init command = %#v, want distinct Use init command", configInit)
-	}
-}
-
 type treeEntry struct {
 	directory bool
 	mode      fs.FileMode
@@ -296,11 +279,6 @@ func executeCommandResult(t *testing.T, args ...string) (string, error) {
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
 	rootCmd.SetArgs(args)
-	configPathOverride = ""
-	if flag := rootCmd.PersistentFlags().Lookup("config"); flag != nil {
-		_ = flag.Value.Set("")
-		flag.Changed = false
-	}
 	err := rootCmd.Execute()
 	return out.String(), err
 }

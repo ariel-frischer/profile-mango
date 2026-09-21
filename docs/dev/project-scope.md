@@ -92,11 +92,11 @@ does not promise roles, MCP projection, or any other expansion.
 ## Non-goals and boundaries
 
 **Current exclusions:** applicable installation or application, import, drift repair,
-credential handling, provider calls, target-home inspection, roles, MCP projection,
-and identity management. `init` scaffolds portable files and a route-identity
-example only. It does not create user-level configuration, resolve credentials,
-inspect target homes, or call providers. These are milestone boundaries, not all
-permanent bans.
+user-level preference storage, home resolution, credential handling, provider calls,
+target-home inspection, roles, MCP projection, and identity management. `init`
+scaffolds portable files and a route-identity example only. It does not resolve
+credentials, inspect target homes, or call providers. These are milestone
+boundaries, not all permanent bans.
 
 **Long-term product boundaries:** profile-mango is not a replacement agent runtime,
 a model/provider service, or a credential store. It does not promise identical
