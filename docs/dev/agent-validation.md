@@ -62,6 +62,14 @@ PROFILE_MANGO_PROBE_ROOT="$PWD/.probe" \
 ./scripts/agent-config-probe.sh
 ```
 
+For Codex, the probe hashes the resolved direct executable and rejects any
+binary other than the pinned `codex-cli 0.154.0` SHA-256 before running target
+commands. Its native consumption check is intentionally limited to the safe
+`features list` inspector: positive, negative, malformed, and feature-only
+runtime-override cases are asserted. Route, authentication, project/profile
+precedence, permission/tool enforcement, and instruction/skill delivery remain
+explicit gaps unless a version-qualified safe inspector is established.
+
 The custom-fork profile fixtures and commands are not evidence for upstream
 Jcode, and successful parsing does not establish authentication, permissions,
 network policy, tool enforcement, or runtime behavior.

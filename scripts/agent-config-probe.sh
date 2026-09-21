@@ -6,6 +6,8 @@ readonly requested_root="${PROFILE_MANGO_PROBE_ROOT:-}"
 readonly codex_requested="${PROFILE_MANGO_CODEX_BIN:-}"
 readonly jcode_requested="${PROFILE_MANGO_JCODE_BIN:-}"
 readonly keep_probe="${PROFILE_MANGO_KEEP_PROBE:-0}"
+readonly codex_expected_version='codex-cli 0.154.0'
+readonly codex_expected_sha256='3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022'
 
 die() {
 	printf 'probe error: %s\n' "$*" >&2
@@ -115,6 +117,9 @@ timeout_bin="$(command -v timeout || true)"
 [[ -n "$timeout_bin" ]] || die "timeout is required for bounded execution"
 [[ "$timeout_seconds" =~ ^[1-9][0-9]*$ ]] || die "timeout must be a positive integer"
 
+codex_sha256="$(sha256sum "$codex_bin" | awk '{print $1}')"
+assert_equal "$codex_sha256" "$codex_expected_sha256"
+
 if [[ -n "$requested_root" ]]; then
 	[[ "$requested_root" == /* ]] || die "PROFILE_MANGO_PROBE_ROOT must be absolute"
 	mkdir -p "$requested_root"
@@ -148,10 +153,14 @@ codex_version="$(sandbox "$codex_baseline" codex --version)"
 codex_help="$(sandbox "$codex_baseline" codex --help)"
 codex_features_baseline="$(sandbox "$codex_baseline" codex features list)"
 codex_features_positive="$(sandbox "$codex_positive" codex features list)"
-assert_contains "$codex_version" 'codex-cli 0.154.0'
+codex_features_cli_enable="$(sandbox "$codex_positive" codex --enable apps features list)"
+codex_features_cli_disable="$(sandbox "$codex_positive" codex --disable apps features list)"
+assert_equal "$codex_version" "$codex_expected_version"
 assert_contains "$codex_help" '--strict-config'
 assert_equal "$(feature_state <<<"$codex_features_baseline")" true
 assert_equal "$(feature_state <<<"$codex_features_positive")" false
+assert_equal "$(feature_state <<<"$codex_features_cli_enable")" true
+assert_equal "$(feature_state <<<"$codex_features_cli_disable")" false
 if codex_malformed_output="$(sandbox "$codex_malformed" codex features list 2>&1)"; then
 	die 'malformed Codex config unexpectedly succeeded'
 fi
@@ -252,10 +261,18 @@ printf 'platform=%s\n' "$(uname -srm)"
 printf 'network=unshared-by-bwrap\n'
 printf 'environment=env-i-with-synthetic-home-xdg-and-target-roots\n'
 printf 'codex-version=%s\n' "$codex_version"
-printf 'codex-sha256=%s\n' "$(sha256sum "$codex_bin" | awk '{print $1}')"
+printf 'codex-sha256=%s\n' "$codex_sha256"
 printf 'codex-features-apps-baseline=%s\n' "$(feature_state <<<"$codex_features_baseline")"
 printf 'codex-features-apps-synthetic=%s\n' "$(feature_state <<<"$codex_features_positive")"
+printf 'codex-features-apps-cli-enable=%s\n' "$(feature_state <<<"$codex_features_cli_enable")"
+printf 'codex-features-apps-cli-disable=%s\n' "$(feature_state <<<"$codex_features_cli_disable")"
 printf 'codex-malformed-config=rejected\n'
+printf 'codex-config-consumption=features-apps-only-observed\n'
+printf 'codex-route-provider-model-effort=unverified\n'
+printf 'codex-authentication-identity=unverified\n'
+printf 'codex-precedence=feature-runtime-override-observed-route-project-unverified\n'
+printf 'codex-permissions-tools=enforcement-unverified\n'
+printf 'codex-instruction-skill-delivery=unverified\n'
 printf 'jcode-version=%s\n' "$jcode_version"
 printf 'jcode-sha256=%s\n' "$(sha256sum "$jcode_bin" | awk '{print $1}')"
 printf 'jcode-profile-fields=provider-model-effort-tools-skills-instruction-presence\n'
