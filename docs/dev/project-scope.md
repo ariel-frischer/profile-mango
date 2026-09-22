@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-22, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -43,6 +43,11 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
+- A separate Codex `0.154.0` settings-only installer for root `model_provider`,
+  `model`, and source-qualified `model_reasoning_effort = "high"`. It patches an
+  explicit path with consent and backup, preserving unrelated TOML and target-owned
+  auth. OAuth identity, installed-binary equivalence, ambient precedence, delivery,
+  and full-profile applicability remain unverified and are warned, not claimed.
 - A Pi `0.86.1` preview renderer that emits deterministic source-grounded JSON
   settings candidates for `defaultProvider`, `defaultModel`, and
   `defaultThinkingLevel`, resource copies, and a versioned report only into an
@@ -98,7 +103,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
-| Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
+| Codex | First intended public adapter | Exact `0.154.0` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` model-only strict-JSON installer; explicit settings-file consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` model-role/thinking-default YAML installer; native read-only getters qualified, full startup, precedence, authentication, delivery, and enforcement blocked |

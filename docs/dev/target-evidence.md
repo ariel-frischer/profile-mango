@@ -27,7 +27,9 @@ versions, installed binaries and tested support must remain distinct.
 ## Product boundary
 
 Codex is the first intended public adapter candidate. Public targets have inert
-exact-version renderers. Claude Code permits only model-field installation; Pi
+exact-version renderers. Codex permits only three root route settings at an explicit
+path, with OAuth identity, installed-binary equivalence, and full-profile
+applicability unverified. Claude Code permits only model-field installation; Pi
 permits three route-default settings, Hermes three model/reasoning fields, and
 OpenCode model plus one qualified skill resource or an explicit named primary/
 subagent definition with model and instructions, and OpenClaw model-primary
@@ -47,7 +49,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
+| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver consumed installer-generated provider/model/high-effort fields with negative controls; built profile-mango CLI synthetic plan/apply/reapply, backup and auth/outside sentinels | Three root settings installable only at an explicit path for OpenAI/native/OAuth binding with `high` effort; OAuth identity, installed-binary equivalence, project/runtime precedence and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
@@ -484,6 +486,52 @@ and the command returns nonzero while authentication, delivery, precedence, or
 enforcement is unverified. The preview never contains active `config.toml`,
 `AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
 paths.
+
+### Codex 0.154.0 settings-only installation, 2026-09-22
+
+This is a separate, bounded installer, not a promotion of the inert preview.
+Only root `model_provider = "openai"`, a non-empty safe `model`, and
+`model_reasoning_effort = "high"` are patched at one explicit config path.
+Permissions, tools, instructions, skills, non-native transport, non-OpenAI
+providers, non-OAuth bindings, other efforts, malformed/duplicate TOML, and
+ambiguous profile/provider shadow state block. The installer does not write
+authentication settings or read a credential store.
+
+Retained local qualification at `.worktrees/reports/ap-6fu.14/qualification-milestone-20260922.md`
+used exact `rust-v0.154.0` source commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340` (archive SHA-256
+`848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`).
+Its resolver consumed actual `PatchConfig` output: effective OpenAI provider
+ID/object, model `gpt-5.6`, and effort `high`. An unknown-provider control
+failed, and omitted model/effort controls yielded absent values. Filtered Cargo
+and direct compiled test runs each passed exactly one test. The release lockfile
+required metadata-only normalization of 150 workspace version strings in a
+separate copy; no external dependency or edge changed. The test bypassed
+requirements.toml and ambient layers, so it does not prove installed-binary
+equivalence, model availability, active profile/project/runtime precedence,
+authentication identity, or runtime enforcement.
+
+The rebuilt profile-mango CLI planned without writing, then applied with
+`--override --apply --yes --expect-plan` and default backup against synthetic
+TOML. Config SHA-256 changed from
+`1e1a9c8dd11c8120885c38985a1c02d02bfeb4735088ef4f30de3e78637cb90c`
+to `f2d8fc2f623194d6f3f2b6a5b9d6c08cd7c2c1e2212039f6479d6aaf4a9eba66`;
+the backup retained the original digest. Target-owned
+`forced_login_method = "api"`, an unknown key, feature table, and comment remained unchanged. A
+second built plan and matching apply both reported `noop`. A read-only
+permission requirement remained blocked even with apply flags. Synthetic
+`auth.json` and outside-target sentinel SHA-256 values stayed unchanged at
+`011e02a527fc678e665c87d60d899e3ac72be7ffcf4bd289ff400e0d44f686b3`
+and `4d0646b302547417167fe19f380c26f501c6fe912e959ec788ccbdd5eb0d63d2`.
+Internal transaction tests cover stale plans and synthetic guarded restoration.
+There is no public restore command, so built-binary restore remains unverified.
+
+`codex login status` distinguishes stored API-key from ChatGPT login, but the
+same ChatGPT message covers both Codex-managed OAuth and externally supplied
+ChatGPT tokens in the pinned source. It is advice for a user, not a credential
+read or OAuth proof by profile-mango. Human and JSON plans warn that successful
+installation applies **only to three settings**, never the OAuth-required full
+profile, delivery, policy enforcement, or effective runtime route.
 
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 
