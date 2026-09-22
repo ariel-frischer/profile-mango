@@ -102,6 +102,14 @@ func TestInstallConsentRequiresTerminalOrHash(t *testing.T) {
 	if terminalInput(strings.NewReader("y\n")) {
 		t.Fatal("redirected input was accepted as terminal consent")
 	}
+	devNull, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer devNull.Close()
+	if terminalInput(devNull) {
+		t.Fatal("/dev/null was accepted as terminal consent")
+	}
 	options := installOptions{targets: []string{"codex@0.154.0"}, apply: true, yes: true, expectPlan: "plan"}
 	if err := validateInstallOptions(options); err != nil {
 		t.Fatal(err)
@@ -214,6 +222,18 @@ func TestInstallExpectedPlanRejectsChangedTargetBeforeWrite(t *testing.T) {
 	err := runInstall(cmd, "route-only", options)
 	if err == nil || !strings.Contains(err.Error(), "expected plan") {
 		t.Fatalf("runInstall error = %v, want expected plan mismatch", err)
+	}
+	var report install.ApplyReport
+	decoder := json.NewDecoder(bytes.NewReader(output.Bytes()))
+	if decodeErr := decoder.Decode(&report); decodeErr != nil {
+		t.Fatalf("decode failed apply report: %v\n%s", decodeErr, output.String())
+	}
+	if report.Status == "" || len(report.Targets) == 0 {
+		t.Fatalf("failed apply report = %#v", report)
+	}
+	var extra any
+	if decodeErr := decoder.Decode(&extra); decodeErr != io.EOF {
+		t.Fatalf("failed apply emitted extra JSON value, decode error = %v", decodeErr)
 	}
 	data, readErr := os.ReadFile(config)
 	if readErr != nil {

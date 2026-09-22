@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
@@ -112,10 +113,11 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	}
 	report, applyErr := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: options.expectPlanOrPlanID(plan)})
 	if applyErr != nil {
-		if report.Status != "" || len(report.Targets) > 0 {
-			if err := writeApplyReport(cmd, report, options.jsonOutput); err != nil {
-				return err
-			}
+		if report.Status == "" && len(report.Targets) == 0 {
+			report = failedApplyReport(plan, applyErr)
+		}
+		if err := writeApplyReport(cmd, report, options.jsonOutput); err != nil {
+			return err
 		}
 		return applyErr
 	}
@@ -299,8 +301,8 @@ func terminalInput(reader io.Reader) bool {
 	if !ok {
 		return false
 	}
-	info, err := file.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
+	fd := file.Fd()
+	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 }
 
 func (options installOptions) expectPlanOrPlanID(plan install.Plan) string {
@@ -327,4 +329,17 @@ func writeApplyReport(cmd *cobra.Command, report install.ApplyReport, jsonOutput
 		}
 	}
 	return nil
+}
+
+func failedApplyReport(plan install.Plan, applyErr error) install.ApplyReport {
+	report := install.ApplyReport{Status: "failed", Targets: make([]install.ApplyTargetResult, 0, len(plan.Targets))}
+	for _, target := range plan.Targets {
+		report.Targets = append(report.Targets, install.ApplyTargetResult{
+			Target: target.Target.String(), Status: "failed", Error: applyErr.Error(),
+		})
+	}
+	if len(report.Targets) == 0 {
+		report.Targets = append(report.Targets, install.ApplyTargetResult{Target: "install", Status: "failed", Error: applyErr.Error()})
+	}
+	return report
 }
