@@ -274,6 +274,13 @@ model application does not run OpenCode or inspect auth stores, sessions, plugin
 MCP, providers, or the network. Any live configuration path still requires separate
 path-specific user approval after a disposable backup/restore rehearsal.
 
+If backup preparation or the initial journal write fails before any configuration
+is applied, the installer removes only unchanged backups created by that attempt.
+Pre-existing or replaced artifacts are preserved, and cleanup failures are reported
+with the original error. After resolving the external blocker, retry the same plan
+only if its inputs and destinations remain unchanged. Successful-transaction
+backups and recovery journals are not part of this preparation cleanup.
+
 All commands accept the global `--non-interactive` flag. It disables prompts, not
 safety checks or consent requirements. Interactive install apply prompts only on
 a real terminal and accepts `y` or `yes`; an empty answer declines. JSON output,

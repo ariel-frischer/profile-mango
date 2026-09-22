@@ -114,6 +114,42 @@ func TestCreatedFileVerificationRejectsPreVerificationReplacement(t *testing.T) 
 	assertTestFile(t, path, "original")
 }
 
+func TestCreatedFileVerificationRequiresFileObjectIdentity(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "backup")
+	created, err := writeNewFile(path, []byte("original"), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replaceBackup(t, path)
+	replacement, err := SnapshotFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Model platforms whose serialized Identity contains only mutable metadata.
+	created.Identity = replacement.Identity
+	if err := verifyCreatedFile(created); err == nil {
+		t.Fatal("matching metadata accepted a different file object")
+	}
+	assertTestFile(t, path, "original")
+}
+
+type unverifiedFileInfo struct{ os.FileInfo }
+
+func (unverifiedFileInfo) Sys() any { return nil }
+
+func TestSameFileObjectRejectsUnverifiedMetadata(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "backup")
+	writeTestFile(t, path, "original")
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unknown := unverifiedFileInfo{info}
+	if sameFileObject(unknown, unknown) {
+		t.Fatal("metadata without a verified file object established ownership")
+	}
+}
+
 func TestRemoveCreatedPathPreservesReplacement(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "backup")
 	writeTestFile(t, path, "original")
@@ -167,8 +203,8 @@ func TestPreparationFailureJoinsOriginalAndCleanupErrors(t *testing.T) {
 func preparationChanges(t *testing.T) (string, []Change, ApplyOptions) {
 	t.Helper()
 	root := t.TempDir()
-	first := filepath.Join(root, "target")
-	second := filepath.Join(root, "manifest")
+	first := filepath.Join(root, "a-target")
+	second := filepath.Join(root, "z-manifest")
 	writeTestFile(t, first, "old-target")
 	writeTestFile(t, second, "old-manifest")
 	beforeFirst, err := SnapshotFile(first)

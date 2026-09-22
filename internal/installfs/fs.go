@@ -43,6 +43,7 @@ type Snapshot struct {
 	Mode     fs.FileMode `json:"mode,omitempty"`
 	Identity Identity    `json:"identity,omitempty"`
 	Content  []byte      `json:"-"`
+	info     os.FileInfo
 }
 
 // Change is one independently replaceable file effect.
@@ -126,7 +127,7 @@ func SnapshotFile(path string) (Snapshot, error) {
 	}
 	return Snapshot{
 		Path: abs, Exists: true, SHA256: Hash(data), Size: int64(len(data)),
-		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data,
+		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data, info: openedInfo,
 	}, nil
 }
 
@@ -342,7 +343,7 @@ func cleanupPreparedBackup(backup preparedBackup, remove func(string) error) err
 	if !backup.verified {
 		return fmt.Errorf("preserve backup %s: creation identity is unverified", backup.path)
 	}
-	if !current.Equal(backup.snapshot) {
+	if !current.Equal(backup.snapshot) || !sameFileObject(backup.snapshot.info, current.info) {
 		return fmt.Errorf("preserve backup %s: changed after creation", backup.path)
 	}
 	if err := remove(backup.path); err != nil && !os.IsNotExist(err) {
@@ -356,7 +357,7 @@ func verifyCreatedFile(created Snapshot) error {
 	if err != nil {
 		return fmt.Errorf("inspect creator path: %w", err)
 	}
-	if !current.Equal(created) {
+	if !current.Equal(created) || !sameFileObject(created.info, current.info) {
 		return fmt.Errorf("created file changed before verification")
 	}
 	return nil
@@ -548,6 +549,10 @@ func writeNewFile(path string, data []byte, mode fs.FileMode) (Snapshot, error) 
 	if err != nil {
 		return Snapshot{}, err
 	}
+	return writeCreatedFile(file, abs, data)
+}
+
+func writeCreatedFile(file *os.File, abs string, data []byte) (Snapshot, error) {
 	creator, err := file.Stat()
 	if err != nil {
 		return Snapshot{}, errors.Join(err, file.Close())
@@ -571,7 +576,7 @@ func writeNewFile(path string, data []byte, mode fs.FileMode) (Snapshot, error) 
 	}
 	created := Snapshot{
 		Path: abs, Exists: true, SHA256: Hash(data), Size: info.Size(),
-		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data,
+		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data, info: info,
 	}
 	if err := file.Close(); err != nil {
 		return Snapshot{}, errors.Join(err, removeCreatedPath(abs, creator))
@@ -601,11 +606,7 @@ func removeCreatedPath(path string, creator os.FileInfo) error {
 }
 
 func sameFileObject(left, right os.FileInfo) bool {
-	leftID, rightID := fileIdentity(left), fileIdentity(right)
-	if leftID.Device != 0 || leftID.Inode != 0 || rightID.Device != 0 || rightID.Inode != 0 {
-		return leftID.Device == rightID.Device && leftID.Inode == rightID.Inode
-	}
-	return leftID == rightID
+	return left != nil && right != nil && os.SameFile(left, right)
 }
 
 func writeAtomicUnconditional(path string, data []byte, mode fs.FileMode) error {
