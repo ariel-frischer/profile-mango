@@ -9,11 +9,40 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-// ModelPatch is the only install-capable OpenCode configuration effect.
+// ModelPatch is the model-only OpenCode configuration effect.
 type ModelPatch struct {
 	Content []byte
 	Before  string
 	After   string
+}
+
+// ConfigPatch is the lossless OpenCode configuration patch for one install.
+type ConfigPatch struct {
+	Content      []byte
+	ModelBefore  string
+	ModelAfter   string
+	SkillsBefore []string
+	SkillsAfter  []string
+}
+
+// PatchConfig applies the qualified model field and optional skill root field.
+func PatchConfig(source []byte, route profilemango.RouteBinding, skillPaths []string) (ConfigPatch, error) {
+	model, err := PatchModel(source, route)
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	result := ConfigPatch{Content: model.Content, ModelBefore: model.Before, ModelAfter: model.After}
+	if len(skillPaths) == 0 {
+		return result, nil
+	}
+	skills, err := PatchSkillsJSONC(model.Content, skillPaths)
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	result.Content = skills.Content
+	result.SkillsBefore = skills.Before
+	result.SkillsAfter = skills.After
+	return result, nil
 }
 
 // PatchModel changes only the top-level JSONC model field.

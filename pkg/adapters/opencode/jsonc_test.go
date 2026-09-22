@@ -101,3 +101,69 @@ func TestPatchModelJSONCRejectsInvalidEncoding(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 }
+
+func TestPatchSkillsJSONCPreservesUnrelatedConfig(t *testing.T) {
+	source := "{\r\n  // keep\r\n  \"skills\" : {\r\n    \"urls\": [\"https://example.invalid/skills\"],\r\n    \"paths\": [\"existing\" /* keep path comment */],\r\n  },\r\n  \"unknown\": true,\r\n}\r\n"
+	patch, err := PatchSkillsJSONC([]byte(source), []string{"/state/config-dir"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "{\r\n  // keep\r\n  \"skills\" : {\r\n    \"urls\": [\"https://example.invalid/skills\"],\r\n    \"paths\": [\"existing\" /* keep path comment */,\"/state/config-dir\"],\r\n  },\r\n  \"unknown\": true,\r\n}\r\n"
+	if string(patch.Content) != want {
+		t.Fatalf("content = %q, want %q", patch.Content, want)
+	}
+	if strings.Join(patch.Before, ",") != "existing" || strings.Join(patch.After, ",") != "existing,/state/config-dir" {
+		t.Fatalf("patch metadata = %#v", patch)
+	}
+	second, err := PatchSkillsJSONC([]byte(source), []string{"/state/config-dir"})
+	if err != nil || !bytes.Equal(patch.Content, second.Content) {
+		t.Fatalf("patch is not deterministic: %v", err)
+	}
+}
+
+func TestPatchSkillsJSONCInsertsAndNoops(t *testing.T) {
+	tests := map[string]struct {
+		source string
+		want   string
+	}{
+		"missing skills": {
+			source: `{ "model": "openai/gpt-5.6", "unknown": true }`,
+			want:   `{"skills":{"paths":["/state/config-dir"]}, "model": "openai/gpt-5.6", "unknown": true }`,
+		},
+		"empty skills": {
+			source: `{ "skills": {} }`,
+			want:   `{ "skills": {"paths":["/state/config-dir"]} }`,
+		},
+		"existing path noop": {
+			source: `{ "skills": { "paths": ["/state/config-dir"] } }`,
+			want:   `{ "skills": { "paths": ["/state/config-dir"] } }`,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			patch, err := PatchSkillsJSONC([]byte(test.source), []string{"/state/config-dir"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(patch.Content) != test.want {
+				t.Fatalf("content = %q, want %q", patch.Content, test.want)
+			}
+		})
+	}
+}
+
+func TestPatchSkillsJSONCRejectsAmbiguousInput(t *testing.T) {
+	tests := map[string]string{
+		"skills is not object": `{ "skills": false }`,
+		"paths is not array":   `{ "skills": { "paths": false } }`,
+		"path is not string":   `{ "skills": { "paths": [false] } }`,
+		"duplicate paths":      `{ "skills": { "paths": [], "paths": [] } }`,
+	}
+	for name, source := range tests {
+		t.Run(name, func(t *testing.T) {
+			if _, err := PatchSkillsJSONC([]byte(source), []string{"/state/config-dir"}); err == nil {
+				t.Fatal("ambiguous skills config was accepted")
+			}
+		})
+	}
+}

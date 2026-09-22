@@ -30,7 +30,7 @@ func TestRenderTable(t *testing.T) {
 				"opencode.config.precedence_partial",
 				"opencode.config.unknown_keys_ignored",
 				"opencode.extensions.plugins_mcp_unverified",
-				"opencode.install.model_only",
+				"opencode.install.narrow",
 				"opencode.instructions.delivery_unverified",
 				"opencode.route.authentication_unverified",
 				"opencode.route.effort_unverified",
@@ -134,7 +134,7 @@ func TestRenderRouteGoldenAndStableReport(t *testing.T) {
 		t.Fatal("render report is not deterministic")
 	}
 	if !strings.Contains(string(firstReport), EvidenceSHA256) || !strings.Contains(string(firstReport), AdapterVersion) ||
-		!strings.Contains(string(firstReport), EvidenceLevel) || !strings.Contains(string(firstReport), "opencode.install.model_only") {
+		!strings.Contains(string(firstReport), EvidenceLevel) || !strings.Contains(string(firstReport), "opencode.install.narrow") {
 		t.Fatal("report omitted exact evidence, adapter metadata, native validation level, or install boundary")
 	}
 	if strings.Contains(string(golden), "oauth") || strings.Contains(string(golden), "credential") {
@@ -162,7 +162,7 @@ func TestRenderReportsNativeValidationCapabilities(t *testing.T) {
 		"config.inspection":      StatusPartial,
 		"config.effective-state": StatusPartial,
 		"config.precedence":      StatusPartial,
-		"install":                StatusBlocking,
+		"install":                StatusPartial,
 	}
 	for field, status := range want {
 		if actual, ok := capabilityStatus(result, field); !ok || actual != status {
