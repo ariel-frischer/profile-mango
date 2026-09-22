@@ -95,6 +95,12 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 	if plan.Status != StatusReady || plan.Targets[0].Status != StatusReady {
 		t.Fatalf("plan = %#v", plan)
 	}
+	if !plan.Backup || len(plan.Targets[0].Fields) != 1 || plan.Targets[0].Fields[0].Path != "config.model" || plan.Targets[0].Fields[0].Before != "old/model" || plan.Targets[0].Fields[0].After != "claude-sonnet-4-5" {
+		t.Fatalf("plan diff = %#v", plan.Targets[0].Fields)
+	}
+	if len(plan.Targets[0].Files) == 0 || len(plan.Targets[0].Files[0].Fields) != 1 || plan.Targets[0].Files[0].Fields[0].Path != "config.model" {
+		t.Fatalf("file diff = %#v", plan.Targets[0].Files)
+	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
@@ -102,6 +108,7 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); err != nil {
 		t.Fatalf("backup missing: %v", err)
 	}
+	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
 	reapply, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +132,15 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 func TestClaudeCodeInstallRejectsMalformedAndUnownedConflict(t *testing.T) {
 	request, _ := claudeCodeTestRequest(t)
 	config := request.Targets[0].ConfigPath
+	writeInstallTestFile(t, config, "")
+	empty, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if empty.Status != StatusBlocked || !strings.Contains(empty.Targets[0].Reason, "empty") {
+		t.Fatalf("empty plan = %#v", empty)
+	}
+
 	writeInstallTestFile(t, config, `{ "model": `)
 	malformed, err := BuildPlan(request)
 	if err != nil {

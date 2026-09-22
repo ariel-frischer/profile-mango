@@ -42,6 +42,9 @@ func validateClaudeCodeProfile(input AdapterInput) error {
 	if input.Target.Name != claudecode.TargetName || input.Target.Version != claudecode.TargetVersion {
 		return fmt.Errorf("Claude Code install adapter requires exact target %s@%s", claudecode.TargetName, claudecode.TargetVersion)
 	}
+	if input.Config.Exists && len(input.Config.Content) == 0 {
+		return fmt.Errorf("Claude Code settings file is empty")
+	}
 	if input.Profile.Permissions != nil {
 		return fmt.Errorf("Claude Code permission requirements remain install-blocking")
 	}
