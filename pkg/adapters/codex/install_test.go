@@ -79,6 +79,11 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 			route:  installRoute(),
 			want:   "table header",
 		},
+		"empty table": {
+			source: "[]\n",
+			route:  installRoute(),
+			want:   "table header",
+		},
 		"wrong transport": {
 			source: "",
 			route:  profilemango.RouteBinding{Provider: "openai", Transport: "proxy", Authentication: "oauth", Model: "gpt-5.6", Effort: "high"},

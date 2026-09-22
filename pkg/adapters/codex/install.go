@@ -194,12 +194,20 @@ func skipSpace(data []byte) int {
 func parseTableHeader(line []byte) (string, error) {
 	trimmed := strings.TrimSpace(string(stripComment(line)))
 	if strings.HasPrefix(trimmed, "[[") && strings.HasSuffix(trimmed, "]]") {
-		return strings.TrimSpace(trimmed[2 : len(trimmed)-2]), nil
+		return nonEmptyTableName(trimmed[2 : len(trimmed)-2])
 	}
 	if strings.HasPrefix(trimmed, "[") && strings.HasSuffix(trimmed, "]") {
-		return strings.TrimSpace(trimmed[1 : len(trimmed)-1]), nil
+		return nonEmptyTableName(trimmed[1 : len(trimmed)-1])
 	}
 	return "", fmt.Errorf("invalid Codex TOML table header")
+}
+
+func nonEmptyTableName(raw string) (string, error) {
+	name := strings.TrimSpace(raw)
+	if name == "" {
+		return "", fmt.Errorf("invalid Codex TOML table header")
+	}
+	return name, nil
 }
 
 func stripComment(line []byte) []byte {

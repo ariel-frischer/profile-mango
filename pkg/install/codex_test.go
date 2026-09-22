@@ -11,7 +11,7 @@ import (
 )
 
 func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
-	request, root := codexTestRequest(t)
+	request, _ := codexTestRequest(t)
 	config := request.Targets[0].ConfigPath
 	before := "# keep\nunknown = true\n[features]\napps = false\n"
 	writeInstallTestFile(t, config, before)
@@ -52,7 +52,6 @@ func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
 	if err != nil || reapply.Status != StatusNoop || !hasFileAction(reapply.Targets[0], ActionNoop) {
 		t.Fatalf("reapply = %#v, err=%v", reapply, err)
 	}
-	_ = root
 }
 
 func TestCodexInstallRejectsUnownedConflictAndAllowsOverride(t *testing.T) {
