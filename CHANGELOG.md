@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Install qualified Hermes 0.21.3 model and reasoning config fields with exact isolated native merge evidence and transactional safeguards
 - Install qualified OpenClaw 2026.9.5 model and thinking defaults with exact source-native consumption and transactional safeguards
 - Exact Oh My Pi 18.2.6 two-field YAML installation with source-native getter qualification, lossless patches, backups and guarded transactions
+- Install exact OpenCode 1.18.31 named primary and subagent definitions with model and ordered instructions at explicit owned paths, qualified by isolated native consumption
 
 ### Changed
 
@@ -55,6 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Show sanitized field-level before/after changes in human install plans before consent, without changing JSON plan output.
 - Report install preflight rejection as not-attempted while preserving unchanged targets as noop in library and single-object CLI reports.
 - Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
+- Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
 
 ## [0.0.1] - 2026-01-01
 

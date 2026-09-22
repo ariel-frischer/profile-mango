@@ -425,6 +425,27 @@ func restoreChange(change Change, entry JournalEntry) error {
 	if err != nil {
 		return err
 	}
+	if entry.Delete {
+		if current.Exists {
+			if entry.BeforeExists && current.SHA256 == entry.BeforeSHA256 {
+				return nil
+			}
+			return fmt.Errorf("%s is not transaction-owned", change.Path)
+		}
+		if !entry.BeforeExists {
+			return nil
+		}
+		content := change.Before.Content
+		mode := change.Before.Mode
+		if entry.BackupPath != "" {
+			backup, err := verifiedBackup(entry)
+			if err != nil {
+				return err
+			}
+			content, mode = backup.Content, backup.Mode
+		}
+		return atomicReplace(change.Path, content, current, mode)
+	}
 	if !current.Exists || current.SHA256 != entry.AfterSHA256 {
 		return fmt.Errorf("%s is not transaction-owned", change.Path)
 	}
@@ -452,6 +473,24 @@ func validateRecovery(journal Journal) error {
 		if err != nil {
 			return err
 		}
+		if entry.Delete {
+			if current.Exists {
+				if entry.BeforeExists && current.SHA256 == entry.BeforeSHA256 {
+					continue
+				}
+				return fmt.Errorf("%s: %w", entry.Path, ErrRecoveryRequired)
+			}
+			if !entry.BeforeExists {
+				continue
+			}
+			if entry.BackupPath == "" {
+				return fmt.Errorf("%s has no recovery backup: %w", entry.Path, ErrRecoveryRequired)
+			}
+			if _, err := verifiedBackup(entry); err != nil {
+				return err
+			}
+			continue
+		}
 		if current.Exists && current.SHA256 == entry.BeforeSHA256 {
 			continue
 		}
@@ -474,6 +513,22 @@ func restoreEntry(entry JournalEntry) error {
 	current, err := SnapshotFile(entry.Path)
 	if err != nil {
 		return err
+	}
+	if entry.Delete {
+		if current.Exists {
+			if entry.BeforeExists && current.SHA256 == entry.BeforeSHA256 {
+				return nil
+			}
+			return fmt.Errorf("%s: %w", entry.Path, ErrRecoveryRequired)
+		}
+		if !entry.BeforeExists {
+			return nil
+		}
+		backup, err := verifiedBackup(entry)
+		if err != nil {
+			return err
+		}
+		return atomicReplace(entry.Path, backup.Content, current, backup.Mode)
 	}
 	if current.Exists && current.SHA256 == entry.BeforeSHA256 {
 		return nil

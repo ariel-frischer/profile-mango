@@ -115,9 +115,58 @@ func TestPatchSkillsJSONCPreservesUnrelatedConfig(t *testing.T) {
 	if strings.Join(patch.Before, ",") != "existing" || strings.Join(patch.After, ",") != "existing,/state/config-dir" {
 		t.Fatalf("patch metadata = %#v", patch)
 	}
+	if len(patch.Added) != 1 || patch.Added[0] != "/state/config-dir" {
+		t.Fatalf("added paths = %#v", patch.Added)
+	}
 	second, err := PatchSkillsJSONC([]byte(source), []string{"/state/config-dir"})
 	if err != nil || !bytes.Equal(patch.Content, second.Content) {
 		t.Fatalf("patch is not deterministic: %v", err)
+	}
+}
+
+func TestRemoveSkillPathJSONCPreservesUnrelatedConfig(t *testing.T) {
+	source := "{\r\n  // keep\r\n  \"skills\" : {\r\n    \"urls\": [\"https://example.invalid/skills\"],\r\n    \"paths\": [\"existing\" /* keep path comment */,\"/state/config-dir\"],\r\n  },\r\n  \"unknown\": true,\r\n}\r\n"
+	patch, err := RemoveSkillPathJSONC([]byte(source), "/state/config-dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "{\r\n  // keep\r\n  \"skills\" : {\r\n    \"urls\": [\"https://example.invalid/skills\"],\r\n    \"paths\": [\"existing\" /* keep path comment */],\r\n  },\r\n  \"unknown\": true,\r\n}\r\n"
+	if string(patch.Content) != want || !patch.Removed {
+		t.Fatalf("content=%q removed=%v, want %q and removed", patch.Content, patch.Removed, want)
+	}
+	if strings.Join(patch.Before, ",") != "existing,/state/config-dir" || strings.Join(patch.After, ",") != "existing" {
+		t.Fatalf("patch metadata = %#v", patch)
+	}
+}
+
+func TestRemoveSkillPathJSONCNoopAndRejectsDuplicate(t *testing.T) {
+	tests := map[string]struct {
+		source string
+		want   string
+		err    bool
+	}{
+		"missing": {
+			source: `{ "skills": { "paths": ["existing"] } }`,
+			want:   `{ "skills": { "paths": ["existing"] } }`,
+		},
+		"duplicate": {
+			source: `{ "skills": { "paths": ["/state/config-dir", "/state/config-dir"] } }`,
+			err:    true,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			patch, err := RemoveSkillPathJSONC([]byte(test.source), "/state/config-dir")
+			if test.err {
+				if err == nil {
+					t.Fatal("duplicate managed path was accepted")
+				}
+				return
+			}
+			if err != nil || string(patch.Content) != test.want || patch.Removed {
+				t.Fatalf("patch=%#v err=%v", patch, err)
+			}
+		})
 	}
 }
 

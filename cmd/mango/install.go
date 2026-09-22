@@ -22,6 +22,7 @@ type installOptions struct {
 	resourceRoot   string
 	bindings       string
 	targets        []string
+	agents         []string
 	configs        []string
 	manifests      []string
 	configPaths    []string
@@ -52,6 +53,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	cmd.Flags().StringArrayVar(&options.targets, "target", nil, "exact target@version; repeat for multiple targets")
+	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target@version=primary:name or subagent:name; requires --config-path ending agents/name.md")
 	cmd.Flags().StringArrayVar(&options.configs, "config-path", nil, "target=explicit config path; repeat for multiple targets")
 	cmd.Flags().StringArrayVar(&options.configPaths, "config", nil, "target@version=explicit config path; repeat for multiple targets")
 	cmd.Flags().StringArrayVar(&options.manifests, "manifest", nil, "target@version=explicit ownership manifest path")
@@ -131,6 +133,9 @@ func validateInstallOptions(options installOptions) error {
 	if options.all && len(options.targets) > 0 {
 		return fmt.Errorf("--all and --target are mutually exclusive")
 	}
+	if options.all && len(options.agents) > 0 {
+		return fmt.Errorf("--all and --agent are mutually exclusive")
+	}
 	if options.yes && !options.apply {
 		return fmt.Errorf("--yes requires --apply")
 	}
@@ -175,6 +180,10 @@ func resolveInstallPaths(options installOptions) (installPaths, error) {
 }
 
 func installTargets(options installOptions, registry *install.Registry) ([]install.TargetRequest, error) {
+	agents, err := parseAgentSelections(options.agents)
+	if err != nil {
+		return nil, err
+	}
 	configValues := append([]string(nil), options.configs...)
 	configValues = append(configValues, options.configPaths...)
 	configMap, err := parseTargetPaths(configValues)
@@ -186,6 +195,9 @@ func installTargets(options installOptions, registry *install.Registry) ([]insta
 		return nil, err
 	}
 	if options.all {
+		if len(agents) > 0 {
+			return nil, fmt.Errorf("--all and --agent are mutually exclusive")
+		}
 		return targetRequestsFromAll(registry, configMap, manifestMap), nil
 	}
 	if len(options.targets) == 0 {
@@ -202,7 +214,35 @@ func installTargets(options installOptions, registry *install.Registry) ([]insta
 			return nil, fmt.Errorf("duplicate target: %s", target.String())
 		}
 		seen[target.String()] = struct{}{}
-		result = append(result, install.TargetRequest{Target: target, ConfigPath: targetPath(configMap, target), ManifestPath: targetPath(manifestMap, target)})
+		result = append(result, install.TargetRequest{Target: target, Agent: agents[target.String()], ConfigPath: targetPath(configMap, target), ManifestPath: targetPath(manifestMap, target)})
+	}
+	for key := range agents {
+		if _, found := seen[key]; !found {
+			return nil, fmt.Errorf("--agent target %s must also be selected with --target", key)
+		}
+	}
+	return result, nil
+}
+
+func parseAgentSelections(values []string) (map[string]install.AgentDestination, error) {
+	result := make(map[string]install.AgentDestination, len(values))
+	for _, value := range values {
+		selector, spec, found := strings.Cut(value, "=")
+		if !found {
+			return nil, fmt.Errorf("--agent requires target@version=primary:name or subagent:name")
+		}
+		target, err := install.ParseTarget(selector)
+		if err != nil {
+			return nil, err
+		}
+		mode, name, found := strings.Cut(spec, ":")
+		if !found || mode == "" || name == "" {
+			return nil, fmt.Errorf("--agent requires target@version=primary:name or subagent:name")
+		}
+		if _, exists := result[target.String()]; exists {
+			return nil, fmt.Errorf("duplicate --agent selection for %s", target.String())
+		}
+		result[target.String()] = install.AgentDestination{Mode: mode, Name: name}
 	}
 	return result, nil
 }

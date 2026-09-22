@@ -151,15 +151,18 @@ not upstream Jcode or a supported public target.
 All current target renderers remain non-applicable previews. Expect blocking
 diagnostics and a nonzero exit status even when preview artifacts are written.
 OpenCode `1.18.31` separately supports lossless transactional application of
-top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit path. This does not make the renderer or
-full profile applicable. Never present preview syntax, model-field application, or
-native parsing as authentication, delivery, or enforcement.
+top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit
+path. A distinct named primary/subagent definition can receive model and ordered
+instructions. This does not make the renderer or full profile applicable. Never
+present preview syntax, field application, or native resolution as authentication
+or policy enforcement.
 
 ## Plan-first install
 
 Only the exact subsets in the README install table and target evidence ledger are installable. Other targets remain blocked.
-OpenCode requires exact version `1.18.31`, a route-only or single-skill profile,
-and one explicit config path. Plan first against synthetic or separately approved disposable state:
+OpenCode main-config installation requires exact version `1.18.31`, a route-only
+or single-skill profile, and one explicit config path. Plan first against
+synthetic or separately approved disposable state:
 
 ```bash
 mango install <profile-name> \
@@ -178,6 +181,18 @@ path. OpenCode skill files cannot override unowned or externally edited resource
 even with `--override`. Its directory-wide discovery is not an exclusive allowlist.
 Never use a live path without new path-specific user approval after a verified
 disposable backup/restore rehearsal.
+
+For a distinct named OpenCode agent definition, use an instruction-only profile
+with a native route and pass `--agent opencode@1.18.31=primary:mango-review` (or
+`subagent:mango-review`) plus `--config-path
+opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`. The
+parent `agents` directory must already exist. This writes a custom Markdown
+prompt and adjacent ownership manifest, not the main JSONC config or a native
+named-profile preset. A primary is not activated by installation and a subagent
+is not proven delegated. Required permissions, tools and skills block. Unowned
+or edited definitions never permit override, including identical bytes. On
+profile omission, only clean owned skills and Mango-introduced discovery paths
+are removed; ambiguous legacy paths remain with a warning.
 
 Use global `--non-interactive` for automation. It never grants consent: apply
 still needs `--yes --expect-plan <planID>`. JSON and redirected input never prompt.

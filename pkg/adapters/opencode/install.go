@@ -18,11 +18,13 @@ type ModelPatch struct {
 
 // ConfigPatch is the lossless OpenCode configuration patch for one install.
 type ConfigPatch struct {
-	Content      []byte
-	ModelBefore  string
-	ModelAfter   string
-	SkillsBefore []string
-	SkillsAfter  []string
+	Content       []byte
+	ModelBefore   string
+	ModelAfter    string
+	SkillsBefore  []string
+	SkillsAfter   []string
+	SkillsAdded   []string
+	SkillsRemoved bool
 }
 
 // PatchConfig applies the qualified model field and optional skill root field.
@@ -42,7 +44,28 @@ func PatchConfig(source []byte, route profilemango.RouteBinding, skillPaths []st
 	result.Content = skills.Content
 	result.SkillsBefore = skills.Before
 	result.SkillsAfter = skills.After
+	result.SkillsAdded = skills.Added
 	return result, nil
+}
+
+// PatchConfigRemoveSkillPath removes one target-owned skills.paths entry.
+func PatchConfigRemoveSkillPath(source []byte, route profilemango.RouteBinding, skillPath string) (ConfigPatch, error) {
+	model, err := PatchModel(source, route)
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	skills, err := RemoveSkillPathJSONC(model.Content, skillPath)
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	return ConfigPatch{
+		Content:       skills.Content,
+		ModelBefore:   model.Before,
+		ModelAfter:    model.After,
+		SkillsBefore:  skills.Before,
+		SkillsAfter:   skills.After,
+		SkillsRemoved: skills.Removed,
+	}, nil
 }
 
 // PatchModel changes only the top-level JSONC model field.

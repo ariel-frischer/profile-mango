@@ -35,6 +35,7 @@ const (
 	ActionUpdate   = "update"
 	ActionOverride = "override"
 	ActionNoop     = "noop"
+	ActionDelete   = "delete"
 )
 
 type Target struct {
@@ -82,6 +83,7 @@ func snapshotFromFS(value installfs.Snapshot) Snapshot {
 
 type AdapterInput struct {
 	Target       Target
+	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
 	Profile      profilemango.ResolvedProfile
@@ -102,9 +104,12 @@ type Adapter interface {
 type FilePatch struct {
 	// NoOverride preserves an edited or unowned file even when the patch permits overrides.
 	NoOverride bool
+	Delete     bool
 	Path       string
 	Content    []byte
 	Fields     []string
+	// Ownership records target-specific provenance needed for safe future cleanup.
+	Ownership []string `json:"-"`
 }
 
 type FieldChange struct {
@@ -132,9 +137,18 @@ type Patch struct {
 
 type TargetRequest struct {
 	Target       Target
+	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
 }
+
+// AgentDestination selects a native named OpenCode definition, not the default config.
+type AgentDestination struct {
+	Mode string `json:"mode"`
+	Name string `json:"name"`
+}
+
+func (agent AgentDestination) Empty() bool { return agent.Mode == "" && agent.Name == "" }
 
 type Request struct {
 	ProfileName  string
@@ -170,13 +184,17 @@ type FilePlan struct {
 	Path         string        `json:"path"`
 	Action       string        `json:"action"`
 	BeforeSHA256 string        `json:"beforeSHA256,omitempty"`
-	AfterSHA256  string        `json:"afterSHA256"`
+	AfterSHA256  string        `json:"afterSHA256,omitempty"`
 	Owned        bool          `json:"owned"`
 	Fields       []FieldChange `json:"fields,omitempty"`
+	Delete       bool          `json:"delete,omitempty"`
+	targetPath   string        `json:"-"`
+	ownership    []string      `json:"-"`
 }
 
 type TargetPlan struct {
 	Target            Target                   `json:"target"`
+	Agent             *AgentDestination        `json:"agent,omitempty"`
 	Metadata          AdapterMetadata          `json:"metadata"`
 	Status            string                   `json:"status"`
 	Reason            string                   `json:"reason,omitempty"`

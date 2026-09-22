@@ -14,6 +14,8 @@ import (
 
 type openCodeAdapter struct{}
 
+const openCodeSkillsPathOwnership = "opencode.skills.paths.profile-mango"
+
 func (openCodeAdapter) Metadata() AdapterMetadata {
 	return AdapterMetadata{
 		Target:         opencode.TargetName,
@@ -22,11 +24,14 @@ func (openCodeAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: opencode.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact OpenCode 1.18.31 top-level model and one target-owned skill are installable at one explicit path",
+		Reason:         "exact OpenCode 1.18.31 model, one owned skill, or named primary/subagent definition is installable at an explicit path",
 	}
 }
 
 func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
+	if !input.Agent.Empty() {
+		return planOpenCodeAgent(input)
+	}
 	skill, err := validateOpenCodeProfile(input)
 	if err != nil {
 		return Patch{}, err
@@ -40,10 +45,14 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 		return Patch{}, err
 	}
 	fields := []FieldChange{{Path: "config.model", Before: configPatch.ModelBefore, After: configPatch.ModelAfter}}
-	files := []FilePatch{{Content: configPatch.Content, Fields: []string{"config.model"}}}
+	configFile := FilePatch{Content: configPatch.Content, Fields: []string{"config.model"}}
+	files := []FilePatch{configFile}
 	patch := Patch{Files: files, Fields: fields, OverrideAllowed: true}
 	if skill != nil {
 		files[0].Fields = append(files[0].Fields, "config.skills.paths")
+		if len(configPatch.SkillsAdded) > 0 || manifestOwnsField(input.Ownership, input.ConfigPath, openCodeSkillsPathOwnership) {
+			files[0].Ownership = []string{openCodeSkillsPathOwnership}
+		}
 		patch.Fields = append(patch.Fields, FieldChange{
 			Path:      "config.skills.paths",
 			Before:    strings.Join(configPatch.SkillsBefore, ","),
@@ -51,6 +60,29 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 			Sensitive: true,
 		})
 		patch.Files = append(patch.Files, FilePatch{Path: "SKILL.md", Content: skill.Content, Fields: []string{"resources.skills"}, NoOverride: true})
+	} else {
+		legacyPath := openCodeLegacySkillPath(input.ConfigPath)
+		if manifestOwnsField(input.Ownership, input.ConfigPath, openCodeSkillsPathOwnership) {
+			configPatch, err = opencode.PatchConfigRemoveSkillPath(input.Config.Content, input.Route, skillConfigDir(input.ConfigPath))
+			if err != nil {
+				return Patch{}, err
+			}
+			files[0].Content = configPatch.Content
+			if configPatch.SkillsRemoved {
+				files[0].Fields = append(files[0].Fields, "config.skills.paths")
+				patch.Fields = append(patch.Fields, FieldChange{
+					Path:      "config.skills.paths",
+					Before:    strings.Join(configPatch.SkillsBefore, ","),
+					After:     strings.Join(configPatch.SkillsAfter, ","),
+					Sensitive: true,
+				})
+			}
+		} else if manifestHasFile(input.Ownership, legacyPath) {
+			patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_path_preserved", "target.config.skills.paths", "existing skills.paths entry has no profile-mango provenance marker and is preserved", 0, 0)
+		}
+		if manifestHasFile(input.Ownership, legacyPath) {
+			patch.Files = append(patch.Files, FilePatch{Path: "SKILL.md", Delete: true, Fields: []string{"resources.skills"}, NoOverride: true})
+		}
 	}
 	if skill == nil {
 		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.model_only", "target.config.model", "only the exact top-level model field is applied; authentication, effort, provider options, permissions, tools, instructions, skills, plugins, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
@@ -58,6 +90,66 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_narrow", "target.config.skills.paths", "one skill is copied beside the explicit config and exposed through a directory-wide skills.paths entry; other skills in that directory may also be discovered, so this is not an exclusive allowlist; instructions, additional skills, permissions, tools, authentication, effort, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
 	}
 	return patch, nil
+}
+
+func planOpenCodeAgent(input AdapterInput) (Patch, error) {
+	if input.Profile.Permissions != nil || input.Profile.Tools != nil || len(input.Profile.Skills) > 0 {
+		return Patch{}, fmt.Errorf("OpenCode named agent permissions, tools, and skills remain unqualified; remove these requirements or use a supported destination")
+	}
+	contentByPath := make(map[string][]byte, len(input.Resources))
+	for _, resource := range input.Resources {
+		if resource.Digest.Kind != "instruction" {
+			return Patch{}, fmt.Errorf("OpenCode named agent only supports instruction resources")
+		}
+		contentByPath[resource.Digest.Path] = resource.Content
+	}
+	instructions := make([]string, 0, len(input.Profile.Instructions))
+	for _, path := range input.Profile.Instructions {
+		content, found := contentByPath[path]
+		if !found {
+			return Patch{}, fmt.Errorf("OpenCode named agent instruction %q is missing", path)
+		}
+		instructions = append(instructions, string(content))
+	}
+	definition, err := opencode.AgentDefinition(input.Route, input.Agent.Mode, instructions)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch := Patch{Files: []FilePatch{{Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}}}
+	patch.Fields = []FieldChange{{Path: "agent.mode", After: input.Agent.Mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.agent_limits", "agent", "custom prompt replaces the stock agent prompt and native trimming applies; a primary is selectable but not made default, a subagent is eligible but delegation is unverified; higher-precedence config and runtime enforcement remain unverified", 0, 0)
+	return patch, nil
+}
+
+func manifestHasFile(manifest Manifest, path string) bool {
+	for _, file := range manifest.Files {
+		if file.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
+func manifestOwnsField(manifest Manifest, path, field string) bool {
+	for _, file := range manifest.Files {
+		if file.Path != path {
+			continue
+		}
+		for _, candidate := range file.Fields {
+			if candidate == field {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func openCodeLegacySkillPath(configPath string) string {
+	absolute, err := filepath.Abs(configPath)
+	if err != nil {
+		absolute = configPath
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(absolute), "SKILL.md"))
 }
 
 func validateOpenCodeProfile(input AdapterInput) (*render.Resource, error) {

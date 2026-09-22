@@ -61,6 +61,31 @@ func TestApplyRollsBackAppliedFilesAfterFault(t *testing.T) {
 	assertTestFile(t, second, "old-second")
 }
 
+func TestApplyRollsBackAppliedDeleteAfterFault(t *testing.T) {
+	root := t.TempDir()
+	deleted := filepath.Join(root, "a-delete")
+	updated := filepath.Join(root, "b-update")
+	writeTestFile(t, deleted, "old-delete")
+	writeTestFile(t, updated, "old-update")
+	deletedBefore, err := SnapshotFile(deleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updatedBefore, err := SnapshotFile(updated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = Apply([]Change{
+		{Path: deleted, Before: deletedBefore, Delete: true},
+		{Path: updated, Before: updatedBefore, Content: []byte("new-update")},
+	}, ApplyOptions{PlanID: "delete-fault-plan", Backup: true, FaultAfter: 1})
+	if err == nil {
+		t.Fatal("fault was not reported")
+	}
+	assertTestFile(t, deleted, "old-delete")
+	assertTestFile(t, updated, "old-update")
+}
+
 func TestRecoverRestoresIncompleteJournal(t *testing.T) {
 	root := t.TempDir()
 	first := filepath.Join(root, "first")
@@ -93,6 +118,37 @@ func TestRecoverRestoresIncompleteJournal(t *testing.T) {
 	assertTestFile(t, second, "old-second")
 }
 
+func TestRecoverRestoresIncompleteDeleteJournal(t *testing.T) {
+	root := t.TempDir()
+	deleted := filepath.Join(root, "a-delete")
+	updated := filepath.Join(root, "b-update")
+	writeTestFile(t, deleted, "old-delete")
+	writeTestFile(t, updated, "old-update")
+	deletedBefore, err := SnapshotFile(deleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updatedBefore, err := SnapshotFile(updated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Apply([]Change{
+		{Path: deleted, Before: deletedBefore, Delete: true},
+		{Path: updated, Before: updatedBefore, Content: []byte("new-update")},
+	}, ApplyOptions{PlanID: "delete-recovery-plan", Backup: true, FaultAfter: 1, LeaveJournal: true})
+	if err == nil || result.Status != "recovery-required" {
+		t.Fatalf("expected interrupted transaction, result=%#v err=%v", result, err)
+	}
+	if _, err := os.Stat(deleted); !os.IsNotExist(err) {
+		t.Fatalf("deleted path still exists before recovery: %v", err)
+	}
+	if err := Recover(result.JournalPath); err != nil {
+		t.Fatal(err)
+	}
+	assertTestFile(t, deleted, "old-delete")
+	assertTestFile(t, updated, "old-update")
+}
+
 func TestRecoverRejectsThirdPartyEdit(t *testing.T) {
 	root := t.TempDir()
 	first := filepath.Join(root, "first")
@@ -121,6 +177,35 @@ func TestRecoverRejectsThirdPartyEdit(t *testing.T) {
 	}
 	assertTestFile(t, first, "third-party")
 	assertTestFile(t, second, "old-second")
+}
+
+func TestRecoverRejectsThirdPartyRecreationOfDeletedFile(t *testing.T) {
+	root := t.TempDir()
+	deleted := filepath.Join(root, "a-delete")
+	updated := filepath.Join(root, "b-update")
+	writeTestFile(t, deleted, "old-delete")
+	writeTestFile(t, updated, "old-update")
+	deletedBefore, err := SnapshotFile(deleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updatedBefore, err := SnapshotFile(updated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Apply([]Change{
+		{Path: deleted, Before: deletedBefore, Delete: true},
+		{Path: updated, Before: updatedBefore, Content: []byte("new-update")},
+	}, ApplyOptions{PlanID: "delete-guarded-recovery", Backup: true, FaultAfter: 1, LeaveJournal: true})
+	if err == nil || result.Status != "recovery-required" {
+		t.Fatalf("expected interrupted transaction, result=%#v err=%v", result, err)
+	}
+	writeTestFile(t, deleted, "third-party")
+	if err := Recover(result.JournalPath); err == nil {
+		t.Fatal("recovery overwrote third-party recreation")
+	}
+	assertTestFile(t, deleted, "third-party")
+	assertTestFile(t, updated, "old-update")
 }
 
 func TestApplyRejectsStaleSnapshotBeforeWrites(t *testing.T) {

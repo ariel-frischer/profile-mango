@@ -21,8 +21,10 @@ type JSONCSkillsPatch struct {
 	Content  []byte
 	Before   []string
 	After    []string
+	Added    []string
 	Found    bool
 	Inserted bool
+	Removed  bool
 }
 
 // PatchModelJSONC validates a top-level JSONC object and changes only its model
@@ -58,7 +60,7 @@ func PatchSkillsJSONC(data []byte, paths []string) (JSONCSkillsPatch, error) {
 	}
 	if scanner.skills == nil {
 		content := insertAt(data, scanner.rootOpen+1, topLevelSkills(desired)+topLevelSeparator(scanner))
-		return JSONCSkillsPatch{Content: content, After: desired, Inserted: true}, nil
+		return JSONCSkillsPatch{Content: content, After: desired, Added: desired, Inserted: true}, nil
 	}
 	before := []string(nil)
 	if scanner.skills.paths != nil {
@@ -69,7 +71,41 @@ func PatchSkillsJSONC(data []byte, paths []string) (JSONCSkillsPatch, error) {
 		return JSONCSkillsPatch{Content: append([]byte(nil), data...), Before: before, After: after, Found: true}, nil
 	}
 	content := insertSkillsPaths(data, scanner.skills, missing)
-	return JSONCSkillsPatch{Content: content, Before: before, After: after, Found: scanner.skills.paths != nil, Inserted: scanner.skills.paths == nil}, nil
+	return JSONCSkillsPatch{Content: content, Before: before, After: after, Added: missing, Found: scanner.skills.paths != nil, Inserted: scanner.skills.paths == nil}, nil
+}
+
+// RemoveSkillPathJSONC removes one exact managed path while preserving unrelated bytes.
+func RemoveSkillPathJSONC(data []byte, path string) (JSONCSkillsPatch, error) {
+	if err := validateSkillPath(path); err != nil {
+		return JSONCSkillsPatch{}, err
+	}
+	scanner, err := newJSONCScanner(data)
+	if err != nil {
+		return JSONCSkillsPatch{}, err
+	}
+	if scanner.skills == nil || scanner.skills.paths == nil {
+		return JSONCSkillsPatch{Content: append([]byte(nil), data...)}, nil
+	}
+	paths := scanner.skills.paths
+	before := append([]string(nil), paths.values...)
+	index := -1
+	for candidate, value := range paths.values {
+		if value != path {
+			continue
+		}
+		if index >= 0 {
+			return JSONCSkillsPatch{}, fmt.Errorf("OpenCode skills.paths contains duplicate managed path %q", path)
+		}
+		index = candidate
+	}
+	if index < 0 {
+		return JSONCSkillsPatch{Content: append([]byte(nil), data...), Before: before, After: before, Found: true}, nil
+	}
+	after := append([]string(nil), before[:index]...)
+	after = append(after, before[index+1:]...)
+	item := paths.items[index]
+	content := removeArrayItem(data, item)
+	return JSONCSkillsPatch{Content: content, Before: before, After: after, Found: true, Removed: true}, nil
 }
 
 func normalizeSkillPaths(paths []string) ([]string, error) {
@@ -175,8 +211,16 @@ type arraySpan struct {
 	open          int
 	close         int
 	values        []string
+	items         []arrayItemSpan
 	hasEntries    bool
 	trailingComma bool
+}
+
+type arrayItemSpan struct {
+	start              int
+	end                int
+	leadingCommaStart  int
+	trailingCommaStart int
 }
 
 type skillsObjectSpan struct {
@@ -397,21 +441,28 @@ func (scanner *jsoncScanner) parseStringArray() (*arraySpan, error) {
 		span.close = scanner.pos - 1
 		return span, nil
 	}
+	leadingCommaStart := -1
 	for {
-		value, _, _, err := scanner.parseString()
+		scanner.skipTrivia()
+		start := scanner.pos
+		value, _, end, err := scanner.parseString()
 		if err != nil {
 			return nil, scanner.errorf("OpenCode skills.paths must contain only strings: %v", err)
 		}
 		span.values = append(span.values, value)
 		span.hasEntries = true
+		item := arrayItemSpan{start: start, end: end, leadingCommaStart: leadingCommaStart, trailingCommaStart: -1}
 		scanner.skipTrivia()
 		if scanner.consume(']') {
+			span.items = append(span.items, item)
 			span.close = scanner.pos - 1
 			return span, nil
 		}
 		if !scanner.consume(',') {
 			return nil, scanner.errorf("expected comma or skills.paths close")
 		}
+		item.trailingCommaStart = scanner.pos - 1
+		span.items = append(span.items, item)
 		span.trailingComma = true
 		scanner.skipTrivia()
 		if scanner.consume(']') {
@@ -419,7 +470,18 @@ func (scanner *jsoncScanner) parseStringArray() (*arraySpan, error) {
 			return span, nil
 		}
 		span.trailingComma = false
+		leadingCommaStart = item.trailingCommaStart
 	}
+}
+
+func removeArrayItem(data []byte, item arrayItemSpan) []byte {
+	start, end := item.start, item.end
+	if item.leadingCommaStart >= 0 {
+		start = item.leadingCommaStart
+	} else if item.trailingCommaStart >= 0 {
+		end = item.trailingCommaStart + 1
+	}
+	return append(append([]byte(nil), data[:start]...), data[end:]...)
 }
 
 func (scanner *jsoncScanner) finishObjectEntry() (bool, error) {
