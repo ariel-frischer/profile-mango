@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Install qualified OpenClaw 2026.9.5 model and thinking defaults with exact source-native consumption and transactional safeguards
 - Exact Oh My Pi 18.2.6 two-field YAML installation with source-native getter qualification, lossless patches, backups and guarded transactions
 - Install exact OpenCode 1.18.31 named primary and subagent definitions with model and ordered instructions at explicit owned paths, qualified by isolated native consumption
+- Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
 
 ### Changed
 

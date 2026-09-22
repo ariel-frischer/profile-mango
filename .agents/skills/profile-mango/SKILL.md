@@ -153,16 +153,18 @@ diagnostics and a nonzero exit status even when preview artifacts are written.
 OpenCode `1.18.31` separately supports lossless transactional application of
 top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit
 path. A distinct named primary/subagent definition can receive model and ordered
-instructions. This does not make the renderer or full profile applicable. Never
-present preview syntax, field application, or native resolution as authentication
-or policy enforcement.
+instructions. Codex `0.154.0` separately supports only root `model_provider`,
+`model`, and `model_reasoning_effort = "high"`. Neither makes its renderer or full
+profile applicable. Never present installed settings as authentication, full
+delivery, or policy enforcement.
 
 ## Plan-first install
 
-Only the exact subsets in the README install table and target evidence ledger are installable. Other targets remain blocked.
-OpenCode main-config installation requires exact version `1.18.31`, a route-only
-or single-skill profile, and one explicit config path. Plan first against
-synthetic or separately approved disposable state:
+Only the exact subsets in the README install table and target evidence ledger
+are installable. Other targets remain blocked. OpenCode main-config installation
+requires exact version `1.18.31`, a route-only or single-skill profile, and one
+explicit config path. Plan first against synthetic or separately approved
+disposable state:
 
 ```bash
 profile-mango install <profile-name> \
@@ -173,6 +175,13 @@ profile-mango install <profile-name> \
   --config-path opencode=/explicit/disposable/opencode.jsonc \
   --override --json
 ```
+
+For Codex, use `--target codex@0.154.0` with
+`--config-path codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth route, and
+`effort: high`. Treat this as **settings only**, not successful OAuth or full
+profile installation. The plan warns that `codex login status` distinguishes
+stored API-key from ChatGPT modes but cannot prove exact OAuth. Do not run it
+on another user's behalf or share status output containing key fragments.
 
 Review the destination digest, field diff, file hashes, and plan ID. Apply only by
 repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing

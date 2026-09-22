@@ -36,7 +36,7 @@ agent, authenticate, or switch a running conversation.
 | Oh My Pi `18.2.6` | Not established* | Default model role and thinking level | Not qualified |
 | OpenClaw `2026.9.5` | Yes, separate config/state | Default agent model and thinking level | Not qualified |
 | Hermes `0.21.3` | Yes, separate config/state | Provider, default model, and reasoning effort | Not qualified |
-| Codex `0.154.0` | Yes, named config presets | Preview only; installation remains blocked | Separately in progress |
+| Codex `0.154.0` | Yes, named config presets | Root provider, model, and `high` reasoning effort only | Separately in progress |
 
 \*Our [versioned references](docs/dev/agents/README.md) do not establish an
 equivalent native named-profile feature for these agents. Mango installation does
@@ -50,6 +50,15 @@ delegation. Use disposable test configuration for now; live paths require
 separate, path-specific approval.
 See [agent versions and limitations](docs/dev/target-evidence.md) for the exact
 fields, native evidence, and precedence limits.
+
+For Codex `0.154.0`, a route-only OpenAI/native/OAuth binding with `high` effort
+can plan three root settings at an explicit disposable `config.toml`. The
+read-only plan shows warnings and a plan ID. Applying requires
+`--apply --yes --expect-plan <planID>` and backs up the config, but never changes
+login credentials or proves OAuth. `codex login status` distinguishes API-key
+from ChatGPT login, not Codex-managed OAuth from externally supplied tokens.
+Other profile requirements stay blocked; do not use a personal Codex path
+without separate path-specific approval.
 
 ## How does installation work without native profiles?
 

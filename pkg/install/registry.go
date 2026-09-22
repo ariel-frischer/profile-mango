@@ -3,8 +3,6 @@ package install
 import (
 	"fmt"
 	"sort"
-
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 )
 
 type Registry struct {
@@ -59,27 +57,14 @@ func (registry *Registry) Targets() []Target {
 	return result
 }
 
-type blockedAdapter struct{ metadata AdapterMetadata }
-
-func (adapter blockedAdapter) Metadata() AdapterMetadata { return adapter.metadata }
-
-func (adapter blockedAdapter) Plan(AdapterInput) (Patch, error) {
-	return Patch{}, fmt.Errorf("target %s is install-blocked", adapter.metadata.Target)
-}
-
 func DefaultRegistry() *Registry {
-	blockedReason := "production target installation is blocked pending disposable-target validation; no target state is read or written"
 	return NewRegistry(
 		claudeCodeAdapter{},
-		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
+		codexAdapter{},
 		hermesAdapter{},
 		ohMyPiAdapter{},
 		openClawAdapter{},
 		piAdapter{},
 		openCodeAdapter{},
 	)
-}
-
-func blockedMetadata(target, version, adapterVersion, evidence, reason string) AdapterMetadata {
-	return AdapterMetadata{Target: target, Version: version, AdapterVersion: adapterVersion, EvidenceSHA256: evidence, Installable: false, Status: StatusBlocked, Reason: reason}
 }
