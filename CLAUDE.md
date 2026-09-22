@@ -18,7 +18,7 @@ tested evidence, and supported capabilities.
 ```bash
 make build          # Build binary
 make deps           # Download dependencies
-make install        # Install mango
+make install        # Install profile-mango
 make test           # Run tests
 make lint           # Run linters
 make format         # Format code
@@ -27,7 +27,7 @@ make format         # Format code
 ## Architecture
 
 ```
-cmd/mango/             # CLI entry point (cobra)
+cmd/profile-mango/             # CLI entry point (cobra)
   home.go             # effective profile-home inspection
   validate.go         # offline strict validation
 internal/profilehome/  # --home/env/user-home resolution

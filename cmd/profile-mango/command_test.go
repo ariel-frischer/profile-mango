@@ -24,7 +24,7 @@ func executeCommand(t *testing.T, args ...string) string {
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
+		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
 }
@@ -76,8 +76,8 @@ func TestVersionAliasSmoke(t *testing.T) {
 }
 
 func TestRootCommandUsesMangoIdentity(t *testing.T) {
-	if rootCmd.Use != "mango" {
-		t.Fatalf("root command use = %q, want mango", rootCmd.Use)
+	if rootCmd.Use != "profile-mango" {
+		t.Fatalf("root command use = %q, want profile-mango", rootCmd.Use)
 	}
 }
 
@@ -186,7 +186,7 @@ func TestNonInteractiveFlagIsGlobal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("non-interactive version failed: %v", err)
 	}
-	if !strings.Contains(output, "mango ") {
+	if !strings.Contains(output, "profile-mango ") {
 		t.Fatalf("version output = %q", output)
 	}
 }

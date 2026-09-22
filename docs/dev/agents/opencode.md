@@ -116,7 +116,7 @@ inert renderer applicable.
 
 ## Narrow install-capable subset
 
-`mango install` can patch the top-level `model` field in one explicit
+`profile-mango install` can patch the top-level `model` field in one explicit
 OpenCode config file and, independently, install exactly one validated portable
 skill resource. The skill resource is written as a target-owned `SKILL.md` beside
 the explicit config, and the config receives an absolute `skills.paths` entry for

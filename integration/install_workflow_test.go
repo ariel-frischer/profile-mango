@@ -98,7 +98,7 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 	repo := absolutePath(t, "..")
 	root := t.TempDir()
 	w := installWorkflow{root: root, binary: filepath.Join(root, executableName()), env: cleanInstallEnv(t, root), original: original, expected: expected}
-	runGo(t, repo, w.env, "build", "-o", w.binary, "./cmd/mango")
+	runGo(t, repo, w.env, "build", "-o", w.binary, "./cmd/profile-mango")
 	profile := filepath.Join(root, "profiles", "minimal")
 	if err := os.MkdirAll(profile, 0o700); err != nil {
 		t.Fatal(err)

@@ -15,7 +15,7 @@ go test ./integration -run TestCleanOfflineInstallAndInstalledBinary -count=1 -v
 The test creates temporary `HOME`, `XDG_CONFIG_HOME`, `GOCACHE`, and `GOBIN`
 directories. It sets `GOTOOLCHAIN=local` and `GOPROXY=off`, reuses the already
 populated `GOMODCACHE`, runs local `go build` and `go install`, and then invokes
-only the installed `mango` binary. It verifies:
+only the installed `profile-mango` binary. It verifies:
 
 - root help, plain version output, and the effective profile-home path without
   creating it;

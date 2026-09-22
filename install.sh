@@ -14,7 +14,7 @@
 
 set -eu
 
-BINARY_NAME="mango"
+BINARY_NAME="profile-mango"
 RELEASE_NAME="profile-mango"
 GITLAB_REPO="ariel-frischer/profile-mango"
 if [ -n "${HOME:-}" ]; then

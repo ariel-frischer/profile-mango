@@ -210,4 +210,4 @@ None blocks establishing the principles above.
 | What comes after deterministic rendering: manual placement or managed application? | Prefer inspectable output and explicit effects first. Decide application/import/drift workflows separately with ownership and rollback evidence. |
 | How should target-version support evolve? | Start with individually tested versions and a small reproducible fixture set; claim ranges only when evidence supports them. |
 | What is the public schema namespace? | Verify ownership of the current `profilemango.dev` identifier before public release, and rename if unavailable as the evidence ledger notes. |
-mango.dev` identifier before public release, and rename if unavailable as the evidence ledger notes. |
+profile-mango.dev` identifier before public release, and rename if unavailable as the evidence ledger notes. |

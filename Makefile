@@ -26,8 +26,8 @@ deps: ## Download dependencies
 
 d: deps ## Alias for deps
 
-install: ## Install mango to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/mango/
+install: ## Install profile-mango to GOPATH/bin
+	go install ${LDFLAGS} ./cmd/profile-mango/
 
 i: install ## Alias for install
 
@@ -85,19 +85,19 @@ clean: ## Clean build artifacts
 c: clean ## Alias for clean
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/mango ./cmd/mango/
+	go build ${LDFLAGS} -o bin/profile-mango ./cmd/profile-mango/
 
 b: build ## Alias for build
 
 bin: build ## Alias for build
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/mango/
+	go run ${LDFLAGS} ./cmd/profile-mango/
 
 r: run ## Alias for run
 
 check-agent-sources: ## Check documented agent sources without writing changes
-	go run ./cmd/mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
+	go run ./cmd/profile-mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)
@@ -109,7 +109,7 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall mango
+uninstall: ## Uninstall profile-mango
 	@./uninstall.sh
 
 u: uninstall ## Alias for uninstall

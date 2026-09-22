@@ -8,15 +8,15 @@ Thanks for your interest in contributing!
 git clone https://gitlab.com/ariel-frischer/profile-mango.git
 cd profile-mango
 make deps      # Download dependencies
-make install   # Install mango
-make build     # Build bin/mango
+make install   # Install profile-mango
+make build     # Build bin/profile-mango
 make test      # Run tests
 ```
 
 ## Development
 
 ```bash
-make build     # Build to bin/mango
+make build     # Build to bin/profile-mango
 make test      # Run all tests
 make lint      # Run linters
 make format    # Format code
@@ -34,7 +34,7 @@ make format    # Format code
 Use [GitLab issues](https://gitlab.com/ariel-frischer/profile-mango/issues). Include:
 - What you expected vs what happened
 - Steps to reproduce
-- `mango version` output
+- `profile-mango version` output
 - OS and architecture
 
 ## Code Style

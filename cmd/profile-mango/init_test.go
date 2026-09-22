@@ -13,14 +13,14 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-const expectedReadmeLogo = `█▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
+const expectedReadmeLogo = `🥭 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█`
 
 const expectedStarterProfile = `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: default
-  description: Default profile scaffolded by mango init
+  description: Default profile scaffolded by profile-mango init
 spec:
   routeRef: local
 `

@@ -1,8 +1,8 @@
 #!/bin/sh
-# mango uninstaller for profile-mango releases
+# profile-mango uninstaller for profile-mango releases
 set -eu
 
-BINARY_NAME="mango"
+BINARY_NAME="profile-mango"
 INSTALL_DIR="${PROFILE_MANGO_INSTALL_DIR:-$HOME/.local/bin}"
 TARGET="${INSTALL_DIR}/${BINARY_NAME}"
 

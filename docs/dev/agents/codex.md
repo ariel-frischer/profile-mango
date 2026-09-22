@@ -29,7 +29,7 @@ See [AGENTS.md guidance][agents] and [skill guidance][skills].
 
 ## Preview renderer boundary
 
-`mango render <name> --target codex --target-version 0.154.0` is an
+`profile-mango render <name> --target codex --target-version 0.154.0` is an
 offline compiler boundary, not an installer. Without `--preview`, applicability
 blockers produce diagnostics and no output. With `--preview`, the command may
 atomically create a new explicit `--out` directory containing `render.json`,

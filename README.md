@@ -1,4 +1,4 @@
-# profile-mango
+# profile-mango 🥭
 
 **Your coding-agent setup, without the copy-paste.**
 
@@ -24,7 +24,7 @@ settings such as themes and session history stay outside Profile Mango too.
 agent yet**, even if it has its own native named profiles.
 
 You can create profiles, check them for errors offline, and generate previews.
-For the exact versions below, `mango install` can also apply a limited set of
+For the exact versions below, `profile-mango install` can also apply a limited set of
 settings to an explicitly chosen agent configuration file. It does not launch an
 agent, authenticate, or switch a running conversation.
 
@@ -69,7 +69,7 @@ primary is selectable by OpenCode, not automatically activated; a subagent is
 eligible for delegation, not proof of runtime orchestration. The generated
 instructions replace that named agent's stock prompt.
 
-To switch settings, run `mango install <other-profile>` with the same target,
+To switch settings, run `profile-mango install <other-profile>` with the same target,
 configuration path, and ownership manifest, then review and approve the new plan.
 Unchanged Mango-owned files can be updated directly; unowned or edited files need
 an adapter-approved `--override`. Non-interactive apply requires
@@ -90,10 +90,10 @@ git clone git@gitlab.com:ariel-frischer/profile-mango.git
 cd profile-mango
 make deps
 make install
-mango version
+profile-mango version
 ```
 
-The binary is called `mango` and goes into your Go bin directory, usually
+The binary is called `profile-mango` and goes into your Go bin directory, usually
 `~/go/bin`. Make sure it is on your `PATH`.
 
 ## Try it
@@ -101,13 +101,13 @@ The binary is called `mango` and goes into your Go bin directory, usually
 Create a starter profile in a new project folder:
 
 ```bash
-mango init ./my-profiles
+profile-mango init ./my-profiles
 ```
 
 Check it using the included example model settings:
 
 ```bash
-mango validate ./my-profiles/profiles/default/profile.yaml \
+profile-mango validate ./my-profiles/profiles/default/profile.yaml \
   --bindings ./my-profiles/bindings/local.example.yaml
 ```
 
@@ -115,10 +115,10 @@ Edit `profiles/default/profile.yaml` to change the profile. The separate
 `bindings/local.example.yaml` file describes the provider and model, not passwords
 or tokens. Neither command changes your agent configuration.
 
-Prefer a shared location? Run `mango init` without a directory to use
+Prefer a shared location? Run `profile-mango init` without a directory to use
 `~/.profile-mango`. Existing files are never overwritten.
 
-For installation flags and consent requirements, run `mango install --help`.
+For installation flags and consent requirements, run `profile-mango install --help`.
 The bundled [agent skill](.agents/skills/profile-mango/SKILL.md) can also guide a
 coding agent through authoring profiles and planning supported installations.
 
