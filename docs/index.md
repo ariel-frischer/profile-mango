@@ -11,7 +11,7 @@
 - [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.86.1 source/package provenance, inert preview syntax, static effect review, and bounded settings-module installation evidence.
 - [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source evidence, configuration effects, and blocked native support boundary.
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
-- [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and blocked native inspection boundary.
+- [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and bounded native config-merge installation qualification.
 - [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 release/source/binary evidence, native JSONC model acceptance, partial merged-state/precedence observations, and blocked installation/enforcement.
 - [`dev/agents/jcode.md`](dev/agents/jcode.md) - Ariel custom Jcode fork experimental-only provenance, executed profile probe boundary, and inert preview projection.
 - [`dev/m0-validation.md`](dev/m0-validation.md) - Reproducible offline clean-install, installed-binary, and Draft 2020-12 contract evidence for M0.

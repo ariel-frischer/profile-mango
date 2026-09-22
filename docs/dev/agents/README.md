@@ -30,7 +30,7 @@ and commits are reproducible locators, not proof of target behavior.
 - [Pi](pi.md): exact `0.86.1` inert preview plus three-default settings installer; native settings-module evidence only, full applicability remains blocked.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md) — exact v2026.9.5 inert preview renderer; native applicability remains blocked.
-- [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer; native applicability remains blocked.
+- [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer plus three-field installer with isolated native config-merge evidence; full startup/auth/enforcement remain blocked.
 - [OpenCode](opencode.md) — exact OpenCode 1.18.31 inert JSONC preview renderer plus bounded model and one-skill installation; isolated merged-config and skill-body discovery evidence does not prove full runtime enforcement.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target with an exact-build inert preview renderer; native applicability remains blocked.
 

@@ -27,8 +27,9 @@ versions, installed binaries and tested support must remain distinct.
 ## Product boundary
 
 Codex is the first intended public adapter candidate. Public targets have inert
-exact-version renderers. OpenCode and Claude Code currently permit only model-field
-installation; Pi permits only its three route-default settings. Other target gates
+exact-version renderers. Claude Code permits only model-field installation; Pi
+permits three route-default settings, Hermes three model/reasoning fields, and
+OpenCode model plus one qualified skill resource. Other target gates
 remain blocked unless explicitly qualified below. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
 Native probes require approved disposable scope and exact evidence. Ariel's custom
@@ -43,16 +44,18 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive/extracted-binary hashes, isolated network-blocked `debug config` probe, lossless JSONC patch tests, transactional disposable-path apply/reapply/recovery checks, backup/restore inventory, and deterministic inert renderer tests | Top-level `model` field installable at one explicit path with destination-bound consent and transactional safeguards; auth identity, provider options, full precedence/provenance, delivery, permissions, tools, plugins, MCP, and enforcement remain blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config and debug skill consumption, lossless JSONC/resource patch tests, compiled transactional lifecycle and isolated backup/restore inventory | Model plus one SKILL.md and skills.paths installable; directory discovery is not an exclusive allowlist. Full auth, precedence, delivery and runtime enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
-| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
+| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
-| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`) | immutable source archive/build metadata hashes, entrypoint/config/status/profile effect review, and deterministic inert YAML preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, permissions, tools, skills, context, and enforcement remain blocked |
-| Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1` | immutable source archives and npm package/integrity hashes, bundled entrypoint identity, static startup/config effect review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native config acceptance, effective state, precedence, auth, delivery, extensions, permissions/tools, and enforcement remain blocked |
+| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks | Three model/reasoning config fields installable; full startup, authentication, delivery and runtime enforcement remain blocked |
+| Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
 The observations are version-qualified snapshots, not compatibility ranges.
+Dated initial M0 source reviews below are historical; later installation
+qualification sections and this summary record the current narrow support gates.
 
 ## Pi v0.86.1 evidence
 
