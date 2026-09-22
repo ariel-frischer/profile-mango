@@ -17,7 +17,7 @@ func (hermesAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: hermes.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Hermes 0.21.3 config YAML fields are natively consumed at a bounded config level; runtime enforcement remains unverified",
+		Reason:         "exact Hermes 0.21.3 config YAML fields are consumed by a pinned native loader module in an isolated effective-merge probe; startup, authentication, provider calls, and runtime enforcement remain unverified",
 	}
 }
 
