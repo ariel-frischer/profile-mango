@@ -35,6 +35,7 @@ const (
 	ActionUpdate   = "update"
 	ActionOverride = "override"
 	ActionNoop     = "noop"
+	ActionDelete   = "delete"
 )
 
 type Target struct {
@@ -102,9 +103,12 @@ type Adapter interface {
 type FilePatch struct {
 	// NoOverride preserves an edited or unowned file even when the patch permits overrides.
 	NoOverride bool
+	Delete     bool
 	Path       string
 	Content    []byte
 	Fields     []string
+	// Ownership records target-specific provenance needed for safe future cleanup.
+	Ownership []string `json:"-"`
 }
 
 type FieldChange struct {
@@ -170,9 +174,12 @@ type FilePlan struct {
 	Path         string        `json:"path"`
 	Action       string        `json:"action"`
 	BeforeSHA256 string        `json:"beforeSHA256,omitempty"`
-	AfterSHA256  string        `json:"afterSHA256"`
+	AfterSHA256  string        `json:"afterSHA256,omitempty"`
 	Owned        bool          `json:"owned"`
 	Fields       []FieldChange `json:"fields,omitempty"`
+	Delete       bool          `json:"delete,omitempty"`
+	targetPath   string        `json:"-"`
+	ownership    []string      `json:"-"`
 }
 
 type TargetPlan struct {

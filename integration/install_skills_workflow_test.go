@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
@@ -37,6 +38,42 @@ func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 		t.Fatal("stale source consent was accepted")
 	}
 	assertWorkflowBytes(t, filepath.Join(w.root, "SKILL.md"), []byte(workflowSkill))
+}
+
+func TestInstalledBinaryOpenCodeSkillOmissionReconciles(t *testing.T) {
+	w, _ := newSkillWorkflow(t)
+	initial := w.plan(t)
+	result := w.run(t, "--apply", "--yes", "--expect-plan", initial.PlanID)
+	if result.err != nil {
+		t.Fatalf("initial apply failed: %v\n%s", result.err, result.stderr)
+	}
+	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
+	content := strings.Replace(string(readWorkflowFile(t, profile)), "  skills:\n    - skills/research/SKILL.md\n", "", 1)
+	if err := os.WriteFile(profile, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cleanup := w.plan(t)
+	if cleanup.Status != install.StatusReady {
+		t.Fatalf("unexpected cleanup plan: %#v", cleanup)
+	}
+	result = w.run(t, "--apply", "--yes", "--expect-plan", cleanup.PlanID)
+	if result.err != nil {
+		t.Fatalf("cleanup apply failed: %v\n%s", result.err, result.stderr)
+	}
+	if _, err := os.Stat(filepath.Join(w.root, "SKILL.md")); !os.IsNotExist(err) {
+		t.Fatalf("omitted skill remains after built-binary cleanup: %v", err)
+	}
+	var config struct {
+		Skills struct {
+			Paths []string `json:"paths"`
+		} `json:"skills"`
+	}
+	if err := json.Unmarshal(readWorkflowFile(t, w.config), &config); err != nil {
+		t.Fatal(err)
+	}
+	if len(config.Skills.Paths) != 0 {
+		t.Fatalf("managed skills path remains after cleanup: %#v", config.Skills.Paths)
+	}
 }
 
 func assertInstalledSkillConfig(t *testing.T, w installWorkflow) {

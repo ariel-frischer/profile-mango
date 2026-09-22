@@ -51,15 +51,32 @@
     "file": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "action", "afterSHA256", "owned"],
+      "required": ["path", "action", "owned"],
       "properties": {
         "path": {"type": "string"},
-        "action": {"enum": ["create", "update", "override", "noop"]},
+        "action": {"enum": ["create", "update", "override", "noop", "delete"]},
         "beforeSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "afterSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "owned": {"type": "boolean"},
+        "delete": {"type": "boolean"},
         "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}}
-      }
+      },
+      "oneOf": [
+        {
+          "required": ["afterSHA256"],
+          "properties": {
+            "action": {"enum": ["create", "update", "override", "noop"]},
+            "delete": {"const": false}
+          }
+        },
+        {
+          "required": ["delete"],
+          "properties": {
+            "action": {"const": "delete"},
+            "delete": {"const": true}
+          }
+        }
+      ]
     },
     "diagnostic": {
       "type": "object",

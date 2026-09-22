@@ -255,7 +255,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	if manifest != nil && !bytes.Equal(manifestSnapshot.Content, manifestData) {
 		changes = append(changes, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(manifestSnapshot.Path), Action: manifestAction(manifestSnapshot), BeforeSHA256: manifestSnapshot.SHA256, AfterSHA256: installfs.Hash(manifestData), Owned: manifestSnapshot.Exists})
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(manifestSnapshot.Path), Action: manifestAction(manifestSnapshot), BeforeSHA256: manifestSnapshot.SHA256, AfterSHA256: installfs.Hash(manifestData), Owned: manifestSnapshot.Exists, targetPath: manifestSnapshot.Path})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
 	}
 	targetPlan.changes = changes
@@ -282,9 +282,15 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 			return nil, true
 		}
 		seen[path] = struct{}{}
-		if err := installfs.ValidateContent(file.Content); err != nil {
-			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.patch_too_large", filepath.Base(path), err.Error(), 0, 0)
+		if file.Delete && len(file.Content) > 0 {
+			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.patch_delete_content", filepath.Base(path), "delete patches must not include replacement content", 0, 0)
 			return nil, true
+		}
+		if !file.Delete {
+			if err := installfs.ValidateContent(file.Content); err != nil {
+				targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.patch_too_large", filepath.Base(path), err.Error(), 0, 0)
+				return nil, true
+			}
 		}
 		before := config
 		if path != config.Path {
@@ -295,25 +301,41 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 				return nil, true
 			}
 		}
-		afterHash := installfs.Hash(file.Content)
+		afterHash := ""
+		if !file.Delete {
+			afterHash = installfs.Hash(file.Content)
+		}
 		ownedHash, owned := ownershipHash(ownership, path)
-		action, conflict := fileAction(request, patch.OverrideAllowed && !file.NoOverride, before, ownedHash, owned, afterHash)
+		action, conflict := fileAction(request, patch.OverrideAllowed && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
 		fields := fieldsForNames(file.Fields)
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields})
-		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...)})
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: append([]string(nil), file.Ownership...)})
+		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
 		if conflict {
-			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", filepath.Base(path), "target file is edited or unowned; use an adapter-approved override only when the effect is understood", 0, 0)
+			message := "target file is edited or unowned; use an adapter-approved override only when the effect is understood"
+			if file.Delete {
+				message = "deletion requires an unchanged profile-mango-owned file and cannot be overridden"
+			}
+			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", filepath.Base(path), message, 0, 0)
 			continue
 		}
-		if action != ActionNoop {
-			changes = append(changes, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...)})
+		if action != ActionNoop && (!file.Delete || before.Exists) {
+			changes = append(changes, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
 		}
 	}
 	sort.Slice(targetPlan.Files, func(i, j int) bool { return targetPlan.Files[i].Path < targetPlan.Files[j].Path })
 	return changes, targetPlan.Diagnostics.HasErrors()
 }
 
-func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot, ownedHash string, owned bool, afterHash string) (string, bool) {
+func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot, ownedHash string, owned bool, afterHash string, deleteFile bool) (string, bool) {
+	if deleteFile {
+		if !before.Exists {
+			return ActionDelete, false
+		}
+		if owned && ownedHash != "" && before.SHA256 == ownedHash {
+			return ActionDelete, false
+		}
+		return ActionDelete, true
+	}
 	if before.Exists && before.SHA256 == afterHash {
 		return ActionNoop, false
 	}
@@ -355,15 +377,20 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 	if len(changes) > 0 && snapshot.Exists {
 		manifest.Generation++
 	}
+	originalFiles := append([]ManifestFile(nil), manifest.Files...)
 	for _, file := range files {
-		if file.Path == filepath.Base(snapshot.Path) {
+		actualPath := file.targetPath
+		if actualPath == "" || actualPath == snapshot.Path {
 			continue
 		}
-		actualPath := findChangePath(changes, file.Path)
-		if actualPath == "" {
+		if file.Delete {
+			manifest.Files = removeManifestFile(manifest.Files, actualPath)
 			continue
 		}
-		manifest.Files = replaceManifestFile(manifest.Files, ManifestFile{Path: actualPath, SHA256: file.AfterSHA256, Fields: fieldNames(file.Fields)})
+		manifest.Files = replaceManifestFile(manifest.Files, ManifestFile{Path: actualPath, SHA256: file.AfterSHA256, Fields: manifestFields(file)})
+	}
+	if snapshot.Exists && len(changes) == 0 && !manifestFilesEqual(originalFiles, manifest.Files) {
+		manifest.Generation++
 	}
 	sort.Slice(manifest.Files, func(i, j int) bool { return manifest.Files[i].Path < manifest.Files[j].Path })
 	data, err := json.MarshalIndent(manifest, "", "  ")
@@ -371,15 +398,6 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 		return nil, nil, fmt.Errorf("encode ownership manifest: %w", err)
 	}
 	return &manifest, append(data, '\n'), nil
-}
-
-func findChangePath(changes []installfs.Change, base string) string {
-	for _, change := range changes {
-		if filepath.Base(change.Path) == base {
-			return change.Path
-		}
-	}
-	return ""
 }
 
 func replaceManifestFile(files []ManifestFile, value ManifestFile) []ManifestFile {
@@ -397,6 +415,45 @@ func replaceManifestFile(files []ManifestFile, value ManifestFile) []ManifestFil
 		result = append(result, value)
 	}
 	return result
+}
+
+func removeManifestFile(files []ManifestFile, path string) []ManifestFile {
+	result := make([]ManifestFile, 0, len(files))
+	for _, file := range files {
+		if file.Path != path {
+			result = append(result, file)
+		}
+	}
+	return result
+}
+
+func manifestFields(file FilePlan) []string {
+	names := fieldNames(file.Fields)
+	seen := make(map[string]struct{}, len(names)+len(file.ownership))
+	for _, name := range names {
+		seen[name] = struct{}{}
+	}
+	for _, name := range file.ownership {
+		if _, found := seen[name]; found {
+			continue
+		}
+		seen[name] = struct{}{}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func manifestFilesEqual(left, right []ManifestFile) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index].Path != right[index].Path || left[index].SHA256 != right[index].SHA256 || strings.Join(left[index].Fields, "\x00") != strings.Join(right[index].Fields, "\x00") {
+			return false
+		}
+	}
+	return true
 }
 
 func decodeManifest(data []byte, target Target) (Manifest, error) {
