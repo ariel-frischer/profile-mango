@@ -27,6 +27,10 @@ const project = process.argv[3];
 const agent = process.argv[4];
 const mode = process.argv[5];
 const { SettingsManager } = await import(pathToFileURL(join(root, "dist/core/settings-manager.js")).href);
+if (mode === "positive") {
+  const global = SettingsManager.create(project + "/absent", agent, { projectTrusted: true });
+  if (global.getDefaultProvider() !== "sentinel-provider" || global.getDefaultModel() !== "sentinel-global-model" || global.getDefaultThinkingLevel() !== "high") throw new Error("global route settings not consumed");
+}
 const manager = SettingsManager.create(project, agent, { projectTrusted: true });
 const errors = manager.drainErrors();
 if (mode === "positive") {
@@ -90,8 +94,12 @@ func assertNativePackage(t *testing.T, packageRoot string) {
 	if metadata.Bin["pi"] != Entrypoint {
 		t.Fatalf("native Pi bin = %q, want %q", metadata.Bin["pi"], Entrypoint)
 	}
-	if _, err := os.Stat(filepath.Join(packageRoot, "dist", "core", "settings-manager.js")); err != nil {
-		t.Fatalf("exact Pi settings module missing: %v", err)
+	module, err := os.ReadFile(filepath.Join(packageRoot, "dist", "core", "settings-manager.js"))
+	if err != nil {
+		t.Fatalf("read exact Pi settings module: %v", err)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(module)); got != "5368b155ec26d88374cec9e66b8e588b5041a0fb0047414f70b34e13892c4f48" {
+		t.Fatalf("Pi imported settings module hash mismatch: %s", got)
 	}
 	entrypoint, err := os.ReadFile(filepath.Join(packageRoot, Entrypoint))
 	if err != nil {
@@ -158,15 +166,17 @@ func runNativeSettingsProbe(t *testing.T, node, packageRoot, mode string) {
 
 func nativeProbeArgs(root, packageRoot, node, mode string) []string {
 	return []string{
-		"--die-with-parent", "--new-session", "--unshare-net", "--ro-bind", "/", "/",
-		"--tmpfs", "/home", "--dir", "/home/ari", "--tmpfs", "/run", "--tmpfs", "/tmp", "--tmpfs", "/var/tmp",
-		"--bind", root, "/home/ari", "--ro-bind", packageRoot, "/usr/local", "--chdir", "/home/ari/project",
+		"--die-with-parent", "--new-session", "--unshare-net", "--unshare-pid", "--unshare-ipc", "--cap-drop", "ALL",
+		"--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
+		"--ro-bind", "/bin", "/bin", "--ro-bind", "/etc", "/etc", "--proc", "/proc", "--dev", "/dev",
+		"--tmpfs", "/run", "--tmpfs", "/tmp", "--tmpfs", "/var/tmp", "--dir", "/probe", "--ro-bind", node, "/probe/node",
+		"--bind", root, "/home/ari", "--ro-bind", packageRoot, "/package", "--chdir", "/home/ari/project",
 		"--clearenv", "--setenv", "HOME", "/home/ari", "--setenv", "PI_CODING_AGENT_DIR", "/home/ari/agent",
 		"--setenv", "PI_CODING_AGENT_SESSION_DIR", "/home/ari/sessions", "--setenv", "XDG_CONFIG_HOME", "/home/ari/xdg/config",
 		"--setenv", "XDG_DATA_HOME", "/home/ari/xdg/data", "--setenv", "XDG_CACHE_HOME", "/home/ari/xdg/cache",
 		"--setenv", "XDG_RUNTIME_DIR", "/run", "--setenv", "TMPDIR", "/home/ari/tmp", "--setenv", "PI_OFFLINE", "1",
-		"--setenv", "PI_SKIP_VERSION_CHECK", "1", "--setenv", "PATH", "/usr/bin:/bin", "--", node,
-		"/home/ari/probe.mjs", "/usr/local", "/home/ari/project", "/home/ari/agent", mode,
+		"--setenv", "PI_SKIP_VERSION_CHECK", "1", "--setenv", "PATH", "/usr/bin:/bin", "--", "/probe/node",
+		"/home/ari/probe.mjs", "/package", "/home/ari/project", "/home/ari/agent", mode,
 	}
 }
 

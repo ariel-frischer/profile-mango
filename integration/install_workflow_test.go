@@ -26,6 +26,7 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	}{
 		"opencode@1.18.31":    {"openai", "gpt-5.6", "{\n  // keep user comment\n  \"model\": \"openai/old\",\n  \"theme\": \"system\"\n}\n", "{\n  // keep user comment\n  \"model\": \"openai/gpt-5.6\",\n  \"theme\": \"system\"\n}\n"},
 		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
+		"pi@0.86.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
 	}
 	for target, test := range tests {
 		t.Run(target, func(t *testing.T) {

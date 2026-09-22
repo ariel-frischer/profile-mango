@@ -20,7 +20,7 @@ required properties block mutation. Credentials and target processes are outside
 ordinary install execution. Native qualification is a separate disposable,
 credential-free, network-blocked developer workflow. Native parsing, effective
 configuration, delivery, and runtime enforcement are distinct evidence levels.
-Only the OpenCode 1.18.31 top-level model field is currently install-capable.
+Only exact subsets recorded in the target evidence ledger are install-capable.
 Future target promotion requires evidence, not merely a new registry entry.
 
 ## Parallel installation work

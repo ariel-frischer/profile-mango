@@ -52,7 +52,7 @@ assets/                # Demo content (GIFs, screenshots)
 
 ## Target Safety Boundary
 
-The canonical M0 core, validation, and render paths remain offline and pure. OpenCode `1.18.31` alone permits transactional application of the top-level `model` field at one explicit caller-supplied path, using synthetic or separately approved disposable state unless new path-specific user approval is recorded. It must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Every broader capability and every other production target remains blocked. Codex is the first intended public target. Jcode remains experimental developer evidence and is not a supported product target.
+The canonical core, validation, and rendering remain offline and pure. Only exact installation subsets in `docs/dev/target-evidence.md` may modify explicit caller-supplied paths, using synthetic or separately approved disposable state unless new path-specific live approval is recorded. Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unqualified targets and unknown required properties remain blocked. Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated, timeout-bounded, and must hide personal homes and sockets. Jcode remains experimental developer evidence, not a supported public target.
 
 ## Post-Feature Checklist
 

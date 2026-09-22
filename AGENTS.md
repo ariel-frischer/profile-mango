@@ -82,12 +82,12 @@ CHANGELOG.md          # generated changelog output
 
 ## Target Safety Boundary
 
-- The canonical M0 core, validation, and render paths remain offline and pure: no target homes, credentials, subprocesses, providers, or network access.
-- OpenCode `1.18.31` alone permits transactional application of the top-level `model` field at one explicit caller-supplied path. Use only synthetic or separately approved disposable state unless new path-specific user approval is recorded.
-- The OpenCode installer must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Every broader capability and every other production target remains blocked.
-- Codex is the first intended public adapter target; only an exact-version inert preview renderer exists, and native applicability remains blocked.
-- Jcode is developer-only experimental evidence, not a supported product target or README promise.
-- Unknown keys, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed.
+- Canonical parsing, validation, and rendering remain offline and pure: no target homes, credentials, subprocesses, providers, or network access.
+- Only the exact installation subsets in `docs/dev/target-evidence.md` may be applied at explicit caller-supplied paths. Use synthetic or separately approved disposable state unless new path-specific live approval is recorded.
+- Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unknown required properties and unqualified targets remain blocked.
+- Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated and timeout-bounded. Hide personal homes and sockets; writes may occur only inside the disposable sandbox.
+- Codex remains the first intended public target. Jcode is experimental developer evidence, not a supported product target or README promise.
+- Unknown keys in canonical input, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed. Target-owned unrelated configuration remains preserved.
 
 ## Testing Guidance
 

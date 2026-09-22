@@ -1,14 +1,14 @@
 # Target evidence ledger
 
-**Evidence date:** 2026-09-20 local / 2026-09-21 UTC
+**Evidence dates:** initial 2026-09-20 local / 2026-09-21 UTC; installation updates 2026-09-22 UTC
 **Platform:** Linux x86_64
-**Scope:** M0 contract evidence, transactional install-engine evidence, isolated native-inspector evidence, and the exact Codex 0.154.0, Pi 0.86.1, Oh My Pi 18.2.6, Claude Code 2.1.278, OpenClaw 2026.9.5, Hermes Agent 0.21.3, and OpenCode 1.18.31 adapter boundaries. OpenCode alone has a narrowly install-capable top-level `model` field at one explicit caller-supplied path; all validation used synthetic or copied disposable state. No live target-home read, credential read, target session launch, provider/model launch or request, provider initialization, hook/extension/child launch, or live-state mutation. Install planning/application tests use fake adapters plus the exact OpenCode model-only adapter against synthetic temporary files. The only target processes executed were bounded
-`--version`, `--help`, the pinned Oh My Pi source `--version`, Codex `features
-list`, Ariel custom-fork profile inspection, and OpenCode `debug config` commands
-in synthetic homes. They did not start a TUI/session or initialize a provider.
-No OpenClaw, Hermes, Claude Code, or Pi command was executed. The OpenCode probe
-used blocked network and disposable state, then restored its backup with a matching
-recursive inventory.
+**Scope:** Canonical contract, shared transaction, exact-version renderer, and
+narrow installation evidence. All native qualification and install validation use
+synthetic disposable state, not personal agent homes or authenticated providers.
+The dated target sections below distinguish initial source/package review from
+subsequent isolated native commands or settings-module probes. Native probes may
+write only within their disposable sandbox. No full-profile runtime or policy
+compatibility is implied by installation of a qualified configuration subset.
 
 M0 freezes the portable contract. It does not claim that either target enforces that contract yet. Target claims use three separately reported levels:
 
@@ -26,17 +26,13 @@ versions, installed binaries and tested support must remain distinct.
 
 ## Product boundary
 
-Codex is the first intended public adapter candidate. OpenCode, Claude Code, Pi, Oh My Pi,
-and OpenClaw have exact source/version inert preview renderers. OpenCode additionally
-has exact-version model-candidate parser acceptance, partial merged-state/precedence
-evidence, and lossless transactional application of only the top-level `model` field
-at one explicit path. Every other target remains install-blocked, and OpenCode full
-profile applicability, auth identity, delivery, and runtime enforcement remain
-blocked. Native probes require explicit approval, disposable state, and evidence-level
-limits. Ariel's custom Jcode fork
-is **not** a supported public target. It remains here only as experimental
-developer evidence because that fork currently provides the closest comparison
-surface for named policy profiles.
+Codex is the first intended public adapter candidate. Public targets have inert
+exact-version renderers. OpenCode and Claude Code currently permit only model-field
+installation; Pi permits only its three route-default settings. Other target gates
+remain blocked unless explicitly qualified below. Field consumption, full-route
+authentication, precedence, delivery, and runtime enforcement are separate claims.
+Native probes require approved disposable scope and exact evidence. Ariel's custom
+Jcode fork is experimental developer evidence, not a supported public target.
 
 Ariel's custom Jcode fork must not appear in the README support list, release
 promise, or public compatibility matrix. Public support for any Jcode variant
@@ -121,6 +117,30 @@ discovery, delivery, permissions/tools, and runtime enforcement. `applicable` is
 always false, and validated canonical resources are copied only into explicit
 inert staging output.
 
+### Bounded settings-module installation, 2026-09-22
+
+The separate opt-in `TestNativeSettingsModuleQualification` imports only the exact
+package's `dist/core/settings-manager.js`, SHA-256
+`5368b155ec26d88374cec9e66b8e588b5041a0fb0047414f70b34e13892c4f48`.
+This hash was compared with the same file in the immutable tarball above. It is
+not a full CLI startup test. The hardened probe uses allowlisted runtime/package
+mounts, synthetic writable state, cleared environment, isolated network/PID/IPC
+namespaces, dropped capabilities, and a 15-second timeout. It verifies native
+getters consume all three generated global defaults, project settings override
+the global model, malformed settings produce a global parse diagnostic, and no
+sandbox file or content changes occur.
+
+The installer manages only `defaultProvider`, `defaultModel`, and
+`defaultThinkingLevel` in one explicitly supplied settings JSON file. It preserves
+unrelated data and rejects malformed/duplicate/ambiguous managed values and
+unsupported required profile effects. Compiled-CLI tests verify real disposable
+plan/apply, default backup bytes, deterministic diffs, hash-bound consent, stale
+rejection, no-op reapply, and backup restoration. Project overrides remain
+target-owned and can supersede global defaults. No implicit global destination is
+selected. Authentication identity, model catalogs, full startup, trust,
+extensions, resources, tools, permissions, delivery, and enforcement remain
+unverified or blocked. The full-profile renderer remains inert.
+
 ## Claude Code v2.1.278 evidence
 
 ### Immutable artifact, release, and platform
@@ -157,22 +177,42 @@ installation, extensions, memory, hooks, updates, and permissions checks and may
 fix issues. `/status` is session-oriented. No release-qualified schema or
 effective-config command with per-key provenance was established.
 
-Accordingly, `--version`, `--help`, `doctor`, `/status`, config, and schema paths
-were reviewed but not executed. The opaque startup path was not proven
-side-effect-free, so no personal `~/.claude`, login, session, slash command,
-plugin, hook, MCP, credential, provider, or network operation was used. This is
-an explicit native evidence gap, not a claim that the commands are unsafe in all
-environments.
+Accordingly, the initial preview qualification reviewed but did not execute `--version`, `--help`, `doctor`, `/status`, config, or schema paths. The later bounded model-consumption probe below supersedes only that execution gap. No personal `~/.claude`, login, slash command, credential, or live provider operation was used.
+
+### Bounded model installation, 2026-09-22
+
+`scripts/claudecode-config-probe.sh` executes only the exact ELF hash above in
+bubblewrap with a synthetic HOME/config/project, cleared environment, isolated
+network/PID/IPC namespaces, hidden personal homes and sockets, and timeouts. Its
+`--bare --settings <explicit-file> --print --no-session-persistence` sentinel
+probe reports `claude-code:unrecognized_model` with `SENTINEL-MODEL`, then
+`Not logged in`. This establishes consumption of the explicit file's model field,
+not a provider request, authenticated route, successful session, or default-path
+precedence. The malformed `--settings` argument is rejected. Native startup can
+create state, backups, and telemetry files inside the sandbox, so this is an
+opt-in bounded-write probe, not a no-write inspector. The settings file remains
+byte-identical and the external sentinel is preserved.
+
+The model-only installer uses this ELF hash as its evidence identity and replaces
+only top-level `model` in strict JSON at one explicit path. Duplicate keys,
+malformed JSON, non-string models, existing empty files, unsupported required
+permissions/tools/resources, and non-native/non-Anthropic route bindings are
+rejected. Unrelated bytes and target-owned values are preserved. Built-binary
+tests verify planning, diffs, hash-bound noninteractive consent, default backup
+bytes, stale rejection, no-op reapply, and disposable backup restoration. Shared
+fault tests establish transaction rollback and tamper-checked recovery. This does
+not promote the full-profile renderer or establish authentication, effort,
+permissions, tools, instruction/skill delivery, or runtime enforcement.
 
 ### Capability classification
 
 | Portable property | Evidence | Applicability consequence |
 | --- | --- | --- |
-| Fidelity | Documentation-context `model` candidate only | Partial preview fidelity |
-| Native acceptance | No safe exact-release parser probe | Blocking |
+| Fidelity | Model-only field mapping | Partial preview fidelity |
+| Native acceptance | Exact ELF consumes explicit settings-file model sentinel | Narrow model-field installation only |
 | Effective state | No merged per-key report | Blocking |
-| Precedence | Mutable docs only; no exact-release observation | Blocking |
-| Model | Candidate field only | Partial; required route acceptance remains blocked |
+| Precedence | Explicit `--settings` path only; default and override hierarchy unverified | Blocking outside explicit-file consumption |
+| Model | Exact native sentinel consumption and disposable CLI apply | Top-level model field installable; required exact route remains unverified |
 | Effort | No release-qualified mapping | Blocking |
 | Provider and transport | No release-qualified mapping | Blocking |
 | Authentication | No credential-free identity proof | Blocking |
@@ -183,7 +223,7 @@ environments.
 | Plugins, hooks, and MCP | Discovery, precedence, and enforcement unverified | Blocking |
 | Runtime enforcement | No authorized session/provider observation | Blocking |
 
-The adapter therefore always sets `applicable: false`. It emits only an inert
+The full-profile renderer therefore continues to set `applicable: false`. It emits only an inert
 JSON `model` candidate and digest-verified, path-addressed resource previews through the
 shared render contract. It never emits credentials, provider/authentication
 values, target-home files, active settings paths, or enforcement claims.

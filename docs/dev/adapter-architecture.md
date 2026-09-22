@@ -83,7 +83,12 @@ network-blocked, scratch-only, non-TUI, and restores its independent backup.
 The shared install engine additionally supports lossless application of only the
 OpenCode top-level `model` field at one explicit path, with destination-bound
 consent and transactional backups/recovery tested against disposable state.
-Every other production adapter remains install-blocked pending native evidence.
+Claude Code `2.1.278` additionally supports only strict-JSON top-level `model`
+replacement at one explicit path, backed by isolated exact-ELF model consumption
+and disposable built-binary application. Pi `0.86.1` applies only its three route
+defaults, qualified through native settings-module getters and project override
+tests. Other targets remain blocked pending evidence. None of these narrow
+installers establishes authenticated full-route or policy enforcement.
 See [shared architecture](../architecture.md) for install/CLI ownership.
 
 The Ariel renderer uses only the exact retained synthetic profile-resolution
