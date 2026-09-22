@@ -208,6 +208,13 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	metadata := adapter.Metadata()
 	targetPlan := TargetPlan{Target: targetRequest.Target, Metadata: metadata, ConfigPath: targetRequest.ConfigPath, ManifestPath: targetRequest.ManifestPath}
+	if !targetRequest.Agent.Empty() {
+		agent := targetRequest.Agent
+		targetPlan.Agent = &agent
+	}
+	if err := validateAgentDestination(targetRequest); err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
+	}
 	if !metadata.Installable {
 		return blockedTargetPlan(targetPlan, metadata.Reason, "install.target.blocked")
 	}
@@ -234,7 +241,19 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.manifest_invalid")
 	}
-	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route, Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
+	if manifestSnapshot.Exists && !sameAgentOwnership(ownership, targetRequest.Agent) {
+		return blockedTargetPlan(targetPlan, "ownership manifest belongs to a different agent destination", "install.agent_owner_mismatch")
+	}
+	if targetPlan.Agent != nil && manifestSnapshot.Exists && !namedAgentFilesMatch(ownership, config.Path) {
+		return blockedTargetPlan(targetPlan, "named agent ownership manifest has unrelated files", "install.agent_owner_mismatch")
+	}
+	if targetPlan.Agent != nil && config.Exists {
+		hash, owned := ownershipHash(ownership, config.Path)
+		if !owned || hash != config.SHA256 {
+			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
+		}
+	}
+	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route, Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
@@ -373,6 +392,10 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 	manifest.Owner = "profile-mango"
 	manifest.Profile = profile
 	manifest.Target = target.Target
+	manifest.Fields = nil
+	if !target.Agent.Empty() {
+		manifest.Fields = []string{"agent:" + target.Agent.Mode + ":" + target.Agent.Name}
+	}
 	manifest.PlanID = ""
 	if len(changes) > 0 && snapshot.Exists {
 		manifest.Generation++
@@ -600,4 +623,47 @@ func safeResourcePath(value string) (string, error) {
 
 func safeName(name string) bool {
 	return name != "" && filepath.Base(name) == name && !strings.ContainsAny(name, "/\\\x00")
+}
+
+func validateAgentDestination(target TargetRequest) error {
+	if target.Agent.Empty() {
+		return nil
+	}
+	if target.Target != (Target{Name: "opencode", Version: "1.18.31"}) {
+		return fmt.Errorf("named agents require exact opencode@1.18.31")
+	}
+	if target.Agent.Mode != "primary" && target.Agent.Mode != "subagent" {
+		return fmt.Errorf("agent mode must be primary or subagent")
+	}
+	name := target.Agent.Name
+	if name == "" || name[0] < 'a' || name[0] > 'z' {
+		return fmt.Errorf("agent name must be simple lowercase letters, digits, or hyphens")
+	}
+	for _, char := range name {
+		letter := char >= 'a' && char <= 'z'
+		digit := char >= '0' && char <= '9'
+		if !letter && !digit && char != '-' {
+			return fmt.Errorf("agent name must be simple lowercase letters, digits, or hyphens")
+		}
+	}
+	for _, reserved := range []string{"build", "plan", "general", "explore", "compaction", "title", "summary"} {
+		if name == reserved {
+			return fmt.Errorf("agent name %q is a reserved OpenCode built-in", name)
+		}
+	}
+	if filepath.Base(target.ConfigPath) != name+".md" || filepath.Base(filepath.Dir(target.ConfigPath)) != "agents" {
+		return fmt.Errorf("named agent --config-path must end in agents/%s.md", name)
+	}
+	return nil
+}
+
+func sameAgentOwnership(manifest Manifest, agent AgentDestination) bool {
+	if agent.Empty() {
+		return len(manifest.Fields) == 0
+	}
+	return len(manifest.Fields) == 1 && manifest.Fields[0] == "agent:"+agent.Mode+":"+agent.Name
+}
+
+func namedAgentFilesMatch(manifest Manifest, path string) bool {
+	return len(manifest.Files) == 1 && manifest.Files[0].Path == path
 }

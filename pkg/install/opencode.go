@@ -29,6 +29,9 @@ func (openCodeAdapter) Metadata() AdapterMetadata {
 }
 
 func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
+	if !input.Agent.Empty() {
+		return planOpenCodeAgent(input)
+	}
 	skill, err := validateOpenCodeProfile(input)
 	if err != nil {
 		return Patch{}, err
@@ -86,6 +89,35 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	} else {
 		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_narrow", "target.config.skills.paths", "one skill is copied beside the explicit config and exposed through a directory-wide skills.paths entry; other skills in that directory may also be discovered, so this is not an exclusive allowlist; instructions, additional skills, permissions, tools, authentication, effort, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
 	}
+	return patch, nil
+}
+
+func planOpenCodeAgent(input AdapterInput) (Patch, error) {
+	if input.Profile.Permissions != nil || input.Profile.Tools != nil || len(input.Profile.Skills) > 0 {
+		return Patch{}, fmt.Errorf("OpenCode named agent permissions, tools, and skills remain unqualified; remove these requirements or use a supported destination")
+	}
+	contentByPath := make(map[string][]byte, len(input.Resources))
+	for _, resource := range input.Resources {
+		if resource.Digest.Kind != "instruction" {
+			return Patch{}, fmt.Errorf("OpenCode named agent only supports instruction resources")
+		}
+		contentByPath[resource.Digest.Path] = resource.Content
+	}
+	instructions := make([]string, 0, len(input.Profile.Instructions))
+	for _, path := range input.Profile.Instructions {
+		content, found := contentByPath[path]
+		if !found {
+			return Patch{}, fmt.Errorf("OpenCode named agent instruction %q is missing", path)
+		}
+		instructions = append(instructions, string(content))
+	}
+	definition, err := opencode.AgentDefinition(input.Route, input.Agent.Mode, instructions)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch := Patch{Files: []FilePatch{{Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}}}
+	patch.Fields = []FieldChange{{Path: "agent.mode", After: input.Agent.Mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.agent_limits", "agent", "custom prompt replaces the stock agent prompt and native trimming applies; a primary is selectable but not made default, a subagent is eligible but delegation is unverified; higher-precedence config and runtime enforcement remain unverified", 0, 0)
 	return patch, nil
 }
 

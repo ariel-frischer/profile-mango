@@ -83,6 +83,7 @@ func snapshotFromFS(value installfs.Snapshot) Snapshot {
 
 type AdapterInput struct {
 	Target       Target
+	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
 	Profile      profilemango.ResolvedProfile
@@ -136,9 +137,18 @@ type Patch struct {
 
 type TargetRequest struct {
 	Target       Target
+	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
 }
+
+// AgentDestination selects a native named OpenCode definition, not the default config.
+type AgentDestination struct {
+	Mode string `json:"mode"`
+	Name string `json:"name"`
+}
+
+func (agent AgentDestination) Empty() bool { return agent.Mode == "" && agent.Name == "" }
 
 type Request struct {
 	ProfileName  string
@@ -184,6 +194,7 @@ type FilePlan struct {
 
 type TargetPlan struct {
 	Target            Target                   `json:"target"`
+	Agent             *AgentDestination        `json:"agent,omitempty"`
 	Metadata          AdapterMetadata          `json:"metadata"`
 	Status            string                   `json:"status"`
 	Reason            string                   `json:"reason,omitempty"`

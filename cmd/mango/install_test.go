@@ -55,6 +55,25 @@ func TestInstallTargetAndConfigPathParsing(t *testing.T) {
 	}
 }
 
+func TestInstallNamedAgentSelection(t *testing.T) {
+	options := installOptions{targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=subagent:mango-review"}, configPaths: []string{"opencode@1.18.31=/synthetic/agents/mango-review.md"}}
+	requests, err := installTargets(options, install.DefaultRegistry())
+	if err != nil || len(requests) != 1 || requests[0].Agent != (install.AgentDestination{Mode: "subagent", Name: "mango-review"}) {
+		t.Fatalf("requests = %#v, err = %v", requests, err)
+	}
+	for name, options := range map[string]installOptions{
+		"missing target": {targets: []string{"opencode@1.18.31"}, agents: []string{"codex@0.154.0=primary:mango-review"}},
+		"malformed":      {targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=primary"}},
+		"duplicate":      {targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=primary:mango-review", "opencode@1.18.31=subagent:mango-review"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := installTargets(options, install.DefaultRegistry()); err == nil {
+				t.Fatal("invalid agent accepted")
+			}
+		})
+	}
+}
+
 func TestInstallProductionPlanBlockedWithoutTargetRead(t *testing.T) {
 	root := t.TempDir()
 	profiles := filepath.Join(root, "profiles")
