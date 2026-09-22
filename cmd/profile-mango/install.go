@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -257,28 +259,131 @@ func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) er
 		_, err = cmd.OutOrStdout().Write(data)
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "plan %s: %s\n", plan.PlanID, plan.Status); err != nil {
+	return writeHumanInstallPlan(cmd.OutOrStdout(), plan)
+}
+
+func writeHumanInstallPlan(output io.Writer, plan install.Plan) error {
+	if _, err := fmt.Fprintf(output, "plan %s: %s\n", humanPath(plan.PlanID), humanPath(plan.Status)); err != nil {
 		return err
 	}
-	for _, target := range plan.Targets {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "  %s: %s", target.Target.String(), target.Status); err != nil {
+	for _, target := range orderedTargetPlans(plan.Targets) {
+		if err := writeHumanTarget(output, target); err != nil {
 			return err
-		}
-		if target.Reason != "" {
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), " (%s)", target.Reason); err != nil {
-				return err
-			}
-		}
-		if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
-			return err
-		}
-		for _, file := range target.Files {
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "    %s: %s\n", file.Path, file.Action); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
+}
+
+func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
+	if _, err := fmt.Fprintf(output, "  %s: %s", humanPath(target.Target.String()), humanPath(target.Status)); err != nil {
+		return err
+	}
+	if target.Reason != "" {
+		if _, err := fmt.Fprintf(output, " (%s)", humanPath(target.Reason)); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(output); err != nil {
+		return err
+	}
+	seen := make(map[string]struct{}, len(target.Fields))
+	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {
+		return err
+	}
+	for _, file := range orderedFilePlans(target.Files) {
+		if _, err := fmt.Fprintf(output, "    %s: %s\n", humanPath(file.Path), humanPath(file.Action)); err != nil {
+			return err
+		}
+		if err := writeHumanFields(output, file.Fields, "      ", seen, file.Action != install.ActionNoop); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeHumanFields(output io.Writer, fields []install.FieldChange, indent string, seen map[string]struct{}, showEmpty bool) error {
+	for _, field := range orderedFieldChanges(fields) {
+		if field.Path == "" {
+			continue
+		}
+		if _, found := seen[field.Path]; found {
+			continue
+		}
+		if field.Before == field.After {
+			if field.Before == "" && showEmpty {
+				if _, err := fmt.Fprintf(output, "%sfield %s\n", indent, humanPath(field.Path)); err != nil {
+					return err
+				}
+				seen[field.Path] = struct{}{}
+			}
+			continue
+		}
+		if field.Sensitive {
+			field.Before, field.After = "<redacted>", "<redacted>"
+		}
+		if _, err := fmt.Fprintf(output, "%sfield %s: %s -> %s\n", indent, humanPath(field.Path), strconv.Quote(field.Before), strconv.Quote(field.After)); err != nil {
+			return err
+		}
+		seen[field.Path] = struct{}{}
+	}
+	return nil
+}
+
+func orderedTargetPlans(targets []install.TargetPlan) []install.TargetPlan {
+	result := append([]install.TargetPlan(nil), targets...)
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].Target.String() < result[j].Target.String()
+	})
+	return result
+}
+
+func orderedFilePlans(files []install.FilePlan) []install.FilePlan {
+	result := append([]install.FilePlan(nil), files...)
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].Path != result[j].Path {
+			return result[i].Path < result[j].Path
+		}
+		return result[i].Action < result[j].Action
+	})
+	return result
+}
+
+func orderedFieldChanges(fields []install.FieldChange) []install.FieldChange {
+	ordered := append([]install.FieldChange(nil), fields...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		if ordered[i].Path != ordered[j].Path {
+			return ordered[i].Path < ordered[j].Path
+		}
+		if ordered[i].Sensitive != ordered[j].Sensitive {
+			return ordered[i].Sensitive
+		}
+		if ordered[i].Before != ordered[j].Before {
+			return ordered[i].Before < ordered[j].Before
+		}
+		return ordered[i].After < ordered[j].After
+	})
+	result := make([]install.FieldChange, 0, len(ordered))
+	for _, field := range ordered {
+		if len(result) == 0 || result[len(result)-1].Path != field.Path {
+			result = append(result, field)
+			continue
+		}
+		merged := &result[len(result)-1]
+		merged.Sensitive = merged.Sensitive || field.Sensitive
+		if merged.Before == merged.After && field.Before != field.After {
+			merged.Before, merged.After = field.Before, field.After
+		}
+	}
+	return result
+}
+
+func humanPath(value string) string {
+	if strings.IndexFunc(value, func(r rune) bool {
+		return unicode.IsControl(r) || r == '\\' || r == '"'
+	}) >= 0 {
+		return strconv.Quote(value)
+	}
+	return value
 }
 
 func confirmInstall(input io.Reader, output io.Writer, planID string) error {
