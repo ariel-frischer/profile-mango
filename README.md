@@ -6,11 +6,14 @@ Switching agents shouldn't mean rewriting your instructions, copying skills, and
 setting up the same preferences again. Profile Mango aims to keep those choices in
 one reusable profile, while making it clear what each agent can actually support.
 
-A profile brings together:
+A profile is a reusable bundle of coding-agent preferences:
 
 - **Instructions and skills:** how you want your agent to work.
 - **Permissions:** which tools and actions it should be allowed to use.
 - **Model preferences:** which provider, model, and effort level to use.
+
+**Profile Mango unifies profiles, not entire agent configurations.** It manages
+native settings where needed to support a profile, leaving the rest to each agent.
 
 Your credentials stay with your agents, not in your profiles. Agent-specific
 settings such as themes and session history stay outside Profile Mango too.
