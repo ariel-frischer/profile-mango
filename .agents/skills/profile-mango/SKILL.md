@@ -151,14 +151,15 @@ not upstream Jcode or a supported public target.
 All current target renderers remain non-applicable previews. Expect blocking
 diagnostics and a nonzero exit status even when preview artifacts are written.
 OpenCode `1.18.31` separately supports lossless transactional application of only
-the top-level `model` field at one explicit path. This does not make the renderer or
-full profile applicable. Never present preview syntax, model-field application, or
-native parsing as authentication, delivery, or enforcement.
+the top-level `model` field. Codex `0.154.0` separately supports only root
+`model_provider`, `model`, and `model_reasoning_effort = "high"`. Neither makes
+its inert renderer or full profile applicable. Never present installed settings
+or native parsing as authentication, full delivery, or enforcement.
 
 ## Plan-first install
 
-All production targets except OpenCode support deterministic blocked planning only.
-OpenCode requires exact version `1.18.31`, a route-only profile, and one explicit
+Other production targets support deterministic blocked planning only. OpenCode
+`1.18.31` and Codex `0.154.0` require narrow route-only profiles and an explicit
 config path. Plan first against synthetic or separately approved disposable state:
 
 ```bash
@@ -171,6 +172,13 @@ profile-mango install <profile-name> \
   --override --json
 ```
 
+For Codex, use `--target codex@0.154.0` with
+`--config-path codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth route, and
+`effort: high`. Treat this as **settings only**, not successful OAuth or full
+profile installation. The plan warns that `codex login status` distinguishes
+stored API-key from ChatGPT modes but cannot prove exact OAuth. Do not run it
+on another user's behalf or share status output containing key fragments.
+
 Review the destination digest, field diff, file hashes, and plan ID. Apply only by
 repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
 unowned or externally edited files require `--override`; there is no general force
@@ -181,9 +189,9 @@ disposable backup/restore rehearsal.
 
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access
   credentials, call providers, or launch target agents.
-- `install` remains plan-only for every production target except the exact
-  OpenCode `1.18.31` top-level model subset. That subset may touch only the explicit
-  config path and adjacent Profile Mango manifest, backup, journal, and lock paths.
+- `install` remains plan-only for other production targets. The exact OpenCode
+  model and Codex three-setting subsets may touch only explicit config paths and
+  adjacent Profile Mango manifest, backup, journal, and lock paths.
   It must not read auth stores, sessions, plugins, MCP, providers, or the network.
   Do not point it at a live config without new path-specific user approval.
 - `render` writes only beneath the new path supplied by `--out` and never applies

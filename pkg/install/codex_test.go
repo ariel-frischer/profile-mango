@@ -55,6 +55,36 @@ func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
 	}
 }
 
+func TestCodexSettingsInstallLeavesAuthenticationUntouched(t *testing.T) {
+	tests := map[string]string{
+		"forced api":     "forced_login_method = \"api\"\n",
+		"forced chatgpt": "forced_login_method = \"chatgpt\"\n",
+	}
+	for name, authSetting := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, _ := codexTestRequest(t)
+			request.Registry = DefaultRegistry()
+			request.Override = true
+			config := request.Targets[0].ConfigPath
+			authPath := filepath.Join(filepath.Dir(config), "auth.json")
+			writeInstallTestFile(t, authPath, "synthetic credential sentinel")
+			writeInstallTestFile(t, config, authSetting+"unknown = true\n")
+			plan, err := BuildPlan(request)
+			if err != nil || plan.Status != StatusReady {
+				t.Fatalf("plan = %#v, err=%v", plan, err)
+			}
+			if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+				t.Fatal(err)
+			}
+			content, err := os.ReadFile(config)
+			if err != nil || !strings.Contains(string(content), authSetting) {
+				t.Fatalf("auth setting changed: content=%q err=%v", content, err)
+			}
+			assertInstallTestFile(t, authPath, "synthetic credential sentinel")
+		})
+	}
+}
+
 func TestCodexInstallRejectsUnownedConflictAndAllowsOverride(t *testing.T) {
 	request, _ := codexTestRequest(t)
 	config := request.Targets[0].ConfigPath
@@ -204,12 +234,12 @@ func TestCodexInstallRestoresSyntheticConfigThroughTransactionEngine(t *testing.
 	}
 }
 
-func TestCodexMetadataRemainsBlockedAfterSourceQualification(t *testing.T) {
+func TestCodexMetadataReportsSettingsOnlyQualification(t *testing.T) {
 	metadata := (codexAdapter{}).Metadata()
-	if metadata.Installable || metadata.Status != StatusBlocked {
-		t.Fatalf("metadata = %#v, want blocked and non-installable", metadata)
+	if !metadata.Installable || metadata.Status != StatusReady {
+		t.Fatalf("metadata = %#v, want settings-only installable", metadata)
 	}
-	for _, required := range []string{"model_provider", "installed-binary equivalence", "project/runtime precedence", "OAuth identity"} {
+	for _, required := range []string{"settings-only", "model_provider", "installed-binary equivalence", "project/runtime precedence", "OAuth identity"} {
 		if !strings.Contains(metadata.Reason, required) {
 			t.Fatalf("metadata reason = %q, want %q", metadata.Reason, required)
 		}

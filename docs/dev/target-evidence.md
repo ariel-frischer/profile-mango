@@ -30,9 +30,11 @@ Codex is the first intended public adapter candidate. OpenCode, Claude Code, Pi,
 and OpenClaw have exact source/version inert preview renderers. OpenCode additionally
 has exact-version model-candidate parser acceptance, partial merged-state/precedence
 evidence, and lossless transactional application of only the top-level `model` field
-at one explicit path. Every other target remains install-blocked, and OpenCode full
-profile applicability, auth identity, delivery, and runtime enforcement remain
-blocked. Native probes require explicit approval, disposable state, and evidence-level
+at one explicit path. Codex separately permits three root route settings at one
+explicit path, with OAuth identity and full-profile applicability unverified.
+Other targets remain install-blocked, and OpenCode full-profile applicability,
+auth identity, delivery, and runtime enforcement remain blocked. Native probes
+require explicit approval, disposable state, and evidence-level
 limits. Ariel's custom Jcode fork
 is **not** a supported public target. It remains here only as experimental
 developer evidence because that fork currently provides the closest comparison
@@ -48,7 +50,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd` | immutable GitHub release/source/archive/extracted-binary hashes, isolated network-blocked `debug config` probe, lossless JSONC patch tests, transactional disposable-path apply/reapply/recovery checks, backup/restore inventory, and deterministic inert renderer tests | Top-level `model` field installable at one explicit path with destination-bound consent and transactional safeguards; auth identity, provider options, full precedence/provenance, delivery, permissions, tools, plugins, MCP, and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
+| Codex CLI | `codex-cli 0.154.0` | exact-source resolver consumed installer-generated provider/model/high-effort fields with negative controls; built profile-mango CLI synthetic plan/apply/reapply, backup and auth/outside sentinels | Three root settings installable only at an explicit path for OpenAI/native/OAuth binding with `high` effort; OAuth identity, installed-binary equivalence, project/runtime precedence and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274` | immutable wrapper/native package tarballs, registry integrity, extracted ELF hash, release tag verification, static launcher/command review, and deterministic inert JSON tests; no native command executed | Inert preview renderer only; native acceptance, effective state, precedence, route/auth, permissions/tools, instruction/skill delivery, and enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
@@ -439,6 +441,52 @@ and the command returns nonzero while authentication, delivery, precedence, or
 enforcement is unverified. The preview never contains active `config.toml`,
 `AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
 paths.
+
+### Codex 0.154.0 settings-only installation, 2026-09-22
+
+This is a separate, bounded installer, not a promotion of the inert preview.
+Only root `model_provider = "openai"`, a non-empty safe `model`, and
+`model_reasoning_effort = "high"` are patched at one explicit config path.
+Permissions, tools, instructions, skills, non-native transport, non-OpenAI
+providers, non-OAuth bindings, other efforts, malformed/duplicate TOML, and
+ambiguous profile/provider shadow state block. The installer does not write
+authentication settings or read a credential store.
+
+Retained local qualification at `.worktrees/reports/ap-6fu.14/qualification-milestone-20260922.md`
+used exact `rust-v0.154.0` source commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340` (archive SHA-256
+`848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`).
+Its resolver consumed actual `PatchConfig` output: effective OpenAI provider
+ID/object, model `gpt-5.6`, and effort `high`. An unknown-provider control
+failed, and omitted model/effort controls yielded absent values. Filtered Cargo
+and direct compiled test runs each passed exactly one test. The release lockfile
+required metadata-only normalization of 150 workspace version strings in a
+separate copy; no external dependency or edge changed. The test bypassed
+requirements.toml and ambient layers, so it does not prove installed-binary
+equivalence, model availability, active profile/project/runtime precedence,
+authentication identity, or runtime enforcement.
+
+The rebuilt profile-mango CLI planned without writing, then applied with
+`--override --apply --yes --expect-plan` and default backup against synthetic
+TOML. Config SHA-256 changed from
+`1e1a9c8dd11c8120885c38985a1c02d02bfeb4735088ef4f30de3e78637cb90c`
+to `f2d8fc2f623194d6f3f2b6a5b9d6c08cd7c2c1e2212039f6479d6aaf4a9eba66`;
+the backup retained the original digest. Target-owned
+`forced_login_method = "api"`, an unknown key, feature table, and comment remained unchanged. A
+second built plan and matching apply both reported `noop`. A read-only
+permission requirement remained blocked even with apply flags. Synthetic
+`auth.json` and outside-target sentinel SHA-256 values stayed unchanged at
+`011e02a527fc678e665c87d60d899e3ac72be7ffcf4bd289ff400e0d44f686b3`
+and `4d0646b302547417167fe19f380c26f501c6fe912e959ec788ccbdd5eb0d63d2`.
+Internal transaction tests cover stale plans and synthetic guarded restoration.
+There is no public restore command, so built-binary restore remains unverified.
+
+`codex login status` distinguishes stored API-key from ChatGPT login, but the
+same ChatGPT message covers both Codex-managed OAuth and externally supplied
+ChatGPT tokens in the pinned source. It is advice for a user, not a credential
+read or OAuth proof by profile-mango. Human and JSON plans warn that successful
+installation applies **only to three settings**, never the OAuth-required full
+profile, delivery, policy enforcement, or effective runtime route.
 
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 

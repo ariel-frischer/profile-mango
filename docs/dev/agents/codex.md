@@ -1,6 +1,6 @@
 # Codex configuration reference
 
-**Reference date:** 2026-09-21. **Status:** exact-version inert preview support for Codex CLI `0.154.0`; native applicability is blocked. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and it always reports `applicable: false` because authentication, delivery, precedence, and enforcement remain unverified.
+**Reference date:** 2026-09-22. **Status:** exact-version inert preview plus a separate three-root-setting installer for Codex CLI `0.154.0`. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and still reports `applicable: false` for the full profile because authentication, delivery, precedence, and enforcement remain unverified.
 
 ## Configuration and precedence
 
@@ -51,6 +51,29 @@ effect review.
 
 Future checks must use an isolated `CODEX_HOME` and project with no credentials
 or provider access. Native parsing does not prove runtime enforcement.
+
+## Bounded settings-only installation
+
+`profile-mango install <name> --target codex@0.154.0 --config-path codex=/explicit/disposable/config.toml` plans only the root `model_provider`,
+`model`, and `model_reasoning_effort = "high"` settings for an OpenAI/native/OAuth
+binding. Use all three explicit project input flags together if not using the
+profile home. An existing unowned config needs `--override`; apply requires
+`--apply --yes --expect-plan <planID>` or interactive terminal consent. Plans are
+read-only, backups are enabled by default, and repeated application is a no-op.
+See [the version-qualified evidence](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
+
+The adapter rejects required permissions, tools, instructions, skills,
+non-qualified routes, malformed TOML, active profiles and provider shadow
+state. It patches only the explicit caller-supplied root document, preserving
+unrelated keys/comments and target-owned authentication. It never runs Codex,
+reads auth stores, or selects OAuth. `codex login status` can tell a user whether
+the stored login is API-key or ChatGPT, but the same ChatGPT message covers
+Codex-managed OAuth and externally supplied tokens. Do not share status output
+containing key fragments. Project/runtime overrides, active-profile selection,
+installed-binary equivalence, authentication identity, model availability,
+resource delivery and policy enforcement remain unverified. Settings-only
+success must not be reported as full-profile applicability. No live target path
+was approved or used for the qualification.
 
 [basic]: https://learn.chatgpt.com/docs/config-file/config-basic
 [advanced]: https://learn.chatgpt.com/docs/config-file/config-advanced

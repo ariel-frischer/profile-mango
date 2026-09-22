@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestInstallOptionValidationTable(t *testing.T) {
@@ -53,7 +54,7 @@ func TestInstallTargetAndConfigPathParsing(t *testing.T) {
 	}
 }
 
-func TestInstallProductionPlanBlockedWithoutTargetRead(t *testing.T) {
+func TestInstallCodexSettingsPlanWarnsWithoutWriting(t *testing.T) {
 	root := t.TempDir()
 	profiles := filepath.Join(root, "profiles")
 	if err := os.MkdirAll(filepath.Join(profiles, "route-only"), 0o755); err != nil {
@@ -62,7 +63,10 @@ func TestInstallProductionPlanBlockedWithoutTargetRead(t *testing.T) {
 	writeFile(t, filepath.Join(profiles, "route-only", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: route\n")
 	bindings := filepath.Join(root, "bindings.yaml")
 	writeFile(t, bindings, "routes:\n  route:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n")
-	targetPath := filepath.Join(root, "must-not-be-read", "config.toml")
+	targetPath := filepath.Join(root, "target", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd := &cobra.Command{}
 	cmd.SetOut(&stdout)
@@ -72,14 +76,31 @@ func TestInstallProductionPlanBlockedWithoutTargetRead(t *testing.T) {
 		targets: []string{"codex@0.154.0"}, configs: []string{"codex=" + targetPath},
 		jsonOutput: true,
 	})
-	if err == nil || !strings.Contains(err.Error(), "blocked") {
-		t.Fatalf("error = %v", err)
+	if err != nil {
+		t.Fatalf("Codex settings plan: %v; output=%s", err, stdout.String())
 	}
-	if !strings.Contains(stdout.String(), `"status": "blocked"`) || !strings.Contains(stdout.String(), "exact OAuth route cannot be guaranteed") {
+	if !strings.Contains(stdout.String(), `"status": "ready"`) || !strings.Contains(stdout.String(), "authentication remains unmanaged") || !strings.Contains(stdout.String(), "codex login status") {
 		t.Fatalf("unexpected plan: %s", stdout.String())
 	}
-	if _, statErr := os.Stat(filepath.Dir(targetPath)); !os.IsNotExist(statErr) {
-		t.Fatalf("blocked production plan touched target path: %v", statErr)
+	if _, statErr := os.Stat(targetPath); !os.IsNotExist(statErr) {
+		t.Fatalf("read-only Codex plan touched target path: %v", statErr)
+	}
+}
+
+func TestInstallHumanPlanDisplaysTargetWarning(t *testing.T) {
+	var output bytes.Buffer
+	command := &cobra.Command{}
+	command.SetOut(&output)
+	plan := install.Plan{PlanID: "synthetic", Status: install.StatusReady, Targets: []install.TargetPlan{{
+		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+		Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning,
+			Code: "codex.install.auth_unmanaged", Message: "authentication is unmanaged; codex login status does not prove exact OAuth"}},
+	}}}
+	if err := writeInstallPlan(command, plan, false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "warning: authentication is unmanaged; codex login status does not prove exact OAuth") {
+		t.Fatalf("human plan omitted required warning: %s", output.String())
 	}
 }
 

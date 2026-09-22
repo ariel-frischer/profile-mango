@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-22, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -43,6 +43,11 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
+- A separate Codex `0.154.0` settings-only installer for root `model_provider`,
+  `model`, and source-qualified `model_reasoning_effort = "high"`. It patches one
+  explicit path with consent and backup, preserving unrelated TOML and target-owned
+  auth. Authentication, installed-binary equivalence, ambient precedence, delivery,
+  and full-profile applicability remain unverified and are warned, not claimed.
 - A Pi `0.86.1` preview renderer that emits deterministic source-grounded JSON
   settings candidates for `defaultProvider`, `defaultModel`, and
   `defaultThinkingLevel`, resource copies, and a versioned report only into an
@@ -73,15 +78,15 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
 - A transactional install planner/application engine with deterministic,
   destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
   stale checks, atomic replacement, ownership evidence, journals, rollback, and
-  guarded recovery. OpenCode `1.18.31` alone enables the exact top-level `model`
-  field at one explicit path; every other production target remains blocked.
-  Validation uses fake adapters and synthetic or copied disposable OpenCode state.
+  guarded recovery. Only the bounded OpenCode model and Codex three-field subsets
+  can be applied at explicit paths; other production targets remain blocked.
+  Validation uses fake adapters and disposable synthetic target state.
   It never implicitly inspects or modifies global agent configuration.
 - An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
-**No full-profile production target adapter is shipped.** OpenCode `1.18.31` supports only lossless application of the top-level `model` field to one explicit path. The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers still report full profiles as non-applicable. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The ordinary offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. The OpenCode model-only installer reads and writes only its explicit caller-supplied config and adjacent transaction paths. The separate opt-in OpenCode probe runs only the pinned exact binary in disposable network-blocked state. Model-field application evidence does not establish authentication, full-profile delivery, or runtime enforcement.
+**No full-profile production target adapter is shipped.** OpenCode `1.18.31` applies only its top-level `model` field; Codex `0.154.0` applies only three qualified root settings. Both require explicit caller-supplied paths and remain independent from inert renderers. The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers still report full profiles as non-applicable. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The ordinary offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. Narrow installers read and write only their explicit config and adjacent transaction paths. Synthetic native probes do not establish authentication, full-profile delivery, or runtime enforcement.
 
 ## Confirmed intended MVP targets
 
@@ -90,7 +95,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
-| Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
+| Codex | First intended public adapter | Exact `0.154.0` inert preview plus a bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` inert JSON preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` inert JSON settings preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |

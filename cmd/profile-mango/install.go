@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type installOptions struct {
@@ -261,6 +262,21 @@ func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) er
 			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "    %s: %s\n", file.Path, file.Action); err != nil {
 				return err
 			}
+		}
+		if err := writeTargetWarnings(cmd.OutOrStdout(), target.Diagnostics); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeTargetWarnings(output io.Writer, diagnostics profilemango.Diagnostics) error {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity != profilemango.SeverityWarning {
+			continue
+		}
+		if _, err := fmt.Fprintf(output, "    warning: %s\n", diagnostic.Message); err != nil {
+			return err
 		}
 	}
 	return nil

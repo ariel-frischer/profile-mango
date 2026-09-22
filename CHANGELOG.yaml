@@ -20,6 +20,7 @@ versions:
             - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
             - Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
             - Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
+            - Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
         changed:
             - Successful profile-mango init output now shows the ANSI README logo
             - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together

@@ -4,8 +4,9 @@ These contributor references summarize configuration surfaces for the intended
 MVP targets and Ariel's experimental-only custom Jcode fork. They are documentation
 bases for isolated probes and adapter work, not a compatibility matrix. Codex,
 Claude Code, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode now have exact-version,
-preview-only renderers;
-no target has an applicable installer or enforcement claim.
+preview-only renderers. Separately qualified narrow installers apply only the
+documented subsets in the [target evidence ledger](../target-evidence.md); no
+full-profile applicability or runtime enforcement is claimed.
 
 The [source manifest](sources.json) records deterministic provenance and keeps
 four states separate:
@@ -25,7 +26,7 @@ and commits are reproducible locators, not proof of target behavior.
 
 ## Targets
 
-- [Codex](codex.md) — exact Codex 0.154.0 inert preview renderer; native applicability remains blocked.
+- [Codex](codex.md) — exact Codex 0.154.0 inert preview plus three-root-setting installer; full-profile applicability remains blocked.
 - [Claude Code](claude-code.md) — exact v2.1.278 immutable-package inert preview renderer; native acceptance remains blocked.
 - [Pi](pi.md) — exact Pi `0.86.1` inert JSON preview renderer; native applicability remains blocked.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.

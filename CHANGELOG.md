@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
 - Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
 - Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
+- Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
 
 ### Changed
 

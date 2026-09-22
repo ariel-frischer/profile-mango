@@ -48,17 +48,21 @@ authentication stores always remain target-owned.
 
 The current prototype validates and resolves these bundles, produces deterministic,
 inspectable inert previews, and can transactionally apply only the exact OpenCode
-`1.18.31` top-level `model` field at one explicit path. Every other production target
-and every broader OpenCode profile capability remain install-blocked.
+`1.18.31` top-level `model` field or Codex `0.154.0` root provider/model/high-effort
+settings at explicit paths. Full-profile applicability remains blocked.
 
 > **Status:** private prototype. Shipped validation and M1 project scaffolding
 > are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Pi
 > `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, Hermes Agent `0.21.3`,
-> and OpenCode `1.18.31` have exact-version inert preview renderers. OpenCode alone
-> also supports lossless transactional application of the top-level `model` field to
-> one explicit caller-supplied path, with destination-bound consent, backup, stale
-> checks, journaling, rollback, and guarded recovery. Full-profile output remains
-> non-applicable because authentication, delivery, precedence, and enforcement are
+> and OpenCode `1.18.31` have exact-version inert preview renderers. OpenCode
+> separately applies only its top-level `model` field; Codex applies only
+> `model_provider`, `model`, and source-qualified `model_reasoning_effort = "high"`
+> to one explicit caller-supplied path. Plans are read-only and application uses
+> destination-bound consent, backup, stale checks, journaling and rollback.
+> Codex authentication stays target-owned and unverified; `codex login status`
+> distinguishes API-key from ChatGPT login but cannot prove exact OAuth.
+> Full-profile output remains non-applicable because authentication, delivery,
+> precedence, and enforcement are
 > unverified. Claude Code is blocked by opaque startup and diagnostic effects.
 > Pi is blocked by startup settings/auth/model/session effects, migrations,
 > discovery, package/update subprocesses, network-capable model/catalog paths, and
@@ -208,6 +212,23 @@ routes:
     model: gpt-5.6
     effort: high
 ```
+
+For a separate route-only Codex profile with no permission, tool, instruction,
+or skill requirements, plan a **settings-only** change at a disposable explicit
+path first:
+
+```bash
+profile-mango install route-only --profiles ./profiles --resource-root . \
+  --bindings ./bindings/local.yaml --target codex@0.154.0 \
+  --config-path codex=/explicit/disposable/config.toml --override --json
+```
+
+Review the three field changes, destination, warnings, and plan ID. Repeat the
+same inputs with `--apply --yes --expect-plan <planID>` only after approving the
+destination and effects. `--override` is needed only for an existing unowned
+config. The installer never verifies or changes OAuth; project/runtime overrides
+and the rest of the profile remain unqualified. Never target a personal Codex
+home without separate path-specific authorization.
 
 ## Features
 

@@ -108,6 +108,11 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 			route:  profilemango.RouteBinding{Provider: "sentinel", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "high"},
 			want:   "built-in openai",
 		},
+		"unqualified effort": {
+			source: "",
+			route:  profilemango.RouteBinding{Provider: "openai", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "medium"},
+			want:   "only source-qualified high",
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

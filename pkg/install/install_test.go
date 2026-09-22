@@ -27,24 +27,26 @@ func (adapter testAdapter) Plan(input AdapterInput) (Patch, error) {
 	}, nil
 }
 
-func TestDefaultRegistryBlocksProductionWithoutReadingTargetPath(t *testing.T) {
-	request, root := testRequest(t, nil)
+func TestDefaultRegistryPlansCodexSettingsWithoutWriting(t *testing.T) {
+	request, _ := codexTestRequest(t)
 	request.Registry = DefaultRegistry()
-	request.Targets[0].Target = Target{Name: "codex", Version: "0.154.0"}
-	request.Targets[0].ConfigPath = filepath.Join(root, "does-not-exist")
+	config := request.Targets[0].ConfigPath
+	auth := filepath.Join(filepath.Dir(config), "auth.json")
+	writeInstallTestFile(t, auth, "synthetic auth sentinel")
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusBlocked {
+	if plan.Status != StatusReady || plan.Targets[0].Status != StatusReady || !plan.Targets[0].Metadata.Installable {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if !strings.Contains(plan.Targets[0].Reason, "exact OAuth") || !strings.Contains(plan.Targets[0].Reason, "not read or written") {
-		t.Fatalf("Codex blocked reason = %q, want authentication limitation and effect boundary", plan.Targets[0].Reason)
+	if !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.auth_unmanaged") {
+		t.Fatalf("missing unmanaged-auth warning: %#v", plan.Targets[0].Diagnostics)
 	}
-	if _, err := os.Stat(request.Targets[0].ConfigPath); !os.IsNotExist(err) {
-		t.Fatalf("blocked plan touched target path: %v", err)
+	if _, err := os.Stat(config); !os.IsNotExist(err) {
+		t.Fatalf("read-only plan created config: %v", err)
 	}
+	assertInstallTestFile(t, auth, "synthetic auth sentinel")
 }
 
 func TestPlanIDsAreStableAcrossTargetInputOrder(t *testing.T) {

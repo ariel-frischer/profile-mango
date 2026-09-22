@@ -80,8 +80,8 @@ func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, e
 	if !validCodexValue(route.Model) {
 		return nil, fmt.Errorf("codex model must be a non-empty safe string")
 	}
-	if !validCodexEffort(route.Effort) {
-		return nil, fmt.Errorf("codex reasoning effort %q is unsupported", route.Effort)
+	if route.Effort != "high" {
+		return nil, fmt.Errorf("codex install supports only source-qualified high reasoning effort")
 	}
 	return map[string]string{
 		"model_provider":         route.Provider,
@@ -100,15 +100,6 @@ func validCodexValue(value string) bool {
 		}
 	}
 	return true
-}
-
-func validCodexEffort(value string) bool {
-	switch value {
-	case "none", "minimal", "low", "medium", "high", "xhigh":
-		return true
-	default:
-		return false
-	}
 }
 
 type configDocument struct {
