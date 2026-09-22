@@ -21,3 +21,5 @@
 - [`dev/target-evidence.md`](dev/target-evidence.md) — Target evidence levels, exact inert preview-renderer boundaries for Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel's experimental-only custom Jcode fork, support policy, and deferred verification.
 
 - [`Hermes native installer evidence`](../pkg/adapters/hermes/hermes_native_evidence.md) - Exact imported-module hashes, isolated generated-patch consumption, and runtime limitations for Hermes 0.21.3.
+
+- [`OpenClaw native field evidence`](../pkg/adapters/openclaw/testdata/openclaw-native-field-consumption.evidence.json) - Exact imported-source hashes, model/thinking getter results, and override/fallback limits.

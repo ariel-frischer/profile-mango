@@ -29,7 +29,8 @@ versions, installed binaries and tested support must remain distinct.
 Codex is the first intended public adapter candidate. Public targets have inert
 exact-version renderers. Claude Code permits only model-field installation; Pi
 permits three route-default settings, Hermes three model/reasoning fields, and
-OpenCode model plus one qualified skill resource. Other target gates
+OpenCode model plus one qualified skill resource, and OpenClaw model-primary
+plus thinking-default settings. Other target gates
 remain blocked unless explicitly qualified below. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
 Native probes require approved disposable scope and exact evidence. Ariel's custom
@@ -48,7 +49,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
-| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | immutable source archive/build-input hashes, entrypoint/config effect review, and deterministic inert JSON5 preview tests; no native command executed | Inert preview renderer only; runtime artifact, native config acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
+| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks | Three model/reasoning config fields installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
@@ -898,3 +899,33 @@ stale rejection/disposable restoration. This is config parsing and effective
 merge evidence only. Full startup, authenticated route, provider execution,
 delivery, permissions/tools, sessions, hooks, plugins, MCP, and enforcement remain
 unqualified. The ordinary installer never imports or launches Hermes.
+
+
+## OpenClaw bounded installation qualification, 2026-09-22
+
+Exact `2026.9.5` commit `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9`, tree
+`ac00d08eb2766b4fd114bee710e78a1df6c3cc03`, was mounted read-only with hash-gated
+imported source modules. Native JSON5 parser, core validator, model-primary
+getters/resolvers and `resolveConfiguredThinkingDefaultCore` consumed generated
+model/thinking settings. Global values, per-agent overrides, explicit fallbacks,
+and user-override fallback disabling were checked. Inherited fallback availability
+is distinct from effective fallback projection, and an agent primary without
+fallbacks does not inherit global fallbacks.
+
+Root reran exact-source consumption under Node 24.21.0 in a cleared-environment,
+network/PID/IPC-isolated sandbox with dropped capabilities, allowlisted mounts,
+hidden personal homes/sockets and timeout. The independent rerun removed the
+worker's broad `/etc` mount. A second rerun consumed actual compiled-CLI applied
+output, then verified no-op and restored the disposable config bytes. Default
+backups, preservation and stale rejection also pass compiled integration tests.
+This is source-native field consumption, not full startup, authentication,
+provider identity, sessions, policy or runtime enforcement. Only two defaults are
+promoted. Credentials, provider options, fallback editing, resources, permissions,
+tools, hooks, plugins, MCP and other required capabilities remain blocked.
+
+The independent codeload gzip SHA-256
+`3bd4d9617308808704cfdcbbdfdf87335d2f8efa4a34be49210aa34eca816841`
+differs from retained archive SHA-256
+`0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4`.
+Neither replaces the other. Exact peeled Git identity and actual imported hashes,
+recorded in the target's native evidence fixture, underpin this qualification.

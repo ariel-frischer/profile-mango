@@ -92,7 +92,9 @@ and disposable built-binary application. Pi `0.86.1` applies only its three rout
 defaults, qualified through native settings-module getters and project override
 tests. Hermes `0.21.3` applies model provider/default and agent reasoning effort,
 qualified through an exact source-native read-only config merge. Other targets
-remain blocked pending evidence. None of these narrow
+remain blocked pending evidence. OpenClaw `2026.9.5` additionally applies only
+model-primary and thinking-default, qualified by source-native getters and
+agent override/fallback checks. None of these narrow
 installers establishes authenticated full-route or policy enforcement.
 See [shared architecture](../architecture.md) for install/CLI ownership.
 
@@ -117,8 +119,9 @@ an explicit support blocker rather than bypassed by running the unsafe inspector
 See [target evidence](target-evidence.md) and the [Oh My Pi reference](agents/oh-my-pi.md)
 for the provenance and effect details.
 
-OpenClaw's exact source/archive identity is pinned, but no dependency install,
-runtime build, or native command was run. The reviewed `config validate --json`
+OpenClaw's initial M0 review pinned source/archive identity without executing
+a native command. Later isolated source-native getter qualification covers only
+two defaults, not a full runtime build or startup. The reviewed `config validate --json`
 path performs plugin/state/include discovery and was not accepted as a safe M0
 probe. Those are explicit blockers, not reasons to add a target-home inspector or
 plugin framework. See [target evidence](target-evidence.md) and the

@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Install the exact Claude Code 2.1.278 model field and Pi 0.86.1 route-default settings with native consumption evidence and transactional safeguards.
 - Install one qualified OpenCode 1.18.31 skill with native discovery evidence, lossless skills.paths edits, and non-overridable resource ownership protection
 - Install qualified Hermes 0.21.3 model and reasoning config fields with exact isolated native merge evidence and transactional safeguards
+- Install qualified OpenClaw 2026.9.5 model and thinking defaults with exact source-native consumption and transactional safeguards
 
 ### Changed
 

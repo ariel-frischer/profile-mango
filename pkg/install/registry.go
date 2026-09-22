@@ -6,7 +6,6 @@ import (
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 )
 
 type Registry struct {
@@ -76,7 +75,7 @@ func DefaultRegistry() *Registry {
 		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
 		hermesAdapter{},
 		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
-		blockedAdapter{metadata: blockedMetadata(openclaw.TargetName, openclaw.TargetVersion, openclaw.AdapterVersion, openclaw.EvidenceSHA256, blockedReason)},
+		openClawAdapter{},
 		piAdapter{},
 		openCodeAdapter{},
 	)
