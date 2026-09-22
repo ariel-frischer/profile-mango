@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Apply all selected installation targets in one filesystem transaction and reject altered recovery backups before restoring files.
 - Show sanitized field-level before/after changes in human install plans before consent, without changing JSON plan output.
 - Report install preflight rejection as not-attempted while preserving unchanged targets as noop in library and single-object CLI reports.
+- Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
 
 ## [0.0.1] - 2026-01-01
 

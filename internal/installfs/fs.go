@@ -43,6 +43,7 @@ type Snapshot struct {
 	Mode     fs.FileMode `json:"mode,omitempty"`
 	Identity Identity    `json:"identity,omitempty"`
 	Content  []byte      `json:"-"`
+	info     os.FileInfo
 }
 
 // Change is one independently replaceable file effect.
@@ -88,6 +89,12 @@ type JournalEntry struct {
 	Applied      bool   `json:"applied"`
 }
 
+type preparedBackup struct {
+	path     string
+	snapshot Snapshot
+	verified bool
+}
+
 func Hash(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
@@ -120,7 +127,7 @@ func SnapshotFile(path string) (Snapshot, error) {
 	}
 	return Snapshot{
 		Path: abs, Exists: true, SHA256: Hash(data), Size: int64(len(data)),
-		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data,
+		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data, info: openedInfo,
 	}, nil
 }
 
@@ -167,13 +174,13 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	if err := preflight(changes); err != nil {
 		return ApplyResult{}, err
 	}
-	entries, backups, err := prepareBackups(changes, options)
+	entries, backups, ownedBackups, err := prepareBackups(changes, options)
 	if err != nil {
 		return ApplyResult{}, err
 	}
 	journal := Journal{APIVersion: JournalVersion, PlanID: options.PlanID, Status: "prepared", LockPath: options.LockPath, Entries: entries}
 	if err := writeJournal(options.JournalPath, journal); err != nil {
-		return ApplyResult{}, err
+		return ApplyResult{}, preparationFailure(err, ownedBackups)
 	}
 	for index := range changes {
 		if options.FaultAfter > 0 && index == options.FaultAfter {
@@ -275,27 +282,85 @@ func preflight(changes []Change) error {
 	return nil
 }
 
-func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []string, error) {
+func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []string, []preparedBackup, error) {
 	entries := make([]JournalEntry, len(changes))
 	backups := make([]string, 0, len(changes))
+	owned := make([]preparedBackup, 0, len(changes))
 	for index, change := range changes {
 		entry := JournalEntry{Path: change.Path, BeforeExists: change.Before.Exists, BeforeSHA256: change.Before.SHA256, BeforeMode: uint32(change.Before.Mode), AfterSHA256: Hash(change.Content), Delete: change.Delete}
 		if options.Backup && change.Before.Exists {
 			backup := BackupPath(change.Path, options.PlanID)
 			if _, err := os.Lstat(backup); err == nil {
-				return nil, nil, fmt.Errorf("backup already exists: %s", backup)
+				return nil, nil, nil, preparationFailure(fmt.Errorf("backup already exists: %s", backup), owned)
 			} else if !os.IsNotExist(err) {
-				return nil, nil, fmt.Errorf("inspect backup %s: %w", backup, err)
+				return nil, nil, nil, preparationFailure(fmt.Errorf("inspect backup %s: %w", backup, err), owned)
 			}
-			if err := writeNewFile(backup, change.Before.Content, change.Before.Mode); err != nil {
-				return nil, nil, fmt.Errorf("create backup %s: %w", backup, err)
+			candidate := preparedBackup{path: backup}
+			created, err := writeNewFile(backup, change.Before.Content, change.Before.Mode)
+			if err != nil {
+				return nil, nil, nil, preparationFailure(fmt.Errorf("create backup %s: %w", backup, err), append(owned, candidate))
 			}
+			if err := verifyCreatedFile(created); err != nil {
+				return nil, nil, nil, preparationFailure(fmt.Errorf("verify backup %s: %w", backup, err), append(owned, candidate))
+			}
+			candidate.snapshot = created
+			candidate.verified = true
+			owned = append(owned, candidate)
 			entry.BackupPath = backup
 			backups = append(backups, backup)
 		}
 		entries[index] = entry
 	}
-	return entries, backups, nil
+	return entries, backups, owned, nil
+}
+
+func preparationFailure(cause error, owned []preparedBackup) error {
+	return preparationFailureWith(cause, owned, os.Remove)
+}
+
+func preparationFailureWith(cause error, owned []preparedBackup, remove func(string) error) error {
+	return errors.Join(cause, cleanupPreparedBackupsWith(owned, remove))
+}
+
+func cleanupPreparedBackupsWith(backups []preparedBackup, remove func(string) error) error {
+	var cleanupErrors []error
+	for _, backup := range backups {
+		if err := cleanupPreparedBackup(backup, remove); err != nil {
+			cleanupErrors = append(cleanupErrors, err)
+		}
+	}
+	return errors.Join(cleanupErrors...)
+}
+
+func cleanupPreparedBackup(backup preparedBackup, remove func(string) error) error {
+	current, err := SnapshotFile(backup.path)
+	if err != nil {
+		return fmt.Errorf("cleanup backup %s: %w", backup.path, err)
+	}
+	if !current.Exists {
+		return nil
+	}
+	if !backup.verified {
+		return fmt.Errorf("preserve backup %s: creation identity is unverified", backup.path)
+	}
+	if !current.Equal(backup.snapshot) || !sameFileObject(backup.snapshot.info, current.info) {
+		return fmt.Errorf("preserve backup %s: changed after creation", backup.path)
+	}
+	if err := remove(backup.path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove backup %s: %w", backup.path, err)
+	}
+	return nil
+}
+
+func verifyCreatedFile(created Snapshot) error {
+	current, err := SnapshotFile(created.Path)
+	if err != nil {
+		return fmt.Errorf("inspect creator path: %w", err)
+	}
+	if !current.Equal(created) || !sameFileObject(created.info, current.info) {
+		return fmt.Errorf("created file changed before verification")
+	}
+	return nil
 }
 
 func applyChange(change Change) error {
@@ -472,29 +537,76 @@ func writeJournal(path string, journal Journal) error {
 	return writeAtomicUnconditional(path, append(data, '\n'), 0o600)
 }
 
-func writeNewFile(path string, data []byte, mode fs.FileMode) error {
+func writeNewFile(path string, data []byte, mode fs.FileMode) (Snapshot, error) {
 	abs, _, err := inspectPath(path, true)
 	if err != nil {
-		return err
+		return Snapshot{}, err
 	}
 	if err := ValidateContent(data); err != nil {
-		return err
+		return Snapshot{}, err
 	}
 	file, err := os.OpenFile(abs, os.O_WRONLY|os.O_CREATE|os.O_EXCL, chooseMode(mode))
 	if err != nil {
-		return err
+		return Snapshot{}, err
 	}
-	if _, err := file.Write(data); err != nil {
-		_ = file.Close()
-		_ = os.Remove(abs)
-		return err
+	return writeCreatedFile(file, abs, data)
+}
+
+func writeCreatedFile(file *os.File, abs string, data []byte) (Snapshot, error) {
+	creator, err := file.Stat()
+	if err != nil {
+		return Snapshot{}, errors.Join(err, file.Close())
+	}
+	fail := func(cause error) (Snapshot, error) {
+		return Snapshot{}, errors.Join(cause, closeAndRemoveCreated(file, abs, creator))
+	}
+	written, err := file.Write(data)
+	if err != nil {
+		return fail(err)
+	}
+	if written != len(data) {
+		return fail(io.ErrShortWrite)
 	}
 	if err := file.Sync(); err != nil {
-		_ = file.Close()
-		_ = os.Remove(abs)
-		return err
+		return fail(err)
 	}
-	return file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return fail(err)
+	}
+	created := Snapshot{
+		Path: abs, Exists: true, SHA256: Hash(data), Size: info.Size(),
+		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data, info: info,
+	}
+	if err := file.Close(); err != nil {
+		return Snapshot{}, errors.Join(err, removeCreatedPath(abs, creator))
+	}
+	return created, nil
+}
+
+func closeAndRemoveCreated(file *os.File, path string, creator os.FileInfo) error {
+	return errors.Join(file.Close(), removeCreatedPath(path, creator))
+}
+
+func removeCreatedPath(path string, creator os.FileInfo) error {
+	current, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect created file %s: %w", path, err)
+	}
+	if !sameFileObject(creator, current) || linkCount(current) > 1 {
+		return fmt.Errorf("preserve created file %s: creation ownership changed", path)
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove created file %s: %w", path, err)
+	}
+	return nil
+}
+
+func sameFileObject(left, right os.FileInfo) bool {
+	return left != nil && right != nil && os.SameFile(left, right)
 }
 
 func writeAtomicUnconditional(path string, data []byte, mode fs.FileMode) error {
