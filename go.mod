@@ -3,6 +3,7 @@ module gitlab.com/ariel-frischer/profile-mango
 go 1.25.5
 
 require (
+	github.com/BurntSushi/toml v1.6.0
 	github.com/fatih/color v1.19.0
 	github.com/mattn/go-isatty v0.0.22
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3

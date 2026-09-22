@@ -2,6 +2,7 @@ package codex
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/BurntSushi/toml"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
@@ -36,11 +38,33 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 	if len(source) > maxConfigBytes {
 		return ConfigPatch{}, fmt.Errorf("codex config exceeds %d-byte limit", maxConfigBytes)
 	}
+	if err := validateConfigBytes(source); err != nil {
+		return ConfigPatch{}, err
+	}
+	if err := validateTOML(source); err != nil {
+		return ConfigPatch{}, err
+	}
 	document, err := scanConfig(source)
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	return applyConfigPatch(source, document, values), nil
+	patch := applyConfigPatch(source, document, values)
+	if err := validateTOML(patch.Content); err != nil {
+		return ConfigPatch{}, fmt.Errorf("validate patched config: %w", err)
+	}
+	return patch, nil
+}
+
+func validateTOML(data []byte) error {
+	var decoded map[string]any
+	if err := toml.Unmarshal(data, &decoded); err != nil {
+		var parseError toml.ParseError
+		if errors.As(err, &parseError) && parseError.Position.Line > 0 {
+			return fmt.Errorf("invalid codex TOML at line %d; correct syntax before installing", parseError.Position.Line)
+		}
+		return fmt.Errorf("invalid codex TOML; correct syntax before installing")
+	}
+	return nil
 }
 
 func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, error) {
@@ -145,7 +169,7 @@ func scanConfig(data []byte) (configDocument, error) {
 			return configDocument{}, fmt.Errorf("codex target field %q must be a string", assignment.key)
 		}
 		if _, found := document.assignments[assignment.key]; found {
-			return configDocument{}, fmt.Errorf("duplicate Codex TOML key %q", assignment.key)
+			return configDocument{}, fmt.Errorf("duplicate codex TOML key")
 		}
 		document.assignments[assignment.key] = assignment
 		if table == "" {
@@ -312,7 +336,7 @@ func validateDottedConfigPath(path string) error {
 	}
 	for _, component := range strings.Split(path, ".") {
 		if !validBareConfigComponent(component) {
-			return fmt.Errorf("ambiguous Codex TOML dotted path %q; only bare components are supported", path)
+			return fmt.Errorf("ambiguous codex TOML dotted path; only bare components are supported")
 		}
 	}
 	return nil
@@ -371,7 +395,7 @@ func parseAssignment(data []byte, offset, lineEnd int, table string) (configAssi
 	valueFrom := offset + keyEnd + 1
 	valueFrom = skipValueSpace(data, valueFrom, lineEnd)
 	if valueFrom >= lineEnd || data[valueFrom] == '#' {
-		return configAssignment{}, 0, fmt.Errorf("codex TOML key %q has no value", key)
+		return configAssignment{}, 0, fmt.Errorf("codex TOML key has no value")
 	}
 	value, valueTo, statementEnd, err := parseValue(data, valueFrom, lineEnd)
 	if err != nil {
@@ -432,7 +456,7 @@ func normalizeKey(raw []byte) (string, error) {
 		return key[1 : len(key)-1], nil
 	}
 	if !validBareConfigComponent(key) {
-		return "", fmt.Errorf("invalid Codex TOML key %q", key)
+		return "", fmt.Errorf("invalid codex TOML key")
 	}
 	return key, nil
 }
@@ -637,15 +661,14 @@ func insertMissingFields(source []byte, missing []string, values map[string]stri
 		fmt.Fprintf(&builder, "%s = %s%s", key, tomlString(values[key]), document.newline)
 	}
 	insert := []byte(builder.String())
-	offset := document.firstTable
-	if offset < 0 {
-		offset = len(source)
-	}
-	for _, replacement := range replacements {
-		if replacement.start >= offset {
-			continue
+	offset := len(source)
+	if document.firstTable >= 0 {
+		offset = document.firstTable
+		for _, replacement := range replacements {
+			if replacement.start < offset {
+				offset += len(replacement.content) - (replacement.end - replacement.start)
+			}
 		}
-		offset += len(replacement.content) - (replacement.end - replacement.start)
 	}
 	if offset > 0 && source[offset-1] != '\n' {
 		insert = append([]byte(document.newline), insert...)

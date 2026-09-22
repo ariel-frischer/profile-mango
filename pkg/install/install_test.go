@@ -39,6 +39,9 @@ func TestDefaultRegistryBlocksProductionWithoutReadingTargetPath(t *testing.T) {
 	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusBlocked {
 		t.Fatalf("plan = %#v", plan)
 	}
+	if !strings.Contains(plan.Targets[0].Reason, "exact OAuth") || !strings.Contains(plan.Targets[0].Reason, "not read or written") {
+		t.Fatalf("Codex blocked reason = %q, want authentication limitation and effect boundary", plan.Targets[0].Reason)
+	}
 	if _, err := os.Stat(request.Targets[0].ConfigPath); !os.IsNotExist(err) {
 		t.Fatalf("blocked plan touched target path: %v", err)
 	}

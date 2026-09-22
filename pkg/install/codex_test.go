@@ -143,6 +143,25 @@ func TestCodexInstallRejectsPrecedenceAndProviderShadowState(t *testing.T) {
 	}
 }
 
+func TestCodexInstallRejectsMalformedTOMLWithoutWriting(t *testing.T) {
+	request, _ := codexTestRequest(t)
+	request.Override = true
+	config := request.Targets[0].ConfigPath
+	source := "private_key = credential_canary_12345\n"
+	writeInstallTestFile(t, config, source)
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != StatusBlocked || !hasDiagnostic(plan.Targets[0].Diagnostics, "install.adapter_plan_failed") {
+		t.Fatalf("malformed config plan status = %q, diagnostics = %#v", plan.Status, plan.Targets[0].Diagnostics)
+	}
+	if !strings.Contains(plan.Targets[0].Reason, "invalid codex TOML at line 1") || strings.Contains(plan.Targets[0].Reason, "credential_canary") {
+		t.Fatalf("malformed config reason = %q", plan.Targets[0].Reason)
+	}
+	assertInstallTestFile(t, config, source)
+}
+
 func TestCodexInstallReportsSourceEvidenceAndBoundedPrecedence(t *testing.T) {
 	request, _ := codexTestRequest(t)
 	writeInstallTestFile(t, request.Targets[0].ConfigPath, "unknown = true\n")
@@ -166,8 +185,8 @@ func TestCodexInstallRestoresSyntheticConfigThroughTransactionEngine(t *testing.
 		t.Fatal(err)
 	}
 	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
+	if err != nil || plan.Status != StatusReady {
+		t.Fatalf("restore plan = %#v, err=%v", plan, err)
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)

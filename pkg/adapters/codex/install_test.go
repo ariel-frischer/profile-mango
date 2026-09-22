@@ -39,6 +39,15 @@ func TestPatchConfigInsertsRootFieldsBeforeTables(t *testing.T) {
 	}
 }
 
+func TestPatchConfigInsertsMissingAfterReplacedRootValue(t *testing.T) {
+	source := "model = \"old/model\"\n"
+	want := "model = \"gpt-5.6\"\nmodel_provider = \"openai\"\nmodel_reasoning_effort = \"high\"\n"
+	patch, err := PatchConfig([]byte(source), installRoute())
+	if err != nil || string(patch.Content) != want {
+		t.Fatalf("patch = %q, err=%v, want %q", patch.Content, err, want)
+	}
+}
+
 func TestPatchConfigPreservesUnknownMultilineValue(t *testing.T) {
 	source := "instructions = \"\"\"first\nsecond\"\"\"\n[features]\napps = false\n"
 	patch, err := PatchConfig([]byte(source), installRoute())
@@ -62,7 +71,7 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 		"duplicate model": {
 			source: "model = \"one\"\nmodel = \"two\"\n",
 			route:  installRoute(),
-			want:   "duplicate",
+			want:   "invalid codex TOML",
 		},
 		"non-string model": {
 			source: "model = 42\n",
@@ -72,22 +81,22 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 		"unterminated string": {
 			source: "model = \"unterminated\n",
 			route:  installRoute(),
-			want:   "unterminated",
+			want:   "invalid codex TOML",
 		},
 		"unterminated multiline string": {
 			source: "instructions = \"\"\"never closed\"\"",
 			route:  installRoute(),
-			want:   "unterminated",
+			want:   "invalid codex TOML",
 		},
 		"invalid table": {
 			source: "[features\n",
 			route:  installRoute(),
-			want:   "table header",
+			want:   "invalid codex TOML",
 		},
 		"empty table": {
 			source: "[]\n",
 			route:  installRoute(),
-			want:   "table header",
+			want:   "invalid codex TOML",
 		},
 		"wrong transport": {
 			source: "",
@@ -107,6 +116,51 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 				t.Fatalf("error = %v, want %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestPatchConfigRejectsMalformedUnmanagedTOML(t *testing.T) {
+	tests := map[string]string{
+		"invalid bare token":   "unmanaged = not_a_toml_value\n",
+		"invalid date":         "unmanaged = 1979-13-40\n",
+		"malformed array":      "unmanaged = [1,,2]\n",
+		"duplicate inline key": "unmanaged = { key = true, key = false }\n",
+		"redefined table":      "[features]\napps = false\n[features]\nother = true\n",
+	}
+	for name, source := range tests {
+		t.Run(name, func(t *testing.T) {
+			patch, err := PatchConfig([]byte(source), installRoute())
+			if err == nil || !strings.Contains(err.Error(), "invalid codex TOML") {
+				t.Fatalf("malformed TOML result = %#v, %v; want syntax rejection", patch, err)
+			}
+			if len(patch.Content) > 0 || len(patch.Fields) > 0 {
+				t.Fatalf("malformed TOML produced a patch: %#v", patch)
+			}
+		})
+	}
+}
+
+func TestPatchConfigRedactsInvalidTOMLDiagnostics(t *testing.T) {
+	source := "private_key = credential_canary_12345\n"
+	_, err := PatchConfig([]byte(source), installRoute())
+	if err == nil || !strings.Contains(err.Error(), "invalid codex TOML at line 1") {
+		t.Fatalf("invalid TOML diagnostic = %v", err)
+	}
+	for _, sensitive := range []string{"private_key", "cre", "credential_canary_12345"} {
+		if strings.Contains(err.Error(), sensitive) {
+			t.Fatalf("invalid TOML diagnostic exposed target-owned input: %v", err)
+		}
+	}
+}
+
+func TestPatchConfigRedactsAmbiguousTableName(t *testing.T) {
+	source := "[\"private.credential_canary\"]\nkey = true\n"
+	_, err := PatchConfig([]byte(source), installRoute())
+	if err == nil || !strings.Contains(err.Error(), "ambiguous") {
+		t.Fatalf("ambiguous table diagnostic = %v", err)
+	}
+	if strings.Contains(err.Error(), "credential_canary") {
+		t.Fatalf("ambiguous table diagnostic exposed target-owned name: %v", err)
 	}
 }
 

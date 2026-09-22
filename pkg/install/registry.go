@@ -74,9 +74,10 @@ func (adapter blockedAdapter) Plan(AdapterInput) (Patch, error) {
 
 func DefaultRegistry() *Registry {
 	blockedReason := "production target installation is blocked pending disposable-target validation; no target state is read or written"
+	codexBlockedReason := "Codex install is blocked: exact OAuth route cannot be guaranteed by supported config fields; target state is not read or written; use inert preview"
 	return NewRegistry(
 		blockedAdapter{metadata: blockedMetadata(claudecode.TargetName, claudecode.TargetVersion, claudecode.AdapterVersion, claudecode.EvidenceSHA256, blockedReason)},
-		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
+		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, codexBlockedReason)},
 		blockedAdapter{metadata: blockedMetadata(hermes.TargetName, hermes.TargetVersion, hermes.AdapterVersion, hermes.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(openclaw.TargetName, openclaw.TargetVersion, openclaw.AdapterVersion, openclaw.EvidenceSHA256, blockedReason)},

@@ -75,7 +75,7 @@ func TestInstallProductionPlanBlockedWithoutTargetRead(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "blocked") {
 		t.Fatalf("error = %v", err)
 	}
-	if !strings.Contains(stdout.String(), `"status": "blocked"`) || !strings.Contains(stdout.String(), "production target installation is blocked") {
+	if !strings.Contains(stdout.String(), `"status": "blocked"`) || !strings.Contains(stdout.String(), "exact OAuth route cannot be guaranteed") {
 		t.Fatalf("unexpected plan: %s", stdout.String())
 	}
 	if _, statErr := os.Stat(filepath.Dir(targetPath)); !os.IsNotExist(statErr) {
