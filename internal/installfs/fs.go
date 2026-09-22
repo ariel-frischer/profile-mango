@@ -88,6 +88,12 @@ type JournalEntry struct {
 	Applied      bool   `json:"applied"`
 }
 
+type preparedBackup struct {
+	path     string
+	snapshot Snapshot
+	verified bool
+}
+
 func Hash(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
@@ -167,13 +173,13 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	if err := preflight(changes); err != nil {
 		return ApplyResult{}, err
 	}
-	entries, backups, err := prepareBackups(changes, options)
+	entries, backups, ownedBackups, err := prepareBackups(changes, options)
 	if err != nil {
 		return ApplyResult{}, err
 	}
 	journal := Journal{APIVersion: JournalVersion, PlanID: options.PlanID, Status: "prepared", LockPath: options.LockPath, Entries: entries}
 	if err := writeJournal(options.JournalPath, journal); err != nil {
-		return ApplyResult{}, err
+		return ApplyResult{}, preparationFailure(err, ownedBackups)
 	}
 	for index := range changes {
 		if options.FaultAfter > 0 && index == options.FaultAfter {
@@ -275,27 +281,78 @@ func preflight(changes []Change) error {
 	return nil
 }
 
-func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []string, error) {
+func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []string, []preparedBackup, error) {
 	entries := make([]JournalEntry, len(changes))
 	backups := make([]string, 0, len(changes))
+	owned := make([]preparedBackup, 0, len(changes))
 	for index, change := range changes {
 		entry := JournalEntry{Path: change.Path, BeforeExists: change.Before.Exists, BeforeSHA256: change.Before.SHA256, BeforeMode: uint32(change.Before.Mode), AfterSHA256: Hash(change.Content), Delete: change.Delete}
 		if options.Backup && change.Before.Exists {
 			backup := BackupPath(change.Path, options.PlanID)
 			if _, err := os.Lstat(backup); err == nil {
-				return nil, nil, fmt.Errorf("backup already exists: %s", backup)
+				return nil, nil, nil, preparationFailure(fmt.Errorf("backup already exists: %s", backup), owned)
 			} else if !os.IsNotExist(err) {
-				return nil, nil, fmt.Errorf("inspect backup %s: %w", backup, err)
+				return nil, nil, nil, preparationFailure(fmt.Errorf("inspect backup %s: %w", backup, err), owned)
 			}
+			candidate := preparedBackup{path: backup}
 			if err := writeNewFile(backup, change.Before.Content, change.Before.Mode); err != nil {
-				return nil, nil, fmt.Errorf("create backup %s: %w", backup, err)
+				return nil, nil, nil, preparationFailure(fmt.Errorf("create backup %s: %w", backup, err), append(owned, candidate))
 			}
+			snapshot, err := SnapshotFile(backup)
+			if err != nil {
+				return nil, nil, nil, preparationFailure(fmt.Errorf("verify backup %s: %w", backup, err), append(owned, candidate))
+			}
+			candidate.snapshot = snapshot
+			candidate.verified = true
+			owned = append(owned, candidate)
 			entry.BackupPath = backup
 			backups = append(backups, backup)
 		}
 		entries[index] = entry
 	}
-	return entries, backups, nil
+	return entries, backups, owned, nil
+}
+
+func preparationFailure(cause error, owned []preparedBackup) error {
+	return preparationFailureWith(cause, owned, os.Remove)
+}
+
+func cleanupPreparedBackups(backups []preparedBackup) error {
+	return cleanupPreparedBackupsWith(backups, os.Remove)
+}
+
+func preparationFailureWith(cause error, owned []preparedBackup, remove func(string) error) error {
+	return errors.Join(cause, cleanupPreparedBackupsWith(owned, remove))
+}
+
+func cleanupPreparedBackupsWith(backups []preparedBackup, remove func(string) error) error {
+	var cleanupErrors []error
+	for _, backup := range backups {
+		if err := cleanupPreparedBackup(backup, remove); err != nil {
+			cleanupErrors = append(cleanupErrors, err)
+		}
+	}
+	return errors.Join(cleanupErrors...)
+}
+
+func cleanupPreparedBackup(backup preparedBackup, remove func(string) error) error {
+	current, err := SnapshotFile(backup.path)
+	if err != nil {
+		return fmt.Errorf("cleanup backup %s: %w", backup.path, err)
+	}
+	if !current.Exists {
+		return nil
+	}
+	if !backup.verified {
+		return fmt.Errorf("preserve backup %s: creation identity is unverified", backup.path)
+	}
+	if !current.Equal(backup.snapshot) {
+		return fmt.Errorf("preserve backup %s: changed after creation", backup.path)
+	}
+	if err := remove(backup.path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove backup %s: %w", backup.path, err)
+	}
+	return nil
 }
 
 func applyChange(change Change) error {
