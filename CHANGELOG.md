@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
 - Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
 - Install the exact Claude Code 2.1.278 model field and Pi 0.86.1 route-default settings with native consumption evidence and transactional safeguards.
+- Install one qualified OpenCode 1.18.31 skill with native discovery evidence, lossless skills.paths edits, and non-overridable resource ownership protection
 
 ### Changed
 

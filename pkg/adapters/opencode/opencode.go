@@ -100,7 +100,7 @@ func addEvidenceBlockers(result *Result) {
 		code, path, field, message string
 	}{
 		{"opencode.extensions.plugins_mcp_unverified", "target.extensions.plugins-mcp", "extensions.plugins-mcp", "plugin and MCP discovery, configuration, and enforcement were not observed"},
-		{"opencode.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "route, permission, tool, instruction, skill, plugin, MCP, and policy enforcement was not observed"},
+		{"opencode.runtime.enforcement_unverified", "target.runtime.enforcement", "runtime.enforcement", "route, permission, tool, instruction, skill, plugin, MCP, and policy enforcement was not observed; no safe automated remedy is known"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.path, blocker.message, 0, 0)

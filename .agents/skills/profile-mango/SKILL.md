@@ -150,16 +150,16 @@ not upstream Jcode or a supported public target.
 
 All current target renderers remain non-applicable previews. Expect blocking
 diagnostics and a nonzero exit status even when preview artifacts are written.
-OpenCode `1.18.31` separately supports lossless transactional application of only
-the top-level `model` field at one explicit path. This does not make the renderer or
+OpenCode `1.18.31` separately supports lossless transactional application of
+top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit path. This does not make the renderer or
 full profile applicable. Never present preview syntax, model-field application, or
 native parsing as authentication, delivery, or enforcement.
 
 ## Plan-first install
 
 Only the exact subsets in the README install table and target evidence ledger are installable. Other targets remain blocked.
-OpenCode requires exact version `1.18.31`, a route-only profile, and one explicit
-config path. Plan first against synthetic or separately approved disposable state:
+OpenCode requires exact version `1.18.31`, a route-only or single-skill profile,
+and one explicit config path. Plan first against synthetic or separately approved disposable state:
 
 ```bash
 profile-mango install <profile-name> \
@@ -174,7 +174,9 @@ profile-mango install <profile-name> \
 Review the destination digest, field diff, file hashes, and plan ID. Apply only by
 repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
 unowned or externally edited files require `--override`; there is no general force
-path. Never use a live path without new path-specific user approval after a verified
+path. OpenCode skill files cannot override unowned or externally edited resources,
+even with `--override`. Its directory-wide discovery is not an exclusive allowlist.
+Never use a live path without new path-specific user approval after a verified
 disposable backup/restore rehearsal.
 
 Use global `--non-interactive` for automation. It never grants consent: apply

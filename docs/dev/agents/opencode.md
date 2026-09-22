@@ -123,9 +123,10 @@ the explicit config, and the config receives an absolute `skills.paths` entry fo
 that directory. It requires exact target `opencode@1.18.31`, native transport, and
 a profile with no permission, tool, or instruction requirements. Multi-skill
 profiles, instruction resources, and all other unqualified fields remain blocked.
-Existing unowned or externally edited files require the adapter-approved
-`--override` flag for the model-only path; skill-resource application does not
-override an unowned existing `SKILL.md`.
+Existing unowned or externally edited config files require the adapter-approved
+`--override` flag, including when adding a skill. The skill resource cannot override
+an unowned or externally edited `SKILL.md`, even with that flag. Discovery scans the
+config directory and may include other skills: this is not an exclusive allowlist.
 The planner binds consent to a digest of the normalized config and manifest paths,
 while omitting raw absolute paths from public plan JSON.
 

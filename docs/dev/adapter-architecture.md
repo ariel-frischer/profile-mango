@@ -80,9 +80,12 @@ remain blocked. The renderers do not install output into a production target,
 read a target home, access credentials, start a session, call a provider, or use
 a network connection. The separate OpenCode developer probe is explicit,
 network-blocked, scratch-only, non-TUI, and restores its independent backup.
-The shared install engine additionally supports lossless application of only the
-OpenCode top-level `model` field at one explicit path, with destination-bound
-consent and transactional backups/recovery tested against disposable state.
+The shared install engine supports lossless application of the OpenCode top-level
+`model` field and optionally one `SKILL.md` plus `skills.paths` at one explicit
+path, with destination-bound consent and transactional backups/recovery tested
+against disposable state. `FilePatch.NoOverride` protects skill resources from
+unowned or externally edited replacement even when config override is approved.
+Directory-wide native skill discovery is not an exclusive allowlist.
 Claude Code `2.1.278` additionally supports only strict-JSON top-level `model`
 replacement at one explicit path, backed by isolated exact-ELF model consumption
 and disposable built-binary application. Pi `0.86.1` applies only its three route
@@ -100,10 +103,10 @@ tested build hash and the separate documentation snapshot are recorded in the
 Jcode compatibility.
 
 Claude Code's immutable npm package and release commit are pinned, but its opaque
-native startup and diagnostic paths were not proven side-effect-free. No native
-Claude Code command was run. The adapter keeps native acceptance, effective state,
-precedence, route/auth, permissions/tools, CLAUDE.md, skills, and enforcement
-blocked rather than treating mutable documentation as release evidence.
+general startup and diagnostic paths remain unqualified. A separate exact-ELF
+probe qualified explicit-file model consumption before authentication failure.
+Full effective state, precedence, route/auth, permissions/tools, CLAUDE.md, skills,
+and enforcement remain blocked, rather than treating parsing as runtime evidence.
 
 Oh My Pi's source-level version observation is exact, but the standalone build is
 currently blocked by its missing pinned native addon and the reviewed `config`

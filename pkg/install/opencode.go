@@ -41,7 +41,7 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	}
 	fields := []FieldChange{{Path: "config.model", Before: configPatch.ModelBefore, After: configPatch.ModelAfter}}
 	files := []FilePatch{{Content: configPatch.Content, Fields: []string{"config.model"}}}
-	patch := Patch{Files: files, Fields: fields, OverrideAllowed: skill == nil}
+	patch := Patch{Files: files, Fields: fields, OverrideAllowed: true}
 	if skill != nil {
 		files[0].Fields = append(files[0].Fields, "config.skills.paths")
 		patch.Fields = append(patch.Fields, FieldChange{
@@ -50,12 +50,12 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 			After:     strings.Join(configPatch.SkillsAfter, ","),
 			Sensitive: true,
 		})
-		patch.Files = append(patch.Files, FilePatch{Path: "SKILL.md", Content: skill.Content, Fields: []string{"resources.skills"}})
+		patch.Files = append(patch.Files, FilePatch{Path: "SKILL.md", Content: skill.Content, Fields: []string{"resources.skills"}, NoOverride: true})
 	}
 	if skill == nil {
 		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.model_only", "target.config.model", "only the exact top-level model field is applied; authentication, effort, provider options, permissions, tools, instructions, skills, plugins, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
 	} else {
-		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_narrow", "target.config.skills.paths", "one exact skill is copied beside the explicit config and exposed through an absolute skills.paths entry; instructions, additional skills, permissions, tools, authentication, effort, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_narrow", "target.config.skills.paths", "one skill is copied beside the explicit config and exposed through a directory-wide skills.paths entry; other skills in that directory may also be discovered, so this is not an exclusive allowlist; instructions, additional skills, permissions, tools, authentication, effort, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
 	}
 	return patch, nil
 }

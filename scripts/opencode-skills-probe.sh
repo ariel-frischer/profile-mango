@@ -56,7 +56,7 @@ sandbox() {
   local config_content="$1"
   shift
   "$timeout_bin" "$timeout_seconds" "$bwrap_bin" \
-    --die-with-parent --new-session --unshare-net \
+    --die-with-parent --new-session --unshare-net --unshare-pid --unshare-ipc --cap-drop ALL \
     --ro-bind /usr /usr --ro-bind /bin /bin --ro-bind /lib /lib --ro-bind /lib64 /lib64 --ro-bind /etc /etc \
     --ro-bind "$binary" /probe/opencode --bind "$state" /state \
     --proc /proc --dev /dev --tmpfs /tmp --dir /probe --chdir /state/project \
