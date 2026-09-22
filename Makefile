@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-go test-installer test-v test-coverage lint lint-go lint-shell format clean build bin run check-agent-sources go-install install-global uninstall release patch minor major prep-release worktree worktree-clean
+.PHONY: help deps d install i test t test-go test-installer test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -21,17 +21,23 @@ help: ## Show this help message
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install: ## Download dependencies
+deps: ## Download dependencies
 	go mod download
+
+d: deps ## Alias for deps
+
+install: ## Install mango to GOPATH/bin
+	go install ${LDFLAGS} ./cmd/mango/
 
 i: install ## Alias for install
 
-go-install: ## Install profile-mango to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/profile-mango/
+go-install: install ## Compatibility alias for install
 
-install-global: go-install ## Alias for go-install
+install-global: install ## Compatibility alias for install
 
 test: test-go test-installer ## Run Go and installer tests
+
+t: test ## Alias for test
 
 test-go: ## Run Go tests
 	go test ./...
@@ -46,6 +52,8 @@ test-coverage: ## Run tests with coverage
 	go test -race -coverprofile=coverage.out ./...
 
 lint: lint-go lint-shell ## Run all linters
+
+l: lint ## Alias for lint
 
 lint-go: ## Run Go linters
 	@if command -v mise >/dev/null 2>&1 && [ -f mise.toml ]; then \
@@ -68,20 +76,28 @@ lint-shell: ## Check POSIX shell scripts
 format: ## Format code
 	go fmt ./...
 
+f: format ## Alias for format
+
 clean: ## Clean build artifacts
 	go clean
 	rm -rf bin/ coverage.out
 
+c: clean ## Alias for clean
+
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/profile-mango ./cmd/profile-mango/
+	go build ${LDFLAGS} -o bin/mango ./cmd/mango/
+
+b: build ## Alias for build
 
 bin: build ## Alias for build
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/profile-mango/
+	go run ${LDFLAGS} ./cmd/mango/
+
+r: run ## Alias for run
 
 check-agent-sources: ## Check documented agent sources without writing changes
-	go run ./cmd/profile-mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
+	go run ./cmd/mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)
@@ -93,8 +109,10 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall profile-mango
+uninstall: ## Uninstall mango
 	@./uninstall.sh
+
+u: uninstall ## Alias for uninstall
 
 ##@ Release
 prep-release: ## Full release flow (usage: make prep-release VERSION=v0.1.0)

@@ -40,7 +40,7 @@ flowchart LR
   `pkg/adapters/arieljcode` own exact evidence pins, target syntax, capability
   mapping, target-specific diagnostics, and applicability. The Ariel package is
   experimental-only and is not an upstream Jcode adapter.
-- `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
+- `cmd/mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
 - `internal/staging` creates only a new explicit output directory and never writes
   a target home.

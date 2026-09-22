@@ -11,10 +11,10 @@
 
 </div>
 
-`profile-mango` is a strict profile format, Go library, and CLI for portable
-coding-agent behavior. It separates shared intent from machine-local routes,
-resolves profiles deterministically, and fails closed when a target cannot prove
-that it preserves a requirement.
+`profile-mango` is a strict profile format and Go library that ships the `mango`
+CLI for portable coding-agent behavior. It separates shared intent from
+machine-local routes, resolves profiles deterministically, and fails closed when
+a target cannot prove that it preserves a requirement.
 
 Profile Mango manages **profiles**, not every setting exposed by every agent. A
 profile contains reusable behavior and resources that should travel between coding
@@ -82,9 +82,9 @@ Build and install from source:
 ```bash
 git clone git@gitlab.com:ariel-frischer/profile-mango.git
 cd profile-mango
+make deps
 make install
-make install-global
-profile-mango version
+mango version
 ```
 
 The repository also contains a checksum-verifying private release installer for
@@ -119,17 +119,17 @@ Create a deterministic starter package in the global profile home, or choose an
 explicit project destination:
 
 ```console
-$ profile-mango init
+$ mango init
 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
 Created profile scaffold in /home/alice/.profile-mango
 
-$ profile-mango init .
+$ mango init .
 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
 Created profile scaffold in .
 
-$ profile-mango init ./my-profile-project
+$ mango init ./my-profile-project
 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█
 Created profile scaffold in my-profile-project
@@ -155,14 +155,14 @@ cp ~/.profile-mango/bindings/local.example.yaml \
 
 The default home is `~/.profile-mango` on Linux and macOS and
 `%USERPROFILE%\.profile-mango` on Windows. Override the whole package with the
-root `--home` flag or `PROFILE_MANGO_HOME`; the flag wins. `profile-mango home`
+root `--home` flag or `PROFILE_MANGO_HOME`; the flag wins. `mango home`
 prints the effective absolute path without creating it. Instructions and skills
 may live under `instructions/` and `skills/` in the same package.
 
 Validate a tracked example entirely offline:
 
 ```console
-$ profile-mango validate \
+$ mango validate \
     pkg/profilemango/testdata/fixtures/route-only/profile.yaml \
     --bindings pkg/profilemango/testdata/fixtures/bindings.yaml
 route-only is valid
@@ -171,7 +171,7 @@ route-only is valid
 Use `--json` for a stable machine-readable result:
 
 ```bash
-profile-mango validate profile.yaml --bindings local-bindings.yaml --json
+mango validate profile.yaml --bindings local-bindings.yaml --json
 ```
 
 A profile carries portable intent while a local binding identifies a route
@@ -253,7 +253,7 @@ Every target except OpenCode remains blocked before reading its config path. Ope
 with permissions, tools, instructions, or skills remain blocked.
 
 ```bash
-profile-mango install route-only \
+mango install route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -296,7 +296,7 @@ command uses an explicit project package, writes preview artifacts, reports
 blocking diagnostics, and exits nonzero because the output is not applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -317,7 +317,7 @@ candidate. The output is under `preview/`, never `~/.pi/agent`, and the command
 exits nonzero because the report is non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -342,7 +342,7 @@ The output is YAML syntax under `preview/`, never `~/.omp`, and the command exit
 nonzero because the report is non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -363,7 +363,7 @@ candidate. The output is under `preview/`, never `~/.openclaw`, and the command
 exits nonzero because the report is non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -387,7 +387,7 @@ candidate from source release `v2026.9.14`. The output is YAML syntax under
 is non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -411,7 +411,7 @@ candidate. The output is a documentation-context JSON settings preview under
 is non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -436,7 +436,7 @@ effort, full precedence/provenance, delivery, permissions, tools, plugins, MCP,
 and enforcement remain blocked:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -463,7 +463,7 @@ support list below. The candidate is deterministic TOML syntax under `preview/`
 and the command exits nonzero because the report remains non-applicable:
 
 ```bash
-profile-mango render route-only \
+mango render route-only \
   --profiles pkg/profilemango/testdata/fixtures \
   --resource-root pkg/profilemango/testdata \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml \
@@ -483,13 +483,13 @@ documentation snapshot and all native applicability gaps remain separate in the
 ## Commands
 
 ```text
-profile-mango agents      Inspect documented agent sources without changing local state
-profile-mango completion  Generate shell completion scripts
-profile-mango home        Print the effective profile package home
-profile-mango init        Create a deterministic starter profile package
-profile-mango render      Render an inert, version-qualified candidate for a known target
-profile-mango validate    Validate one PolicyProfile offline
-profile-mango version     Display version information
+mango agents              Inspect documented agent sources without changing local state
+mango completion          Generate shell completion scripts
+mango home        Print the effective profile package home
+mango init        Create a deterministic starter profile package
+mango render      Render an inert, version-qualified candidate for a known target
+mango validate    Validate one PolicyProfile offline
+mango version     Display version information
 ```
 
 ## Library
@@ -543,9 +543,9 @@ make build
 Useful CLI smoke checks:
 
 ```bash
-go run ./cmd/profile-mango --help
-go run ./cmd/profile-mango version
-go run ./cmd/profile-mango home
+go run ./cmd/mango --help
+go run ./cmd/mango version
+go run ./cmd/mango home
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and

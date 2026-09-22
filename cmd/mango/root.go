@@ -7,7 +7,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "profile-mango",
+	Use:     "mango",
 	Short:   "Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.",
 	Version: version.Version,
 }

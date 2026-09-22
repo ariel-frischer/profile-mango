@@ -22,11 +22,12 @@ tested evidence, and supported capabilities.
 
 ```bash
 make help           # List Make targets
-make install        # Download Go modules
-make build          # Build ./bin/profile-mango with version ldflags
+make deps           # Download Go modules
+make install        # Install mango to GOPATH/bin
+make build          # Build ./bin/mango with version ldflags
 make bin            # Alias for build
-make run            # Run ./cmd/profile-mango
-make go-install     # Install profile-mango to GOPATH/bin
+make run            # Run ./cmd/mango
+make go-install     # Compatibility alias for installing mango
 make install-global # Alias for go-install
 make test           # Run tests
 make test-v         # Run tests verbosely
@@ -40,16 +41,16 @@ make release VERSION=v0.1.0       # Alias for prep-release
 CLI smoke checks:
 
 ```bash
-go run ./cmd/profile-mango --help
-go run ./cmd/profile-mango version
-go run ./cmd/profile-mango home
-go run ./cmd/profile-mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
+go run ./cmd/mango --help
+go run ./cmd/mango version
+go run ./cmd/mango home
+go run ./cmd/mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
 ```
 
 ## File Layout
 
 ```
-cmd/profile-mango/      # CLI entry point (cobra)
+cmd/mango/             # CLI entry point (cobra)
   main.go             # binary entry point
   root.go             # root command, persistent flags, command wiring
   version.go          # version subcommand
@@ -75,7 +76,7 @@ CHANGELOG.md          # generated changelog output
 
 - The default application home is `<user-home>/.profile-mango` on every OS.
 - Path priority: root `--home`, then `$PROFILE_MANGO_HOME`, then the default.
-- `profile-mango home` prints the absolute effective path without creating it.
+- `mango home` prints the absolute effective path without creating it.
 - Root `init` scaffolds the effective home; `init .` or `init <directory>` scaffolds an explicit project package.
 - Render inputs default to `<home>/profiles`, `<home>`, and `<home>/bindings/local.yaml`. Explicit project rendering must provide `--profiles`, `--resource-root`, and `--bindings` together.
 - The binary never creates the home implicitly during installation or read-only commands.
@@ -95,7 +96,7 @@ CHANGELOG.md          # generated changelog output
 - Toolchain versions are pinned in `mise.toml`; run `mise install` before canonical lint/build checks.
 - Run `chlog check` after changelog edits.
 - Run `make test` for normal validation; use `make test-coverage` when touching shared packages.
-- Smoke-test generated command paths with `go run ./cmd/profile-mango ...` before release work.
+- Smoke-test generated command paths with `go run ./cmd/mango ...` before release work.
 - Keep fixtures in `pkg/profilemango/testdata/` and avoid depending on the caller's working directory.
 
 ## Release And Changelog

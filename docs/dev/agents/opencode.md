@@ -106,7 +106,7 @@ configuration.
 
 ## Narrow install-capable subset
 
-`profile-mango install` can patch only the top-level `model` field in one explicit
+`mango install` can patch only the top-level `model` field in one explicit
 OpenCode config file. It requires exact target `opencode@1.18.31`, native transport,
 and a profile with no permission, tool, instruction, or skill requirements. Existing
 unowned or externally edited files require the adapter-approved `--override` flag.

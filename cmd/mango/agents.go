@@ -10,8 +10,9 @@ import (
 
 func newAgentsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "agents",
-		Short: "Inspect documented agent sources without changing local state.",
+		Use:     "agents",
+		Aliases: []string{"a"},
+		Short:   "Inspect documented agent sources without changing local state.",
 	}
 	cmd.AddCommand(newAgentsCheckCmd())
 	return cmd
@@ -26,9 +27,10 @@ func newAgentsCheckCmd() *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
-		Use:   "check",
-		Short: "Check the agent source manifest for drift and availability.",
-		Args:  cobra.NoArgs,
+		Use:     "check",
+		Aliases: []string{"c"},
+		Short:   "Check the agent source manifest for drift and availability.",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			report, err := agentcheck.CheckFile(cmd.Context(), manifestPath, agentcheck.Options{
 				TargetID:     targetID,

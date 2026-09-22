@@ -15,8 +15,8 @@ make test
 make test-coverage
 make lint
 make build
-go run ./cmd/profile-mango --help
-go run ./cmd/profile-mango validate pkg/profilemango/testdata/fixtures/route-only/profile.yaml \
+go run ./cmd/mango --help
+go run ./cmd/mango validate pkg/profilemango/testdata/fixtures/route-only/profile.yaml \
   --bindings pkg/profilemango/testdata/fixtures/bindings.yaml --json
 git diff --check
 ```

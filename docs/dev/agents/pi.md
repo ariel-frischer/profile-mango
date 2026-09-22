@@ -75,7 +75,7 @@ the commands are unsafe in every environment.
 
 ## Inert preview adapter boundary
 
-The `profile-mango render --target pi --target-version 0.86.1` adapter emits a
+The `mango render --target pi --target-version 0.86.1` adapter emits a
 candidate at `preview/<profile>.settings.json.preview` using only the exact
 source-grounded `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`
 keys. It never emits authentication, API keys, auth-file data, model-store data,

@@ -14,7 +14,7 @@ var versionPlain bool
 
 var versionCmd = &cobra.Command{
 	Use:     "version",
-	Aliases: []string{"v"},
+	Aliases: []string{"ver"},
 	Short:   "Display version information",
 	Run: func(cmd *cobra.Command, _ []string) {
 		if versionPlain {
@@ -30,7 +30,7 @@ func init() {
 }
 
 func printPlainVersion(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "profile-mango %s\n", version.Version)
+	_, _ = fmt.Fprintf(writer, "mango %s\n", version.Version)
 	_, _ = fmt.Fprintf(writer, "commit: %s\n", version.Commit)
 	_, _ = fmt.Fprintf(writer, "built: %s\n", version.BuildDate)
 	_, _ = fmt.Fprintf(writer, "go: %s\n", runtime.Version())
@@ -39,7 +39,7 @@ func printPlainVersion(writer io.Writer) {
 
 func printPrettyVersion(writer io.Writer) {
 	styles := stylesFor(writer, true)
-	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  profile-mango — Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts."))
+	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  mango — Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts."))
 	printVersionBox(writer, styles)
 	_, _ = fmt.Fprintln(writer)
 }

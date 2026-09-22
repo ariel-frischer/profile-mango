@@ -7,15 +7,16 @@ Thanks for your interest in contributing!
 ```bash
 git clone https://gitlab.com/ariel-frischer/profile-mango.git
 cd profile-mango
-make install   # Download dependencies
-make build     # Build binary
+make deps      # Download dependencies
+make install   # Install mango
+make build     # Build bin/mango
 make test      # Run tests
 ```
 
 ## Development
 
 ```bash
-make build     # Build to bin/profile-mango
+make build     # Build to bin/mango
 make test      # Run all tests
 make lint      # Run linters
 make format    # Format code
@@ -33,7 +34,7 @@ make format    # Format code
 Use [GitLab issues](https://gitlab.com/ariel-frischer/profile-mango/issues). Include:
 - What you expected vs what happened
 - Steps to reproduce
-- `profile-mango version` output
+- `mango version` output
 - OS and architecture
 
 ## Code Style
@@ -45,4 +46,3 @@ Use [GitLab issues](https://gitlab.com/ariel-frischer/profile-mango/issues). Inc
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
-
