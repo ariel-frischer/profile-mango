@@ -17,7 +17,7 @@ func (codexAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: codex.EvidenceSHA256,
 		Installable:    false,
 		Status:         StatusBlocked,
-		Reason:         "no safe credential-free exact-release probe proves model_provider, model, or model_reasoning_effort consumption, effective route or precedence, or OAuth identity. Native evidence is limited to parser acceptance and unrelated features/apps output",
+		Reason:         "source-native exact-release evidence consumes model_provider, model, and model_reasoning_effort from actual PatchConfig output, but installed-binary equivalence, project/runtime precedence, active-profile selection, and OAuth identity remain unverified",
 	}
 }
 
@@ -34,7 +34,8 @@ func (codexAdapter) Plan(input AdapterInput) (Patch, error) {
 	for _, field := range configPatch.Fields {
 		patch.Fields = append(patch.Fields, FieldChange{Path: "config." + field.Key, Before: field.Before, After: field.After})
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_parse_only", "target.config", "the pinned Codex build accepted the route-shaped TOML and typed route fields in an isolated non-session probe; that parsing evidence does not prove effective provider/model/effort values or OAuth route identity, and permissions, tools, instructions, skills, precedence, delivery, and runtime enforcement remain unmanaged", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "the pinned Codex source resolver consumed the actual PatchConfig route fields in an isolated non-session probe; installed-binary equivalence and OAuth route identity remain unverified, and permissions, tools, instructions, skills, delivery, and runtime enforcement remain unmanaged", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the supplied root config document after rejecting active profiles and provider shadow state; project-local layers and runtime overrides are not inspected or controlled", 0, 0)
 	return patch, nil
 }
 

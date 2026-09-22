@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
@@ -103,6 +104,57 @@ spec:
 	}
 }
 
+func TestCodexInstallRejectsPrecedenceAndProviderShadowState(t *testing.T) {
+	tests := map[string]struct {
+		config string
+		want   string
+	}{
+		"active profile": {
+			config: "profile = \"work\"\n",
+			want:   "profile selection or definitions",
+		},
+		"profile table": {
+			config: "[profiles.work]\nmodel = \"profile-model\"\n",
+			want:   "profile selection or definitions",
+		},
+		"provider shadow": {
+			config: "[model_providers.openai]\nname = \"shadow\"\n",
+			want:   "provider override state",
+		},
+		"provider endpoint override": {
+			config: "openai_base_url = \"https://shadow.invalid/v1\"\n",
+			want:   "provider override state",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, _ := codexTestRequest(t)
+			config := request.Targets[0].ConfigPath
+			writeInstallTestFile(t, config, test.config)
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, test.want) {
+				t.Fatalf("plan = %#v, want blocked reason containing %q", plan, test.want)
+			}
+			assertInstallTestFile(t, config, test.config)
+		})
+	}
+}
+
+func TestCodexInstallReportsSourceEvidenceAndBoundedPrecedence(t *testing.T) {
+	request, _ := codexTestRequest(t)
+	writeInstallTestFile(t, request.Targets[0].ConfigPath, "unknown = true\n")
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.route_fields_source_qualified") || !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.precedence_bounded") {
+		t.Fatalf("target diagnostics = %#v", plan.Targets[0].Diagnostics)
+	}
+}
+
 func TestCodexInstallRestoresSyntheticConfigThroughTransactionEngine(t *testing.T) {
 	request, _ := codexTestRequest(t)
 	request.Override = true
@@ -133,13 +185,15 @@ func TestCodexInstallRestoresSyntheticConfigThroughTransactionEngine(t *testing.
 	}
 }
 
-func TestCodexMetadataRemainsBlockedWithoutFieldConsumptionEvidence(t *testing.T) {
+func TestCodexMetadataRemainsBlockedAfterSourceQualification(t *testing.T) {
 	metadata := (codexAdapter{}).Metadata()
 	if metadata.Installable || metadata.Status != StatusBlocked {
 		t.Fatalf("metadata = %#v, want blocked and non-installable", metadata)
 	}
-	if !strings.Contains(metadata.Reason, "model_provider") || !strings.Contains(metadata.Reason, "effective route") {
-		t.Fatalf("metadata reason = %q, want field-consumption blocker", metadata.Reason)
+	for _, required := range []string{"model_provider", "installed-binary equivalence", "project/runtime precedence", "OAuth identity"} {
+		if !strings.Contains(metadata.Reason, required) {
+			t.Fatalf("metadata reason = %q, want %q", metadata.Reason, required)
+		}
 	}
 }
 
@@ -179,6 +233,15 @@ func codexTestRequest(t *testing.T) (Request, string) {
 func hasFileAction(target TargetPlan, action string) bool {
 	for _, file := range target.Files {
 		if file.Action == action {
+			return true
+		}
+	}
+	return false
+}
+
+func hasDiagnostic(diagnostics profilemango.Diagnostics, code string) bool {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == code {
 			return true
 		}
 	}

@@ -105,14 +105,66 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 	}
 }
 
-func TestPatchConfigDoesNotPatchNestedKeys(t *testing.T) {
-	source := "[model_providers.openai]\nmodel = \"nested\"\n"
+func TestPatchConfigRejectsProviderShadowState(t *testing.T) {
+	tests := map[string]string{
+		"table":  "[model_providers.openai]\nmodel = \"nested\"\n",
+		"quoted": "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
+		"dotted": "model_providers.openai.name = \"shadow\"\n",
+	}
+	for name, source := range tests {
+		t.Run(name, func(t *testing.T) {
+			_, err := PatchConfig([]byte(source), installRoute())
+			if err == nil || !strings.Contains(err.Error(), "provider override state") {
+				t.Fatalf("provider shadow was accepted: %v", err)
+			}
+		})
+	}
+}
+
+func TestPatchConfigPreservesUnrelatedProviderState(t *testing.T) {
+	source := "[model_providers.other]\nname = \"unrelated\"\n"
 	patch, err := PatchConfig([]byte(source), installRoute())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(patch.Content), "model = \"nested\"\n") || !strings.Contains(string(patch.Content), "model_provider = \"openai\"\n") {
-		t.Fatalf("nested state was not preserved or root fields missing: %q", patch.Content)
+	if !strings.Contains(string(patch.Content), "name = \"unrelated\"\n") || !strings.Contains(string(patch.Content), "model_provider = \"openai\"\n") {
+		t.Fatalf("unrelated provider state was not preserved or root fields missing: %q", patch.Content)
+	}
+}
+
+func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
+	tests := map[string]struct {
+		source string
+		want   string
+	}{
+		"active profile": {
+			source: "profile = \"work\"\n",
+			want:   "profile selection or definitions",
+		},
+		"profile definitions": {
+			source: "[profiles.work]\nmodel = \"profile-model\"\n",
+			want:   "profile selection or definitions",
+		},
+		"dotted profile definition": {
+			source: "profiles.work = { model = \"profile-model\" }\n",
+			want:   "profile selection or definitions",
+		},
+		"inline provider map": {
+			source: "model_providers = { openai = { name = \"shadow\" } }\n",
+			want:   "provider override state",
+		},
+		"built-in endpoint override": {
+			source: "openai_base_url = \"https://shadow.invalid/v1\"\n",
+			want:   "provider override state",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			_, err := PatchConfig([]byte(test.source), installRoute())
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %v, want %q", err, test.want)
+			}
+		})
 	}
 }
 

@@ -89,6 +89,8 @@ func validCodexEffort(value string) bool {
 
 type configDocument struct {
 	assignments map[string]configAssignment
+	rootKeys    map[string]struct{}
+	tableNames  map[string]struct{}
 	firstTable  int
 	newline     string
 }
@@ -104,7 +106,13 @@ func scanConfig(data []byte) (configDocument, error) {
 	if err := validateConfigBytes(data); err != nil {
 		return configDocument{}, err
 	}
-	document := configDocument{assignments: make(map[string]configAssignment), firstTable: -1, newline: lineEnding(data)}
+	document := configDocument{
+		assignments: make(map[string]configAssignment),
+		rootKeys:    make(map[string]struct{}),
+		tableNames:  make(map[string]struct{}),
+		firstTable:  -1,
+		newline:     lineEnding(data),
+	}
 	table := ""
 	for offset := 0; offset < len(data); {
 		lineEnd, next := nextLine(data, offset)
@@ -119,6 +127,7 @@ func scanConfig(data []byte) (configDocument, error) {
 				return configDocument{}, err
 			}
 			table = parsed
+			document.tableNames[table] = struct{}{}
 			if document.firstTable < 0 {
 				document.firstTable = offset
 			}
@@ -139,9 +148,73 @@ func scanConfig(data []byte) (configDocument, error) {
 			return configDocument{}, fmt.Errorf("duplicate Codex TOML key %q", assignment.key)
 		}
 		document.assignments[assignment.key] = assignment
+		if table == "" {
+			document.rootKeys[assignment.key] = struct{}{}
+		}
 		offset = statementEnd
 	}
+	if err := validateInstallPrecedence(document); err != nil {
+		return configDocument{}, err
+	}
 	return document, nil
+}
+
+func validateInstallPrecedence(document configDocument) error {
+	if hasConfigPath(document.rootKeys, document.tableNames, "profile") ||
+		hasConfigPath(document.rootKeys, document.tableNames, "profiles") {
+		return fmt.Errorf("Codex config contains profile selection or definitions; install requires an unprofiled root config")
+	}
+	if hasProviderShadow(document) ||
+		hasRootKey(document.rootKeys, "openai_base_url") {
+		return fmt.Errorf("Codex config contains provider override state that may shadow the built-in openai provider")
+	}
+	return nil
+}
+
+func hasProviderShadow(document configDocument) bool {
+	if hasRootKey(document.rootKeys, "model_providers") {
+		return true
+	}
+	for key := range document.rootKeys {
+		if isOpenAIProviderPath(key) {
+			return true
+		}
+	}
+	for table := range document.tableNames {
+		if isOpenAIProviderPath(table) {
+			return true
+		}
+	}
+	return false
+}
+
+func isOpenAIProviderPath(path string) bool {
+	const prefix = "model_providers."
+	if !strings.HasPrefix(path, prefix) {
+		return false
+	}
+	provider, _, _ := strings.Cut(path[len(prefix):], ".")
+	provider = strings.Trim(provider, " \t\"'")
+	return provider == "openai"
+}
+
+func hasConfigPath(rootKeys, tableNames map[string]struct{}, path string) bool {
+	for key := range rootKeys {
+		if key == path || strings.HasPrefix(key, path+".") {
+			return true
+		}
+	}
+	for table := range tableNames {
+		if table == path || strings.HasPrefix(table, path+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func hasRootKey(rootKeys map[string]struct{}, key string) bool {
+	_, found := rootKeys[key]
+	return found
 }
 
 func isInstallKey(key string) bool {
