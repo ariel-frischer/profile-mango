@@ -2,8 +2,9 @@
 
 **Reference date:** 2026-09-21. **Documentation pin:** release `v2026.9.5`,
 commit `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9`. **Status:** profile-mango
-ships an exact-version inert preview renderer only. Native applicability and public
-support remain blocked.
+ships an exact-version inert preview renderer and a bounded two-default installer.
+Source-native consumption was qualified on 2026-09-22. Full startup, authentication,
+and policy enforcement remain blocked.
 
 ## Exact source observation
 
@@ -105,3 +106,23 @@ startup. See the [target evidence ledger](../target-evidence.md).
 [workspace]: https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/concepts/agent-workspace.md
 [skills]: https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills.md
 [cli]: https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md
+
+
+## Bounded installation qualification, 2026-09-22
+
+The exact `2026.9.5` installer applies only `agents.defaults.model.primary` and
+`agents.defaults.thinkingDefault`, preserving unrelated JSON5 bytes, comments,
+fallbacks and target-owned state. Native source getters consumed both fields,
+and demonstrated per-agent overrides and fallback limits. Root independently
+reran the probe with hash-gated source modules and actual compiled-CLI output.
+Network/PID/IPC isolation, cleared environment, dropped capabilities, allowlisted
+runtime/source mounts, no broad `/etc` mount, hidden homes/sockets and a timeout
+bounded the probe. No full startup, credentials, providers, gateway, sessions,
+hooks, plugins, MCP, or policy enforcement were exercised.
+
+The codeload gzip hash differs from the retained archive despite matching exact
+peeled commit/tree and imported-source hashes. Both archive hashes remain recorded
+in the [native evidence fixture](../../../pkg/adapters/openclaw/testdata/openclaw-native-field-consumption.evidence.json).
+The [probe](../../../pkg/adapters/openclaw/testdata/openclaw-native-field-consumption-probe.mjs)
+accepts an optional generated-config path; otherwise it uses a synthetic fixture.
+Earlier M0 inspection observations above are historical, not current install gates.

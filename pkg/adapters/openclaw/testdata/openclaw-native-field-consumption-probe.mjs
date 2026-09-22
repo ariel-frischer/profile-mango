@@ -1,6 +1,8 @@
 // OpenClaw v2026.9.5 source-native field-consumption probe.
 // Run only from a disposable sandbox with the exact source mounted at /opt/openclaw.
 
+import { readFileSync } from "node:fs";
+
 const sourceRoot = "/opt/openclaw";
 
 const [{ parseConfigJson5 }, { validateConfigObject }, scope, thinking] = await Promise.all([
@@ -22,7 +24,7 @@ function assert(condition, label) {
   }
 }
 
-const raw = `{
+const raw = process.argv[2] ? readFileSync(process.argv[2], "utf8") : `{
   agents: {
     defaults: {
       model: { primary: "synthetic/global-primary", fallbacks: ["synthetic/global-fallback"] },

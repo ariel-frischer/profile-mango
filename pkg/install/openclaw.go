@@ -44,16 +44,16 @@ func (openClawAdapter) Plan(input AdapterInput) (Patch, error) {
 
 func validateOpenClawProfile(input AdapterInput) error {
 	if input.Target.Name != openclaw.TargetName || input.Target.Version != openclaw.TargetVersion {
-		return fmt.Errorf("OpenClaw install adapter requires exact target %s@%s", openclaw.TargetName, openclaw.TargetVersion)
+		return fmt.Errorf("openclaw install adapter requires exact target %s@%s", openclaw.TargetName, openclaw.TargetVersion)
 	}
 	if input.Profile.Permissions != nil {
-		return fmt.Errorf("OpenClaw permission requirements remain install-blocking")
+		return fmt.Errorf("openclaw permission requirements remain install-blocking")
 	}
 	if input.Profile.Tools != nil {
-		return fmt.Errorf("OpenClaw tool requirements remain install-blocking")
+		return fmt.Errorf("openclaw tool requirements remain install-blocking")
 	}
 	if len(input.Profile.Instructions) > 0 || len(input.Profile.Skills) > 0 || len(input.Resources) > 0 {
-		return fmt.Errorf("OpenClaw instruction and skill delivery remains install-blocking")
+		return fmt.Errorf("openclaw instruction and skill delivery remains install-blocking")
 	}
 	return nil
 }

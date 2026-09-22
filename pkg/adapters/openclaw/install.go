@@ -40,19 +40,19 @@ func PatchConfig(data []byte, route profilemango.RouteBinding) (ConfigPatch, err
 
 func installModel(route profilemango.RouteBinding) (string, error) {
 	if route.Transport != "native" {
-		return "", fmt.Errorf("OpenClaw install requires native transport")
+		return "", fmt.Errorf("openclaw install requires native transport")
 	}
 	if route.Authentication == "" {
-		return "", fmt.Errorf("OpenClaw install requires an authentication mode")
+		return "", fmt.Errorf("openclaw install requires an authentication mode")
 	}
 	if route.Provider == "" || route.Model == "" {
-		return "", fmt.Errorf("OpenClaw install requires provider and model")
+		return "", fmt.Errorf("openclaw install requires provider and model")
 	}
 	if strings.Contains(route.Provider, "/") || unsafeRoutePart(route.Provider) || unsafeRoutePart(route.Model) {
-		return "", fmt.Errorf("OpenClaw provider/model contains unsupported characters")
+		return "", fmt.Errorf("openclaw provider/model contains unsupported characters")
 	}
 	if !validInstallThinkingLevel(route.Effort) {
-		return "", fmt.Errorf("OpenClaw install rejects unsupported thinking level %q", route.Effort)
+		return "", fmt.Errorf("openclaw install rejects unsupported thinking level %q", route.Effort)
 	}
 	return route.Provider + "/" + route.Model, nil
 }
@@ -142,13 +142,13 @@ func newJSON5Scanner(data []byte) (*json5Scanner, error) {
 
 func validateJSON5Bytes(data []byte) error {
 	if len(data) == 0 {
-		return fmt.Errorf("OpenClaw config is empty")
+		return fmt.Errorf("openclaw config is empty")
 	}
 	if bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
-		return fmt.Errorf("OpenClaw config must be UTF-8 without a byte-order mark")
+		return fmt.Errorf("openclaw config must be UTF-8 without a byte-order mark")
 	}
 	if !utf8.Valid(data) {
-		return fmt.Errorf("OpenClaw config is not valid UTF-8")
+		return fmt.Errorf("openclaw config is not valid UTF-8")
 	}
 	return nil
 }
@@ -624,7 +624,7 @@ func patchObjects(data []byte, root *json5Object, model, thinking string) (Confi
 		return ConfigPatch{Content: builder.build(), AfterModel: model, AfterThinking: thinking}, nil
 	}
 	if agents.kind != valueObject {
-		return ConfigPatch{}, fmt.Errorf("OpenClaw agents must be an object")
+		return ConfigPatch{}, fmt.Errorf("openclaw agents must be an object")
 	}
 	defaults, found := agents.object.entries["defaults"]
 	if !found {
@@ -632,7 +632,7 @@ func patchObjects(data []byte, root *json5Object, model, thinking string) (Confi
 		return ConfigPatch{Content: builder.build(), AfterModel: model, AfterThinking: thinking}, nil
 	}
 	if defaults.kind != valueObject {
-		return ConfigPatch{}, fmt.Errorf("OpenClaw agents.defaults must be an object")
+		return ConfigPatch{}, fmt.Errorf("openclaw agents.defaults must be an object")
 	}
 	return patchDefaults(defaults.object, model, thinking, builder)
 }
@@ -660,7 +660,7 @@ func patchModel(defaults *json5Object, model string, builder *patchBuilder) (str
 		return value.stringValue, nil
 	}
 	if value.kind != valueObject {
-		return "", fmt.Errorf("OpenClaw agents.defaults.model must be an object or string")
+		return "", fmt.Errorf("openclaw agents.defaults.model must be an object or string")
 	}
 	primary, found := value.object.entries["primary"]
 	if !found {
@@ -668,7 +668,7 @@ func patchModel(defaults *json5Object, model string, builder *patchBuilder) (str
 		return "", nil
 	}
 	if primary.kind != valueString {
-		return "", fmt.Errorf("OpenClaw agents.defaults.model.primary must be a string")
+		return "", fmt.Errorf("openclaw agents.defaults.model.primary must be a string")
 	}
 	if primary.stringValue != model {
 		builder.replace(primary.start, primary.end, strconv.Quote(model))
@@ -683,10 +683,10 @@ func patchThinking(defaults *json5Object, thinking string, builder *patchBuilder
 		return "", nil
 	}
 	if value.kind != valueString {
-		return "", fmt.Errorf("OpenClaw agents.defaults.thinkingDefault must be a string")
+		return "", fmt.Errorf("openclaw agents.defaults.thinkingDefault must be a string")
 	}
 	if !validInstallThinkingLevel(value.stringValue) {
-		return "", fmt.Errorf("OpenClaw agents.defaults.thinkingDefault has unsupported value %q", value.stringValue)
+		return "", fmt.Errorf("openclaw agents.defaults.thinkingDefault has unsupported value %q", value.stringValue)
 	}
 	if value.stringValue != thinking {
 		builder.replace(value.start, value.end, strconv.Quote(thinking))
