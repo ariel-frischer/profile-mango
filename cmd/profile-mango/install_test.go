@@ -198,6 +198,14 @@ func TestWriteInstallPlanHumanFieldDiffs(t *testing.T) {
 			wantAbsent:           []string{"SECRET-before", "after\tvalue", "\x1b[31m", "config.\npath", "file\nname"},
 			preserveSensitiveRaw: true,
 		},
+		"normalized sensitive fields remain visible": {
+			plan: install.Plan{PlanID: "plan-safe", Status: install.StatusReady, Targets: []install.TargetPlan{{
+				Target: install.Target{Name: "safe", Version: "1"}, Status: install.StatusReady,
+				Fields: []install.FieldChange{{Path: "config.secret", Before: "<redacted>", After: "<redacted>", Sensitive: true}},
+			}}},
+			want:       []string{"field config.secret\n"},
+			wantAbsent: []string{" -> "},
+		},
 		"empty and noop fields do not invent changes": {
 			plan: install.Plan{PlanID: "plan-noop", Status: install.StatusNoop, Targets: []install.TargetPlan{{
 				Target: install.Target{Name: "same", Version: "1"}, Status: install.StatusNoop,

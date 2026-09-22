@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Cross-target inert preview acceptance, early experimental identity reporting, and race-safe no-replace staging
 - Quote the OpenCode JSONC model key after exact 1.18.31 native parsing rejected the prior candidate
 - Apply all selected installation targets in one filesystem transaction and reject altered recovery backups before restoring files.
+- Show sanitized field-level before/after changes in human install plans before consent, without changing JSON plan output.
 
 ## [0.0.1] - 2026-01-01
 

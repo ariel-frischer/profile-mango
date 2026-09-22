@@ -310,7 +310,7 @@ func writeHumanFields(output io.Writer, fields []install.FieldChange, indent str
 			continue
 		}
 		if field.Before == field.After {
-			if field.Before == "" && showEmpty {
+			if (field.Before == "" || field.Sensitive) && showEmpty {
 				if _, err := fmt.Fprintf(output, "%sfield %s\n", indent, humanPath(field.Path)); err != nil {
 					return err
 				}
