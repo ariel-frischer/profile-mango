@@ -106,7 +106,7 @@ func TestInstallConsentRequiresTerminalOrHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer devNull.Close()
+	defer func() { _ = devNull.Close() }()
 	if terminalInput(devNull) {
 		t.Fatal("/dev/null was accepted as terminal consent")
 	}

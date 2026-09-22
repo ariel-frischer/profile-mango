@@ -78,13 +78,13 @@ func inspectSettings(data []byte) (settingsScan, error) {
 	}
 	rootOpen := skipJSONSpace(data, 0)
 	if rootOpen >= len(data) || data[rootOpen] != '{' {
-		return settingsScan{}, fmt.Errorf("Claude Code settings must be a top-level JSON object")
+		return settingsScan{}, fmt.Errorf("claude code settings must be a top-level JSON object")
 	}
 	scanner := settingsScanner{data: data, dec: json.NewDecoder(bytes.NewReader(data))}
 	scanner.dec.UseNumber()
 	token, err := scanner.dec.Token()
 	if err != nil || token != json.Delim('{') {
-		return settingsScan{}, fmt.Errorf("Claude Code settings must be a top-level JSON object")
+		return settingsScan{}, fmt.Errorf("claude code settings must be a top-level JSON object")
 	}
 	scanner.scan.rootOpen = rootOpen
 	if err := scanner.object(true); err != nil {
@@ -101,16 +101,16 @@ func inspectSettings(data []byte) (settingsScan, error) {
 
 func validateSettingsBytes(data []byte) error {
 	if len(data) == 0 {
-		return fmt.Errorf("Claude Code settings are empty")
+		return fmt.Errorf("claude code settings are empty")
 	}
 	if bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
-		return fmt.Errorf("Claude Code settings must be UTF-8 without a byte-order mark")
+		return fmt.Errorf("claude code settings must be UTF-8 without a byte-order mark")
 	}
 	if !utf8.Valid(data) {
-		return fmt.Errorf("Claude Code settings are not valid UTF-8")
+		return fmt.Errorf("claude code settings are not valid UTF-8")
 	}
 	if !json.Valid(data) {
-		return fmt.Errorf("Claude Code settings are not valid JSON")
+		return fmt.Errorf("claude code settings are not valid JSON")
 	}
 	return nil
 }
@@ -137,7 +137,7 @@ func (scanner *settingsScanner) object(top bool) error {
 	}
 	token, err := scanner.dec.Token()
 	if err != nil || token != json.Delim('}') {
-		return fmt.Errorf("Claude Code settings object is not closed")
+		return fmt.Errorf("claude code settings object is not closed")
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func (scanner *settingsScanner) objectKey(keys map[string]struct{}) (string, err
 	}
 	key, ok := token.(string)
 	if !ok {
-		return "", fmt.Errorf("Claude Code settings object key is not a string")
+		return "", fmt.Errorf("claude code settings object key is not a string")
 	}
 	if _, found := keys[key]; found {
 		return "", fmt.Errorf("duplicate Claude Code settings key %q", key)
@@ -169,7 +169,7 @@ func (scanner *settingsScanner) modelValue() error {
 	}
 	value, ok := token.(string)
 	if !ok {
-		return fmt.Errorf("Claude Code settings model must be a string")
+		return fmt.Errorf("claude code settings model must be a string")
 	}
 	scanner.scan.model = &modelSpan{start: start, end: int(scanner.dec.InputOffset()), value: value}
 	return nil
@@ -178,11 +178,11 @@ func (scanner *settingsScanner) modelValue() error {
 func (scanner *settingsScanner) valueStart() (int, error) {
 	pos := skipJSONSpace(scanner.data, int(scanner.dec.InputOffset()))
 	if pos >= len(scanner.data) || scanner.data[pos] != ':' {
-		return 0, fmt.Errorf("Claude Code settings key is missing a colon")
+		return 0, fmt.Errorf("claude code settings key is missing a colon")
 	}
 	pos = skipJSONSpace(scanner.data, pos+1)
 	if pos >= len(scanner.data) {
-		return 0, fmt.Errorf("Claude Code settings value is missing")
+		return 0, fmt.Errorf("claude code settings value is missing")
 	}
 	return pos, nil
 }
@@ -214,40 +214,40 @@ func (scanner *settingsScanner) array() error {
 	}
 	token, err := scanner.dec.Token()
 	if err != nil || token != json.Delim(']') {
-		return fmt.Errorf("Claude Code settings array is not closed")
+		return fmt.Errorf("claude code settings array is not closed")
 	}
 	return nil
 }
 
 func validateInstallRoute(route profilemango.RouteBinding) (string, error) {
 	if route.Provider != "anthropic" {
-		return "", fmt.Errorf("Claude Code model install requires provider anthropic")
+		return "", fmt.Errorf("claude code model install requires provider anthropic")
 	}
 	if route.Transport != "native" {
-		return "", fmt.Errorf("Claude Code model install requires native transport")
+		return "", fmt.Errorf("claude code model install requires native transport")
 	}
 	if route.Authentication == "" {
-		return "", fmt.Errorf("Claude Code model install requires an authentication mode")
+		return "", fmt.Errorf("claude code model install requires an authentication mode")
 	}
 	if !validEffort(route.Effort) {
-		return "", fmt.Errorf("Claude Code model install rejects unsupported effort %q", route.Effort)
+		return "", fmt.Errorf("claude code model install rejects unsupported effort %q", route.Effort)
 	}
 	if err := validateModelValue(route.Model); err != nil {
-		return "", fmt.Errorf("Claude Code model install: %w", err)
+		return "", fmt.Errorf("claude code model install: %w", err)
 	}
 	return route.Model, nil
 }
 
 func validateModelValue(value string) error {
 	if value == "" || strings.TrimSpace(value) != value {
-		return fmt.Errorf("Claude Code model must be a non-empty string without surrounding whitespace")
+		return fmt.Errorf("claude code model must be a non-empty string without surrounding whitespace")
 	}
 	if !utf8.ValidString(value) {
-		return fmt.Errorf("Claude Code model is not valid UTF-8")
+		return fmt.Errorf("claude code model is not valid UTF-8")
 	}
 	for _, character := range value {
 		if character < 0x20 {
-			return fmt.Errorf("Claude Code model contains an unsafe control character")
+			return fmt.Errorf("claude code model contains an unsafe control character")
 		}
 	}
 	return nil

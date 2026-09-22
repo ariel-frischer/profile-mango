@@ -40,19 +40,19 @@ func (claudeCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 
 func validateClaudeCodeProfile(input AdapterInput) error {
 	if input.Target.Name != claudecode.TargetName || input.Target.Version != claudecode.TargetVersion {
-		return fmt.Errorf("Claude Code install adapter requires exact target %s@%s", claudecode.TargetName, claudecode.TargetVersion)
+		return fmt.Errorf("claude code install adapter requires exact target %s@%s", claudecode.TargetName, claudecode.TargetVersion)
 	}
 	if input.Config.Exists && len(input.Config.Content) == 0 {
-		return fmt.Errorf("Claude Code settings file is empty")
+		return fmt.Errorf("claude code settings file is empty")
 	}
 	if input.Profile.Permissions != nil {
-		return fmt.Errorf("Claude Code permission requirements remain install-blocking")
+		return fmt.Errorf("claude code permission requirements remain install-blocking")
 	}
 	if input.Profile.Tools != nil {
-		return fmt.Errorf("Claude Code tool requirements remain install-blocking")
+		return fmt.Errorf("claude code tool requirements remain install-blocking")
 	}
 	if len(input.Profile.Instructions) > 0 || len(input.Profile.Skills) > 0 || len(input.Resources) > 0 {
-		return fmt.Errorf("Claude Code instruction and skill delivery remains install-blocking")
+		return fmt.Errorf("claude code instruction and skill delivery remains install-blocking")
 	}
 	return nil
 }

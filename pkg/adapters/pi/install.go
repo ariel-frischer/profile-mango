@@ -75,7 +75,7 @@ func PatchSettings(data []byte, exists bool, route profilemango.RouteBinding) (S
 // ValidateInstallRoute checks the route subset represented by Pi settings.
 func ValidateInstallRoute(route profilemango.RouteBinding) error {
 	if route.Transport != "native" {
-		return fmt.Errorf("Pi settings install requires native transport")
+		return fmt.Errorf("pi settings install requires native transport")
 	}
 	for _, field := range []struct {
 		name  string
@@ -86,17 +86,17 @@ func ValidateInstallRoute(route profilemango.RouteBinding) error {
 		{name: "effort", value: route.Effort},
 	} {
 		if field.value == "" {
-			return fmt.Errorf("Pi settings install requires route %s", field.name)
+			return fmt.Errorf("pi settings install requires route %s", field.name)
 		}
 		if strings.TrimSpace(field.value) != field.value || !utf8.ValidString(field.value) || hasControl(field.value) {
-			return fmt.Errorf("Pi route %s contains unsupported characters", field.name)
+			return fmt.Errorf("pi route %s contains unsupported characters", field.name)
 		}
 	}
 	if route.Authentication == "" {
-		return fmt.Errorf("Pi settings install requires an authentication mode")
+		return fmt.Errorf("pi settings install requires an authentication mode")
 	}
 	if !validThinkingLevel(route.Effort) {
-		return fmt.Errorf("Pi settings install rejects unsupported thinking level %q", route.Effort)
+		return fmt.Errorf("pi settings install rejects unsupported thinking level %q", route.Effort)
 	}
 	return nil
 }
@@ -170,7 +170,7 @@ func patchExistingSettings(data []byte, object settingsObject, desired map[strin
 
 func settingString(data []byte, span jsonSpan, name string) (string, error) {
 	if span.start >= span.end || data[span.start] != '"' {
-		return "", fmt.Errorf("Pi setting %q must be a string", name)
+		return "", fmt.Errorf("pi setting %q must be a string", name)
 	}
 	var value string
 	if err := json.Unmarshal(data[span.start:span.end], &value); err != nil {
@@ -198,14 +198,14 @@ func parseSettingsObject(data []byte) (settingsObject, error) {
 		data = data[offset:]
 	}
 	if len(data) == 0 || !utf8.Valid(data) || !json.Valid(data) {
-		return settingsObject{}, fmt.Errorf("Pi settings must be valid UTF-8 JSON")
+		return settingsObject{}, fmt.Errorf("pi settings must be valid UTF-8 JSON")
 	}
 	if err := validateUniqueJSONKeys(data); err != nil {
 		return settingsObject{}, err
 	}
 	position := skipJSONSpace(data, 0)
 	if position >= len(data) || data[position] != '{' {
-		return settingsObject{}, fmt.Errorf("Pi settings must be a top-level JSON object")
+		return settingsObject{}, fmt.Errorf("pi settings must be a top-level JSON object")
 	}
 	object := settingsObject{rootOpen: position + offset, offset: offset, fields: make(map[string]jsonSpan)}
 	position++
@@ -242,7 +242,7 @@ func validateUniqueJSONKeys(data []byte) error {
 					return fmt.Errorf("scan Pi settings JSON: object key is not a string")
 				}
 				if _, found := object.keys[key]; found {
-					return fmt.Errorf("Pi settings contain duplicate key %q", key)
+					return fmt.Errorf("pi settings contain duplicate key %q", key)
 				}
 				object.keys[key] = struct{}{}
 				object.expectKey = false
@@ -273,7 +273,7 @@ func parseSettingsEntries(data []byte, position int, object settingsObject) (set
 			return object, nil
 		}
 		if position >= len(data) || data[position] != ',' {
-			return settingsObject{}, fmt.Errorf("Pi settings expected comma or object close")
+			return settingsObject{}, fmt.Errorf("pi settings expected comma or object close")
 		}
 		position = skipJSONSpace(data, position+1)
 	}
@@ -285,11 +285,11 @@ func parseSettingsEntry(data []byte, position int, object *settingsObject) (int,
 		return 0, err
 	}
 	if _, found := object.fields[key]; found {
-		return 0, fmt.Errorf("Pi settings contain duplicate key %q", key)
+		return 0, fmt.Errorf("pi settings contain duplicate key %q", key)
 	}
 	position = skipJSONSpace(data, next)
 	if position >= len(data) || data[position] != ':' {
-		return 0, fmt.Errorf("Pi settings missing colon after %q", key)
+		return 0, fmt.Errorf("pi settings missing colon after %q", key)
 	}
 	position = skipJSONSpace(data, position+1)
 	span, next, err := parseJSONValue(data, position)
@@ -303,7 +303,7 @@ func parseSettingsEntry(data []byte, position int, object *settingsObject) (int,
 
 func parseJSONString(data []byte, start int) (string, int, error) {
 	if start >= len(data) || data[start] != '"' {
-		return "", 0, fmt.Errorf("Pi settings object key must be a quoted string")
+		return "", 0, fmt.Errorf("pi settings object key must be a quoted string")
 	}
 	for position := start + 1; position < len(data); position++ {
 		switch data[position] {
@@ -317,7 +317,7 @@ func parseJSONString(data []byte, start int) (string, int, error) {
 			return value, position + 1, nil
 		}
 	}
-	return "", 0, fmt.Errorf("Pi settings contain an unterminated string")
+	return "", 0, fmt.Errorf("pi settings contain an unterminated string")
 }
 
 func parseJSONValue(data []byte, start int) (jsonSpan, int, error) {
@@ -328,7 +328,7 @@ func parseJSONValue(data []byte, start int) (jsonSpan, int, error) {
 	}
 	end := start + int(decoder.InputOffset())
 	if end <= start {
-		return jsonSpan{}, 0, fmt.Errorf("Pi settings value is empty")
+		return jsonSpan{}, 0, fmt.Errorf("pi settings value is empty")
 	}
 	return jsonSpan{start: start, end: end}, end, nil
 }

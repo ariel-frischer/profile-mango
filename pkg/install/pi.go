@@ -50,24 +50,24 @@ func validatePiProfile(input AdapterInput) error {
 		return err
 	}
 	if input.Profile.Permissions != nil {
-		return fmt.Errorf("Pi permission requirements remain install-blocking")
+		return fmt.Errorf("pi permission requirements remain install-blocking")
 	}
 	if input.Profile.Tools != nil {
-		return fmt.Errorf("Pi tool requirements remain install-blocking")
+		return fmt.Errorf("pi tool requirements remain install-blocking")
 	}
 	return validatePiDelivery(input)
 }
 
 func validatePiTarget(target Target) error {
 	if target.Name != pi.TargetName || target.Version != pi.TargetVersion {
-		return fmt.Errorf("Pi install adapter requires exact target %s@%s", pi.TargetName, pi.TargetVersion)
+		return fmt.Errorf("pi install adapter requires exact target %s@%s", pi.TargetName, pi.TargetVersion)
 	}
 	return nil
 }
 
 func validatePiDelivery(input AdapterInput) error {
 	if len(input.Profile.Instructions) > 0 || len(input.Profile.Skills) > 0 || len(input.Resources) > 0 {
-		return fmt.Errorf("Pi instruction and skill delivery remains install-blocking")
+		return fmt.Errorf("pi instruction and skill delivery remains install-blocking")
 	}
 	return nil
 }
