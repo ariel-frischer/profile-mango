@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -53,6 +54,31 @@ func TestNativeSourceSandboxIsolated(t *testing.T) {
 		if hasArgument(args, forbidden) {
 			t.Fatalf("sandbox exposes forbidden host surface %q: %#v", forbidden, args)
 		}
+	}
+}
+
+func TestNativeSourceOutputChecks(t *testing.T) {
+	tests := map[string]struct {
+		output string
+		check  func(*testing.T, string)
+	}{
+		"positive": {
+			output: "running 1 test\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
+			check:  assertNativeSourcePositiveOutput,
+		},
+		"negative": {
+			output: "running 1 test\nassertion `left == right` failed\n  left: Some(\"profile-mango-dynamic-model\")\n right: Some(\"gpt-5.6\")\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
+			check:  assertNativeSourceNegativeOutput,
+		},
+		"negative ANSI output": {
+			output: "running 1 test\nassertion `left == right` failed\n  left: Some(\"p\x1b[31mrofile\x1b[0m-\x1b[31mmango-dynamic-model\x1b[0m\")\n right: Some(\"g\x1b[32mpt-5.6\x1b[0m\")\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
+			check:  assertNativeSourceNegativeOutput,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			test.check(t, test.output)
+		})
 	}
 }
 
@@ -116,6 +142,10 @@ func runNativeSourceNegative(t *testing.T, root, binary, logPath string) {
 	if err == nil {
 		t.Fatalf("source probe ignored runtime fixture replacement: output=%s", output)
 	}
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) {
+		t.Fatalf("negative source probe failed during setup: err=%v output=%s", err, output)
+	}
 	assertNativeSourceNegativeOutput(t, output)
 }
 
@@ -129,23 +159,56 @@ func writeNativeSourceLog(t *testing.T, path, output string) {
 
 func assertNativeSourcePositiveOutput(t *testing.T, output string) {
 	t.Helper()
-	rejectNativeSourceProbeErrors(t, output)
-	for _, marker := range []string{"running 1 test", "1 passed; 0 failed"} {
-		if !strings.Contains(output, marker) {
-			t.Fatalf("positive source probe output missing %q: %s", marker, output)
-		}
-	}
+	normalized := stripANSISequences(output)
+	rejectNativeSourceProbeErrors(t, normalized)
+	assertNativeSourceSummary(t, normalized, "ok", 1, 0)
 }
 
 func assertNativeSourceNegativeOutput(t *testing.T, output string) {
 	t.Helper()
-	rejectNativeSourceProbeErrors(t, output)
-	for _, marker := range []string{
-		"running 1 test", "test result: FAILED", "1 failed", "assertion", nativeDynamicModel,
-	} {
-		if !strings.Contains(output, marker) {
+	normalized := stripANSISequences(output)
+	rejectNativeSourceProbeErrors(t, normalized)
+	assertNativeSourceSummary(t, normalized, "FAILED", 0, 1)
+	for _, marker := range []string{"assertion `left == right` failed", nativeDynamicModel, `"gpt-5.6"`} {
+		if !strings.Contains(normalized, marker) {
 			t.Fatalf("negative source probe output missing %q: %s", marker, output)
 		}
+	}
+}
+
+func stripANSISequences(output string) string {
+	var builder strings.Builder
+	for index := 0; index < len(output); index++ {
+		if output[index] != 0x1b || index+1 >= len(output) || output[index+1] != '[' {
+			builder.WriteByte(output[index])
+			continue
+		}
+		index += 2
+		for index < len(output) && (output[index] < 0x40 || output[index] > 0x7e) {
+			index++
+		}
+	}
+	return builder.String()
+}
+
+func assertNativeSourceSummary(t *testing.T, output, status string, passed, failed int) {
+	t.Helper()
+	if strings.Count(output, "running 1 test") != 1 {
+		t.Fatalf("source probe did not run exactly one test: %s", output)
+	}
+	summary := ""
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "test result: ") {
+			if summary != "" {
+				t.Fatalf("source probe emitted multiple summaries: %s", output)
+			}
+			summary = line
+		}
+	}
+	want := fmt.Sprintf("test result: %s. %d passed; %d failed;", status, passed, failed)
+	if !strings.HasPrefix(summary, want) {
+		t.Fatalf("source probe summary = %q, want prefix %q", summary, want)
 	}
 }
 

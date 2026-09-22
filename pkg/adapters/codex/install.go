@@ -300,7 +300,34 @@ func nonEmptyTableName(raw string) (string, error) {
 	if name == "" {
 		return "", fmt.Errorf("invalid Codex TOML table header")
 	}
+	if err := validateDottedConfigPath(name); err != nil {
+		return "", err
+	}
 	return name, nil
+}
+
+func validateDottedConfigPath(path string) error {
+	if !strings.Contains(path, ".") {
+		return nil
+	}
+	for _, component := range strings.Split(path, ".") {
+		if !validBareConfigComponent(component) {
+			return fmt.Errorf("ambiguous Codex TOML dotted path %q; only bare components are supported", path)
+		}
+	}
+	return nil
+}
+
+func validBareConfigComponent(component string) bool {
+	if component == "" || strings.TrimSpace(component) != component {
+		return false
+	}
+	for _, character := range component {
+		if !((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '_' || character == '-') {
+			return false
+		}
+	}
+	return true
 }
 
 func stripComment(line []byte) []byte {
@@ -387,6 +414,9 @@ func normalizeKey(raw []byte) (string, error) {
 		return "", fmt.Errorf("Codex TOML key is empty")
 	}
 	if strings.Contains(key, ".") {
+		if err := validateDottedConfigPath(key); err != nil {
+			return "", err
+		}
 		return key, nil
 	}
 	if len(key) >= 2 && key[0] == '"' && key[len(key)-1] == '"' {

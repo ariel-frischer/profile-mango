@@ -106,19 +106,40 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 }
 
 func TestPatchConfigRejectsProviderShadowState(t *testing.T) {
-	tests := map[string]string{
-		"table":              "[model_providers.openai]\nmodel = \"nested\"\n",
-		"quoted":             "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
-		"dotted":             "model_providers.openai.name = \"shadow\"\n",
-		"provider namespace": "[model_providers]\nopenai = { name = \"shadow\" }\n",
-		"quoted components":  "[\"model_providers\".\"openai\"]\nmodel = \"nested\"\n",
-		"spaced components":  "model_providers . openai . name = \"shadow\"\n",
+	tests := map[string]struct {
+		source string
+		want   string
+	}{
+		"table": {
+			source: "[model_providers.openai]\nmodel = \"nested\"\n",
+			want:   "provider override state",
+		},
+		"quoted": {
+			source: "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
+			want:   "ambiguous",
+		},
+		"dotted": {
+			source: "model_providers.openai.name = \"shadow\"\n",
+			want:   "provider override state",
+		},
+		"provider namespace": {
+			source: "[model_providers]\nopenai = { name = \"shadow\" }\n",
+			want:   "provider override state",
+		},
+		"quoted components": {
+			source: "[\"model_providers\".\"openai\"]\nmodel = \"nested\"\n",
+			want:   "ambiguous",
+		},
+		"spaced components": {
+			source: "model_providers . openai . name = \"shadow\"\n",
+			want:   "ambiguous",
+		},
 	}
 	for name, source := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := PatchConfig([]byte(source), installRoute())
-			if err == nil || !strings.Contains(err.Error(), "provider override state") {
-				t.Fatalf("provider shadow was accepted: %v", err)
+			_, err := PatchConfig([]byte(source.source), installRoute())
+			if err == nil || !strings.Contains(err.Error(), source.want) {
+				t.Fatalf("provider shadow result = %v, want %q", err, source.want)
 			}
 		})
 	}
@@ -154,11 +175,11 @@ func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
 		},
 		"quoted profile definition": {
 			source: "[\"profiles\".foo]\nmodel = \"profile-model\"\n",
-			want:   "profile selection or definitions",
+			want:   "ambiguous",
 		},
 		"spaced profile definition": {
 			source: "profiles . work = { model = \"profile-model\" }\n",
-			want:   "profile selection or definitions",
+			want:   "ambiguous",
 		},
 		"inline provider map": {
 			source: "model_providers = { openai = { name = \"shadow\" } }\n",
