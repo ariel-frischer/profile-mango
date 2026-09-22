@@ -75,14 +75,16 @@ for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `model.provider`, `model.default`, and `agent.reasoning_effort`. OpenCode emits only
 the exact-release JSONC `model` field in `provider/model` form. The exact `1.18.31`
 binary accepted the corrected candidate and emitted it in merged configuration;
-full precedence/provenance, effort, authentication, delivery, installation, and
-enforcement remain blocked. None of these adapters claims native applicability,
-installs output into a production target, reads a target home, accesses credentials,
-starts a session, calls a provider, or uses a network connection during ordinary
-render/install operation. The separate OpenCode developer probe is explicit,
-network-blocked, scratch-only, non-TUI, and restores its independent backup. The
-install engine is exercised with fake adapters and synthetic temporary files only;
-every production adapter remains install-blocked.
+full precedence/provenance, effort, authentication, delivery, and enforcement
+remain blocked. The renderers do not install output into a production target,
+read a target home, access credentials, start a session, call a provider, or use
+a network connection. The separate OpenCode developer probe is explicit,
+network-blocked, scratch-only, non-TUI, and restores its independent backup.
+The shared install engine additionally supports lossless application of only the
+OpenCode top-level `model` field at one explicit path, with destination-bound
+consent and transactional backups/recovery tested against disposable state.
+Every other production adapter remains install-blocked pending native evidence.
+See [shared architecture](../architecture.md) for install/CLI ownership.
 
 The Ariel renderer uses only the exact retained synthetic profile-resolution
 evidence for provider/model/effort, closed tool selectors, empty-skill mode,

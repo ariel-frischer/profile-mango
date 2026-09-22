@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI formatting checks inspect tracked Go sources without scanning the restored module cache
 - Cross-target inert preview acceptance, early experimental identity reporting, and race-safe no-replace staging
 - Quote the OpenCode JSONC model key after exact 1.18.31 native parsing rejected the prior candidate
+- Apply all selected installation targets in one filesystem transaction and reject altered recovery backups before restoring files.
 
 ## [0.0.1] - 2026-01-01
 
