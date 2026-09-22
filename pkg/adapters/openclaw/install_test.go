@@ -125,3 +125,18 @@ func TestPatchConfigRejectsUnsafeRouteParts(t *testing.T) {
 func installTestRoute() profilemango.RouteBinding {
 	return profilemango.RouteBinding{Provider: "openai", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "high"}
 }
+
+func TestPatchConfigRejectsAmbiguousEscapes(t *testing.T) {
+	tests := map[string]struct{ source string }{
+		"hex duplicate":         {`{"\xE9":1,"é":2}`},
+		"unsupported surrogate": {`{"\uD800":1}`},
+		"decimal escape":        {`{"value":"\01"}`},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			if _, err := PatchConfig([]byte(test.source), installTestRoute()); err == nil {
+				t.Fatal("ambiguous or invalid escape was accepted")
+			}
+		})
+	}
+}
