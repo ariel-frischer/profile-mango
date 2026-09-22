@@ -10,14 +10,14 @@ These profiles model common named-agent workflows without copying or reading any
 The binding is an example route identity only. It contains no credentials. Validate a profile with:
 
 ```bash
-profile-mango validate examples/jcode-like/profiles/daily/profile.yaml \
+mango validate examples/jcode-like/profiles/daily/profile.yaml \
   --bindings examples/jcode-like/bindings/local.example.yaml --json
 ```
 
 Render commands must use all three explicit project inputs:
 
 ```bash
-profile-mango render daily \
+mango render daily \
   --profiles examples/jcode-like/profiles \
   --resource-root examples/jcode-like \
   --bindings examples/jcode-like/bindings/local.example.yaml \

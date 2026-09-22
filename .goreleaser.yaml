@@ -5,8 +5,8 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/profile-mango/
-    binary: profile-mango
+  - main: ./cmd/mango/
+    binary: mango
     ldflags:
       - -s -w
       - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Version={{.Version}}

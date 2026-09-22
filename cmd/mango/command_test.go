@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 )
 
@@ -19,10 +20,11 @@ func executeCommand(t *testing.T, args ...string) string {
 	resetHomeFlag()
 	resetColorFlag()
 	resetNonInteractiveFlag()
+	resetHelpFlags(rootCmd)
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
+		t.Fatalf("mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
 }
@@ -51,12 +53,98 @@ func resetNonInteractiveFlag() {
 	}
 }
 
+func resetHelpFlags(command *cobra.Command) {
+	if flag := command.Flags().Lookup("help"); flag != nil {
+		_ = flag.Value.Set("false")
+		flag.Changed = false
+	}
+	if flag := command.PersistentFlags().Lookup("help"); flag != nil {
+		_ = flag.Value.Set("false")
+		flag.Changed = false
+	}
+	for _, child := range command.Commands() {
+		resetHelpFlags(child)
+	}
+}
+
 func TestVersionCommandSmoke(t *testing.T) {
 	executeCommand(t, "version")
 }
 
 func TestVersionAliasSmoke(t *testing.T) {
-	executeCommand(t, "v")
+	executeCommand(t, "ver")
+}
+
+func TestRootCommandUsesMangoIdentity(t *testing.T) {
+	if rootCmd.Use != "mango" {
+		t.Fatalf("root command use = %q, want mango", rootCmd.Use)
+	}
+}
+
+func TestCommandAliasesResolveAndRenderHelp(t *testing.T) {
+	tests := map[string]struct {
+		path  []string
+		alias string
+	}{
+		"validate":     {path: []string{"validate"}, alias: "v"},
+		"version":      {path: []string{"version"}, alias: "ver"},
+		"home":         {path: []string{"home"}, alias: "h"},
+		"init":         {path: []string{"init"}, alias: "new"},
+		"agents":       {path: []string{"agents"}, alias: "a"},
+		"agents check": {path: []string{"agents", "check"}, alias: "c"},
+		"render":       {path: []string{"render"}, alias: "r"},
+		"install":      {path: []string{"install"}, alias: "i"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			command := commandAtPath(t, test.path...)
+			if !containsString(command.Aliases, test.alias) {
+				t.Fatalf("%s aliases = %v, want %q", strings.Join(test.path, " "), command.Aliases, test.alias)
+			}
+			findPath := append(append([]string{}, test.path[:len(test.path)-1]...), test.alias)
+			found, _, err := rootCmd.Find(findPath)
+			if err != nil {
+				t.Fatalf("find alias %q: %v", strings.Join(findPath, " "), err)
+			}
+			if found != command {
+				t.Fatalf("alias %q resolved to %s, want %s", test.alias, found.CommandPath(), command.CommandPath())
+			}
+
+			args := append(findPath, "--help")
+			output := executeCommand(t, args...)
+			if !strings.Contains(output, "Aliases:") || !strings.Contains(output, test.alias) {
+				t.Fatalf("help for alias %q omitted alias listing:\n%s", test.alias, output)
+			}
+		})
+	}
+}
+
+func commandAtPath(t *testing.T, path ...string) *cobra.Command {
+	t.Helper()
+	command := rootCmd
+	for _, name := range path {
+		var found *cobra.Command
+		for _, candidate := range command.Commands() {
+			if candidate.Name() == name {
+				found = candidate
+				break
+			}
+		}
+		if found == nil {
+			t.Fatalf("command %q not found below %s", name, command.CommandPath())
+		}
+		command = found
+	}
+	return command
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func TestHelpCommandSmoke(t *testing.T) {
@@ -98,7 +186,7 @@ func TestNonInteractiveFlagIsGlobal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("non-interactive version failed: %v", err)
 	}
-	if !strings.Contains(output, "profile-mango ") {
+	if !strings.Contains(output, "mango ") {
 		t.Fatalf("version output = %q", output)
 	}
 }

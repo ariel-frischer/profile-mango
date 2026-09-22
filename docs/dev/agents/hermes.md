@@ -61,7 +61,7 @@ of those effects before execution.
 
 ## Inert preview boundary
 
-`profile-mango render <name> --target hermes --target-version 0.21.3` emits a
+`mango render <name> --target hermes --target-version 0.21.3` emits a
 deterministic `preview/<name>.config.yaml.preview` candidate through the
 versioned render report. Its source-grounded YAML fields are `model.provider`,
 `model.default`, and `agent.reasoning_effort`. It never copies authentication

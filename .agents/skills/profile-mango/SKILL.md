@@ -1,7 +1,7 @@
 ---
 name: profile-mango
 description: >
-  Use the profile-mango CLI to scaffold, author, validate, and inspect portable
+  Use the mango CLI to scaffold, author, validate, and inspect portable
   coding-agent profiles and machine-local route bindings. Use when working with
   PolicyProfile YAML, local bindings, offline validation, or inert target
   previews. Preserve its fail-closed safety and evidence boundaries.
@@ -28,20 +28,20 @@ explicitly inert target previews without modifying an agent's configuration.
 ## Check the CLI
 
 ```bash
-profile-mango version
-profile-mango --help
+mango version
+mango --help
 ```
 
-The skill is guidance. The `profile-mango` binary must be installed separately.
+The skill is guidance. The `mango` binary must be installed separately.
 
 ## Core workflow
 
 Choose one package location:
 
 ```bash
-profile-mango init                  # global package at ~/.profile-mango
-profile-mango init .                # explicit package in the current directory
-profile-mango init ./agent-profiles # explicit package in a new directory
+mango init                  # global package at ~/.profile-mango
+mango init .                # explicit package in the current directory
+mango init ./agent-profiles # explicit package in a new directory
 ```
 
 `init` creates only absent paths and refuses to overwrite existing files:
@@ -58,7 +58,7 @@ the starter profile:
 ```bash
 cp ~/.profile-mango/bindings/local.example.yaml \
    ~/.profile-mango/bindings/local.yaml
-profile-mango validate ~/.profile-mango/profiles/default/profile.yaml \
+mango validate ~/.profile-mango/profiles/default/profile.yaml \
   --bindings ~/.profile-mango/bindings/local.yaml
 ```
 
@@ -66,7 +66,7 @@ For an explicit project package, run the same workflow relative to its root:
 
 ```bash
 cp bindings/local.example.yaml bindings/local.yaml
-profile-mango validate profiles/default/profile.yaml \
+mango validate profiles/default/profile.yaml \
   --bindings bindings/local.yaml
 ```
 
@@ -134,7 +134,7 @@ or apply target configuration. Use an exact documented target version and pass
 all three project input flags together:
 
 ```bash
-profile-mango render <profile-name> \
+mango render <profile-name> \
   --profiles ./profiles \
   --resource-root . \
   --bindings ./bindings/local.yaml \
@@ -162,7 +162,7 @@ OpenCode requires exact version `1.18.31`, a route-only or single-skill profile,
 and one explicit config path. Plan first against synthetic or separately approved disposable state:
 
 ```bash
-profile-mango install <profile-name> \
+mango install <profile-name> \
   --profiles ./profiles \
   --resource-root . \
   --bindings ./bindings/local.yaml \
@@ -199,7 +199,7 @@ its blocked plan and exits nonzero. Check exit status even when JSON is present.
 - `scripts/opencode-config-probe.sh` is an opt-in exact-binary developer probe. Run
   it only with explicit authorization, synthetic scratch state, blocked network,
   no TUI/session/provider credentials, and retained backup/restore evidence.
-- `profile-mango agents check` is separate: it performs an explicit network drift
+- `mango agents check` is separate: it performs an explicit network drift
   check against documented sources. Do not run it when offline operation is
   required.
 - Unknown or unsupported target behavior remains a blocker, not an invitation to
@@ -210,7 +210,7 @@ its blocked plan and exits nonzero. Check exit status even when JSON is present.
 ```bash
 git clone git@gitlab.com:ariel-frischer/profile-mango.git
 cd profile-mango
+make deps
 make install
-make install-global
-profile-mango version
+mango version
 ```

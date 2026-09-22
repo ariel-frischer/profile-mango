@@ -14,7 +14,8 @@
 
 set -eu
 
-BINARY_NAME="profile-mango"
+BINARY_NAME="mango"
+RELEASE_NAME="profile-mango"
 GITLAB_REPO="ariel-frischer/profile-mango"
 if [ -n "${HOME:-}" ]; then
     DEFAULT_INSTALL_DIR="${HOME}/.local/bin"
@@ -160,7 +161,7 @@ trim_trailing_slashes() {
 }
 
 archive_name_for() {
-    printf '%s_%s_%s_%s.tar.gz\n' "$BINARY_NAME" "$1" "$2" "$3"
+    printf '%s_%s_%s_%s.tar.gz\n' "$RELEASE_NAME" "$1" "$2" "$3"
 }
 
 checksum_entry() {

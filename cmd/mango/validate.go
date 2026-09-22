@@ -13,9 +13,10 @@ func newValidateCmd() *cobra.Command {
 	var bindingsPath string
 	var jsonOutput bool
 	cmd := &cobra.Command{
-		Use:   "validate <profile.yaml>",
-		Short: "Validate one PolicyProfile without accessing agent homes or the network",
-		Args:  cobra.ExactArgs(1),
+		Use:     "validate <profile.yaml>",
+		Aliases: []string{"v"},
+		Short:   "Validate one PolicyProfile without accessing agent homes or the network",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			profileData, err := os.ReadFile(args[0])
 			if err != nil {

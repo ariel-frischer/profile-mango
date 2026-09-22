@@ -207,7 +207,7 @@ From the repository root, run the read-only check when reviewing upstream change
 ```bash
 make check-agent-sources
 # or select one target and request structured output
-go run ./cmd/profile-mango agents check --target codex --json
+go run ./cmd/mango agents check --target codex --json
 ```
 
 The command reads [`agents/sources.json`](agents/sources.json), fetches only

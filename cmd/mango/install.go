@@ -39,6 +39,7 @@ func newInstallCmd() *cobra.Command {
 	var options installOptions
 	cmd := &cobra.Command{
 		Use:          "install <profile>",
+		Aliases:      []string{"i"},
 		Short:        "Plan a bounded target installation; apply only with explicit hash-bound consent",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,

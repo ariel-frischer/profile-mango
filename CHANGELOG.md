@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - GitLab pipelines now run only when a human starts them from the web UI
 - Human-readable CLI output now uses semantic terminal colors with automatic non-TTY suppression and --no-color/NO_COLOR opt-outs, while JSON, completion, and path output remain ANSI-free
 - Add global --non-interactive consent handling and emit one JSON apply report instead of a concatenated plan/report stream.
+- Renamed the installed executable and user-facing CLI command to mango while preserving profile-mango project, module, home, and environment identities
 
 ### Removed
 

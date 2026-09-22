@@ -156,7 +156,7 @@ make_binary() {
     binary_dir=$3
     mkdir -p "$binary_dir"
     if [ "$binary_mode" = "bad" ]; then
-        cat > "${binary_dir}/profile-mango" <<EOF_BAD
+        cat > "${binary_dir}/mango" <<EOF_BAD
 #!/bin/sh
 if [ "\${1:-}" = "--version" ]; then
     exit 1
@@ -164,16 +164,16 @@ fi
 exit 0
 EOF_BAD
     else
-        cat > "${binary_dir}/profile-mango" <<EOF_GOOD
+        cat > "${binary_dir}/mango" <<EOF_GOOD
 #!/bin/sh
 if [ "\${1:-}" = "--version" ]; then
-    printf '%s\\n' 'profile-mango ${binary_version}'
+    printf '%s\\n' 'mango ${binary_version}'
     exit 0
 fi
 printf '%s\\n' 'fixture help'
 EOF_GOOD
     fi
-    chmod +x "${binary_dir}/profile-mango"
+    chmod +x "${binary_dir}/mango"
 }
 
 create_release() {
@@ -189,7 +189,7 @@ create_release() {
             archive_name="profile-mango_${release_number}_${release_os}_${release_arch}.tar.gz"
             binary_dir="${TEST_ROOT}/binaries/${release_number}-${release_os}-${release_arch}"
             make_binary "$release_number" "$release_mode" "$binary_dir"
-            tar -czf "${release_dir}/${archive_name}" -C "$binary_dir" profile-mango
+            tar -czf "${release_dir}/${archive_name}" -C "$binary_dir" mango
             release_digest=$(digest_file "${release_dir}/${archive_name}")
             case "$release_mode" in
                 mismatch)
@@ -266,7 +266,7 @@ run_platform_case() {
     export PROFILE_MANGO_VERSION='1.2.3'
     export PROFILE_MANGO_INSTALL_DIR="${CASE_DIR}/custom-bin"
     run_installer 0
-    [ -x "${PROFILE_MANGO_INSTALL_DIR}/profile-mango" ] || fail "${CASE_NAME}: binary was not installed"
+    [ -x "${PROFILE_MANGO_INSTALL_DIR}/mango" ] || fail "${CASE_NAME}: binary was not installed"
     expected_archive="profile-mango_1.2.3_${canonical_os}_${canonical_arch}.tar.gz"
     assert_file_contains "$CURL_LOG" \
         "fixture://releases/v1.2.3/${expected_archive}" \
@@ -275,7 +275,7 @@ run_platform_case() {
         'fixture://releases/v1.2.3/checksums.txt' \
         "${CASE_NAME} checksum URL"
     assert_file_contains "${CASE_DIR}/stderr" \
-        'Installed binary reports: profile-mango 1.2.3' \
+        'Installed binary reports: mango 1.2.3' \
         "${CASE_NAME} version diagnostic"
 }
 
@@ -303,7 +303,7 @@ unset PROFILE_MANGO_INSTALL_DIR
 printf '%s\n' 'profile sentinel' > "$HOME/.profile"
 cp "$HOME/.profile" "$CASE_DIR/profile.before"
 run_installer 0
-[ -x "$HOME/.local/bin/profile-mango" ] || fail 'default install directory was not used'
+[ -x "$HOME/.local/bin/mango" ] || fail 'default install directory was not used'
 assert_file_equals "$CASE_DIR/profile.before" "$HOME/.profile" 'shell profile was not modified'
 assert_file_contains "${CASE_DIR}/stderr" \
     'The installer does not edit shell profile files.' \
@@ -315,12 +315,12 @@ export FIXTURE_ARCH=x86_64
 export PROFILE_MANGO_VERSION=1.2.3
 export PROFILE_MANGO_INSTALL_DIR="${CASE_DIR}/bin"
 mkdir -p "$PROFILE_MANGO_INSTALL_DIR"
-printf '%s\n' 'previous installed binary' > "$PROFILE_MANGO_INSTALL_DIR/profile-mango"
+printf '%s\n' 'previous installed binary' > "$PROFILE_MANGO_INSTALL_DIR/mango"
 run_installer 0
-assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/profile-mango" \
-    'profile-mango 1.2.3' \
+assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/mango" \
+    'mango 1.2.3' \
     'successful replacement installed new binary'
-backup_files=$(find "$PROFILE_MANGO_INSTALL_DIR" -name 'profile-mango.backup.*' -type f -print)
+backup_files=$(find "$PROFILE_MANGO_INSTALL_DIR" -name 'mango.backup.*' -type f -print)
 [ -n "$backup_files" ] || fail 'successful replacement did not retain rollback backup'
 assert_file_contains "$backup_files" \
     'previous installed binary' \
@@ -332,10 +332,10 @@ export FIXTURE_ARCH=x86_64
 export PROFILE_MANGO_VERSION=1.2.5
 export PROFILE_MANGO_INSTALL_DIR="${CASE_DIR}/bin"
 mkdir -p "$PROFILE_MANGO_INSTALL_DIR"
-printf '%s\n' 'old binary' > "$PROFILE_MANGO_INSTALL_DIR/profile-mango"
+printf '%s\n' 'old binary' > "$PROFILE_MANGO_INSTALL_DIR/mango"
 run_installer 1
 assert_file_contains "${CASE_DIR}/stderr" 'Checksum verification failed' 'checksum mismatch failure'
-assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/profile-mango" 'old binary' 'checksum failure preserved target'
+assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/mango" 'old binary' 'checksum failure preserved target'
 assert_no_temp_entries
 
 new_case missing-checksum-entry
@@ -380,9 +380,9 @@ export FIXTURE_ARCH=x86_64
 export PROFILE_MANGO_VERSION=1.2.4
 export PROFILE_MANGO_INSTALL_DIR="${CASE_DIR}/bin"
 mkdir -p "$PROFILE_MANGO_INSTALL_DIR"
-printf '%s\n' 'previous binary' > "$PROFILE_MANGO_INSTALL_DIR/profile-mango"
+printf '%s\n' 'previous binary' > "$PROFILE_MANGO_INSTALL_DIR/mango"
 run_installer 1
-assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/profile-mango" \
+assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/mango" \
     'previous binary' \
     'verification failure restored previous binary'
 assert_file_contains "${CASE_DIR}/stderr" \
@@ -428,9 +428,9 @@ export PROFILE_MANGO_VERSION=1.2.3
 export PROFILE_MANGO_INSTALL_DIR="${CASE_DIR}/bin"
 export FIXTURE_INTERRUPT=1
 mkdir -p "$PROFILE_MANGO_INSTALL_DIR"
-printf '%s\n' 'interrupted previous binary' > "$PROFILE_MANGO_INSTALL_DIR/profile-mango"
+printf '%s\n' 'interrupted previous binary' > "$PROFILE_MANGO_INSTALL_DIR/mango"
 run_installer 130
-assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/profile-mango" \
+assert_file_contains "$PROFILE_MANGO_INSTALL_DIR/mango" \
     'interrupted previous binary' \
     'interrupted install preserved target'
 assert_no_temp_entries

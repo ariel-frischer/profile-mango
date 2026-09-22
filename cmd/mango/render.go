@@ -129,6 +129,7 @@ func newRenderCmd() *cobra.Command {
 	var options renderOptions
 	cmd := &cobra.Command{
 		Use:          "render <name>",
+		Aliases:      []string{"r"},
 		Short:        "Render an inert, version-qualified candidate without accessing agent homes",
 		Long:         "Render an inert, version-qualified candidate without accessing agent homes. The ariel-jcode target is the Ariel custom Jcode fork and is experimental-only, not upstream Jcode or a supported public target.",
 		Args:         cobra.ExactArgs(1),

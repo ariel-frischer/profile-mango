@@ -14,7 +14,7 @@ const starterProfileYAML = `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: default
-  description: Default profile scaffolded by profile-mango init
+  description: Default profile scaffolded by mango init
 spec:
   routeRef: local
 `
@@ -40,10 +40,11 @@ type starterFile struct {
 
 func newInitCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "init [directory]",
-		Short: "Create a starter profile package",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  runInit,
+		Use:     "init [directory]",
+		Aliases: []string{"new"},
+		Short:   "Create a starter profile package",
+		Args:    cobra.MaximumNArgs(1),
+		RunE:    runInit,
 	}
 }
 
