@@ -107,9 +107,12 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 
 func TestPatchConfigRejectsProviderShadowState(t *testing.T) {
 	tests := map[string]string{
-		"table":  "[model_providers.openai]\nmodel = \"nested\"\n",
-		"quoted": "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
-		"dotted": "model_providers.openai.name = \"shadow\"\n",
+		"table":              "[model_providers.openai]\nmodel = \"nested\"\n",
+		"quoted":             "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
+		"dotted":             "model_providers.openai.name = \"shadow\"\n",
+		"provider namespace": "[model_providers]\nopenai = { name = \"shadow\" }\n",
+		"quoted components":  "[\"model_providers\".\"openai\"]\nmodel = \"nested\"\n",
+		"spaced components":  "model_providers . openai . name = \"shadow\"\n",
 	}
 	for name, source := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -147,6 +150,14 @@ func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
 		},
 		"dotted profile definition": {
 			source: "profiles.work = { model = \"profile-model\" }\n",
+			want:   "profile selection or definitions",
+		},
+		"quoted profile definition": {
+			source: "[\"profiles\".foo]\nmodel = \"profile-model\"\n",
+			want:   "profile selection or definitions",
+		},
+		"spaced profile definition": {
+			source: "profiles . work = { model = \"profile-model\" }\n",
 			want:   "profile selection or definitions",
 		},
 		"inline provider map": {

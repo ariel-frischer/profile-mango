@@ -175,13 +175,18 @@ func hasProviderShadow(document configDocument) bool {
 	if hasRootKey(document.rootKeys, "model_providers") {
 		return true
 	}
+	for key := range document.assignments {
+		if isOpenAIProviderPath(key) {
+			return true
+		}
+	}
 	for key := range document.rootKeys {
 		if isOpenAIProviderPath(key) {
 			return true
 		}
 	}
 	for table := range document.tableNames {
-		if isOpenAIProviderPath(table) {
+		if canonicalConfigPath(table) == "model_providers" || isOpenAIProviderPath(table) {
 			return true
 		}
 	}
@@ -189,6 +194,7 @@ func hasProviderShadow(document configDocument) bool {
 }
 
 func isOpenAIProviderPath(path string) bool {
+	path = canonicalConfigPath(path)
 	const prefix = "model_providers."
 	if !strings.HasPrefix(path, prefix) {
 		return false
@@ -200,16 +206,30 @@ func isOpenAIProviderPath(path string) bool {
 
 func hasConfigPath(rootKeys, tableNames map[string]struct{}, path string) bool {
 	for key := range rootKeys {
-		if key == path || strings.HasPrefix(key, path+".") {
+		if configPathMatches(key, path) {
 			return true
 		}
 	}
 	for table := range tableNames {
-		if table == path || strings.HasPrefix(table, path+".") {
+		if configPathMatches(table, path) {
 			return true
 		}
 	}
 	return false
+}
+
+func configPathMatches(candidate, expected string) bool {
+	candidate = canonicalConfigPath(candidate)
+	return candidate == expected || strings.HasPrefix(candidate, expected+".")
+}
+
+func canonicalConfigPath(path string) string {
+	return strings.Map(func(character rune) rune {
+		if unicode.IsSpace(character) || character == '"' || character == '\'' {
+			return -1
+		}
+		return character
+	}, path)
 }
 
 func hasRootKey(rootKeys map[string]struct{}, key string) bool {

@@ -22,6 +22,7 @@ const (
 	nativeSourceIdentityEnv    = "PROFILE_MANGO_CODEX_SOURCE_IDENTITY"
 	nativeSourceFixtureEnv     = "PROFILE_MANGO_CODEX_SOURCE_FIXTURE"
 	nativeSourceTestFilter     = "config::tests::load_profile_mango_route_fixture_into_effective_config"
+	nativeDynamicModel         = "profile-mango-dynamic-model"
 	nativeSourceCommit         = "6b9826e3aa83b1a5947db50f4332cb9c65f1b340"
 	nativeSourceArchiveSHA256  = "848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4"
 	nativeSourceFixtureSHA256  = "f3e634765552aa50cb6a42045536ff5808237af2bf9fcc8c01adb0f789f20fd3"
@@ -61,32 +62,103 @@ func TestNativeCodexSourceQualification(t *testing.T) {
 	if os.Getenv(nativeSourceTestEnabledEnv) != "1" {
 		t.Skip("set PROFILE_MANGO_CODEX_SOURCE_TEST=1 for the pinned disposable source probe")
 	}
-	binary := requiredNativePath(t, nativeSourceTestBinaryEnv)
-	identity := readNativeSourceIdentity(t)
-	archive := requiredAbsoluteRegularFile(t, nativeSourceArchiveEnv)
-	verifyNativeSourceIdentity(t, binary, archive, identity)
+	binary, identity := nativeSourceQualificationInputs(t)
 	fixture := nativeInstallerFixture(t, installRoute().Model)
 	if got := hashBytes(fixture); got != identity.FixtureSHA256 {
 		t.Fatalf("PatchConfig fixture SHA-256 = %s, want %s", got, identity.FixtureSHA256)
 	}
+	runNativeSourceQualification(t, binary, fixture)
+}
+
+func nativeSourceQualificationInputs(t *testing.T) (string, nativeSourceIdentity) {
+	t.Helper()
+	binary := requiredNativePath(t, nativeSourceTestBinaryEnv)
+	identity := readNativeSourceIdentity(t)
+	archive := requiredAbsoluteRegularFile(t, nativeSourceArchiveEnv)
+	verifyNativeSourceIdentity(t, binary, archive, identity)
+	return binary, identity
+}
+
+func runNativeSourceQualification(t *testing.T, binary string, fixture []byte) {
+	t.Helper()
 	root := nativeSourceRoot(t)
 	fixturePath := filepath.Join(root, "fixture.toml")
+	positiveLog := filepath.Join(root, "positive-test.log")
+	negativeLog := filepath.Join(root, "negative-test.log")
 	writeSourceFixture(t, fixturePath, fixture)
-	before := nativeSourceInventory(t, root, fixturePath)
-	output, err := runNativeSourceProbe(root, binary)
-	if err != nil || !strings.Contains(output, "1 passed") {
-		t.Fatalf("source probe failed: err=%v output=%s", err, output)
-	}
-	dynamic := nativeInstallerFixture(t, "profile-mango-dynamic-model")
+	before := nativeSourceInventory(t, root, fixturePath, positiveLog, negativeLog)
+	runNativeSourcePositive(t, root, binary, positiveLog)
+	dynamic := nativeInstallerFixture(t, nativeDynamicModel)
 	writeSourceFixture(t, fixturePath, dynamic)
-	if output, err = runNativeSourceProbe(root, binary); err == nil {
-		t.Fatalf("source probe ignored runtime fixture replacement: output=%s", output)
-	}
-	if after := nativeSourceInventory(t, root, fixturePath); !reflect.DeepEqual(before, after) {
+	runNativeSourceNegative(t, root, binary, negativeLog)
+	if after := nativeSourceInventory(t, root, fixturePath, positiveLog, negativeLog); !reflect.DeepEqual(before, after) {
 		t.Fatalf("source probe changed task state: before=%#v after=%#v", before, after)
 	}
 	if _, err := os.Stat(filepath.Join(root, "nonexistent-codex-home")); !os.IsNotExist(err) {
 		t.Fatalf("synthetic CODEX_HOME was created: %v", err)
+	}
+}
+
+func runNativeSourcePositive(t *testing.T, root, binary, logPath string) {
+	t.Helper()
+	output, err := runNativeSourceProbe(root, binary)
+	writeNativeSourceLog(t, logPath, output)
+	if err != nil {
+		t.Fatalf("positive source probe failed: err=%v output=%s", err, output)
+	}
+	assertNativeSourcePositiveOutput(t, output)
+}
+
+func runNativeSourceNegative(t *testing.T, root, binary, logPath string) {
+	t.Helper()
+	output, err := runNativeSourceProbe(root, binary)
+	writeNativeSourceLog(t, logPath, output)
+	if err == nil {
+		t.Fatalf("source probe ignored runtime fixture replacement: output=%s", output)
+	}
+	assertNativeSourceNegativeOutput(t, output)
+}
+
+func writeNativeSourceLog(t *testing.T, path, output string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(output), 0o600); err != nil {
+		t.Fatalf("write native source probe log: %v", err)
+	}
+	t.Logf("native source probe log %s:\n%s", filepath.Base(path), output)
+}
+
+func assertNativeSourcePositiveOutput(t *testing.T, output string) {
+	t.Helper()
+	rejectNativeSourceProbeErrors(t, output)
+	for _, marker := range []string{"running 1 test", "1 passed; 0 failed"} {
+		if !strings.Contains(output, marker) {
+			t.Fatalf("positive source probe output missing %q: %s", marker, output)
+		}
+	}
+}
+
+func assertNativeSourceNegativeOutput(t *testing.T, output string) {
+	t.Helper()
+	rejectNativeSourceProbeErrors(t, output)
+	for _, marker := range []string{
+		"running 1 test", "test result: FAILED", "1 failed", "assertion", nativeDynamicModel,
+	} {
+		if !strings.Contains(output, marker) {
+			t.Fatalf("negative source probe output missing %q: %s", marker, output)
+		}
+	}
+}
+
+func rejectNativeSourceProbeErrors(t *testing.T, output string) {
+	t.Helper()
+	lower := strings.ToLower(output)
+	for _, marker := range []string{
+		"timed out", "timeout", "context deadline exceeded", "signal: killed",
+		"bwrap:", "failed to execute", "permission denied", "no such file or directory",
+	} {
+		if strings.Contains(lower, marker) {
+			t.Fatalf("source probe output contains setup or timeout failure %q: %s", marker, output)
+		}
 	}
 }
 
@@ -159,14 +231,18 @@ func writeSourceFixture(t *testing.T, path string, content []byte) {
 	}
 }
 
-func nativeSourceInventory(t *testing.T, root, excluded string) map[string]string {
+func nativeSourceInventory(t *testing.T, root string, excluded ...string) map[string]string {
 	t.Helper()
 	inventory := make(map[string]string)
+	excludedPaths := make(map[string]struct{}, len(excluded))
+	for _, path := range excluded {
+		excludedPaths[path] = struct{}{}
+	}
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == excluded {
+		if _, skip := excludedPaths[path]; skip {
 			return nil
 		}
 		relative, err := filepath.Rel(root, path)
@@ -198,7 +274,7 @@ func runNativeSourceProbe(root, binary string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	process := exec.CommandContext(ctx, bwrap, nativeSourceSandboxArgs(root, binary)...)
-	process.Env = nil
+	process.Env = []string{}
 	output, err := process.CombinedOutput()
 	if ctx.Err() != nil {
 		return string(output), ctx.Err()
