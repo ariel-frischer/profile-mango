@@ -29,7 +29,8 @@ versions, installed binaries and tested support must remain distinct.
 Codex is the first intended public adapter candidate. Public targets have inert
 exact-version renderers. Claude Code permits only model-field installation; Pi
 permits three route-default settings, Hermes three model/reasoning fields, and
-OpenCode model plus one qualified skill resource, and OpenClaw model-primary
+OpenCode model plus one qualified skill resource or an explicit named primary/
+subagent definition with model and instructions, and OpenClaw model-primary
 plus thinking-default settings. Other target gates
 remain blocked unless explicitly qualified below. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
@@ -45,7 +46,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config and debug skill consumption, lossless JSONC/resource patch tests, compiled transactional lifecycle and isolated backup/restore inventory | Model plus one SKILL.md and skills.paths installable; directory discovery is not an exclusive allowlist. Full auth, precedence, delivery and runtime enforcement remain blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
@@ -884,10 +885,10 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   inspection, and enforcement remain blocked pending safe exact-artifact
   inspection paths. OpenClaw and Hermes retain their source-qualified inert
   boundaries.
-- OpenCode `1.18.31` native model-candidate parsing and partial merged-state
-  behavior are observed. Production patch preservation, complete precedence and
-  provenance, authentication identity, effort, delivery, permissions, tools,
-  plugins, MCP, and runtime enforcement remain deferred.
+- OpenCode `1.18.31` native model, single-skill and named-definition consumption
+  are qualified below. Complete precedence and provenance, authentication
+  identity, effort, permissions, tools, plugins, MCP, runtime delegation, and
+  enforcement remain deferred.
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.
@@ -911,8 +912,35 @@ skill resources remain protected even with config `--override`. Compiled-CLI
 checks cover actual config/resource application, backup, idempotent replan,
 stale-source rejection, and unowned-resource preservation. Directory discovery
 may include other skills and is not an exclusive allowlist. Multi-skill profiles,
-instructions, authenticated route identity, policy enforcement, and full-profile
-runtime behavior remain blocked.
+main-config instructions, authenticated route identity, policy enforcement, and
+full-profile runtime behavior remain blocked. A later omission removes only a
+clean owned resource and a Mango-introduced discovery path; ambiguous legacy
+paths are preserved with a warning. No-op matching bytes never adopt unowned files.
+
+## OpenCode named primary/subagent definition qualification, 2026-09-22
+
+Compiled Mango generated two distinct `agents/<name>.md` definitions in
+disposable state using explicit `--agent opencode@1.18.31=primary:mango-review`
+and `subagent:mango-research`. SHA-256 of the actual installed definitions:
+`1a91ae593c0eb78167948df77f83271cd391c0ade7fc9666d043251f1a6f33c5`
+and `9a6fe91855defd1f71a74642bea6b29d97031a39e9f5e47c2b5dca542e0384eb`.
+The exact OpenCode binary `f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`
+resolved both name, mode, route model and instruction body via `debug agent name`.
+Changing mode, model or prompt changed the observed native result. Removing or
+renaming the definition prevented its named resolution. This is actual
+installer-generated artifact consumption, not only handwritten feasibility.
+
+The opt-in probe used cleared environment, synthetic home/XDG/config/auth,
+empty `/etc`, allowlisted read-only runtime and binary mounts, writable synthetic
+state only, network/PID/IPC isolation, dropped capabilities and a 20-second
+timeout. Candidate and definition bytes remained unchanged, an unrelated
+sentinel was preserved, and restored state matched its pre-probe inventory.
+No `--tool`, provider/model request, TUI or session was used. Plan IDs include
+destination and mode/name; only unchanged Mango-owned whole definitions can be
+updated, regardless of `--override`. Primary selection, subagent delegation,
+authentication, higher-precedence target state, policy enforcement, and runtime
+behavior were not executed or inferred. Other targets have no qualified named
+instruction/subagent installer; their required fields remain blocked.
 
 
 ## Hermes bounded installation qualification, 2026-09-22

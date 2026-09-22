@@ -63,14 +63,15 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   and a versioned report only into an explicit staging directory. Its Python
   build requirement, source provenance, unsafe config-inspector paths, and
   native applicability gaps remain explicit in every report.
-- An OpenCode `1.18.31` inert JSONC preview renderer plus a narrowly
-  install-capable top-level `model` and single-skill adapter, pinned to immutable release,
-  source, archive, and extracted-binary hashes. The exact model candidate is
-  natively accepted and appears in merged output. Installation requires one explicit
-  path, destination-bound consent, and transactional safeguards, while preserving
-  unrelated JSONC bytes and target-owned credential/provider state. Authentication
-  identity, effort, delivery, permissions, tools, plugins, MCP, full precedence,
-  and enforcement remain blocked.
+- An OpenCode `1.18.31` inert JSONC preview renderer plus bounded main-config
+  `model`/single-skill installation or an explicit named primary/subagent Markdown
+  definition with model and ordered instructions, pinned to immutable release,
+  source, archive and extracted-binary hashes. Exact native config, skill and
+  generated named-agent consumption were observed in isolated disposable state.
+  Installation requires explicit paths, destination-bound consent and transactional
+  safeguards, preserving unrelated JSONC and credentials. Authentication identity,
+  effort, permissions, tools, plugins, MCP, full precedence, active selection,
+  delegation and runtime enforcement remain blocked or unverified.
 - A transactional install planner/application engine with deterministic,
   destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
   stale checks, atomic replacement, ownership evidence, journals, rollback, and
@@ -103,7 +104,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` model-role/thinking-default YAML installer; native read-only getters qualified, full startup, precedence, authentication, delivery, and enforcement blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` model-primary/thinking-default JSON5 installer; source-native getters, agent overrides and fallback limits verified, full startup/auth/delivery/enforcement blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
-| OpenCode | Intended MVP target | Exact `1.18.31`; top-level model plus one SKILL.md and skills.paths installable at one explicit path with lossless JSONC preservation and transactional safeguards; native skill discovery/body loading verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |
+| OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/instructions; native generated-definition resolution verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer

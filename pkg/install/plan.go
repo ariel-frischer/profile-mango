@@ -410,6 +410,12 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 			manifest.Files = removeManifestFile(manifest.Files, actualPath)
 			continue
 		}
+		if file.Action == ActionNoop {
+			priorHash, owned := ownershipHash(ownership, actualPath)
+			if !owned || priorHash != file.BeforeSHA256 {
+				continue
+			}
+		}
 		manifest.Files = replaceManifestFile(manifest.Files, ManifestFile{Path: actualPath, SHA256: file.AfterSHA256, Fields: manifestFields(file)})
 	}
 	if snapshot.Exists && len(changes) == 0 && !manifestFilesEqual(originalFiles, manifest.Files) {

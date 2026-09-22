@@ -31,14 +31,14 @@ and commits are reproducible locators, not proof of target behavior.
 - [Oh My Pi](oh-my-pi.md) — intended MVP target variant; qualified independently.
 - [OpenClaw](openclaw.md): exact 2026.9.5 inert renderer plus bounded model-primary/thinking-default installer; source-native consumption and overrides qualified, full runtime/auth/enforcement blocked.
 - [Hermes](hermes.md) — exact Hermes Agent 0.21.3 inert preview renderer plus three-field installer with isolated native config-merge evidence; full startup/auth/enforcement remain blocked.
-- [OpenCode](opencode.md) — exact OpenCode 1.18.31 inert JSONC preview renderer plus bounded model and one-skill installation; isolated merged-config and skill-body discovery evidence does not prove full runtime enforcement.
+- [OpenCode](opencode.md) — exact OpenCode 1.18.31 inert JSONC preview renderer plus bounded main model/one-skill or explicit named primary/subagent definition installation; isolated native consumption does not prove runtime delegation or enforcement.
 - [Ariel custom Jcode fork](jcode.md) — experimental-only local comparison target with an exact-build inert preview renderer; native applicability remains blocked.
 
-Pi native commands were not executed because its startup and metadata paths were
-not accepted as bounded. OpenCode `1.18.31` was executed only through the
-approved synthetic, network-blocked, non-TUI probe documented in the
-[validation strategy](../agent-validation.md). That evidence proves the exact
-JSONC model candidate parses and appears in merged output, while write-free
-inspection, production installation, authentication, delivery, and enforcement
-remain unverified. Record executed results only in the
+Pi full-startup commands were not executed because their metadata paths were
+not accepted as bounded; a separately pinned settings module was qualified.
+OpenCode `1.18.31` was executed only through synthetic, network-blocked,
+non-TUI probes. The exact JSONC model and one skill were consumed, and the
+native named-agent resolver consumed generated primary/subagent definitions.
+No authenticated session, provider call, runtime delegation, full precedence,
+or policy enforcement was verified. Record executed results only in the
 [target evidence ledger](../target-evidence.md).

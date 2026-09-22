@@ -28,15 +28,15 @@ For the exact versions below, `mango install` can also apply a limited set of
 settings to an explicitly chosen agent configuration file. It does not launch an
 agent, authenticate, or switch a running conversation.
 
-| Agent | Native named profiles | Main-agent settings installable from a Mango profile |
-| --- | --- | --- |
-| Claude Code `2.1.278` | Not established* | Model only |
-| OpenCode `1.18.31` | Not established* | Model, optionally one `SKILL.md` and its discovery path |
-| Pi `0.86.1` | Not established* | Provider, model, and thinking level |
-| Oh My Pi `18.2.6` | Not established* | Default model role and thinking level |
-| OpenClaw `2026.9.5` | Yes, separate config/state | Default agent model and thinking level |
-| Hermes `0.21.3` | Yes, separate config/state | Provider, default model, and reasoning effort |
-| Codex `0.154.0` | Yes, named config presets | Preview only; installation remains blocked |
+| Agent | Native named profiles | Main-agent settings installable from a Mango profile | Explicit named agent destination |
+| --- | --- | --- | --- |
+| Claude Code `2.1.278` | Not established* | Model only | Not qualified |
+| OpenCode `1.18.31` | Not established* | Model, optionally one `SKILL.md` and its discovery path | Named primary or subagent Markdown definition with model and ordered instructions |
+| Pi `0.86.1` | Not established* | Provider, model, and thinking level | Not qualified |
+| Oh My Pi `18.2.6` | Not established* | Default model role and thinking level | Not qualified |
+| OpenClaw `2026.9.5` | Yes, separate config/state | Default agent model and thinking level | Not qualified |
+| Hermes `0.21.3` | Yes, separate config/state | Provider, default model, and reasoning effort | Not qualified |
+| Codex `0.154.0` | Yes, named config presets | Preview only; installation remains blocked | Separately in progress |
 
 \*Our [versioned references](docs/dev/agents/README.md) do not establish an
 equivalent native named-profile feature for these agents. Mango installation does
@@ -44,9 +44,10 @@ not depend on one. Native profiles are not proof of full Mango profile support.
 
 Unsupported permissions, tool rules, and resource requirements block installation
 rather than being silently dropped. Read the plan's warnings: installing a model
-does not verify authentication or enforce every route preference. Subagent
-installation is not supported. Use disposable test configuration for now; live
-paths require separate, path-specific approval.
+does not verify authentication or enforce every route preference. OpenCode named
+definitions deliver a custom prompt, not permission enforcement or verified
+delegation. Use disposable test configuration for now; live paths require
+separate, path-specific approval.
 See [agent versions and limitations](docs/dev/target-evidence.md) for the exact
 fields, native evidence, and precedence limits.
 
@@ -59,7 +60,14 @@ feature for this.
 
 Installing starts with a diff and a plan. Applying requires confirmation, creates
 backups by default, and checks that the files have not changed since planning.
-A profile name in Mango does not create a native agent profile or subagent.
+A profile name in Mango does not by itself create a native agent profile or
+subagent. For OpenCode `1.18.31`, explicitly select `--agent
+opencode@1.18.31=primary:mango-review` or `subagent:mango-review` with a
+caller-supplied `--config-path` ending in `agents/mango-review.md`. This writes
+a named definition and adjacent ownership manifest, not the main config. A
+primary is selectable by OpenCode, not automatically activated; a subagent is
+eligible for delegation, not proof of runtime orchestration. The generated
+instructions replace that named agent's stock prompt.
 
 To switch settings, run `mango install <other-profile>` with the same target,
 configuration path, and ownership manifest, then review and approve the new plan.
@@ -67,8 +75,10 @@ Unchanged Mango-owned files can be updated directly; unowned or edited files nee
 an adapter-approved `--override`. Non-interactive apply requires
 `--apply --yes --expect-plan <planID>` from that new plan.
 
-This is not a full reset to the new profile: previously installed OpenCode skills
-are not automatically removed, and conflicting skill files cannot be overridden.
+This is not a full reset to the new profile. Switching or omitting the one
+installed OpenCode skill removes only a clean Mango-owned `SKILL.md` and a
+Mango-introduced discovery path; ambiguous legacy paths are preserved with a
+warning. Edited or unowned skill files cannot be deleted or overridden.
 
 ## Install
 

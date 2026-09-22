@@ -12,13 +12,13 @@
 - [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source/addon evidence, two-field native getter qualification, and broader blocked capabilities.
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
 - [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and bounded native config-merge installation qualification.
-- [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 release/source/binary evidence, native JSONC model acceptance, partial merged-state/precedence observations, and blocked installation/enforcement.
+- [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 model/one-skill and named primary/subagent installation evidence, isolated generated-definition consumption, and runtime limits.
 - [`dev/agents/jcode.md`](dev/agents/jcode.md) - Ariel custom Jcode fork experimental-only provenance, executed profile probe boundary, and inert preview projection.
 - [`dev/m0-validation.md`](dev/m0-validation.md) - Reproducible offline clean-install, installed-binary, and Draft 2020-12 contract evidence for M0.
 - [`../examples/jcode-like/README.md`](../examples/jcode-like/README.md) - Credential-free base, daily, review, and research profiles used across every public adapter.
 - [Project constitution](../.autospec/constitution.yaml) - Durable principles and lightweight governance for relevant project work.
 - [`dev/project-scope.md`](dev/project-scope.md) - North star, current M0, intended MVP targets, boundaries, success criteria, and proposed defaults.
-- [`dev/target-evidence.md`](dev/target-evidence.md) — Target evidence levels, exact inert preview-renderer boundaries for Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel's experimental-only custom Jcode fork, support policy, and deferred verification.
+- [`dev/target-evidence.md`](dev/target-evidence.md) - Version-qualified native/installer evidence, limited OpenCode named-agent delivery, support boundaries, and deferred verification for public targets and the experimental-only custom Jcode fork.
 
 - [`Hermes native installer evidence`](../pkg/adapters/hermes/hermes_native_evidence.md) - Exact imported-module hashes, isolated generated-patch consumption, and runtime limitations for Hermes 0.21.3.
 

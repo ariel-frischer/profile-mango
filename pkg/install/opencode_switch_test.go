@@ -25,6 +25,47 @@ func TestOpenCodeSwitchRemovesCleanOwnedLegacySkill(t *testing.T) {
 	}
 }
 
+func TestOpenCodeSwitchDoesNotAdoptIdenticalUnownedSkill(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
+	writeInstallTestFile(t, profile, switchTestProfile(true))
+	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
+	skill := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md")
+	writeInstallTestFile(t, skill, openCodeTestSkill)
+	applySwitchTestPlan(t, request)
+	for _, file := range readSwitchManifest(t, request.Targets[0].ConfigPath).Files {
+		if file.Path == skill {
+			t.Fatal("identical unowned skill was adopted into manifest")
+		}
+	}
+	writeInstallTestFile(t, profile, switchTestProfile(false))
+	applySwitchTestPlan(t, request)
+	assertInstallTestFile(t, skill, openCodeTestSkill)
+}
+
+func TestOpenCodeSwitchDoesNotReclaimEditedSkillOnNoop(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
+	resource := filepath.Join(root, "SKILL.md")
+	writeInstallTestFile(t, profile, switchTestProfile(true))
+	writeInstallTestFile(t, resource, openCodeTestSkill)
+	applySwitchTestPlan(t, request)
+	skill := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md")
+	updated := openCodeTestSkill + "External edit.\n"
+	writeInstallTestFile(t, resource, updated)
+	writeInstallTestFile(t, skill, updated)
+	applySwitchTestPlan(t, request)
+	writeInstallTestFile(t, profile, switchTestProfile(false))
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusConflict {
+		t.Fatalf("edited skill omission status = %s/%s", plan.Status, plan.Targets[0].Status)
+	}
+	assertInstallTestFile(t, skill, updated)
+}
+
 func switchTestProfile(skill bool) string {
 	profile := "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: primary\n"
 	if skill {
