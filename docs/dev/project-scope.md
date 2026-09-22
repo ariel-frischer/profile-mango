@@ -51,8 +51,9 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   in every report.
 - An Oh My Pi `18.2.6` preview renderer that emits deterministic candidate YAML,
   resource copies, and a versioned report only into an explicit staging directory.
-  Its source-level target evidence, native build blocker, and unsafe config-inspector
-  effects remain explicit in every report.
+  Its preview retains historical build and unsafe config-inspector limitations.
+  A separate two-field installer is qualified by exact source-native read-only
+  settings getters with a pinned addon, not full startup or precedence.
 - An OpenClaw `2026.9.5` preview renderer that emits deterministic source-grounded
   JSON5 candidate syntax, resource copies, and a versioned report only into an
   explicit staging directory. Its source/archive provenance, missing runtime
@@ -99,7 +100,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` model-only strict-JSON installer; explicit settings-file consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
-| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
+| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` model-role/thinking-default YAML installer; native read-only getters qualified, full startup, precedence, authentication, delivery, and enforcement blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` model-primary/thinking-default JSON5 installer; source-native getters, agent overrides and fallback limits verified, full startup/auth/delivery/enforcement blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
 | OpenCode | Intended MVP target | Exact `1.18.31`; top-level model plus one SKILL.md and skills.paths installable at one explicit path with lossless JSONC preservation and transactional safeguards; native skill discovery/body loading verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |

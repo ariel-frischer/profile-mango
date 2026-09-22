@@ -47,7 +47,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config and debug skill consumption, lossless JSONC/resource patch tests, compiled transactional lifecycle and isolated backup/restore inventory | Model plus one SKILL.md and skills.paths installable; directory discovery is not an exclusive allowlist. Full auth, precedence, delivery and runtime enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
-| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | exact source review, direct `--version`, frozen lockfile, source manifest/runtime hashes, and deterministic inert preview tests | Inert preview renderer only; standalone native artifact and applicability remain blocked |
+| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks | Three model/reasoning config fields installable; full startup, authentication, delivery and runtime enforcement remain blocked |
@@ -486,6 +486,9 @@ paths.
 
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 
+The following records the initial preview qualification. The later installer
+qualification below supersedes the missing-addon blocker only for two fields.
+
 The task-owned source checkout is pinned to tag `v18.2.6` and commit
 `78b753124d11f8dd3ae73e2524125890ff7c977e`. Frozen dependency installation used
 Bun `1.3.14` and the pinned `bun.lock`. The direct source entrypoint
@@ -558,6 +561,37 @@ Reports remain `applicable: false`, include
 the source, build, and config blockers above, and return nonzero. It never writes
 `~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
+
+### Narrow Oh My Pi installer qualification, 2026-09-22
+
+Exact source `78b753124d11f8dd3ae73e2524125890ff7c977e`, the Bun hash above,
+and `nightly-2026-08-12` produced the native addon through upstream
+`scripts/bazel-natives.ts host --dest packages/natives/native` with networking
+disabled. The addon SHA-256 is
+`9632a05bc6460c65b7fcbe8653c44cb757217a91502ab7faeb0d5241be70372e`.
+The toolchain manifest hash is
+`38824251984d44a1d1eb4bbb109074b6d0e3213d6f82d9538622033a5bc60455`.
+An older worker note's different Bun hash (`951ee2...`) is unreconciled metadata,
+not equivalent evidence and not the runtime used by the successful qualification.
+
+Actual compiled CLI plan/apply output was passed to exact
+`Settings.loadReadOnly({agentDir, cwd})`. `getModelRole("default")` returned
+`synthetic/native-proof` and `get("defaultThinkingLevel")` returned `xhigh`.
+Control input without the fields returned no model role and `high`. An unmanaged
+review role and synthetic unknown-key sentinel remained unchanged.
+The root run removed the worker's broad read-only `/etc` mount and used cleared
+environment, isolated namespaces/network, dropped capabilities, hidden personal
+homes/sockets, read-only exact source/runtime, disposable state/cache and timeout.
+Content/mode inventories showed no target writes during native loading.
+
+The compiled CLI checks demonstrated deterministic read-only plans, wrong-hash
+and stale-plan zero writes, lossless application, default byte-equal backup and
+no-op reapply. Shared transaction tests separately establish fault rollback and
+hash-guarded recovery. There is no public restore CLI command.
+Only `modelRoles.default` and `defaultThinkingLevel` are installable at an explicit
+path. Full-profile previews remain non-applicable. This evidence does not prove
+model/provider resolution, authentication, precedence, delivery or enforcement.
+See the [target reference](agents/oh-my-pi.md) for the bounded patch contract.
 
 ## Hermes Agent v0.21.3 evidence
 

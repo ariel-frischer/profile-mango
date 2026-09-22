@@ -112,10 +112,11 @@ probe qualified explicit-file model consumption before authentication failure.
 Full effective state, precedence, route/auth, permissions/tools, CLAUDE.md, skills,
 and enforcement remain blocked, rather than treating parsing as runtime evidence.
 
-Oh My Pi's source-level version observation is exact, but the standalone build is
-currently blocked by its missing pinned native addon and the reviewed `config`
-commands initialize settings, discovery, and migration paths. That is recorded as
-an explicit support blocker rather than bypassed by running the unsafe inspector.
+Oh My Pi's initial build stopped at its missing native addon. A later exact-source
+addon build with pinned nightly Rust qualifies the separate installer for only
+`modelRoles.default` and `defaultThinkingLevel` through `Settings.loadReadOnly`.
+The reviewed `config` commands still initialize discovery and migration paths and
+were not run. Full startup, authentication, precedence, and enforcement stay blocked.
 See [target evidence](target-evidence.md) and the [Oh My Pi reference](agents/oh-my-pi.md)
 for the provenance and effect details.
 

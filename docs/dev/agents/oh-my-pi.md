@@ -2,8 +2,9 @@
 
 **Reference date:** 2026-09-21. **Documentation pin:** release `v18.2.6`,
 commit `78b753124d11f8dd3ae73e2524125890ff7c977e`. **Status:** profile-mango
-ships an exact-version inert preview renderer only. Native applicability and
-public Oh My Pi support remain blocked. Oh My Pi is qualified independently from
+ships an inert preview renderer and, since 2026-09-22, a two-field installer
+qualified through exact source-native read-only getters. Broader applicability
+remains blocked. Oh My Pi is qualified independently from
 [Pi](pi.md).
 
 ## Configuration and precedence
@@ -58,7 +59,7 @@ No native addons found for linux-x64.
 Expected pi_natives.linux-x64-modern.node / pi_natives.linux-x64-baseline.node
 ```
 
-This missing native addon is a direct support blocker. No mutable release download,
+This missing native addon was the initial support blocker. No mutable release download,
 wrapper, global tool installation, or alternate version was used.
 
 ## Candidate inspection and effects
@@ -73,14 +74,40 @@ loads global and project configuration, discovers overlays, and may migrate lega
 JSON or seed state. Those effects are not accepted as a side-effect-free inspector
 for profile-mango M0.
 
-A config probe was not retained because the reviewed source and missing native
+A config probe was not retained in the initial review because the source and missing native
 addon hit the stop conditions. In particular, no provider, authentication, session,
 hook, extension, child, personal home, credential store, or target-home operation
 was run. A future probe must use a direct exact artifact, task-owned config and
 project roots, sanitized environment, blocked network, bounded timeout, and unique
 synthetic secret sentinels before it can add runtime evidence.
 
-## Adapter boundary
+## Narrow installer qualification, 2026-09-22
+
+The exact source addon was subsequently built with `nightly-2026-08-12`
+(`rustc 1.99.0-nightly (3d6c19bb9 2026-08-11)`) and the pinned Bun runtime above.
+`pi_natives.linux-x64-modern.node` has SHA-256
+`9632a05bc6460c65b7fcbe8653c44cb757217a91502ab7faeb0d5241be70372e`.
+The build used upstream `scripts/bazel-natives.ts host --dest packages/natives/native`.
+
+The separate installer patches only `modelRoles.default` and
+`defaultThinkingLevel` at an explicit path. Actual compiled CLI output was loaded
+through exact `Settings.loadReadOnly`, with model-role and thinking getters
+returning the installed synthetic values. A control without either field returned
+no default model role and the built-in `high` thinking level. Unknown-key and
+unmanaged-role sentinels survived unchanged. The root probe used a cleared
+environment, isolated network/PID/IPC/UTS, dropped capabilities, no `/etc` mount,
+hidden personal homes/sockets, read-only source/runtime mounts, separate disposable
+cache, and a 180-second timeout. Content hashes and modes showed no target writes.
+
+This is settings-module consumption, not a standalone binary, model resolution,
+authentication, full precedence, delivery, session startup, or enforcement test.
+The installer never launches the target. Unsupported requirements remain blocking.
+Lossless patch tests cover comments, unknown fields, CRLF, Unicode columns,
+document-end markers and rejection of duplicate keys, multiline managed scalars,
+anchors, aliases and merge keys. Shared transaction tests cover backups, stale
+plans, ownership, fault rollback and guarded recovery.
+
+## Preview adapter boundary
 
 The CLI target is `oh-my-pi` with the exact version `18.2.6`. The renderer emits
 `preview/<profile>.config.yml.preview` and digest-verified resource copies that

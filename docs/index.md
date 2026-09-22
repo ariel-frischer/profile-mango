@@ -9,7 +9,7 @@
 - [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and Ariel's experimental-only custom Jcode fork.
 - [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert preview syntax, and bounded model-only native installation evidence.
 - [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.86.1 source/package provenance, inert preview syntax, static effect review, and bounded settings-module installation evidence.
-- [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source evidence, configuration effects, and blocked native support boundary.
+- [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source/addon evidence, two-field native getter qualification, and broader blocked capabilities.
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
 - [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and bounded native config-merge installation qualification.
 - [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 release/source/binary evidence, native JSONC model acceptance, partial merged-state/precedence observations, and blocked installation/enforcement.

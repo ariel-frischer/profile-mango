@@ -1,0 +1,30 @@
+package install
+
+import "testing"
+
+func TestDefaultRegistryOhMyPiQualification(t *testing.T) {
+	cases := map[string]struct {
+		target Target
+		found  bool
+		ready  bool
+	}{
+		"qualified exact version": {Target{"oh-my-pi", "18.2.6"}, true, true},
+		"unknown version":         {Target{"oh-my-pi", "18.2.7"}, false, false},
+		"Codex still blocked":     {Target{"codex", "0.154.0"}, true, false},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			adapter, found := DefaultRegistry().Lookup(tc.target)
+			if found != tc.found {
+				t.Fatalf("found = %v, want %v", found, tc.found)
+			}
+			if !found {
+				return
+			}
+			metadata := adapter.Metadata()
+			if metadata.Installable != tc.ready || (metadata.Status == StatusReady) != tc.ready {
+				t.Fatalf("unexpected metadata: %#v", metadata)
+			}
+		})
+	}
+}

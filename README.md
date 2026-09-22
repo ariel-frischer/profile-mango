@@ -242,6 +242,7 @@ unsupported required permissions, tools, instructions, or skills remain blocked.
 | OpenCode `1.18.31` | Top-level `model`, optionally one `SKILL.md` plus `skills.paths` | Exact native merged config and skill discovery/body loading, limited precedence |
 | Claude Code `2.1.278` | Top-level `model` | Exact ELF explicit settings-file consumption before no-auth termination |
 | Pi `0.86.1` | `defaultProvider`, `defaultModel`, `defaultThinkingLevel` | Exact settings-module getters and project-over-global precedence only |
+| Oh My Pi `18.2.6` | `modelRoles.default`, `defaultThinkingLevel` | Exact source-native read-only getters with a pinned native addon, not full startup or precedence |
 
 ```bash
 profile-mango install route-only \
@@ -361,8 +362,11 @@ profile-mango render route-only \
   --preview --json
 ```
 
-The Oh My Pi adapter emits no credentials or active target-home files. Its source
-version, build blocker, config-inspector effects, and capability gaps are recorded
+The Oh My Pi preview emits no credentials or active target-home files. Separately,
+`install --target oh-my-pi@18.2.6 --config-path oh-my-pi=/explicit/disposable/config.yml`
+can patch only `modelRoles.default` and `defaultThinkingLevel`, with the same
+plan-first consent and transaction safeguards above. Its source version,
+historical build blocker, later native getter evidence, inspector effects, and gaps are recorded
 in the [target evidence ledger](docs/dev/target-evidence.md).
 
 ## Inert OpenClaw preview

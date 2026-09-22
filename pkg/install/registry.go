@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 )
 
 type Registry struct {
@@ -74,7 +73,7 @@ func DefaultRegistry() *Registry {
 		claudeCodeAdapter{},
 		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
 		hermesAdapter{},
-		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
+		ohMyPiAdapter{},
 		openClawAdapter{},
 		piAdapter{},
 		openCodeAdapter{},
