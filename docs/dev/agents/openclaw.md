@@ -26,6 +26,15 @@ executable target build was produced.
 
 ## Configuration and precedence
 
+**Native named profiles:** static inspection on 2026-09-22 of the pinned
+[`src/cli/profile.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/cli/profile.ts)
+shows root `--profile <name>` parsing and projection into `OPENCLAW_PROFILE`,
+`OPENCLAW_STATE_DIR`, and `OPENCLAW_CONFIG_PATH`. These select profile-specific
+config/state, distinct from provider-local authentication profiles. This is source
+evidence, not a new runtime probe or proof that Mango can create or activate native
+profiles. Mango installation still patches only its qualified fields at an explicit
+caller-supplied path.
+
 Pinned documentation and source describe strict JSON5 at
 `~/.openclaw/openclaw.json`, relocatable with `OPENCLAW_CONFIG_PATH`; invalid or
 unknown configuration fails startup, and `$include` can split configuration.
