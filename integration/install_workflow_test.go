@@ -67,6 +67,30 @@ func (w installWorkflow) checkInstall(t *testing.T) {
 	assertWorkflowBytes(t, filepath.Join(w.root, "outside-sentinel"), []byte("untouched"))
 }
 
+func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
+	w := newInstallWorkflow(t, "claude-code@2.1.278", "anthropic", "claude-sonnet-4-5",
+		"{\"model\":\"old\",\"keep\":true}\n", "{\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
+	piPath := filepath.Join(w.root, "pi-settings.json")
+	before := []byte("{\"defaultProvider\":\"old\",\"defaultModel\":\"old\",\"defaultThinkingLevel\":\"low\",\"keep\":true}\n")
+	if err := os.WriteFile(piPath, before, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	w.args = append(w.args, "--target", "pi@0.86.1", "--config-path", "pi="+piPath)
+	plan := w.plan(t)
+	if len(plan.Targets) != 2 {
+		t.Fatalf("expected two targets, got %#v", plan.Targets)
+	}
+	w.checkInstall(t)
+	want := []byte("{\"defaultProvider\":\"anthropic\",\"defaultModel\":\"claude-sonnet-4-5\",\"defaultThinkingLevel\":\"high\",\"keep\":true}\n")
+	assertWorkflowBytes(t, piPath, want)
+	backup := installfs.BackupPath(piPath, plan.PlanID)
+	assertWorkflowBytes(t, backup, before)
+	if err := os.WriteFile(piPath, readWorkflowFile(t, backup), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	assertWorkflowBytes(t, piPath, before)
+}
+
 func newInstallWorkflow(t *testing.T, target, provider, model, original, expected string) installWorkflow {
 	t.Helper()
 	repo := absolutePath(t, "..")
