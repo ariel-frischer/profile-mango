@@ -447,18 +447,8 @@ func (scanner *json5Scanner) parseEscape(value *strings.Builder) error {
 		value.WriteByte('\v')
 	case '0':
 		value.WriteByte(0)
-	case 'x':
-		code, err := scanner.readHex(2)
-		if err != nil {
-			return err
-		}
-		value.WriteByte(byte(code))
-	case 'u':
-		code, err := scanner.readHex(4)
-		if err != nil {
-			return err
-		}
-		value.WriteRune(rune(code))
+	case 'x', 'u':
+		return scanner.parseHexEscape(value, escape)
 	case '\n':
 	case '\r':
 		if scanner.pos < len(scanner.data) && scanner.data[scanner.pos] == '\n' {
@@ -466,6 +456,23 @@ func (scanner *json5Scanner) parseEscape(value *strings.Builder) error {
 		}
 	default:
 		return scanner.errorf("unsupported string escape")
+	}
+	return nil
+}
+
+func (scanner *json5Scanner) parseHexEscape(value *strings.Builder, escape byte) error {
+	count := 2
+	if escape == 'u' {
+		count = 4
+	}
+	code, err := scanner.readHex(count)
+	if err != nil {
+		return err
+	}
+	if escape == 'x' {
+		value.WriteByte(byte(code))
+	} else {
+		value.WriteRune(rune(code))
 	}
 	return nil
 }
