@@ -446,6 +446,9 @@ func (scanner *json5Scanner) parseEscape(value *strings.Builder) error {
 	case 'v':
 		value.WriteByte('\v')
 	case '0':
+		if scanner.pos < len(scanner.data) && scanner.data[scanner.pos] >= '0' && scanner.data[scanner.pos] <= '9' {
+			return scanner.errorf("decimal escape after zero")
+		}
 		value.WriteByte(0)
 	case 'x', 'u':
 		return scanner.parseHexEscape(value, escape)
@@ -469,11 +472,10 @@ func (scanner *json5Scanner) parseHexEscape(value *strings.Builder, escape byte)
 	if err != nil {
 		return err
 	}
-	if escape == 'x' {
-		value.WriteByte(byte(code))
-	} else {
-		value.WriteRune(rune(code))
+	if code >= 0xD800 && code <= 0xDFFF {
+		return scanner.errorf("surrogate escapes are unsupported")
 	}
+	value.WriteRune(rune(code))
 	return nil
 }
 
