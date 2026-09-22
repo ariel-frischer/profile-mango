@@ -74,6 +74,11 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 			route:  installRoute(),
 			want:   "unterminated",
 		},
+		"unterminated multiline string": {
+			source: "instructions = \"\"\"never closed\"\"",
+			route:  installRoute(),
+			want:   "unterminated",
+		},
 		"invalid table": {
 			source: "[features\n",
 			route:  installRoute(),

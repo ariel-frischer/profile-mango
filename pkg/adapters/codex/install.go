@@ -34,7 +34,7 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 		return ConfigPatch{}, err
 	}
 	if len(source) > maxConfigBytes {
-		return ConfigPatch{}, fmt.Errorf("Codex config exceeds %d-byte limit", maxConfigBytes)
+		return ConfigPatch{}, fmt.Errorf("codex config exceeds %d-byte limit", maxConfigBytes)
 	}
 	document, err := scanConfig(source)
 	if err != nil {
@@ -45,19 +45,19 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 
 func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, error) {
 	if route.Transport != "native" {
-		return nil, fmt.Errorf("Codex install requires native transport")
+		return nil, fmt.Errorf("codex install requires native transport")
 	}
 	if route.Authentication != "oauth" {
-		return nil, fmt.Errorf("Codex install requires oauth authentication; credentials remain target-owned")
+		return nil, fmt.Errorf("codex install requires oauth authentication; credentials remain target-owned")
 	}
 	if route.Provider != "openai" {
-		return nil, fmt.Errorf("Codex install supports only the built-in openai provider")
+		return nil, fmt.Errorf("codex install supports only the built-in openai provider")
 	}
 	if !validCodexValue(route.Model) {
-		return nil, fmt.Errorf("Codex model must be a non-empty safe string")
+		return nil, fmt.Errorf("codex model must be a non-empty safe string")
 	}
 	if !validCodexEffort(route.Effort) {
-		return nil, fmt.Errorf("Codex reasoning effort %q is unsupported", route.Effort)
+		return nil, fmt.Errorf("codex reasoning effort %q is unsupported", route.Effort)
 	}
 	return map[string]string{
 		"model_provider":         route.Provider,
@@ -139,10 +139,10 @@ func scanConfig(data []byte) (configDocument, error) {
 			return configDocument{}, err
 		}
 		if table == "" && isInstallKey(assignment.key) && isMultilineString(data, assignment.valueFrom) {
-			return configDocument{}, fmt.Errorf("Codex target field %q does not support multiline strings", assignment.key)
+			return configDocument{}, fmt.Errorf("codex target field %q does not support multiline strings", assignment.key)
 		}
 		if table == "" && isInstallKey(assignment.key) && data[assignment.valueFrom] != '"' && data[assignment.valueFrom] != '\'' {
-			return configDocument{}, fmt.Errorf("Codex target field %q must be a string", assignment.key)
+			return configDocument{}, fmt.Errorf("codex target field %q must be a string", assignment.key)
 		}
 		if _, found := document.assignments[assignment.key]; found {
 			return configDocument{}, fmt.Errorf("duplicate Codex TOML key %q", assignment.key)
@@ -162,11 +162,11 @@ func scanConfig(data []byte) (configDocument, error) {
 func validateInstallPrecedence(document configDocument) error {
 	if hasConfigPath(document.rootKeys, document.tableNames, "profile") ||
 		hasConfigPath(document.rootKeys, document.tableNames, "profiles") {
-		return fmt.Errorf("Codex config contains profile selection or definitions; install requires an unprofiled root config")
+		return fmt.Errorf("codex config contains profile selection or definitions; install requires an unprofiled root config")
 	}
 	if hasProviderShadow(document) ||
 		hasRootKey(document.rootKeys, "openai_base_url") {
-		return fmt.Errorf("Codex config contains provider override state that may shadow the built-in openai provider")
+		return fmt.Errorf("codex config contains provider override state that may shadow the built-in openai provider")
 	}
 	return nil
 }
@@ -252,10 +252,10 @@ func isMultilineString(data []byte, offset int) bool {
 
 func validateConfigBytes(data []byte) error {
 	if bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
-		return fmt.Errorf("Codex config must be UTF-8 without a byte-order mark")
+		return fmt.Errorf("codex config must be UTF-8 without a byte-order mark")
 	}
 	if !utf8.Valid(data) {
-		return fmt.Errorf("Codex config is not valid UTF-8")
+		return fmt.Errorf("codex config is not valid UTF-8")
 	}
 	return nil
 }
@@ -323,7 +323,9 @@ func validBareConfigComponent(component string) bool {
 		return false
 	}
 	for _, character := range component {
-		if !((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '_' || character == '-') {
+		switch {
+		case character >= 'a' && character <= 'z', character >= 'A' && character <= 'Z', character >= '0' && character <= '9', character == '_', character == '-':
+		default:
 			return false
 		}
 	}
@@ -369,7 +371,7 @@ func parseAssignment(data []byte, offset, lineEnd int, table string) (configAssi
 	valueFrom := offset + keyEnd + 1
 	valueFrom = skipValueSpace(data, valueFrom, lineEnd)
 	if valueFrom >= lineEnd || data[valueFrom] == '#' {
-		return configAssignment{}, 0, fmt.Errorf("Codex TOML key %q has no value", key)
+		return configAssignment{}, 0, fmt.Errorf("codex TOML key %q has no value", key)
 	}
 	value, valueTo, statementEnd, err := parseValue(data, valueFrom, lineEnd)
 	if err != nil {
@@ -405,13 +407,13 @@ func findEquals(line []byte) (int, error) {
 			return index, nil
 		}
 	}
-	return 0, fmt.Errorf("Codex TOML line is missing an equals sign")
+	return 0, fmt.Errorf("codex TOML line is missing an equals sign")
 }
 
 func normalizeKey(raw []byte) (string, error) {
 	key := strings.TrimSpace(string(raw))
 	if key == "" {
-		return "", fmt.Errorf("Codex TOML key is empty")
+		return "", fmt.Errorf("codex TOML key is empty")
 	}
 	if strings.Contains(key, ".") {
 		if err := validateDottedConfigPath(key); err != nil {
@@ -429,10 +431,8 @@ func normalizeKey(raw []byte) (string, error) {
 	if len(key) >= 2 && key[0] == '\'' && key[len(key)-1] == '\'' {
 		return key[1 : len(key)-1], nil
 	}
-	for _, character := range key {
-		if !((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '_' || character == '-') {
-			return "", fmt.Errorf("invalid Codex TOML key %q", key)
-		}
+	if !validBareConfigComponent(key) {
+		return "", fmt.Errorf("invalid Codex TOML key %q", key)
 	}
 	return key, nil
 }
@@ -500,7 +500,7 @@ func findQuote(data []byte, start, lineEnd int, quote byte) (int, error) {
 }
 
 func findTripleQuote(data []byte, start int, quote byte) (int, int, error) {
-	for index := start + 3; index+2 <= len(data); index++ {
+	for index := start + 3; index+2 < len(data); index++ {
 		if data[index] == quote && data[index+1] == quote && data[index+2] == quote {
 			end := index + 3
 			return end, nextStatement(data, end, len(data)), nil
@@ -566,7 +566,7 @@ func parseBareValue(data []byte, start, lineEnd int) (string, int, int, error) {
 		end++
 	}
 	if end == start {
-		return "", 0, 0, fmt.Errorf("Codex TOML value is empty")
+		return "", 0, 0, fmt.Errorf("codex TOML value is empty")
 	}
 	return "", end, nextStatement(data, end, lineEnd), nil
 }

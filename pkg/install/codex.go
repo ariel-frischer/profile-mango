@@ -41,16 +41,16 @@ func (codexAdapter) Plan(input AdapterInput) (Patch, error) {
 
 func validateCodexProfile(input AdapterInput) error {
 	if input.Target.Name != codex.TargetName || input.Target.Version != codex.TargetVersion {
-		return fmt.Errorf("Codex install adapter requires exact target %s@%s", codex.TargetName, codex.TargetVersion)
+		return fmt.Errorf("codex install adapter requires exact target %s@%s", codex.TargetName, codex.TargetVersion)
 	}
 	if input.Profile.Permissions != nil {
-		return fmt.Errorf("Codex permission requirements remain install-blocking")
+		return fmt.Errorf("codex permission requirements remain install-blocking")
 	}
 	if input.Profile.Tools != nil {
-		return fmt.Errorf("Codex tool requirements remain install-blocking")
+		return fmt.Errorf("codex tool requirements remain install-blocking")
 	}
 	if len(input.Profile.Instructions) > 0 || len(input.Profile.Skills) > 0 || len(input.Resources) > 0 {
-		return fmt.Errorf("Codex instruction and skill delivery remains install-blocking")
+		return fmt.Errorf("codex instruction and skill delivery remains install-blocking")
 	}
 	return nil
 }

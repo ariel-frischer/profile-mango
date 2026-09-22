@@ -67,11 +67,11 @@ func TestNativeSourceOutputChecks(t *testing.T) {
 			check:  assertNativeSourcePositiveOutput,
 		},
 		"negative": {
-			output: "running 1 test\nassertion `left == right` failed\n  left: Some(\"profile-mango-dynamic-model\")\n right: Some(\"gpt-5.6\")\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
+			output: "running 1 test\nassertion failed: `(left == right)`\nDiff < left / right > :\n Some(\n<    \"profile-mango-dynamic-model\",\n>    \"gpt-5.6\",\n )\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
 			check:  assertNativeSourceNegativeOutput,
 		},
 		"negative ANSI output": {
-			output: "running 1 test\nassertion `left == right` failed\n  left: Some(\"p\x1b[31mrofile\x1b[0m-\x1b[31mmango-dynamic-model\x1b[0m\")\n right: Some(\"g\x1b[32mpt-5.6\x1b[0m\")\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
+			output: "running 1 test\nassertion failed: `(left == right)`\n\x1b[1mDiff\x1b[0m \x1b[31m< left\x1b[0m / \x1b[32mright >\x1b[0m :\n Some(\n\x1b[31m<    \"p\x1b[0m\x1b[1;48;5;52;31mrofile\x1b[0m\x1b[31m-\x1b[0m\x1b[1;48;5;52;31mmango-dynamic-model\x1b[0m\x1b[31m\",\x1b[0m\n\x1b[32m>    \"\x1b[0m\x1b[1;48;5;22;32mg\x1b[0m\x1b[32mp\x1b[0m\x1b[1;48;5;22;32mt\x1b[0m\x1b[32m-\x1b[0m\x1b[1;48;5;22;32m5.6\x1b[0m\x1b[32m\",\x1b[0m\n )\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2455 filtered out; finished in 0.00s\n",
 			check:  assertNativeSourceNegativeOutput,
 		},
 	}
@@ -169,7 +169,7 @@ func assertNativeSourceNegativeOutput(t *testing.T, output string) {
 	normalized := stripANSISequences(output)
 	rejectNativeSourceProbeErrors(t, normalized)
 	assertNativeSourceSummary(t, normalized, "FAILED", 0, 1)
-	for _, marker := range []string{"assertion `left == right` failed", nativeDynamicModel, `"gpt-5.6"`} {
+	for _, marker := range []string{"assertion failed: `(left == right)`", "Diff < left / right >", `<    "` + nativeDynamicModel + `"`, `>    "gpt-5.6"`} {
 		if !strings.Contains(normalized, marker) {
 			t.Fatalf("negative source probe output missing %q: %s", marker, output)
 		}
