@@ -295,14 +295,14 @@ func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []s
 				return nil, nil, nil, preparationFailure(fmt.Errorf("inspect backup %s: %w", backup, err), owned)
 			}
 			candidate := preparedBackup{path: backup}
-			if err := writeNewFile(backup, change.Before.Content, change.Before.Mode); err != nil {
+			created, err := writeNewFile(backup, change.Before.Content, change.Before.Mode)
+			if err != nil {
 				return nil, nil, nil, preparationFailure(fmt.Errorf("create backup %s: %w", backup, err), append(owned, candidate))
 			}
-			snapshot, err := SnapshotFile(backup)
-			if err != nil {
+			if err := verifyCreatedFile(created); err != nil {
 				return nil, nil, nil, preparationFailure(fmt.Errorf("verify backup %s: %w", backup, err), append(owned, candidate))
 			}
-			candidate.snapshot = snapshot
+			candidate.snapshot = created
 			candidate.verified = true
 			owned = append(owned, candidate)
 			entry.BackupPath = backup
@@ -315,10 +315,6 @@ func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []s
 
 func preparationFailure(cause error, owned []preparedBackup) error {
 	return preparationFailureWith(cause, owned, os.Remove)
-}
-
-func cleanupPreparedBackups(backups []preparedBackup) error {
-	return cleanupPreparedBackupsWith(backups, os.Remove)
 }
 
 func preparationFailureWith(cause error, owned []preparedBackup, remove func(string) error) error {
@@ -351,6 +347,17 @@ func cleanupPreparedBackup(backup preparedBackup, remove func(string) error) err
 	}
 	if err := remove(backup.path); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("remove backup %s: %w", backup.path, err)
+	}
+	return nil
+}
+
+func verifyCreatedFile(created Snapshot) error {
+	current, err := SnapshotFile(created.Path)
+	if err != nil {
+		return fmt.Errorf("inspect creator path: %w", err)
+	}
+	if !current.Equal(created) {
+		return fmt.Errorf("created file changed before verification")
 	}
 	return nil
 }
@@ -529,29 +536,76 @@ func writeJournal(path string, journal Journal) error {
 	return writeAtomicUnconditional(path, append(data, '\n'), 0o600)
 }
 
-func writeNewFile(path string, data []byte, mode fs.FileMode) error {
+func writeNewFile(path string, data []byte, mode fs.FileMode) (Snapshot, error) {
 	abs, _, err := inspectPath(path, true)
 	if err != nil {
-		return err
+		return Snapshot{}, err
 	}
 	if err := ValidateContent(data); err != nil {
-		return err
+		return Snapshot{}, err
 	}
 	file, err := os.OpenFile(abs, os.O_WRONLY|os.O_CREATE|os.O_EXCL, chooseMode(mode))
 	if err != nil {
-		return err
+		return Snapshot{}, err
 	}
-	if _, err := file.Write(data); err != nil {
-		_ = file.Close()
-		_ = os.Remove(abs)
-		return err
+	creator, err := file.Stat()
+	if err != nil {
+		return Snapshot{}, errors.Join(err, file.Close())
+	}
+	fail := func(cause error) (Snapshot, error) {
+		return Snapshot{}, errors.Join(cause, closeAndRemoveCreated(file, abs, creator))
+	}
+	written, err := file.Write(data)
+	if err != nil {
+		return fail(err)
+	}
+	if written != len(data) {
+		return fail(io.ErrShortWrite)
 	}
 	if err := file.Sync(); err != nil {
-		_ = file.Close()
-		_ = os.Remove(abs)
-		return err
+		return fail(err)
 	}
-	return file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return fail(err)
+	}
+	created := Snapshot{
+		Path: abs, Exists: true, SHA256: Hash(data), Size: info.Size(),
+		Mode: info.Mode().Perm(), Identity: fileIdentity(info), Content: data,
+	}
+	if err := file.Close(); err != nil {
+		return Snapshot{}, errors.Join(err, removeCreatedPath(abs, creator))
+	}
+	return created, nil
+}
+
+func closeAndRemoveCreated(file *os.File, path string, creator os.FileInfo) error {
+	return errors.Join(file.Close(), removeCreatedPath(path, creator))
+}
+
+func removeCreatedPath(path string, creator os.FileInfo) error {
+	current, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect created file %s: %w", path, err)
+	}
+	if !sameFileObject(creator, current) || linkCount(current) > 1 {
+		return fmt.Errorf("preserve created file %s: creation ownership changed", path)
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove created file %s: %w", path, err)
+	}
+	return nil
+}
+
+func sameFileObject(left, right os.FileInfo) bool {
+	leftID, rightID := fileIdentity(left), fileIdentity(right)
+	if leftID.Device != 0 || leftID.Inode != 0 || rightID.Device != 0 || rightID.Inode != 0 {
+		return leftID.Device == rightID.Device && leftID.Inode == rightID.Inode
+	}
+	return leftID == rightID
 }
 
 func writeAtomicUnconditional(path string, data []byte, mode fs.FileMode) error {

@@ -89,7 +89,7 @@ func TestCleanupPreparedBackupsPreservesChangedArtifacts(t *testing.T) {
 			}
 			test.mutate(t, path)
 
-			err = cleanupPreparedBackups([]preparedBackup{{path: path, snapshot: before, verified: true}})
+			err = cleanupPreparedBackupsWith([]preparedBackup{{path: path, snapshot: before, verified: true}}, os.Remove)
 			if err == nil {
 				t.Fatal("changed backup was removed without an error")
 			}
@@ -100,11 +100,45 @@ func TestCleanupPreparedBackupsPreservesChangedArtifacts(t *testing.T) {
 	}
 }
 
+func TestCreatedFileVerificationRejectsPreVerificationReplacement(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "backup")
+	created, err := writeNewFile(path, []byte("original"), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replaceBackup(t, path)
+
+	if err := verifyCreatedFile(created); err == nil {
+		t.Fatal("replacement was accepted as creator-owned")
+	}
+	assertTestFile(t, path, "original")
+}
+
+func TestRemoveCreatedPathPreservesReplacement(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "backup")
+	writeTestFile(t, path, "original")
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	creator, err := file.Stat()
+	if closeErr := file.Close(); err != nil || closeErr != nil {
+		t.Fatalf("stat/close creator: stat=%v close=%v", err, closeErr)
+	}
+	replaceBackup(t, path)
+
+	err = removeCreatedPath(path, creator)
+	if err == nil || !strings.Contains(err.Error(), "ownership changed") {
+		t.Fatalf("remove error = %v, want ownership failure", err)
+	}
+	assertTestFile(t, path, "original")
+}
+
 func TestCleanupPreparedBackupsReportsUnverifiedArtifact(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "backup")
 	writeTestFile(t, path, "uncertain")
 
-	err := cleanupPreparedBackups([]preparedBackup{{path: path}})
+	err := cleanupPreparedBackupsWith([]preparedBackup{{path: path}}, os.Remove)
 	if err == nil || !strings.Contains(err.Error(), "unverified") {
 		t.Fatalf("cleanup error = %v, want unverified ownership", err)
 	}
