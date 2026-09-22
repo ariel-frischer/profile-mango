@@ -15,20 +15,21 @@ import (
 )
 
 type installOptions struct {
-	profiles     string
-	resourceRoot string
-	bindings     string
-	targets      []string
-	configs      []string
-	manifests    []string
-	configPaths  []string
-	all          bool
-	apply        bool
-	yes          bool
-	expectPlan   string
-	noBackup     bool
-	override     bool
-	jsonOutput   bool
+	profiles       string
+	resourceRoot   string
+	bindings       string
+	targets        []string
+	configs        []string
+	manifests      []string
+	configPaths    []string
+	all            bool
+	apply          bool
+	yes            bool
+	expectPlan     string
+	noBackup       bool
+	override       bool
+	jsonOutput     bool
+	nonInteractive bool
 }
 
 func newInstallCmd() *cobra.Command {
@@ -39,6 +40,7 @@ func newInstallCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			options.nonInteractive = nonInteractive
 			return runInstall(cmd, args[0], options)
 		},
 	}
@@ -84,8 +86,11 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	if err != nil {
 		return err
 	}
-	if err := writeInstallPlan(cmd, plan, options.jsonOutput); err != nil {
-		return err
+	writePlan := !options.apply || !options.jsonOutput || plan.Status == install.StatusBlocked
+	if writePlan {
+		if err := writeInstallPlan(cmd, plan, options.jsonOutput); err != nil {
+			return err
+		}
 	}
 	if !options.apply {
 		if plan.Status == install.StatusBlocked {
@@ -105,9 +110,14 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	} else if err := confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), plan.PlanID); err != nil {
 		return err
 	}
-	report, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: options.expectPlanOrPlanID(plan)})
-	if err != nil {
-		return err
+	report, applyErr := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: options.expectPlanOrPlanID(plan)})
+	if applyErr != nil {
+		if report.Status != "" || len(report.Targets) > 0 {
+			if err := writeApplyReport(cmd, report, options.jsonOutput); err != nil {
+				return err
+			}
+		}
+		return applyErr
 	}
 	return writeApplyReport(cmd, report, options.jsonOutput)
 }
@@ -121,6 +131,9 @@ func validateInstallOptions(options installOptions) error {
 	}
 	if options.yes && !options.apply {
 		return fmt.Errorf("--yes requires --apply")
+	}
+	if options.nonInteractive && options.apply && !options.yes {
+		return fmt.Errorf("--non-interactive apply requires --yes --expect-plan")
 	}
 	if options.expectPlan != "" && (!options.apply || !options.yes) {
 		return fmt.Errorf("--expect-plan requires --apply --yes")
@@ -272,9 +285,10 @@ func confirmInstall(input io.Reader, output io.Writer, planID string) error {
 	}
 	line, err := bufio.NewReader(input).ReadString('\n')
 	if err != nil && err != io.EOF {
-		return fmt.Errorf("read confirmation: %w", err)
+		return fmt.Errorf("apply declined: confirmation input failed: %w", err)
 	}
-	if strings.ToLower(strings.TrimSpace(line)) != "y" {
+	answer := strings.ToLower(strings.TrimSpace(line))
+	if answer != "y" && answer != "yes" {
 		return fmt.Errorf("apply declined")
 	}
 	return nil
