@@ -1,5 +1,7 @@
 # Documentation index
 
+- [`architecture.md`](architecture.md) - Shared canonical, render, install, filesystem, and CLI ownership with parallel target-install integration boundaries.
+
 - [Roadmap](../ROADMAP.md) - Evidence-gated product direction for target applicability, profile assignments, profile-scoped adapters, agent roles, MCP, and hooks.
 - [`dev/agent-validation.md`](dev/agent-validation.md) - No-inference native checks, version-qualified support, local references, and the read-only upstream source drift check.
 - [`dev/ap-i2v-agent-skill-plan.md`](dev/ap-i2v-agent-skill-plan.md) - Implementation and validation plan for the bundled npx-installable profile-mango agent skill.
