@@ -177,6 +177,12 @@ unowned or externally edited files require `--override`; there is no general for
 path. Never use a live path without new path-specific user approval after a verified
 disposable backup/restore rehearsal.
 
+Use global `--non-interactive` for automation. It never grants consent: apply
+still needs `--yes --expect-plan <planID>`. JSON and redirected input never prompt.
+Plan-only JSON is one `Plan`; ready apply JSON is one `ApplyReport`, including
+engine failure reports, not a concatenated plan/report stream. Blocked apply emits
+its blocked plan and exits nonzero. Check exit status even when JSON is present.
+
 ## Safety boundary
 
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access

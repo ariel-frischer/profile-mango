@@ -276,6 +276,19 @@ model application does not run OpenCode or inspect auth stores, sessions, plugin
 MCP, providers, or the network. Any live configuration path still requires separate
 path-specific user approval after a disposable backup/restore rehearsal.
 
+All commands accept the global `--non-interactive` flag. It disables prompts, not
+safety checks or consent requirements. Interactive install apply prompts only on
+a real terminal and accepts `y` or `yes`; an empty answer declines. JSON output,
+redirected input, and `--non-interactive` never prompt and require explicit
+`--yes --expect-plan <planID>` to apply.
+
+JSON planning emits one `Plan` object. A ready JSON apply now emits one
+`ApplyReport` object, including a failure report when the apply engine fails,
+rather than concatenating the plan and report. Automation that consumed the old
+two-object stream must read a single report instead. A blocked apply emits its
+blocked plan and exits nonzero. Invalid flags or declined consent can fail before
+any report is produced. Always check the exit status as well as the JSON status.
+
 ## Representative profiles
 
 [`examples/jcode-like/`](examples/jcode-like/) contains credential-free `base`,

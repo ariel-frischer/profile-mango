@@ -36,6 +36,10 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	if result.err != nil {
 		t.Fatalf("automated apply failed: %v\n%s", result.err, result.stderr)
 	}
+	var report install.ApplyReport
+	if err := json.Unmarshal([]byte(result.stdout), &report); err != nil || report.Status != "committed" {
+		t.Fatalf("expected one committed JSON report: err=%v output=%s", err, result.stdout)
+	}
 	if !strings.Contains(string(readWorkflowFile(t, w.config)), `"model": "openai/gpt-5.6"`) {
 		t.Fatal("install did not update the active config")
 	}
@@ -72,7 +76,7 @@ func newInstallWorkflow(t *testing.T) installWorkflow {
 			t.Fatal(err)
 		}
 	}
-	w.args = []string{"install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
+	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
 		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", "opencode@1.18.31", "--config-path", "opencode@1.18.31=" + w.config, "--override", "--json"}
 	return w
 }
