@@ -21,8 +21,10 @@ func TestOpenClawAdapterMetadata(t *testing.T) {
 	if !metadata.Installable || metadata.Status != StatusReady || metadata.EvidenceSHA256 != openclaw.EvidenceSHA256 {
 		t.Fatalf("metadata did not expose qualified install subset: %#v", metadata)
 	}
-	if !strings.Contains(metadata.Reason, "model") || !strings.Contains(metadata.Reason, "thinking") {
-		t.Fatalf("metadata reason omitted field scope: %q", metadata.Reason)
+	for _, term := range []string{"model", "thinking", "resolver", "getter", "fallback", "override"} {
+		if !strings.Contains(metadata.Reason, term) {
+			t.Fatalf("metadata reason omitted evidence scope %q: %q", term, metadata.Reason)
+		}
 	}
 }
 

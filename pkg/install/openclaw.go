@@ -17,7 +17,7 @@ func (openClawAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: openclaw.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact OpenClaw 2026.9.5 model and thinking-default fields are installable through source-native parser/schema evidence",
+		Reason:         "exact OpenClaw 2026.9.5 model and thinking-default fields are qualified by source-native resolver/getter evidence; fallback and user model-override limits remain explicit",
 	}
 }
 
