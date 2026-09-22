@@ -14,7 +14,7 @@ func (claudeCodeAdapter) Metadata() AdapterMetadata {
 		Target:         claudecode.TargetName,
 		Version:        claudecode.TargetVersion,
 		AdapterVersion: claudecode.AdapterVersion,
-		EvidenceSHA256: claudecode.EvidenceSHA256,
+		EvidenceSHA256: claudecode.NativeBinarySHA256,
 		Installable:    true,
 		Status:         StatusReady,
 		Reason:         "exact Claude Code 2.1.278 consumes one top-level model setting at an explicit path; all other profile effects remain blocked",

@@ -53,6 +53,8 @@ sandbox() {
 		--die-with-parent \
 		--new-session \
 		--unshare-net \
+		--unshare-pid \
+		--unshare-ipc \
 		--ro-bind /usr /usr \
 		--ro-bind /bin /bin \
 		--ro-bind /lib /lib \

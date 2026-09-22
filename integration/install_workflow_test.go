@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,12 +16,27 @@ import (
 )
 
 type installWorkflow struct {
-	binary, root, config, original string
-	env, args                      []string
+	binary, root, config, original, expected string
+	env, args                                []string
 }
 
 func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
-	w := newInstallWorkflow(t)
+	tests := map[string]struct {
+		provider, model, original, expected string
+	}{
+		"opencode@1.18.31":    {"openai", "gpt-5.6", "{\n  // keep user comment\n  \"model\": \"openai/old\",\n  \"theme\": \"system\"\n}\n", "{\n  // keep user comment\n  \"model\": \"openai/gpt-5.6\",\n  \"theme\": \"system\"\n}\n"},
+		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
+	}
+	for target, test := range tests {
+		t.Run(target, func(t *testing.T) {
+			w := newInstallWorkflow(t, target, test.provider, test.model, test.original, test.expected)
+			w.checkInstall(t)
+		})
+	}
+}
+
+func (w installWorkflow) checkInstall(t *testing.T) {
+	t.Helper()
 	before := readWorkflowFile(t, w.config)
 	plan := w.plan(t)
 	if plan.Status != install.StatusReady || !plan.Backup || len(plan.Targets[0].Fields) == 0 {
@@ -40,9 +55,7 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.stdout), &report); err != nil || report.Status != "committed" {
 		t.Fatalf("expected one committed JSON report: err=%v output=%s", err, result.stdout)
 	}
-	if !strings.Contains(string(readWorkflowFile(t, w.config)), `"model": "openai/gpt-5.6"`) {
-		t.Fatal("install did not update the active config")
-	}
+	assertWorkflowBytes(t, w.config, []byte(w.expected))
 	backup := installfs.BackupPath(w.config, plan.PlanID)
 	assertWorkflowBytes(t, backup, before)
 	w.checkNoopAndStale(t, plan.PlanID)
@@ -53,11 +66,11 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	assertWorkflowBytes(t, filepath.Join(w.root, "outside-sentinel"), []byte("untouched"))
 }
 
-func newInstallWorkflow(t *testing.T) installWorkflow {
+func newInstallWorkflow(t *testing.T, target, provider, model, original, expected string) installWorkflow {
 	t.Helper()
 	repo := absolutePath(t, "..")
 	root := t.TempDir()
-	w := installWorkflow{root: root, binary: filepath.Join(root, executableName()), env: cleanInstallEnv(t, root)}
+	w := installWorkflow{root: root, binary: filepath.Join(root, executableName()), env: cleanInstallEnv(t, root), original: original, expected: expected}
 	runGo(t, repo, w.env, "build", "-o", w.binary, "./cmd/profile-mango")
 	profile := filepath.Join(root, "profiles", "minimal")
 	if err := os.MkdirAll(profile, 0o700); err != nil {
@@ -65,11 +78,10 @@ func newInstallWorkflow(t *testing.T) installWorkflow {
 	}
 	files := map[string]string{
 		filepath.Join(profile, "profile.yaml"):  "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: minimal\nspec:\n  routeRef: primary\n",
-		filepath.Join(root, "bindings.yaml"):    "routes:\n  primary:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n",
+		filepath.Join(root, "bindings.yaml"):    fmt.Sprintf("routes:\n  primary:\n    provider: %s\n    transport: native\n    authentication: oauth\n    model: %s\n    effort: high\n", provider, model),
 		filepath.Join(root, "outside-sentinel"): "untouched",
 	}
-	w.config = filepath.Join(root, "opencode.jsonc")
-	w.original = "{\n  // keep user comment\n  \"model\": \"openai/old\",\n  \"theme\": \"system\"\n}\n"
+	w.config = filepath.Join(root, "target.json")
 	files[w.config] = w.original
 	for path, content := range files {
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
@@ -77,7 +89,7 @@ func newInstallWorkflow(t *testing.T) installWorkflow {
 		}
 	}
 	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
-		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", "opencode@1.18.31", "--config-path", "opencode@1.18.31=" + w.config, "--override", "--json"}
+		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config-path", target + "=" + w.config, "--override", "--json"}
 	return w
 }
 
@@ -129,8 +141,7 @@ func (w installWorkflow) rejectUnconfirmedApply(t *testing.T, planID string) {
 func (w installWorkflow) checkNoopAndStale(t *testing.T, oldID string) {
 	t.Helper()
 	after := readWorkflowFile(t, w.config)
-	want := strings.Replace(w.original, `"openai/old"`, `"openai/gpt-5.6"`, 1)
-	assertWorkflowBytes(t, w.config, []byte(want))
+	assertWorkflowBytes(t, w.config, []byte(w.expected))
 	plan := w.plan(t)
 	if plan.Status != install.StatusNoop {
 		t.Fatalf("reapply status=%s, want noop", plan.Status)
