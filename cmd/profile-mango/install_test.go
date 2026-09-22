@@ -156,6 +156,122 @@ func TestInstallConfirmationTreatsInputErrorAsDecline(t *testing.T) {
 	}
 }
 
+func TestWriteInstallPlanHumanFieldDiffs(t *testing.T) {
+	tests := map[string]struct {
+		plan                 install.Plan
+		want                 []string
+		wantAbsent           []string
+		preserveSensitiveRaw bool
+	}{
+		"target and file fields are deterministic and deduplicated": {
+			plan: install.Plan{PlanID: "plan-123", Status: install.StatusReady, Targets: []install.TargetPlan{
+				{Target: install.Target{Name: "zeta", Version: "1"}, Status: install.StatusReady, Fields: []install.FieldChange{
+					{Path: "config.z", Before: "z", After: "Z"},
+					{Path: "config.model", Before: "old", After: "new"},
+				}, Files: []install.FilePlan{
+					{Path: "z.json", Action: install.ActionUpdate, Fields: []install.FieldChange{{Path: "config.z"}, {Path: "resource.only"}}},
+				}},
+				{Target: install.Target{Name: "alpha", Version: "1"}, Status: install.StatusReady, Fields: []install.FieldChange{{Path: "config.model", Before: "old", After: "new"}}, Files: []install.FilePlan{
+					{Path: "a.json", Action: install.ActionUpdate, Fields: []install.FieldChange{{Path: "config.model"}}},
+				}},
+			}},
+			want: []string{
+				"plan plan-123: ready\n",
+				"  alpha@1: ready\n",
+				"    field config.model: \"old\" -> \"new\"\n",
+				"    a.json: update\n",
+				"  zeta@1: ready\n",
+				"    field config.model: \"old\" -> \"new\"\n",
+				"    field config.z: \"z\" -> \"Z\"\n",
+				"    z.json: update\n",
+				"      field resource.only\n",
+			},
+			wantAbsent: []string{"      field config.model\n", "      field config.z\n"},
+		},
+		"sensitive values and controls are safe before normalization": {
+			plan: install.Plan{PlanID: "plan-safe", Status: install.StatusReady, Targets: []install.TargetPlan{{
+				Target: install.Target{Name: "safe", Version: "1"}, Status: install.StatusReady,
+				Fields: []install.FieldChange{{Path: "config.\npath", Before: "SECRET-before", After: "after\tvalue\x1b[31m", Sensitive: true}},
+				Files:  []install.FilePlan{{Path: "file\nname", Action: install.ActionUpdate}},
+			}}},
+			want:                 []string{"field \"config.\\npath\": \"<redacted>\" -> \"<redacted>\"\n", "\"file\\nname\": update\n"},
+			wantAbsent:           []string{"SECRET-before", "after\tvalue", "\x1b[31m", "config.\npath", "file\nname"},
+			preserveSensitiveRaw: true,
+		},
+		"normalized sensitive fields remain visible": {
+			plan: install.Plan{PlanID: "plan-safe", Status: install.StatusReady, Targets: []install.TargetPlan{{
+				Target: install.Target{Name: "safe", Version: "1"}, Status: install.StatusReady,
+				Fields: []install.FieldChange{{Path: "config.secret", Before: "<redacted>", After: "<redacted>", Sensitive: true}},
+			}}},
+			want:       []string{"field config.secret\n"},
+			wantAbsent: []string{" -> "},
+		},
+		"empty and noop fields do not invent changes": {
+			plan: install.Plan{PlanID: "plan-noop", Status: install.StatusNoop, Targets: []install.TargetPlan{{
+				Target: install.Target{Name: "same", Version: "1"}, Status: install.StatusNoop,
+				Fields: []install.FieldChange{{Path: "config.same", Before: "same", After: "same"}, {Path: "config.empty"}},
+				Files:  []install.FilePlan{{Path: "config.json", Action: install.ActionNoop, Fields: []install.FieldChange{{Path: "config.same"}, {Path: "config.empty"}}}},
+			}}},
+			want:       []string{"plan plan-noop: noop\n", "  same@1: noop\n", "    config.json: noop\n"},
+			wantAbsent: []string{"config.same:", "config.empty", " -> "},
+		},
+		"create fields show an empty before value": {
+			plan: install.Plan{PlanID: "plan-create", Status: install.StatusReady, Targets: []install.TargetPlan{{
+				Target: install.Target{Name: "new", Version: "1"}, Status: install.StatusReady,
+				Fields: []install.FieldChange{{Path: "config.model", After: "new/model"}},
+				Files:  []install.FilePlan{{Path: "config.json", Action: install.ActionCreate, Fields: []install.FieldChange{{Path: "config.model"}}}},
+			}}},
+			want: []string{"config.model: \"\" -> \"new/model\"\n", "config.json: create\n"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+			cmd := &cobra.Command{}
+			cmd.SetOut(&output)
+			if err := writeInstallPlan(cmd, test.plan, false); err != nil {
+				t.Fatal(err)
+			}
+			got := output.String()
+			for _, want := range test.want {
+				if !strings.Contains(got, want) {
+					t.Fatalf("output = %q, missing %q", got, want)
+				}
+			}
+			for _, absent := range test.wantAbsent {
+				if strings.Contains(got, absent) {
+					t.Fatalf("output = %q, unexpectedly contains %q", got, absent)
+				}
+			}
+			if test.preserveSensitiveRaw && test.plan.Targets[0].Fields[0].Before != "SECRET-before" {
+				t.Fatalf("human rendering mutated sensitive field: %#v", test.plan.Targets[0].Fields[0])
+			}
+			if strings.Count(got, "      field config.model") != 0 {
+				t.Fatalf("output duplicates target/file field: %q", got)
+			}
+		})
+	}
+}
+
+func TestWriteInstallPlanHumanOutputIsDeterministic(t *testing.T) {
+	plan := install.Plan{PlanID: "plan-repeat", Status: install.StatusReady, Targets: []install.TargetPlan{
+		{Target: install.Target{Name: "b", Version: "1"}, Status: install.StatusReady, Fields: []install.FieldChange{{Path: "z", Before: "1", After: "2"}, {Path: "a", Before: "1", After: "2"}}},
+		{Target: install.Target{Name: "a", Version: "1"}, Status: install.StatusReady, Fields: []install.FieldChange{{Path: "a", Before: "1", After: "2"}}},
+	}}
+	var first, second bytes.Buffer
+	for _, output := range []*bytes.Buffer{&first, &second} {
+		cmd := &cobra.Command{}
+		cmd.SetOut(output)
+		if err := writeInstallPlan(cmd, plan, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if first.String() != second.String() {
+		t.Fatalf("human output changed between runs:\nfirst:\n%s\nsecond:\n%s", first.String(), second.String())
+	}
+}
+
 func TestInstallJSONApplyEmitsOneReportAndDoesNotReadStdin(t *testing.T) {
 	options, _, _ := cliOpenCodeInstallFixture(t)
 	plan := buildCLIInstallPlan(t, options)
