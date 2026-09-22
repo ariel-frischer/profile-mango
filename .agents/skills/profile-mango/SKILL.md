@@ -157,7 +157,7 @@ native parsing as authentication, delivery, or enforcement.
 
 ## Plan-first install
 
-All production targets except OpenCode support deterministic blocked planning only.
+Only the exact subsets in the README install table and target evidence ledger are installable. Other targets remain blocked.
 OpenCode requires exact version `1.18.31`, a route-only profile, and one explicit
 config path. Plan first against synthetic or separately approved disposable state:
 
@@ -177,13 +177,19 @@ unowned or externally edited files require `--override`; there is no general for
 path. Never use a live path without new path-specific user approval after a verified
 disposable backup/restore rehearsal.
 
+Use global `--non-interactive` for automation. It never grants consent: apply
+still needs `--yes --expect-plan <planID>`. JSON and redirected input never prompt.
+Plan-only JSON is one `Plan`; ready apply JSON is one `ApplyReport`, including
+engine failure reports, not a concatenated plan/report stream. Blocked apply emits
+its blocked plan and exits nonzero. Check exit status even when JSON is present.
+
 ## Safety boundary
 
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access
   credentials, call providers, or launch target agents.
-- `install` remains plan-only for every production target except the exact
-  OpenCode `1.18.31` top-level model subset. That subset may touch only the explicit
-  config path and adjacent Profile Mango manifest, backup, journal, and lock paths.
+- `install` may apply only qualified target-specific subsets. It may touch only
+  explicit config paths and adjacent Profile Mango manifests, backups, journals,
+  and locks.
   It must not read auth stores, sessions, plugins, MCP, providers, or the network.
   Do not point it at a live config without new path-specific user approval.
 - `render` writes only beneath the new path supplied by `--out` and never applies

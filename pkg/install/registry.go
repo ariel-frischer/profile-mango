@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 )
 
 type Registry struct {
@@ -75,12 +73,12 @@ func (adapter blockedAdapter) Plan(AdapterInput) (Patch, error) {
 func DefaultRegistry() *Registry {
 	blockedReason := "production target installation is blocked pending disposable-target validation; no target state is read or written"
 	return NewRegistry(
-		blockedAdapter{metadata: blockedMetadata(claudecode.TargetName, claudecode.TargetVersion, claudecode.AdapterVersion, claudecode.EvidenceSHA256, blockedReason)},
+		claudeCodeAdapter{},
 		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(hermes.TargetName, hermes.TargetVersion, hermes.AdapterVersion, hermes.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(openclaw.TargetName, openclaw.TargetVersion, openclaw.AdapterVersion, openclaw.EvidenceSHA256, blockedReason)},
-		blockedAdapter{metadata: blockedMetadata(pi.TargetName, pi.TargetVersion, pi.AdapterVersion, pi.EvidenceSHA256, blockedReason)},
+		piAdapter{},
 		openCodeAdapter{},
 	)
 }

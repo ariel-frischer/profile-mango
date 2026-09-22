@@ -51,29 +51,14 @@ inspectable inert previews, and can transactionally apply only the exact OpenCod
 `1.18.31` top-level `model` field at one explicit path. Every other production target
 and every broader OpenCode profile capability remain install-blocked.
 
-> **Status:** private prototype. Shipped validation and M1 project scaffolding
-> are offline and pure. Claude Code `2.1.278`, Codex CLI `0.154.0`, Pi
-> `0.86.1`, Oh My Pi `18.2.6`, OpenClaw `2026.9.5`, Hermes Agent `0.21.3`,
-> and OpenCode `1.18.31` have exact-version inert preview renderers. OpenCode alone
-> also supports lossless transactional application of the top-level `model` field to
-> one explicit caller-supplied path, with destination-bound consent, backup, stale
-> checks, journaling, rollback, and guarded recovery. Full-profile output remains
-> non-applicable because authentication, delivery, precedence, and enforcement are
-> unverified. Claude Code is blocked by opaque startup and diagnostic effects.
-> Pi is blocked by startup settings/auth/model/session effects, migrations,
-> discovery, package/update subprocesses, network-capable model/catalog paths, and
-> unbounded writes. Oh My Pi is blocked by its missing standalone native addon and
-> unsafe config-inspector effects. OpenClaw is blocked by source-only runtime
-> evidence and an unsafe config-inspection path. Hermes is blocked by its exact
-> Python build requirement, missing runtime artifact, and unsafe inspector paths.
-> OpenCode is pinned to immutable release/source/archive/binary evidence. Its
-> corrected JSONC `model` candidate is natively accepted by exact `1.18.31`, and
-> partial merged-state and inline-over-global precedence were observed in an
-> approved synthetic network-blocked probe. The inspector is writeful, ignores
-> unknown keys, and provides no general per-field provenance. Authentication
-> identity, effort, delivery, permissions, tools, plugins, MCP, full precedence, and
-> enforcement remain blocked. No global agent configuration was read or changed;
-> disposable backups were restored and verified byte-for-byte.
+> **Status:** private prototype. Validation and project scaffolding are offline.
+> Exact-version renderers remain inert. Installation supports only the qualified
+> target-specific subsets listed below, with explicit paths, deterministic diffs,
+> hash-bound consent, default backups, stale checks, rollback, and guarded recovery.
+> Full-profile authentication, delivery, permissions, and enforcement remain
+> unverified. Native qualification uses isolated disposable state, never personal
+> global agent configuration or authenticated provider requests. See the
+> [evidence ledger](docs/dev/target-evidence.md) for precise versions and limits.
 
 ## Install
 
@@ -248,9 +233,14 @@ or unknown.
 
 `install` accepts repeatable exact `target@version` selections or `--all`, resolves
 the same explicit profile inputs as `render`, and emits a deterministic plan ID.
-Every target except OpenCode remains blocked before reading its config path. OpenCode
-`1.18.31` can plan only the top-level `model` field at one explicit path, and profiles
-with permissions, tools, instructions, or skills remain blocked.
+Only these exact target subsets are currently installable. Other targets and
+unsupported required permissions, tools, instructions, or skills remain blocked.
+
+| Target | Installed fields | Native evidence boundary |
+| --- | --- | --- |
+| OpenCode `1.18.31` | Top-level `model` | Exact native merged config, limited precedence |
+| Claude Code `2.1.278` | Top-level `model` | Exact ELF explicit settings-file consumption before no-auth termination |
+| Pi `0.86.1` | `defaultProvider`, `defaultModel`, `defaultThinkingLevel` | Exact settings-module getters and project-over-global precedence only |
 
 ```bash
 profile-mango install route-only \
@@ -268,6 +258,12 @@ adapter replaces or inserts the single top-level model field from the current
 snapshot. Comments, unknown keys, unrelated bytes, modes, provider options, and
 credential-shaped target-owned state are preserved.
 
+Claude Code uses `--target claude-code@2.1.278` and
+`--config-path claude-code=/explicit/disposable/settings.json`, with an Anthropic
+native-route binding. Only strict JSON `model` is changed. Exact native evidence
+covers explicit `--settings` file consumption and no-auth early termination, not
+default-path precedence, authentication, effort, or full-profile activation.
+
 The application engine supports destination-bound consent, create-only backups,
 stale snapshot rejection, ownership manifests, atomic per-file replacement,
 journals, rollback, and guarded recovery. A non-interactive apply requires
@@ -276,6 +272,19 @@ model application does not run OpenCode or inspect auth stores, sessions, plugin
 MCP, providers, or the network. Any live configuration path still requires separate
 path-specific user approval after a disposable backup/restore rehearsal.
 
+All commands accept the global `--non-interactive` flag. It disables prompts, not
+safety checks or consent requirements. Interactive install apply prompts only on
+a real terminal and accepts `y` or `yes`; an empty answer declines. JSON output,
+redirected input, and `--non-interactive` never prompt and require explicit
+`--yes --expect-plan <planID>` to apply.
+
+JSON planning emits one `Plan` object. A ready JSON apply now emits one
+`ApplyReport` object, including a failure report when the apply engine fails,
+rather than concatenating the plan and report. Automation that consumed the old
+two-object stream must read a single report instead. A blocked apply emits its
+blocked plan and exits nonzero. Invalid flags or declined consent can fail before
+any report is produced. Always check the exit status as well as the JSON status.
+
 ## Representative profiles
 
 [`examples/jcode-like/`](examples/jcode-like/) contains credential-free `base`,
@@ -283,8 +292,7 @@ path-specific user approval after a disposable backup/restore rehearsal.
 without reading or copying live Jcode configuration. Installed-binary integration
 tests validate each profile and render it through every public adapter. Every
 render remains inert. Install plans remain blocked for all representative profiles
-that carry instructions, skills, permissions, or tools; only a route-only OpenCode
-model profile can use the narrow install subset.
+that carry instructions, skills, permissions, or tools; only compatible route-only profiles can use the narrow install subsets.
 
 ## Inert Codex preview
 

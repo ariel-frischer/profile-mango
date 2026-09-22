@@ -1,12 +1,14 @@
 # Documentation index
 
+- [`architecture.md`](architecture.md) - Shared canonical, render, install, filesystem, and CLI ownership with parallel target-install integration boundaries.
+
 - [Roadmap](../ROADMAP.md) - Evidence-gated product direction for target applicability, profile assignments, profile-scoped adapters, agent roles, MCP, and hooks.
 - [`dev/agent-validation.md`](dev/agent-validation.md) - No-inference native checks, version-qualified support, local references, and the read-only upstream source drift check.
 - [`dev/ap-i2v-agent-skill-plan.md`](dev/ap-i2v-agent-skill-plan.md) - Implementation and validation plan for the bundled npx-installable profile-mango agent skill.
 - [`dev/adapter-architecture.md`](dev/adapter-architecture.md) - Target-neutral render boundary, explicit dispatch, and inert adapter failure behavior.
 - [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and Ariel's experimental-only custom Jcode fork.
-- [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert JSON preview syntax, and blocked native inspection.
-- [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.86.1 source/package provenance, inert JSON settings preview syntax, static effect review, and blocked native inspection.
+- [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert preview syntax, and bounded model-only native installation evidence.
+- [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.86.1 source/package provenance, inert preview syntax, static effect review, and bounded settings-module installation evidence.
 - [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.2.6 source evidence, configuration effects, and blocked native support boundary.
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
 - [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and blocked native inspection boundary.

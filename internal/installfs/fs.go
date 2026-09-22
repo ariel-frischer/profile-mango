@@ -336,6 +336,13 @@ func failTransaction(changes []Change, journal *Journal, options ApplyOptions, l
 }
 
 func rollback(changes []Change, journal *Journal) error {
+	for _, entry := range journal.Entries {
+		if entry.Applied && entry.BackupPath != "" {
+			if _, err := verifiedBackup(entry); err != nil {
+				return err
+			}
+		}
+	}
 	for index := len(changes) - 1; index >= 0; index-- {
 		if !journal.Entries[index].Applied {
 			continue
@@ -362,7 +369,7 @@ func restoreChange(change Change, entry JournalEntry) error {
 	content := change.Before.Content
 	mode := change.Before.Mode
 	if entry.BackupPath != "" {
-		backup, err := SnapshotFile(entry.BackupPath)
+		backup, err := verifiedBackup(entry)
 		if err != nil {
 			return err
 		}
@@ -389,6 +396,11 @@ func validateRecovery(journal Journal) error {
 		if entry.BeforeExists && entry.BackupPath == "" {
 			return fmt.Errorf("%s has no recovery backup: %w", entry.Path, ErrRecoveryRequired)
 		}
+		if entry.BeforeExists {
+			if _, err := verifiedBackup(entry); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -407,11 +419,22 @@ func restoreEntry(entry JournalEntry) error {
 	if !entry.BeforeExists {
 		return os.Remove(entry.Path)
 	}
-	backup, err := SnapshotFile(entry.BackupPath)
+	backup, err := verifiedBackup(entry)
 	if err != nil {
 		return err
 	}
 	return atomicReplace(entry.Path, backup.Content, current, backup.Mode)
+}
+
+func verifiedBackup(entry JournalEntry) (Snapshot, error) {
+	backup, err := SnapshotFile(entry.BackupPath)
+	if err != nil {
+		return Snapshot{}, fmt.Errorf("read recovery backup: %w", err)
+	}
+	if !backup.Exists || backup.SHA256 != entry.BeforeSHA256 || uint32(backup.Mode) != entry.BeforeMode {
+		return Snapshot{}, fmt.Errorf("backup for %s differs from recorded state: %w", entry.Path, ErrRecoveryRequired)
+	}
+	return backup, nil
 }
 
 func transactionError(cause ...error) error {

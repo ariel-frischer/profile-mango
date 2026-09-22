@@ -134,13 +134,13 @@ established, so no Hermes command was run and the probe harness was not
 broadened. Smart approvals are excluded because they invoke an auxiliary model
 and do not cover file writes.
 
-Claude Code `v2.1.278` is intentionally not added to the native probe harness.
-The immutable npm wrapper and Linux x64 package were acquired and hashed, but the
-opaque native startup path exposes update, telemetry, discovery, plugin, hook,
-MCP, state, subprocess, and session surfaces. `doctor` advertises repair-capable
-checks, `/status` is session-oriented, and no release-qualified schema or
-effective-config inspector was established. No Claude Code command was run, so
-native acceptance, effective state, precedence, route/authentication,
+Claude Code `v2.1.278` has a separate opt-in
+`scripts/claudecode-config-probe.sh` for the exact Linux x64 ELF. It uses cleared
+environment, hidden personal homes/sockets, isolated network/PID/IPC namespaces,
+synthetic writable state, and timeouts. A `--bare --settings` sentinel is consumed
+before no-auth termination. This is a bounded-write model-consumption probe, not
+a no-write inspector or authenticated session. `doctor` and `/status` remain
+excluded. Full effective state, precedence, route/authentication,
 permissions/tools, CLAUDE.md, skills, and runtime enforcement remain blocked.
 
 ## Record support by version and capability
@@ -164,10 +164,10 @@ required-but-unknown properties continue to block applicability.
 
 Use one small source/version manifest and the existing evidence ledger rather than
 competing compatibility tables. The reference-pack task decides the minimal format;
-this guide does not add a product schema or CLI contract. No applicable public
-target adapter is shipped today. Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and
-Hermes preview rendering remain non-applicable. Claude Code is additionally blocked
-on opaque startup/diagnostic effects and unverified native acceptance. Pi is blocked
+this guide does not add a product schema or CLI contract. No full-profile public
+target adapter is shipped today; narrow install subsets are qualified separately. Claude Code, Codex, Pi, Oh My Pi, OpenClaw, and
+Hermes preview rendering remain non-applicable. Claude Code has only bounded
+explicit-file model consumption evidence, not full startup/effective-state proof. Pi is blocked
 on startup settings/auth/model/session effects, migrations, project and extension
 discovery, package/update subprocesses, network-capable model/catalog paths, and
 writes that were not proven bounded. Oh My Pi is blocked on its standalone native

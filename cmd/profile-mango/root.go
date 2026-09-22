@@ -15,11 +15,13 @@ var rootCmd = &cobra.Command{
 var (
 	homePathOverride string
 	noColor          bool
+	nonInteractive   bool
 )
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().StringVar(&homePathOverride, "home", "", "profile package home (default $PROFILE_MANGO_HOME or ~/.profile-mango)")
+	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "disable prompts; write commands still require explicit consent flags")
 
 	rootCmd.SetHelpFunc(colorizedHelp)
 

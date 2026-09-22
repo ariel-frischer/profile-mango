@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
 - Add an isolated OpenCode 1.18.31 native config probe with backup restoration and representative portable profiles validated across every public adapter
 - Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
+- Install the exact Claude Code 2.1.278 model field and Pi 0.86.1 route-default settings with native consumption evidence and transactional safeguards.
 
 ### Changed
 
@@ -34,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
 - GitLab pipelines now run only when a human starts them from the web UI
 - Human-readable CLI output now uses semantic terminal colors with automatic non-TTY suppression and --no-color/NO_COLOR opt-outs, while JSON, completion, and path output remain ANSI-free
+- Add global --non-interactive consent handling and emit one JSON apply report instead of a concatenated plan/report stream.
 
 ### Removed
 
@@ -44,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI formatting checks inspect tracked Go sources without scanning the restored module cache
 - Cross-target inert preview acceptance, early experimental identity reporting, and race-safe no-replace staging
 - Quote the OpenCode JSONC model key after exact 1.18.31 native parsing rejected the prior candidate
+- Apply all selected installation targets in one filesystem transaction and reject altered recovery backups before restoring files.
 
 ## [0.0.1] - 2026-01-01
 

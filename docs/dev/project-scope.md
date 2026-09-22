@@ -73,15 +73,21 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
 - A transactional install planner/application engine with deterministic,
   destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
   stale checks, atomic replacement, ownership evidence, journals, rollback, and
-  guarded recovery. OpenCode `1.18.31` alone enables the exact top-level `model`
-  field at one explicit path; every other production target remains blocked.
-  Validation uses fake adapters and synthetic or copied disposable OpenCode state.
+  guarded recovery. Only the qualified target-specific subsets in the table below
+  can be installed at explicit paths; other targets remain blocked.
+  Validation uses fake adapters and synthetic disposable target state.
   It never implicitly inspects or modifies global agent configuration.
 - An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
-**No full-profile production target adapter is shipped.** OpenCode `1.18.31` supports only lossless application of the top-level `model` field to one explicit path. The Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, OpenCode, and Ariel custom Jcode fork renderers still report full profiles as non-applicable. Ariel's renderer is experimental-only and is not a supported public or upstream Jcode target. The ordinary offline core, validation, and inert render paths do not launch or modify agents, inspect target homes, access credentials, run target subprocesses, or call providers or the network. The OpenCode model-only installer reads and writes only its explicit caller-supplied config and adjacent transaction paths. The separate opt-in OpenCode probe runs only the pinned exact binary in disposable network-blocked state. Model-field application evidence does not establish authentication, full-profile delivery, or runtime enforcement.
+**No full-profile production target adapter is shipped.** Only the exact subsets
+in the table below are installable. Renderers remain non-applicable for full
+profiles. The ordinary core, validation, and render paths stay offline and pure.
+Installers touch only explicit caller-supplied configuration and adjacent transaction
+paths. Separate opt-in native probes use disposable network-blocked state and do
+not establish authentication, full-profile delivery, or runtime enforcement.
+Ariel's Jcode fork remains experimental-only.
 
 ## Confirmed intended MVP targets
 
@@ -91,8 +97,8 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
 | Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
-| Claude Code | Intended MVP target | Exact `2.1.278` inert JSON preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
-| Pi | Intended MVP target | Exact `0.86.1` inert JSON settings preview renderer; native acceptance, effective state, route/auth, delivery, and enforcement remain blocked |
+| Claude Code | Intended MVP target | Exact `2.1.278` model-only strict-JSON installer; explicit settings-file consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
+| Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |

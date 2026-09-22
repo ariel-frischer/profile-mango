@@ -4,7 +4,7 @@
 mutable, unversioned pages. **Release context:** `v2.1.278`, commit
 `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`. The release pin does not version
 the documentation. **Status:** profile-mango ships an exact-version inert preview
-renderer only; native acceptance and effective-state support remain blocked.
+renderer plus a model-only installer. Exact explicit-file model consumption was qualified on 2026-09-22; full effective-state support remains blocked.
 
 ## Immutable artifact and release context
 
@@ -69,19 +69,21 @@ project/user discovery, plugins, hooks, MCP, state/migration, subprocess, and
 session surfaces. `claude doctor` advertises installation, extension, memory,
 hook, update, and permission checks and may fix issues. `/status` is session-oriented,
 and no release-qualified schema or effective-config command was established.
-No native command was run because side-effect-free startup was not proven. A
-future probe must first bound effects, then use a synthetic home/project,
-sanitized environment, no credentials, blocked network, and no session startup.
+The initial preview review ran no native command. The later opt-in probe uses the
+exact ELF, explicit settings, synthetic state, cleared environment, isolated
+network/PID/IPC, and timeouts. The model sentinel is consumed before no-auth
+termination. Sandbox-only startup writes are allowed; no authenticated session or
+provider request is qualified. See the [dated evidence](../target-evidence.md#bounded-model-installation-2026-09-22).
 
 ## Capability classification
 
 | Portable property | Evidence level | Applicability consequence |
 | --- | --- | --- |
 | Config fidelity | Partial; only a documentation-context `model` candidate is emitted | Candidate preview only |
-| Native acceptance | Unverified; no safe exact-release parser probe | Blocking |
+| Native acceptance | Exact ELF consumes explicit-file model sentinel | Model-only installation |
 | Effective state | Unverified; no merged per-key report | Blocking |
 | Precedence | Documentation-context only; not observed for the release | Blocking |
-| Model | Partial candidate syntax only | Blocking route acceptance |
+| Model | Narrow explicit-file consumption | Model field installable, full route remains unverified |
 | Effort | No release-qualified mapping | Blocking |
 | Provider and transport | No release-qualified route mapping | Blocking |
 | Authentication | No credential-free identity proof | Blocking |

@@ -18,6 +18,7 @@ func executeCommand(t *testing.T, args ...string) string {
 	rootCmd.SetErr(&out)
 	resetHomeFlag()
 	resetColorFlag()
+	resetNonInteractiveFlag()
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -38,6 +39,14 @@ func resetHomeFlag() {
 	homePathOverride = ""
 	if flag := rootCmd.PersistentFlags().Lookup("home"); flag != nil {
 		_ = flag.Value.Set("")
+		flag.Changed = false
+	}
+}
+
+func resetNonInteractiveFlag() {
+	nonInteractive = false
+	if flag := rootCmd.PersistentFlags().Lookup("non-interactive"); flag != nil {
+		_ = flag.Value.Set("false")
 		flag.Changed = false
 	}
 }
@@ -78,6 +87,35 @@ func TestRootCommandOmitsRemovedConfigSurface(t *testing.T) {
 	}
 	if flag := rootCmd.PersistentFlags().Lookup("home"); flag == nil {
 		t.Fatal("root command omitted --home flag")
+	}
+}
+
+func TestNonInteractiveFlagIsGlobal(t *testing.T) {
+	if flag := rootCmd.PersistentFlags().Lookup("non-interactive"); flag == nil {
+		t.Fatal("root command omitted --non-interactive flag")
+	}
+	output, err := executeCommandResult(t, "--non-interactive", "version", "--plain")
+	if err != nil {
+		t.Fatalf("non-interactive version failed: %v", err)
+	}
+	if !strings.Contains(output, "profile-mango ") {
+		t.Fatalf("version output = %q", output)
+	}
+}
+
+func TestNonInteractiveInstallStillRequiresExplicitConsent(t *testing.T) {
+	_, err := executeCommandResult(t, "--non-interactive", "install", "route-only", "--target", "codex@0.154.0", "--apply")
+	if err == nil || !strings.Contains(err.Error(), "--non-interactive apply requires --yes --expect-plan") {
+		t.Fatalf("error = %v, want explicit consent error", err)
+	}
+}
+
+func TestInstallConsentFlagsRemainExplicit(t *testing.T) {
+	cmd := newInstallCmd()
+	for _, name := range []string{"apply", "yes", "expect-plan"} {
+		if flag := cmd.Flags().Lookup(name); flag == nil {
+			t.Fatalf("install command omitted --%s", name)
+		}
 	}
 }
 

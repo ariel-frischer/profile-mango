@@ -28,22 +28,43 @@ func ApplyPlan(plan Plan, options ApplyOptions) (ApplyReport, error) {
 			return ApplyReport{}, fmt.Errorf("preflight %s: %w", target.Target.String(), err)
 		}
 	}
-	report := ApplyReport{Status: "committed", Targets: make([]ApplyTargetResult, 0, len(plan.Targets))}
-	for _, target := range sortedTargetPlans(plan.Targets) {
+	return applyTargetChanges(plan)
+}
+
+func applyTargetChanges(plan Plan) (ApplyReport, error) {
+	targets := sortedTargetPlans(plan.Targets)
+	var changes []installfs.Change
+	for _, target := range targets {
+		changes = append(changes, target.changes...)
+	}
+	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup})
+	status := applied.Status
+	if status == "noop" {
+		status = "committed"
+	}
+	if err != nil && status == "" {
+		status = "failed"
+	}
+	report := targetApplyReport(targets, status, err)
+	if err != nil {
+		return report, fmt.Errorf("apply installation transaction: %w", err)
+	}
+	return report, nil
+}
+
+func targetApplyReport(targets []TargetPlan, status string, cause error) ApplyReport {
+	report := ApplyReport{Status: status, Targets: make([]ApplyTargetResult, 0, len(targets))}
+	for _, target := range targets {
 		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
 		if len(target.changes) > 0 {
-			applied, err := installfs.Apply(target.changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup})
-			result.Status = applied.Status
-			if err != nil {
-				result.Error = err.Error()
-				report.Status = "partial"
-				report.Targets = append(report.Targets, result)
-				return report, fmt.Errorf("apply %s: %w", result.Target, err)
+			result.Status = status
+			if cause != nil {
+				result.Error = cause.Error()
 			}
 		}
 		report.Targets = append(report.Targets, result)
 	}
-	return report, nil
+	return report
 }
 
 func sortedTargetPlans(targets []TargetPlan) []TargetPlan {
