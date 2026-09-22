@@ -287,6 +287,16 @@ two-object stream must read a single report instead. A blocked apply emits its
 blocked plan and exits nonzero. Invalid flags or declined consent can fail before
 any report is produced. Always check the exit status as well as the JSON status.
 
+Apply-engine rejection during consent, source, or destination preflight returns
+`not-attempted`, not a transaction failure or rollback. Targets with pending
+changes receive `not-attempted` and the error; unaffected unchanged targets retain
+`noop` without an error. A stale no-op target retains its planned `noop` status but
+carries its preflight error. When no target has pending changes, a plan-wide error
+is attached to the first sorted result. Target results are ordered by exact target
+name and version.
+Automation must accept this additional status instead of assuming every rejected
+apply returns `failed`. Actual transaction outcomes remain unchanged.
+
 ## Representative profiles
 
 [`examples/jcode-like/`](examples/jcode-like/) contains credential-free `base`,
