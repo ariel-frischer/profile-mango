@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "target": {
+    "name": "openclaw",
+    "version": "2026.9.5",
+    "tag": "v2026.9.5",
+    "annotated_tag": "ce2a56d4f41a756662328f4098e303014fdbb38c",
+    "peeled_commit": "ec9c1a13db8938e5a3eaa51fca2e981cde2395a9",
+    "peeled_tree": "ac00d08eb2766b4fd114bee710e78a1df6c3cc03"
+  },
+  "provenance": {
+    "retained_source_archive_sha256": "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4",
+    "recompressed_codeload_archive_sha256": "3bd4d9617308808704cfdcbbdfdf87335d2f8efa4a34be49210aa34eca816841",
+    "archive_note": "The recompressed codeload bytes are an independent transport/archive hash and do not replace the retained source provenance hash."
+  },
+  "imported_source": {
+    "identity": "exact Git checkout mounted read-only for the probe",
+    "commit_and_tree_verified": true,
+    "source_file_sha256": {
+      "src/config/io.read-helpers.ts": "49e133e7c30fd51ba39b062930551fcf9b6b95b682741f8a79e1c928fe2023d1",
+      "src/config/validation-core.ts": "a586f2e100a5e77c7636b2cf8e94f2ca524de64feb2f19a7b8760bff45ed568f",
+      "src/agents/agent-scope.ts": "106351eb1f3456bb3da03eb34f891ca099d75e468e4395a8e1b6fc250e594004",
+      "src/agents/model-thinking-default-core.ts": "62ead002a021712bd24735eebd8262c6511e8bee1dc301b5f0ccac88e23f43c3",
+      "openclaw.mjs": "538e8ee2b65a0b24bb8a5ed3421bfe66621b1e0b5f726a167758c004f566fb36",
+      "package.json": "16a72a5768e629f703a89b27417feb05d4c4ece7df816c5d1364d202c5a2e619",
+      "pnpm-lock.yaml": "2415d6f2835843db64b1f4eadd676fa64c2fc9f5ddd868e73ae3deb2f0ed1b78",
+      "scripts/build-all.mts": "65f6726bbc3b5e18f02d268458b73648da5da5a0ddfb5dd5eca6e3b9a8984e17"
+    }
+  },
+  "probe": {
+    "script": "pkg/adapters/openclaw/testdata/openclaw-native-field-consumption-probe.mjs",
+    "runtime": "Node.js v24.21.0",
+    "modules": [
+      "src/config/io.read-helpers.ts#parseConfigJson5",
+      "src/config/validation-core.ts#validateConfigObject",
+      "src/agents/agent-scope.ts#resolveAgentEffectiveModelPrimary",
+      "src/agents/agent-scope.ts#resolveAgentExplicitModelPrimary",
+      "src/agents/agent-scope.ts#resolveModelFallbackAvailability",
+      "src/agents/agent-scope.ts#resolveEffectiveModelFallbacks",
+      "src/agents/model-thinking-default-core.ts#resolveConfiguredThinkingDefaultCore"
+    ],
+    "sandbox": {
+      "clear_environment": true,
+      "network_isolated": true,
+      "pid_and_ipc_isolated": true,
+      "personal_home_and_sockets_hidden": true,
+      "allowlisted_runtime_and_source_mounts": true,
+      "synthetic_home_and_config_paths": true,
+      "timeout_seconds": 30
+    },
+    "effects_not_run": [
+      "full startup",
+      "gateway or daemon",
+      "auth, providers, or model calls",
+      "sessions, hooks, plugins, MCP, or network"
+    ]
+  },
+  "parser_and_schema": {
+    "candidate_accepted": true,
+    "unknown_agents_defaults_property_rejected": true,
+    "unsupported_thinking_default_rejected": true
+  },
+  "field_consumption": {
+    "global": {
+      "model_primary": "synthetic/global-primary",
+      "thinking_default": "high",
+      "explicit_agent_primary": "undefined",
+      "inherited_fallback_availability": {
+        "kind": "active",
+        "models": ["synthetic/global-fallback"],
+        "source": "inherited"
+      },
+      "inherited_fallback_projection": "undefined"
+    },
+    "per_agent_override": {
+      "model_primary": "synthetic/agent-primary",
+      "thinking_default": "low",
+      "fallback_availability": {
+        "kind": "active",
+        "models": ["synthetic/agent-fallback"],
+        "source": "explicit"
+      },
+      "fallback_projection": ["synthetic/agent-fallback"]
+    }
+  },
+  "limits": {
+    "user_model_override_fallback_availability": {
+      "kind": "disabled_by_model_override"
+    },
+    "agent_primary_without_fallbacks": {
+      "kind": "none_configured",
+      "source": "explicit"
+    },
+    "scope": "This proves source resolver/getter consumption only. It does not prove runtime startup, credentials, provider identity, sessions, or enforcement."
+  }
+}
