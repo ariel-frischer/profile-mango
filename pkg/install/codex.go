@@ -15,9 +15,9 @@ func (codexAdapter) Metadata() AdapterMetadata {
 		Version:        codex.TargetVersion,
 		AdapterVersion: codex.AdapterVersion,
 		EvidenceSHA256: codex.EvidenceSHA256,
-		Installable:    true,
-		Status:         StatusReady,
-		Reason:         "exact Codex route fields are losslessly patchable at one explicit config path; native evidence is parser-only and does not qualify authentication, effective route, precedence, or policy enforcement",
+		Installable:    false,
+		Status:         StatusBlocked,
+		Reason:         "no safe credential-free exact-release probe proves model_provider, model, or model_reasoning_effort consumption, effective route or precedence, or OAuth identity. Native evidence is limited to parser acceptance and unrelated features/apps output",
 	}
 }
 

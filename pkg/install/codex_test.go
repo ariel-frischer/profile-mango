@@ -133,9 +133,33 @@ func TestCodexInstallRestoresSyntheticConfigThroughTransactionEngine(t *testing.
 	}
 }
 
+func TestCodexMetadataRemainsBlockedWithoutFieldConsumptionEvidence(t *testing.T) {
+	metadata := (codexAdapter{}).Metadata()
+	if metadata.Installable || metadata.Status != StatusBlocked {
+		t.Fatalf("metadata = %#v, want blocked and non-installable", metadata)
+	}
+	if !strings.Contains(metadata.Reason, "model_provider") || !strings.Contains(metadata.Reason, "effective route") {
+		t.Fatalf("metadata reason = %q, want field-consumption blocker", metadata.Reason)
+	}
+}
+
+type codexTestAdapter struct{}
+
+func (codexTestAdapter) Metadata() AdapterMetadata {
+	metadata := (codexAdapter{}).Metadata()
+	metadata.Installable = true
+	metadata.Status = StatusReady
+	metadata.Reason = "test-only contract coverage for the Codex patcher"
+	return metadata
+}
+
+func (codexTestAdapter) Plan(input AdapterInput) (Patch, error) {
+	return (codexAdapter{}).Plan(input)
+}
+
 func codexTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
-	request, root := testRequest(t, NewRegistry(codexAdapter{}))
+	request, root := testRequest(t, NewRegistry(codexTestAdapter{}))
 	writeInstallTestFile(t, request.BindingsPath, `routes:
   primary:
     provider: openai
