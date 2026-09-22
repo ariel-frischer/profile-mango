@@ -3,119 +3,52 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
-func TestApplyPreflightReportPreservesNoopAndSortsTargets(t *testing.T) {
-	registry := NewRegistry(
-		testAdapterFor("alpha", "1", "alpha", true),
-		testAdapterFor("zeta", "1", "zeta", true),
-	)
-	request, root := testRequest(t, registry)
-	request.Override = true
-	alpha := filepath.Join(root, "alpha")
-	writeInstallTestFile(t, alpha, "alpha")
-	request.Targets = []TargetRequest{{Target: Target{Name: "alpha", Version: "1"}, ConfigPath: alpha}}
-	first, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ApplyPlan(first, ApplyOptions{ExpectedPlanID: first.PlanID}); err != nil {
-		t.Fatal(err)
-	}
-
-	zeta := filepath.Join(root, "zeta")
-	writeInstallTestFile(t, zeta, "old-zeta")
-	request.Targets = []TargetRequest{
-		{Target: Target{Name: "zeta", Version: "1"}, ConfigPath: zeta},
-		{Target: Target{Name: "alpha", Version: "1"}, ConfigPath: alpha},
-	}
-	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if plan.Status != StatusReady || len(plan.Targets) != 2 {
-		t.Fatalf("plan = %#v", plan)
-	}
-
-	report, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: "wrong-consent"})
-	if err == nil || !strings.Contains(err.Error(), "does not match actual plan") {
-		t.Fatalf("apply report=%#v err=%v", report, err)
-	}
-	if report.Status != StatusNotAttempted || len(report.Targets) != 2 {
-		t.Fatalf("preflight report = %#v", report)
-	}
-	if report.Targets[0].Target != "alpha@1" || report.Targets[0].Status != StatusNoop || report.Targets[0].Error != "" {
-		t.Fatalf("noop result = %#v", report.Targets[0])
-	}
-	if report.Targets[1].Target != "zeta@1" || report.Targets[1].Status != StatusNotAttempted || report.Targets[1].Error == "" {
-		t.Fatalf("pending result = %#v", report.Targets[1])
-	}
-	assertInstallTestFile(t, zeta, "old-zeta")
-	assertAbsentInstallArtifact(t, installfs.BackupPath(zeta, plan.PlanID))
-	assertAbsentInstallArtifact(t, installfs.JournalPath(zeta, plan.PlanID))
-	assertAbsentInstallArtifact(t, zeta+".profile-mango.lock")
+type mixedPreflightFixture struct {
+	request     Request
+	plan        Plan
+	root, alpha string
+	zeta        string
 }
 
-func TestApplyPreflightReportOnStaleSource(t *testing.T) {
-	registry := NewRegistry(testAdapterFor("fake", "1", "new", true))
-	request, root := testRequest(t, registry)
-	config := filepath.Join(root, "config")
-	request.Override = true
-	request.Targets[0] = TargetRequest{Target: Target{Name: "fake", Version: "1"}, ConfigPath: config}
-	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	profile := filepath.Join(request.ProfilesRoot, "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, "changed source")
-
-	report, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID})
-	if err == nil || !strings.Contains(err.Error(), "source") {
-		t.Fatalf("apply report=%#v err=%v", report, err)
-	}
-	if report.Status != StatusNotAttempted || len(report.Targets) != 1 {
-		t.Fatalf("preflight report = %#v", report)
-	}
-	if result := report.Targets[0]; result.Status != StatusNotAttempted || result.Error == "" {
-		t.Fatalf("source result = %#v", result)
-	}
-	assertAbsentInstallArtifact(t, config)
-	assertAbsentInstallArtifact(t, installfs.BackupPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, installfs.JournalPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, config+".profile-mango.lock")
+type mixedPreflightCase struct {
+	allNoop, wrongConsent bool
+	mutation              string
+	noopError             bool
+	cause                 string
 }
 
-func TestApplyPreflightReportOnStaleTarget(t *testing.T) {
-	registry := NewRegistry(testAdapterFor("fake", "1", "new", true))
-	request, root := testRequest(t, registry)
-	config := filepath.Join(root, "config")
-	request.Override = true
-	writeInstallTestFile(t, config, "old")
-	request.Targets[0] = TargetRequest{Target: Target{Name: "fake", Version: "1"}, ConfigPath: config}
-	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
+func TestApplyPreflightReportMixedRejections(t *testing.T) {
+	tests := map[string]mixedPreflightCase{
+		"stale-ready-target":  {mutation: "stale-ready", cause: "preflight"},
+		"stale-noop-target":   {mutation: "stale-noop", noopError: true, cause: "preflight"},
+		"stale-source":        {mutation: "stale-source", cause: "source"},
+		"wrong-consent-mixed": {wrongConsent: true, cause: "does not match"},
+		"all-noop-consent":    {allNoop: true, wrongConsent: true, cause: "does not match"},
 	}
-	writeInstallTestFile(t, config, "stale target")
-
-	report, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID})
-	if err == nil || !strings.Contains(err.Error(), "preflight") {
-		t.Fatalf("apply report=%#v err=%v", report, err)
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			fixture := newMixedPreflightFixture(t, test.allNoop)
+			mutateMixedPreflightFixture(t, &fixture, test.mutation)
+			before := snapshotInstallTree(t, fixture.root)
+			expected := fixture.plan.PlanID
+			if test.wrongConsent {
+				expected = "wrong-consent"
+			}
+			report, err := ApplyPlan(fixture.plan, ApplyOptions{ExpectedPlanID: expected})
+			if err == nil || !strings.Contains(err.Error(), test.cause) {
+				t.Fatalf("report=%#v err=%v", report, err)
+			}
+			assertMixedPreflightReport(t, report, test.allNoop, test.noopError, test.cause)
+			assertInstallTreeUnchanged(t, fixture.root, before)
+		})
 	}
-	if report.Status != StatusNotAttempted || len(report.Targets) != 1 {
-		t.Fatalf("preflight report = %#v", report)
-	}
-	if result := report.Targets[0]; result.Status != StatusNotAttempted || result.Error == "" {
-		t.Fatalf("target result = %#v", result)
-	}
-	assertInstallTestFile(t, config, "stale target")
-	assertAbsentInstallArtifact(t, installfs.BackupPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, installfs.JournalPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, config+".profile-mango.lock")
 }
 
 func TestApplyPreflightReportOnMissingConsentAndBlockedPlan(t *testing.T) {
@@ -128,6 +61,7 @@ func TestApplyPreflightReportOnMissingConsentAndBlockedPlan(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	before := snapshotInstallTree(t, root)
 
 	report, err := ApplyPlan(plan, ApplyOptions{})
 	if err == nil || !strings.Contains(err.Error(), "requires an expected plan ID") {
@@ -150,15 +84,134 @@ func TestApplyPreflightReportOnMissingConsentAndBlockedPlan(t *testing.T) {
 	if report.Status != StatusNotAttempted || report.Targets[0].Status != StatusBlocked {
 		t.Fatalf("blocked report = %#v", report)
 	}
-	assertAbsentInstallArtifact(t, config)
-	assertAbsentInstallArtifact(t, installfs.BackupPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, installfs.JournalPath(config, plan.PlanID))
-	assertAbsentInstallArtifact(t, config+".profile-mango.lock")
+	assertInstallTreeUnchanged(t, root, before)
 }
 
-func assertAbsentInstallArtifact(t *testing.T, path string) {
+func TestApplyPreflightReportOnEmptyPlan(t *testing.T) {
+	report, err := ApplyPlan(Plan{}, ApplyOptions{})
+	if err == nil || !strings.Contains(err.Error(), "requires an expected plan ID") {
+		t.Fatalf("report=%#v err=%v", report, err)
+	}
+	if report.Status != StatusNotAttempted || len(report.Targets) != 1 {
+		t.Fatalf("empty plan report = %#v", report)
+	}
+	if result := report.Targets[0]; result.Target != "install" || result.Status != StatusNotAttempted || result.Error == "" {
+		t.Fatalf("empty plan result = %#v", result)
+	}
+}
+
+func newMixedPreflightFixture(t *testing.T, allNoop bool) mixedPreflightFixture {
+	registry := NewRegistry(
+		testAdapterFor("alpha", "1", "alpha-new", true),
+		testAdapterFor("zeta", "1", "zeta-new", true),
+	)
+	request, root := testRequest(t, registry)
+	request.Override = true
+	fixture := mixedPreflightFixture{request: request, root: root, alpha: filepath.Join(root, "alpha"), zeta: filepath.Join(root, "zeta")}
+	writeInstallTestFile(t, fixture.alpha, "alpha-new")
+	writeInstallTestFile(t, fixture.zeta, "zeta-old")
+	writeOwnedManifest(t, fixture.zeta, Target{Name: "zeta", Version: "1"}, installfs.Hash([]byte("zeta-old")))
+	request.Targets = []TargetRequest{{Target: Target{Name: "alpha", Version: "1"}, ConfigPath: fixture.alpha}}
+	seed, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	applyFixturePlan(t, seed)
+	request.Targets = []TargetRequest{
+		{Target: Target{Name: "zeta", Version: "1"}, ConfigPath: fixture.zeta},
+		{Target: Target{Name: "alpha", Version: "1"}, ConfigPath: fixture.alpha},
+	}
+	fixture.plan = buildFixturePlan(t, request)
+	if allNoop {
+		applyFixturePlan(t, fixture.plan)
+		fixture.plan = buildFixturePlan(t, request)
+	}
+	fixture.request = request
+	return fixture
+}
+
+func buildFixturePlan(t *testing.T, request Request) Plan {
 	t.Helper()
-	if _, err := os.Lstat(path); !os.IsNotExist(err) {
-		t.Fatalf("unexpected install artifact %s: %v", path, err)
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return plan
+}
+
+func applyFixturePlan(t *testing.T, plan Plan) {
+	t.Helper()
+	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func mutateMixedPreflightFixture(t *testing.T, fixture *mixedPreflightFixture, mutation string) {
+	t.Helper()
+	switch mutation {
+	case "stale-ready":
+		writeInstallTestFile(t, fixture.zeta, "stale-ready")
+	case "stale-noop":
+		writeInstallTestFile(t, fixture.alpha, "stale-noop")
+	case "stale-source":
+		profile := filepath.Join(fixture.request.ProfilesRoot, "route-only", "profile.yaml")
+		writeInstallTestFile(t, profile, "changed source")
+	}
+}
+
+func assertMixedPreflightReport(t *testing.T, report ApplyReport, allNoop, noopError bool, cause string) {
+	t.Helper()
+	if report.Status != StatusNotAttempted || len(report.Targets) != 2 {
+		t.Fatalf("preflight report = %#v", report)
+	}
+	alpha, zeta := report.Targets[0], report.Targets[1]
+	if alpha.Target != "alpha@1" || zeta.Target != "zeta@1" {
+		t.Fatalf("report ordering = %#v", report.Targets)
+	}
+	if alpha.Status != StatusNoop {
+		t.Fatalf("alpha result = %#v", alpha)
+	}
+	if allNoop {
+		if zeta.Status != StatusNoop || !strings.Contains(alpha.Error, cause) || zeta.Error != "" {
+			t.Fatalf("all-noop results = %#v", report.Targets)
+		}
+		return
+	}
+	if noopError != strings.Contains(alpha.Error, cause) {
+		t.Fatalf("alpha error = %#v", alpha)
+	}
+	if zeta.Status != StatusNotAttempted || !strings.Contains(zeta.Error, cause) {
+		t.Fatalf("zeta result = %#v", zeta)
+	}
+}
+
+func snapshotInstallTree(t *testing.T, root string) map[string]string {
+	t.Helper()
+	files := make(map[string]string)
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		files[path] = string(data)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return files
+}
+
+func assertInstallTreeUnchanged(t *testing.T, root string, before map[string]string) {
+	t.Helper()
+	after := snapshotInstallTree(t, root)
+	if !reflect.DeepEqual(before, after) {
+		t.Fatalf("synthetic install tree changed:\nbefore=%#v\nafter=%#v", before, after)
 	}
 }
