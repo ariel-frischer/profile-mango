@@ -22,11 +22,12 @@ const (
 )
 
 const (
-	StatusReady       = "ready"
-	StatusNoop        = "noop"
-	StatusBlocked     = "blocked"
-	StatusConflict    = "conflict"
-	StatusUnavailable = "unavailable"
+	StatusReady        = "ready"
+	StatusNoop         = "noop"
+	StatusBlocked      = "blocked"
+	StatusConflict     = "conflict"
+	StatusUnavailable  = "unavailable"
+	StatusNotAttempted = "not-attempted"
 )
 
 const (

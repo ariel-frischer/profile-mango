@@ -9,26 +9,54 @@ import (
 
 func ApplyPlan(plan Plan, options ApplyOptions) (ApplyReport, error) {
 	if options.ExpectedPlanID == "" {
-		return ApplyReport{}, fmt.Errorf("apply requires an expected plan ID")
+		err := fmt.Errorf("apply requires an expected plan ID")
+		return preflightApplyReport(plan, err, ""), err
 	}
 	if options.ExpectedPlanID != plan.PlanID {
-		return ApplyReport{}, fmt.Errorf("expected plan %s does not match actual plan %s", options.ExpectedPlanID, plan.PlanID)
+		err := fmt.Errorf("expected plan %s does not match actual plan %s", options.ExpectedPlanID, plan.PlanID)
+		return preflightApplyReport(plan, err, ""), err
 	}
 	if plan.Status != StatusReady && plan.Status != StatusNoop {
-		return ApplyReport{}, fmt.Errorf("install plan is not applicable: %s", plan.Status)
+		err := fmt.Errorf("install plan is not applicable: %s", plan.Status)
+		return preflightApplyReport(plan, err, ""), err
 	}
 	if err := validateSources(plan); err != nil {
-		return ApplyReport{}, err
+		return preflightApplyReport(plan, err, ""), err
 	}
-	for _, target := range plan.Targets {
+	for _, target := range sortedTargetPlans(plan.Targets) {
 		if len(target.checks) == 0 {
 			continue
 		}
 		if err := installfs.Preflight(target.checks); err != nil {
-			return ApplyReport{}, fmt.Errorf("preflight %s: %w", target.Target.String(), err)
+			cause := fmt.Errorf("preflight %s: %w", target.Target.String(), err)
+			return preflightApplyReport(plan, cause, target.Target.String()), cause
 		}
 	}
 	return applyTargetChanges(plan)
+}
+
+func preflightApplyReport(plan Plan, cause error, failedTarget string) ApplyReport {
+	targets := sortedTargetPlans(plan.Targets)
+	report := ApplyReport{Status: StatusNotAttempted, Targets: make([]ApplyTargetResult, 0, len(targets))}
+	hasPending := false
+	for _, target := range targets {
+		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
+		changed := len(target.changes) > 0 || target.Status == StatusReady
+		if changed {
+			result.Status = StatusNotAttempted
+			hasPending = true
+		}
+		if cause != nil && (changed || target.Target.String() == failedTarget) {
+			result.Error = cause.Error()
+		}
+		report.Targets = append(report.Targets, result)
+	}
+	if len(report.Targets) == 0 {
+		report.Targets = append(report.Targets, ApplyTargetResult{Target: "install", Status: StatusNotAttempted, Error: cause.Error()})
+	} else if cause != nil && !hasPending && failedTarget == "" {
+		report.Targets[0].Error = cause.Error()
+	}
+	return report
 }
 
 func applyTargetChanges(plan Plan) (ApplyReport, error) {

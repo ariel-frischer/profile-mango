@@ -116,9 +116,6 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	}
 	report, applyErr := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: options.expectPlanOrPlanID(plan)})
 	if applyErr != nil {
-		if report.Status == "" && len(report.Targets) == 0 {
-			report = failedApplyReport(plan, applyErr)
-		}
 		if err := writeApplyReport(cmd, report, options.jsonOutput); err != nil {
 			return err
 		}
@@ -435,17 +432,4 @@ func writeApplyReport(cmd *cobra.Command, report install.ApplyReport, jsonOutput
 		}
 	}
 	return nil
-}
-
-func failedApplyReport(plan install.Plan, applyErr error) install.ApplyReport {
-	report := install.ApplyReport{Status: "failed", Targets: make([]install.ApplyTargetResult, 0, len(plan.Targets))}
-	for _, target := range plan.Targets {
-		report.Targets = append(report.Targets, install.ApplyTargetResult{
-			Target: target.Target.String(), Status: "failed", Error: applyErr.Error(),
-		})
-	}
-	if len(report.Targets) == 0 {
-		report.Targets = append(report.Targets, install.ApplyTargetResult{Target: "install", Status: "failed", Error: applyErr.Error()})
-	}
-	return report
 }

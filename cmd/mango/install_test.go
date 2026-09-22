@@ -344,8 +344,11 @@ func TestInstallExpectedPlanRejectsChangedTargetBeforeWrite(t *testing.T) {
 	if decodeErr := decoder.Decode(&report); decodeErr != nil {
 		t.Fatalf("decode failed apply report: %v\n%s", decodeErr, output.String())
 	}
-	if report.Status == "" || len(report.Targets) == 0 {
+	if report.Status != install.StatusNotAttempted || len(report.Targets) != 1 {
 		t.Fatalf("failed apply report = %#v", report)
+	}
+	if result := report.Targets[0]; result.Status != install.StatusNotAttempted || result.Error == "" {
+		t.Fatalf("failed apply target report = %#v", result)
 	}
 	var extra any
 	if decodeErr := decoder.Decode(&extra); decodeErr != io.EOF {
