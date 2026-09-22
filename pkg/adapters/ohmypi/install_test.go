@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"gopkg.in/yaml.v3"
 )
 
 func TestPatchConfigTable(t *testing.T) {
@@ -78,6 +79,22 @@ func TestPatchConfigRejectsAmbiguousInput(t *testing.T) {
 			source: "defaultThinkingLevel: |\n  high\n",
 			want:   "block scalar",
 		},
+		"multiline model": {
+			source: "modelRoles:\n  default: old/model\n    continuation\n",
+			want:   "multiline scalar",
+		},
+		"anchor": {
+			source: "modelRoles:\n  default: &role old/model\n",
+			want:   "anchors",
+		},
+		"alias": {
+			source: "base: &role old/model\nmodelRoles:\n  default: *role\n",
+			want:   "anchors",
+		},
+		"merge key": {
+			source: "modelRoles:\n  <<: {}\n",
+			want:   "merge keys",
+		},
 		"wrong transport": {
 			route: profilemango.RouteBinding{Provider: "openai", Model: "gpt-5.6", Transport: "proxy", Authentication: "oauth", Effort: "high"},
 			want:  "native transport",
@@ -98,6 +115,48 @@ func TestPatchConfigRejectsAmbiguousInput(t *testing.T) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestPatchConfigInsertsBeforeDocumentEnd(t *testing.T) {
+	tests := map[string]struct {
+		source string
+		want   string
+	}{
+		"plain marker": {
+			source: "unknown: true\n...\n",
+			want:   "unknown: true\nmodelRoles:\n  default: \"openai/gpt-5.6\"\ndefaultThinkingLevel: \"high\"\n...\n",
+		},
+		"commented marker": {
+			source: "unknown: true\n...\t# end\n",
+			want:   "unknown: true\nmodelRoles:\n  default: \"openai/gpt-5.6\"\ndefaultThinkingLevel: \"high\"\n...\t# end\n",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			patch, err := PatchConfig([]byte(test.source), installRoute())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(patch.Content) != test.want {
+				t.Fatalf("content = %q, want %q", patch.Content, test.want)
+			}
+		})
+	}
+}
+
+func TestScalarSpanUsesRuneColumns(t *testing.T) {
+	document, err := parseConfig([]byte("unknown: éold\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Line: 1, Column: 10}
+	_, _, raw, err := scalarSpan(document, node)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != "éold" {
+		t.Fatalf("raw = %q, want %q", raw, "éold")
 	}
 }
 

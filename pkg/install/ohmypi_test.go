@@ -123,12 +123,12 @@ func TestOhMyPiAdapterBlocksUnverifiedRequirements(t *testing.T) {
 	}
 }
 
-func TestOhMyPiMetadataRemainsBlockedWithoutNativeApplicability(t *testing.T) {
+func TestOhMyPiMetadataReportsNarrowNativeApplicability(t *testing.T) {
 	metadata := (ohMyPiAdapter{}).Metadata()
-	if metadata.Installable || metadata.Status != StatusBlocked {
-		t.Fatalf("metadata = %#v, want blocked and not installable", metadata)
+	if !metadata.Installable || metadata.Status != StatusReady {
+		t.Fatalf("metadata = %#v, want ready and installable", metadata)
 	}
-	for _, want := range []string{"pi_natives", "source-native settings probe"} {
+	for _, want := range []string{"Settings.loadReadOnly", "modelRoles.default", "defaultThinkingLevel", "remain unmanaged"} {
 		if !strings.Contains(metadata.Reason, want) {
 			t.Fatalf("reason = %q, want substring %q", metadata.Reason, want)
 		}
@@ -137,7 +137,7 @@ func TestOhMyPiMetadataRemainsBlockedWithoutNativeApplicability(t *testing.T) {
 
 func ohMyPiTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
-	request, root := testRequest(t, NewRegistry(ohMyPiTestAdapter{}))
+	request, root := testRequest(t, NewRegistry(ohMyPiAdapter{}))
 	writeInstallTestFile(t, request.BindingsPath, `routes:
   primary:
     provider: openai
@@ -152,20 +152,6 @@ func ohMyPiTestRequest(t *testing.T) (Request, string) {
 		t.Fatal(err)
 	}
 	return request, root
-}
-
-type ohMyPiTestAdapter struct{}
-
-func (ohMyPiTestAdapter) Metadata() AdapterMetadata {
-	metadata := (ohMyPiAdapter{}).Metadata()
-	metadata.Installable = true
-	metadata.Status = StatusReady
-	metadata.Reason = "synthetic contract test override; production promotion remains blocked"
-	return metadata
-}
-
-func (ohMyPiTestAdapter) Plan(input AdapterInput) (Patch, error) {
-	return (ohMyPiAdapter{}).Plan(input)
 }
 
 func ohMyPiRoute() profilemango.RouteBinding {

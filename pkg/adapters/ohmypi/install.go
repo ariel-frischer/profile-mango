@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gopkg.in/yaml.v3"
@@ -36,53 +37,61 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	roles, hasRoles, err := findEntry(document.root, "modelRoles")
-	if err != nil {
-		return ConfigPatch{}, err
-	}
-	thinking, hasThinking, err := findEntry(document.root, "defaultThinkingLevel")
-	if err != nil {
-		return ConfigPatch{}, err
-	}
-	edits := make([]textEdit, 0, 3)
 	patch := ConfigPatch{Content: append([]byte(nil), source...), AfterModel: model, AfterThinkingLevel: effort}
-	if hasRoles {
-		if roles.value.Kind != yaml.MappingNode || roles.value.Style&yaml.FlowStyle != 0 {
-			return ConfigPatch{}, fmt.Errorf("modelRoles must be a block mapping")
-		}
-		defaultRole, found, err := findEntry(roles.value, "default")
-		if err != nil {
-			return ConfigPatch{}, err
-		}
-		if found {
-			edit, before, err := replaceScalar(document, defaultRole.value, model)
-			if err != nil {
-				return ConfigPatch{}, fmt.Errorf("patch modelRoles.default: %w", err)
-			}
-			patch.BeforeModel = before
-			edits = append(edits, edit)
-		} else {
-			edit, err := insertRole(document, roles, "default", model)
-			if err != nil {
-				return ConfigPatch{}, err
-			}
-			edits = appendEdit(edits, edit)
-		}
-	} else {
-		edits = appendEdit(edits, rootInsertion(document, "modelRoles:\n  default: "+yamlString(model)+"\n"))
+	modelEdit, beforeModel, err := patchModelRole(document, model)
+	if err != nil {
+		return ConfigPatch{}, err
 	}
-	if hasThinking {
-		edit, before, err := replaceScalar(document, thinking.value, effort)
-		if err != nil {
-			return ConfigPatch{}, fmt.Errorf("patch defaultThinkingLevel: %w", err)
-		}
-		patch.BeforeThinkingLevel = before
-		edits = append(edits, edit)
-	} else {
-		edits = appendEdit(edits, rootInsertion(document, "defaultThinkingLevel: "+yamlString(effort)+"\n"))
+	patch.BeforeModel = beforeModel
+	thinkingEdit, beforeThinking, err := patchThinkingLevel(document, effort)
+	if err != nil {
+		return ConfigPatch{}, err
 	}
+	patch.BeforeThinkingLevel = beforeThinking
+	edits := appendEdit([]textEdit{modelEdit}, thinkingEdit)
 	patch.Content = applyEdits(source, edits)
 	return patch, nil
+}
+
+func patchModelRole(document yamlDocument, model string) (textEdit, string, error) {
+	roles, found, err := findEntry(document.root, "modelRoles")
+	if err != nil {
+		return textEdit{}, "", err
+	}
+	if !found {
+		return rootInsertion(document, "modelRoles:\n  default: "+yamlString(model)+"\n"), "", nil
+	}
+	if roles.value.Kind != yaml.MappingNode || roles.value.Style&yaml.FlowStyle != 0 {
+		return textEdit{}, "", fmt.Errorf("modelRoles must be a block mapping")
+	}
+	defaultRole, found, err := findEntry(roles.value, "default")
+	if err != nil {
+		return textEdit{}, "", err
+	}
+	if !found {
+		edit, err := insertRole(document, roles, "default", model)
+		return edit, "", err
+	}
+	edit, before, err := replaceScalar(document, defaultRole.value, model)
+	if err != nil {
+		return textEdit{}, "", fmt.Errorf("patch modelRoles.default: %w", err)
+	}
+	return edit, before, nil
+}
+
+func patchThinkingLevel(document yamlDocument, effort string) (textEdit, string, error) {
+	thinking, found, err := findEntry(document.root, "defaultThinkingLevel")
+	if err != nil {
+		return textEdit{}, "", err
+	}
+	if !found {
+		return rootInsertion(document, "defaultThinkingLevel: "+yamlString(effort)+"\n"), "", nil
+	}
+	edit, before, err := replaceScalar(document, thinking.value, effort)
+	if err != nil {
+		return textEdit{}, "", fmt.Errorf("patch defaultThinkingLevel: %w", err)
+	}
+	return edit, before, nil
 }
 
 func validateInstallRoute(route profilemango.RouteBinding) (string, string, error) {
@@ -166,8 +175,44 @@ func parseConfig(source []byte) (yamlDocument, error) {
 	if err := rejectDuplicateKeys(root, ""); err != nil {
 		return yamlDocument{}, err
 	}
+	if err := rejectUnsupportedFeatures(root, ""); err != nil {
+		return yamlDocument{}, err
+	}
 	document.root = root
 	return document, nil
+}
+
+func rejectUnsupportedFeatures(node *yaml.Node, path string) error {
+	if node == nil {
+		return nil
+	}
+	if node.Kind == yaml.AliasNode {
+		return fmt.Errorf("Oh My Pi config aliases are unsupported at %s", path)
+	}
+	if node.Anchor != "" {
+		return fmt.Errorf("Oh My Pi config anchors are unsupported at %s", path)
+	}
+	if node.Kind == yaml.MappingNode {
+		for index := 0; index+1 < len(node.Content); index += 2 {
+			key, value := node.Content[index], node.Content[index+1]
+			if key.Value == "<<" {
+				return fmt.Errorf("Oh My Pi config merge keys are unsupported at %s", joinPath(path, key.Value))
+			}
+			if err := rejectUnsupportedFeatures(key, joinPath(path, key.Value)); err != nil {
+				return err
+			}
+			if err := rejectUnsupportedFeatures(value, joinPath(path, key.Value)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	for _, child := range node.Content {
+		if err := rejectUnsupportedFeatures(child, path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func rejectDuplicateKeys(node *yaml.Node, path string) error {
@@ -233,6 +278,9 @@ func replaceScalar(document yamlDocument, node *yaml.Node, value string) (textEd
 	if err != nil {
 		return textEdit{}, "", err
 	}
+	if node.Style == 0 && strings.TrimSpace(string(raw)) != node.Value {
+		return textEdit{}, "", fmt.Errorf("target field cannot use a multiline scalar")
+	}
 	before, err := decodeScalar(raw, node.Style)
 	if err != nil {
 		return textEdit{}, "", err
@@ -245,15 +293,36 @@ func scalarSpan(document yamlDocument, node *yaml.Node) (int, int, []byte, error
 		return 0, 0, nil, fmt.Errorf("target field has no source line")
 	}
 	line := document.lines[node.Line-1]
-	start := line.start + node.Column - 1
+	offset, err := byteOffsetForColumn(line.content, node.Column)
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	start := line.start + offset
 	if start < line.start || start >= line.end {
 		return 0, 0, nil, fmt.Errorf("target field has no inline scalar")
 	}
-	end, err := scalarEnd(line.content, start-line.start, node.Style)
+	end, err := scalarEnd(line.content, offset, node.Style)
 	if err != nil {
 		return 0, 0, nil, err
 	}
 	return start, line.start + end, document.source[start : line.start+end], nil
+}
+
+func byteOffsetForColumn(line []byte, column int) (int, error) {
+	if column < 1 {
+		return 0, fmt.Errorf("target field has an invalid source column")
+	}
+	for offset, runeColumn := 0, 1; offset < len(line); runeColumn++ {
+		if runeColumn == column {
+			return offset, nil
+		}
+		_, size := utf8.DecodeRune(line[offset:])
+		offset += size
+	}
+	if column == utf8.RuneCount(line)+1 {
+		return len(line), nil
+	}
+	return 0, fmt.Errorf("target field has no source column")
 }
 
 func scalarEnd(line []byte, start int, style yaml.Style) (int, error) {
@@ -264,11 +333,19 @@ func scalarEnd(line []byte, start int, style yaml.Style) (int, error) {
 		return quotedEnd(line, start, '\'')
 	}
 	for index := start; index < len(line); index++ {
-		if line[index] == '#' && (index == start || unicode.IsSpace(rune(line[index-1]))) {
+		if line[index] == '#' && (index == start || spaceBefore(line, start, index)) {
 			return trimRightSpace(line, start, index), nil
 		}
 	}
 	return trimRightSpace(line, start, len(line)), nil
+}
+
+func spaceBefore(line []byte, start, index int) bool {
+	if index <= start {
+		return true
+	}
+	runeValue, _ := utf8.DecodeLastRune(line[start:index])
+	return unicode.IsSpace(runeValue)
 }
 
 func quotedEnd(line []byte, start int, quote byte) (int, error) {
@@ -295,8 +372,12 @@ func quotedEnd(line []byte, start int, quote byte) (int, error) {
 }
 
 func trimRightSpace(line []byte, start, end int) int {
-	for end > start && unicode.IsSpace(rune(line[end-1])) {
-		end--
+	for end > start {
+		runeValue, size := utf8.DecodeLastRune(line[start:end])
+		if !unicode.IsSpace(runeValue) {
+			break
+		}
+		end -= size
 	}
 	return end
 }
@@ -344,13 +425,22 @@ func mappingInsertionOffset(document yamlDocument, keyLine, baseIndent int) int 
 func rootInsertion(document yamlDocument, content string) textEdit {
 	offset := len(document.source)
 	for _, line := range document.lines {
-		if leadingSpaces(line.content) == 0 && strings.TrimSpace(string(line.content)) == "..." {
+		if leadingSpaces(line.content) == 0 && isDocumentEnd(line.content) {
 			offset = line.start
 			break
 		}
 	}
 	content = linePrefix(document.source, offset, lineEnding(document.source)) + content
 	return textEdit{start: offset, end: offset, content: []byte(content)}
+}
+
+func isDocumentEnd(line []byte) bool {
+	trimmed := strings.TrimSpace(string(line))
+	if !strings.HasPrefix(trimmed, "...") {
+		return false
+	}
+	rest := strings.TrimSpace(trimmed[3:])
+	return rest == "" || strings.HasPrefix(rest, "#")
 }
 
 func appendEdit(edits []textEdit, edit textEdit) []textEdit {

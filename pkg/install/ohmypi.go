@@ -15,9 +15,9 @@ func (ohMyPiAdapter) Metadata() AdapterMetadata {
 		Version:        ohmypi.TargetVersion,
 		AdapterVersion: ohmypi.AdapterVersion,
 		EvidenceSHA256: ohmypi.EvidenceSHA256,
-		Installable:    false,
-		Status:         StatusBlocked,
-		Reason:         "exact Oh My Pi 18.2.6 native applicability remains blocked: the linux-x64 pi_natives addon is unavailable, the pinned nightly toolchain is not installed, and the isolated source-native settings probe cannot load without that addon",
+		Installable:    true,
+		Status:         StatusReady,
+		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles.default and defaultThinkingLevel; authentication, provider options, permissions, tools, instructions, skills, precedence, and runtime enforcement remain unmanaged",
 	}
 }
 
