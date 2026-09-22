@@ -45,16 +45,16 @@ func (hermesAdapter) Plan(input AdapterInput) (Patch, error) {
 
 func validateHermesProfile(input AdapterInput) error {
 	if input.Target.Name != hermes.TargetName || input.Target.Version != hermes.TargetVersion {
-		return fmt.Errorf("Hermes install adapter requires exact target %s@%s", hermes.TargetName, hermes.TargetVersion)
+		return fmt.Errorf("hermes install adapter requires exact target %s@%s", hermes.TargetName, hermes.TargetVersion)
 	}
 	if input.Profile.Permissions != nil {
-		return fmt.Errorf("Hermes permission requirements remain install-blocking")
+		return fmt.Errorf("hermes permission requirements remain install-blocking")
 	}
 	if input.Profile.Tools != nil {
-		return fmt.Errorf("Hermes tool requirements remain install-blocking")
+		return fmt.Errorf("hermes tool requirements remain install-blocking")
 	}
 	if len(input.Profile.Instructions) > 0 || len(input.Profile.Skills) > 0 || len(input.Resources) > 0 {
-		return fmt.Errorf("Hermes instruction, skill, and resource delivery remains install-blocking")
+		return fmt.Errorf("hermes instruction, skill, and resource delivery remains install-blocking")
 	}
 	return nil
 }

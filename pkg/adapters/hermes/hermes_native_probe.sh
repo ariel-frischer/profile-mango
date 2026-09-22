@@ -139,6 +139,7 @@ set +e
 	"$bwrap_bin" \
 		--die-with-parent \
 		--new-session \
+		--cap-drop ALL \
 		--unshare-net \
 		--unshare-pid \
 		--unshare-ipc \

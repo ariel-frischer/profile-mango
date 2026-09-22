@@ -73,10 +73,10 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 
 func validateInstallRoute(route profilemango.RouteBinding) (configValues, error) {
 	if route.Transport != "native" {
-		return configValues{}, fmt.Errorf("Hermes config install requires native transport")
+		return configValues{}, fmt.Errorf("hermes config install requires native transport")
 	}
 	if route.Authentication == "" {
-		return configValues{}, fmt.Errorf("Hermes config install requires an authentication mode")
+		return configValues{}, fmt.Errorf("hermes config install requires an authentication mode")
 	}
 	for name, value := range map[string]string{
 		"provider": route.Provider,
@@ -88,17 +88,17 @@ func validateInstallRoute(route profilemango.RouteBinding) (configValues, error)
 		}
 	}
 	if !validEffort(route.Effort) {
-		return configValues{}, fmt.Errorf("Hermes config install rejects unsupported effort %q", route.Effort)
+		return configValues{}, fmt.Errorf("hermes config install rejects unsupported effort %q", route.Effort)
 	}
 	return configValues{provider: route.Provider, model: route.Model, effort: route.Effort}, nil
 }
 
 func validateRouteValue(name, value string) error {
 	if value == "" || strings.TrimSpace(value) != value || !utf8.ValidString(value) {
-		return fmt.Errorf("Hermes %s contains an unsafe value", name)
+		return fmt.Errorf("hermes %s contains an unsafe value", name)
 	}
 	if strings.IndexFunc(value, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
-		return fmt.Errorf("Hermes %s contains an unsafe value", name)
+		return fmt.Errorf("hermes %s contains an unsafe value", name)
 	}
 	return nil
 }
@@ -126,10 +126,10 @@ func generatedConfig(values configValues) []byte {
 
 func parseConfig(source []byte) (*yaml.Node, error) {
 	if bytes.HasPrefix(source, []byte{0xef, 0xbb, 0xbf}) {
-		return nil, fmt.Errorf("Hermes config must be UTF-8 without a byte-order mark")
+		return nil, fmt.Errorf("hermes config must be UTF-8 without a byte-order mark")
 	}
 	if !utf8.Valid(source) {
-		return nil, fmt.Errorf("Hermes config is not valid UTF-8")
+		return nil, fmt.Errorf("hermes config is not valid UTF-8")
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(source))
 	var document yaml.Node
@@ -139,7 +139,7 @@ func parseConfig(source []byte) (*yaml.Node, error) {
 	var extra yaml.Node
 	if err := decoder.Decode(&extra); err != io.EOF {
 		if err == nil {
-			return nil, fmt.Errorf("Hermes config contains multiple YAML documents")
+			return nil, fmt.Errorf("hermes config contains multiple YAML documents")
 		}
 		return nil, fmt.Errorf("parse Hermes config documents: %w", err)
 	}
@@ -151,10 +151,10 @@ func parseConfig(source []byte) (*yaml.Node, error) {
 	}
 	root := document.Content[0]
 	if root.Kind != yaml.MappingNode {
-		return nil, fmt.Errorf("Hermes config must have a top-level mapping")
+		return nil, fmt.Errorf("hermes config must have a top-level mapping")
 	}
 	if root.Style&yaml.FlowStyle != 0 {
-		return nil, fmt.Errorf("Hermes top-level flow mapping is ambiguous")
+		return nil, fmt.Errorf("hermes top-level flow mapping is ambiguous")
 	}
 	return root, nil
 }
@@ -164,13 +164,13 @@ func validateYAMLNode(node *yaml.Node, path string) error {
 		return nil
 	}
 	if node.Tag == "!!null" {
-		return fmt.Errorf("Hermes config contains a null value at %s", path)
+		return fmt.Errorf("hermes config contains a null value at %s", path)
 	}
 	if node.Kind == yaml.AliasNode || node.Alias != nil {
-		return fmt.Errorf("Hermes config contains an ambiguous YAML alias at %s", path)
+		return fmt.Errorf("hermes config contains an ambiguous YAML alias at %s", path)
 	}
 	if node.Anchor != "" {
-		return fmt.Errorf("Hermes config contains an ambiguous YAML anchor/alias at %s", path)
+		return fmt.Errorf("hermes config contains an ambiguous YAML anchor/alias at %s", path)
 	}
 	if node.Kind != yaml.MappingNode {
 		for _, child := range node.Content {
@@ -184,13 +184,13 @@ func validateYAMLNode(node *yaml.Node, path string) error {
 	for index := 0; index+1 < len(node.Content); index += 2 {
 		key, value := node.Content[index], node.Content[index+1]
 		if key.Kind != yaml.ScalarNode || key.Tag != "!!str" {
-			return fmt.Errorf("Hermes config contains a non-string mapping key at %s", path)
+			return fmt.Errorf("hermes config contains a non-string mapping key at %s", path)
 		}
 		if key.Value == "<<" {
-			return fmt.Errorf("Hermes config contains an ambiguous YAML merge alias at %s", path)
+			return fmt.Errorf("hermes config contains an ambiguous YAML merge alias at %s", path)
 		}
 		if _, found := seen[key.Value]; found {
-			return fmt.Errorf("Hermes config contains a duplicate mapping key %q at %s", key.Value, path)
+			return fmt.Errorf("hermes config contains a duplicate mapping key %q at %s", key.Value, path)
 		}
 		seen[key.Value] = struct{}{}
 		childPath := key.Value
@@ -245,7 +245,7 @@ func planModelEdits(source []byte, layout sourceLayout, key, node *yaml.Node, va
 		return []configEdit{{start: start, end: end, replacement: replacement}}, nil
 	}
 	if node.Kind != yaml.MappingNode || node.Style&yaml.FlowStyle != 0 {
-		return nil, fmt.Errorf("Hermes model mapping uses ambiguous flow or non-mapping YAML")
+		return nil, fmt.Errorf("hermes model mapping uses ambiguous flow or non-mapping YAML")
 	}
 	return planMapEdits(source, layout, key, node, []mapField{
 		{key: "provider", path: "model.provider", value: values.provider},
@@ -255,7 +255,7 @@ func planModelEdits(source []byte, layout sourceLayout, key, node *yaml.Node, va
 
 func planMapEdits(source []byte, layout sourceLayout, parentKey, node *yaml.Node, fields []mapField, before map[string]string) ([]configEdit, error) {
 	if node.Kind != yaml.MappingNode || node.Style&yaml.FlowStyle != 0 {
-		return nil, fmt.Errorf("Hermes mapping at %s uses ambiguous flow or non-mapping YAML", parentKey.Value)
+		return nil, fmt.Errorf("hermes mapping at %s uses ambiguous flow or non-mapping YAML", parentKey.Value)
 	}
 	var edits []configEdit
 	var missing []mapField
@@ -300,7 +300,7 @@ func missingFieldsEdit(layout sourceLayout, parentKey *yaml.Node, node *yaml.Nod
 		indent = node.Content[0].Column
 	}
 	if parentKey.Line <= 0 || len(node.Content) == 0 || node.Content[0].Line <= parentKey.Line {
-		return configEdit{}, fmt.Errorf("Hermes mapping %q is not a block mapping", parentKey.Value)
+		return configEdit{}, fmt.Errorf("hermes mapping %q is not a block mapping", parentKey.Value)
 	}
 	insertLine := parentKey.Line + 1
 	firstExistingIndex, firstExistingLine, lastExistingLine := -1, 0, 0
@@ -359,19 +359,19 @@ func generatedSection(layout sourceLayout, name string, fields []mapField) []byt
 
 func scalarSpan(source []byte, node *yaml.Node) (int, int, error) {
 	if node == nil || node.Kind != yaml.ScalarNode || node.Tag == "!!null" {
-		return 0, 0, fmt.Errorf("Hermes target field must be a non-null scalar")
+		return 0, 0, fmt.Errorf("hermes target field must be a non-null scalar")
 	}
 	if node.Style&(yaml.LiteralStyle|yaml.FoldedStyle|yaml.FlowStyle) != 0 {
-		return 0, 0, fmt.Errorf("Hermes target field uses unsupported multiline or flow scalar syntax")
+		return 0, 0, fmt.Errorf("hermes target field uses unsupported multiline or flow scalar syntax")
 	}
 	layout := newSourceLayout(source)
 	line := layout.lineText(node.Line)
 	if line == "" {
-		return 0, 0, fmt.Errorf("Hermes target field has no source value")
+		return 0, 0, fmt.Errorf("hermes target field has no source value")
 	}
 	column := columnOffset(line, node.Column)
 	if column >= len(line) {
-		return 0, 0, fmt.Errorf("Hermes target field has no source value")
+		return 0, 0, fmt.Errorf("hermes target field has no source value")
 	}
 	end, err := scalarEnd(line, column)
 	if err != nil {
@@ -398,7 +398,7 @@ func scalarEnd(line string, start int) (int, error) {
 		end--
 	}
 	if end == start || strings.ContainsAny(line[start:end], " \t") {
-		return 0, fmt.Errorf("Hermes target field has ambiguous plain scalar syntax")
+		return 0, fmt.Errorf("hermes target field has ambiguous plain scalar syntax")
 	}
 	return end, nil
 }
@@ -415,7 +415,7 @@ func doubleQuotedEnd(line string, start int) (int, error) {
 			escaped = false
 		}
 	}
-	return 0, fmt.Errorf("Hermes target field has an unterminated quoted scalar")
+	return 0, fmt.Errorf("hermes target field has an unterminated quoted scalar")
 }
 
 func singleQuotedEnd(line string, start int) (int, error) {
@@ -429,13 +429,13 @@ func singleQuotedEnd(line string, start int) (int, error) {
 		}
 		return index + 1, trailingScalarCheck(line, index+1)
 	}
-	return 0, fmt.Errorf("Hermes target field has an unterminated quoted scalar")
+	return 0, fmt.Errorf("hermes target field has an unterminated quoted scalar")
 }
 
 func trailingScalarCheck(line string, start int) error {
 	trailing := strings.TrimSpace(line[start:])
 	if trailing != "" && !strings.HasPrefix(trailing, "#") {
-		return fmt.Errorf("Hermes target field has trailing ambiguous content")
+		return fmt.Errorf("hermes target field has trailing ambiguous content")
 	}
 	return nil
 }

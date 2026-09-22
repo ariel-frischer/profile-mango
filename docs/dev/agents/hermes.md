@@ -3,7 +3,8 @@
 **Reference date:** 2026-09-21. **Source pin:** repository release
 `v2026.9.14` (Hermes Agent `v0.21.3`), commit
 `345cd2b057a452236de401d3534b8502a7465e8d`. **Status:** exact-version inert
-preview renderer; native applicability remains blocked.
+preview renderer plus a bounded three-field installer qualified on 2026-09-22.
+Full startup, authentication, and runtime enforcement remain blocked.
 
 ## Exact source observation
 
@@ -82,3 +83,22 @@ Pinned sources: [configuration][configuration], [profiles][profiles],
 [security]: https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/skills/security/references/security-privacy.md
 [context]: https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/features/context-files.md
 [skills]: https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/website/docs/features/skills.md
+
+
+## Bounded installation qualification, 2026-09-22
+
+The installer losslessly patches only `model.provider`, `model.default`, and
+`agent.reasoning_effort`. Exact source `hermes_cli.config.load_config_readonly()`
+consumed the generated patch and merged defaults in a synthetic Python 3.12.13
+environment. Both imported config/version modules are hash-gated. Root reran the
+probe with network/PID/IPC isolation, allowlisted mounts, cleared environment,
+dropped capabilities, hidden real homes/sockets, and a timeout. No full agent
+startup, provider call, credential access, session, plugin, hook, or gateway ran.
+
+Compiled-CLI tests exercise plan/apply, byte/comment preservation, default backup,
+idempotent replan, stale rejection, and disposable byte-for-byte restoration.
+Native module consumption is not proof of authenticated routing or policy
+execution. Permissions, tools, instructions, skills, and other required properties
+remain blocked. The initial M0 observations above remain historical evidence.
+See the [retained native evidence](../../../pkg/adapters/hermes/hermes_native_evidence.md)
+for exact hashes, invocation, and limitations.
