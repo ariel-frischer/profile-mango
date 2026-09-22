@@ -63,7 +63,7 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   build requirement, source provenance, unsafe config-inspector paths, and
   native applicability gaps remain explicit in every report.
 - An OpenCode `1.18.31` inert JSONC preview renderer plus a narrowly
-  install-capable top-level `model` field adapter, pinned to immutable release,
+  install-capable top-level `model` and single-skill adapter, pinned to immutable release,
   source, archive, and extracted-binary hashes. The exact model candidate is
   natively accepted and appears in merged output. Installation requires one explicit
   path, destination-bound consent, and transactional safeguards, while preserving
@@ -102,7 +102,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
-| OpenCode | Intended MVP target | Exact `1.18.31`; top-level model field installable at one explicit path with lossless JSONC preservation and transactional safeguards; auth, effort, delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |
+| OpenCode | Intended MVP target | Exact `1.18.31`; top-level model plus one SKILL.md and skills.paths installable at one explicit path with lossless JSONC preservation and transactional safeguards; native skill discovery/body loading verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer
@@ -145,9 +145,8 @@ does not promise roles, MCP projection, or any other expansion.
 
 **Current exclusions:** full-profile application, import, generalized drift repair,
 user-level preference storage, credential handling, provider calls, implicit
-target-home inspection, roles, MCP projection, and identity management. The only
-install-capable target field is OpenCode `1.18.31` top-level `model` at one explicit
-path. `init`
+target-home inspection, roles, MCP projection, and identity management. Only the
+version-qualified subsets in the table above are installable at explicit paths. `init`
 scaffolds portable files and a route-identity example only. Home resolution selects
 only profile-mango-owned inputs; it does not resolve credentials, inspect target
 homes, or call providers. These are milestone boundaries, not all permanent bans.

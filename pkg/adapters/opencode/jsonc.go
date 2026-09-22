@@ -16,6 +16,15 @@ type JSONCModelPatch struct {
 	Inserted bool
 }
 
+// JSONCSkillsPatch is the result of adding one or more absolute skill roots.
+type JSONCSkillsPatch struct {
+	Content  []byte
+	Before   []string
+	After    []string
+	Found    bool
+	Inserted bool
+}
+
 // PatchModelJSONC validates a top-level JSONC object and changes only its model
 // string literal, or inserts a deterministic model property when it is absent.
 func PatchModelJSONC(data []byte, model string) (JSONCModelPatch, error) {
@@ -36,6 +45,121 @@ func PatchModelJSONC(data []byte, model string) (JSONCModelPatch, error) {
 	return JSONCModelPatch{Content: insertModel(data, scanner, strconv.Quote(model)), Inserted: true}, nil
 }
 
+// PatchSkillsJSONC adds absolute skill roots to the top-level skills.paths array.
+// It changes only the required array/object span and preserves all other bytes.
+func PatchSkillsJSONC(data []byte, paths []string) (JSONCSkillsPatch, error) {
+	desired, err := normalizeSkillPaths(paths)
+	if err != nil {
+		return JSONCSkillsPatch{}, err
+	}
+	scanner, err := newJSONCScanner(data)
+	if err != nil {
+		return JSONCSkillsPatch{}, err
+	}
+	if scanner.skills == nil {
+		content := insertAt(data, scanner.rootOpen+1, topLevelSkills(desired)+topLevelSeparator(scanner))
+		return JSONCSkillsPatch{Content: content, After: desired, Inserted: true}, nil
+	}
+	before := []string(nil)
+	if scanner.skills.paths != nil {
+		before = append(before, scanner.skills.paths.values...)
+	}
+	after, missing := mergeSkillPaths(before, desired)
+	if len(missing) == 0 {
+		return JSONCSkillsPatch{Content: append([]byte(nil), data...), Before: before, After: after, Found: true}, nil
+	}
+	content := insertSkillsPaths(data, scanner.skills, missing)
+	return JSONCSkillsPatch{Content: content, Before: before, After: after, Found: scanner.skills.paths != nil, Inserted: scanner.skills.paths == nil}, nil
+}
+
+func normalizeSkillPaths(paths []string) ([]string, error) {
+	result := make([]string, 0, len(paths))
+	seen := make(map[string]struct{}, len(paths))
+	for _, value := range paths {
+		if err := validateSkillPath(value); err != nil {
+			return nil, err
+		}
+		if _, found := seen[value]; found {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("OpenCode skills.paths requires at least one path")
+	}
+	return result, nil
+}
+
+func validateSkillPath(value string) error {
+	if value == "" || strings.TrimSpace(value) != value || !utf8.ValidString(value) {
+		return fmt.Errorf("OpenCode skills.paths contains an invalid path")
+	}
+	for _, character := range value {
+		if character < 0x20 {
+			return fmt.Errorf("OpenCode skills.paths contains an unsafe control character")
+		}
+	}
+	return nil
+}
+
+func mergeSkillPaths(before, desired []string) ([]string, []string) {
+	after := append([]string(nil), before...)
+	seen := make(map[string]struct{}, len(before)+len(desired))
+	for _, value := range before {
+		seen[value] = struct{}{}
+	}
+	missing := make([]string, 0, len(desired))
+	for _, value := range desired {
+		if _, found := seen[value]; found {
+			continue
+		}
+		seen[value] = struct{}{}
+		after = append(after, value)
+		missing = append(missing, value)
+	}
+	return after, missing
+}
+
+func topLevelSkills(paths []string) string {
+	return `"skills":{"paths":` + quoteStringArray(paths) + `}`
+}
+
+func topLevelSeparator(scanner *jsoncScanner) string {
+	if scanner.firstKey >= 0 {
+		return ","
+	}
+	return ""
+}
+
+func insertSkillsPaths(data []byte, skills *skillsObjectSpan, missing []string) []byte {
+	if skills.paths == nil {
+		field := `"paths":` + quoteStringArray(missing)
+		separator := ""
+		if skills.hasEntries && !skills.trailingComma {
+			separator = ","
+		}
+		return insertAt(data, skills.close, separator+field)
+	}
+	separator := ""
+	if skills.paths.hasEntries && !skills.paths.trailingComma {
+		separator = ","
+	}
+	return insertAt(data, skills.paths.close, separator+quoteStringArrayItems(missing))
+}
+
+func quoteStringArray(values []string) string {
+	return "[" + quoteStringArrayItems(values) + "]"
+}
+
+func quoteStringArrayItems(values []string) string {
+	quoted := make([]string, len(values))
+	for index, value := range values {
+		quoted[index] = strconv.Quote(value)
+	}
+	return strings.Join(quoted, ",")
+}
+
 // PatchJSONCModel is an alias with the operation words in the opposite order.
 func PatchJSONCModel(data []byte, model string) (JSONCModelPatch, error) {
 	return PatchModelJSONC(data, model)
@@ -47,12 +171,29 @@ type modelSpan struct {
 	value string
 }
 
+type arraySpan struct {
+	open          int
+	close         int
+	values        []string
+	hasEntries    bool
+	trailingComma bool
+}
+
+type skillsObjectSpan struct {
+	open          int
+	close         int
+	paths         *arraySpan
+	hasEntries    bool
+	trailingComma bool
+}
+
 type jsoncScanner struct {
 	data      []byte
 	pos       int
 	rootOpen  int
 	firstKey  int
 	model     *modelSpan
+	skills    *skillsObjectSpan
 	triviaErr error
 	depth     int
 }
@@ -160,6 +301,9 @@ func (scanner *jsoncScanner) parseObjectEntry(top bool, keys map[string]struct{}
 }
 
 func (scanner *jsoncScanner) parseObjectValue(top bool, key string) error {
+	if top && key == "skills" {
+		return scanner.parseSkillsObject()
+	}
 	if !top || key != "model" {
 		return scanner.parseValue()
 	}
@@ -173,6 +317,109 @@ func (scanner *jsoncScanner) parseObjectValue(top bool, key string) error {
 	}
 	scanner.model = &modelSpan{start: start, end: end, value: value}
 	return nil
+}
+
+func (scanner *jsoncScanner) parseSkillsObject() error {
+	if !scanner.consume('{') {
+		return scanner.errorf("top-level skills must be an object")
+	}
+	span := &skillsObjectSpan{open: scanner.pos - 1}
+	scanner.skills = span
+	keys := map[string]struct{}{}
+	scanner.skipTrivia()
+	if scanner.consume('}') {
+		span.close = scanner.pos - 1
+		return nil
+	}
+	for {
+		if err := scanner.parseSkillsEntry(span, keys); err != nil {
+			return err
+		}
+		done, err := scanner.finishSkillsEntry(span)
+		if done || err != nil {
+			return err
+		}
+	}
+}
+
+func (scanner *jsoncScanner) parseSkillsEntry(span *skillsObjectSpan, keys map[string]struct{}) error {
+	key, _, _, err := scanner.parseString()
+	if err != nil {
+		return err
+	}
+	if _, found := keys[key]; found {
+		return scanner.errorf("duplicate JSONC object key %q", key)
+	}
+	keys[key] = struct{}{}
+	span.hasEntries = true
+	scanner.skipTrivia()
+	if !scanner.consume(':') {
+		return scanner.errorf("expected colon after skills object key")
+	}
+	scanner.skipTrivia()
+	if key == "paths" {
+		paths, err := scanner.parseStringArray()
+		if err != nil {
+			return err
+		}
+		span.paths = paths
+		return nil
+	}
+	return scanner.parseValue()
+}
+
+func (scanner *jsoncScanner) finishSkillsEntry(span *skillsObjectSpan) (bool, error) {
+	scanner.skipTrivia()
+	if scanner.consume('}') {
+		span.close = scanner.pos - 1
+		return true, nil
+	}
+	if !scanner.consume(',') {
+		return false, scanner.errorf("expected comma or skills object close")
+	}
+	span.trailingComma = true
+	scanner.skipTrivia()
+	if scanner.consume('}') {
+		span.close = scanner.pos - 1
+		return true, nil
+	}
+	span.trailingComma = false
+	return false, nil
+}
+
+func (scanner *jsoncScanner) parseStringArray() (*arraySpan, error) {
+	if !scanner.consume('[') {
+		return nil, scanner.errorf("OpenCode skills.paths must be an array of strings")
+	}
+	span := &arraySpan{open: scanner.pos - 1}
+	scanner.skipTrivia()
+	if scanner.consume(']') {
+		span.close = scanner.pos - 1
+		return span, nil
+	}
+	for {
+		value, _, _, err := scanner.parseString()
+		if err != nil {
+			return nil, scanner.errorf("OpenCode skills.paths must contain only strings: %v", err)
+		}
+		span.values = append(span.values, value)
+		span.hasEntries = true
+		scanner.skipTrivia()
+		if scanner.consume(']') {
+			span.close = scanner.pos - 1
+			return span, nil
+		}
+		if !scanner.consume(',') {
+			return nil, scanner.errorf("expected comma or skills.paths close")
+		}
+		span.trailingComma = true
+		scanner.skipTrivia()
+		if scanner.consume(']') {
+			span.close = scanner.pos - 1
+			return span, nil
+		}
+		span.trailingComma = false
+	}
 }
 
 func (scanner *jsoncScanner) finishObjectEntry() (bool, error) {

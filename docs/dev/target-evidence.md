@@ -853,3 +853,25 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Oh My Pi remains non-applicable. Requalify the missing native addon and perform
   a new isolated config probe before making any native support claim.
 - The placeholder `profilemango.dev` schema identifier is not a claim that the domain is registered or controlled. Rename it before public release if ownership is unavailable.
+
+
+## OpenCode single-skill installation qualification, 2026-09-22
+
+Exact `1.18.31` binary SHA-256
+`f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`
+was requalified with `scripts/opencode-skills-probe.sh`. Its isolated `debug skill`
+path accepted `skills.paths`, listed the synthetic skill, and loaded its body.
+The probe uses cleared environment, allowlisted runtime mounts, hidden real homes,
+network/PID/IPC isolation, dropped capabilities, and a timeout. No model call,
+agent session, TUI, credential store, or personal configuration was used.
+Disposable backup restoration matched the original byte inventory.
+
+The installer may copy exactly one validated portable skill to `SKILL.md` beside
+an explicit config and add that directory to `skills.paths`. Existing config
+bytes and unrelated skills members are preserved. Unowned or externally edited
+skill resources remain protected even with config `--override`. Compiled-CLI
+checks cover actual config/resource application, backup, idempotent replan,
+stale-source rejection, and unowned-resource preservation. Directory discovery
+may include other skills and is not an exclusive allowlist. Multi-skill profiles,
+instructions, authenticated route identity, policy enforcement, and full-profile
+runtime behavior remain blocked.

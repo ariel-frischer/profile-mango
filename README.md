@@ -47,9 +47,8 @@ updates, session databases, and other product-specific operations. Credentials a
 authentication stores always remain target-owned.
 
 The current prototype validates and resolves these bundles, produces deterministic,
-inspectable inert previews, and can transactionally apply only the exact OpenCode
-`1.18.31` top-level `model` field at one explicit path. Every other production target
-and every broader OpenCode profile capability remain install-blocked.
+inspectable inert previews, and transactionally applies only the exact qualified
+subsets in the install table below. Broader profile capabilities remain blocked.
 
 > **Status:** private prototype. Validation and project scaffolding are offline.
 > Exact-version renderers remain inert. Installation supports only the qualified
@@ -238,7 +237,7 @@ unsupported required permissions, tools, instructions, or skills remain blocked.
 
 | Target | Installed fields | Native evidence boundary |
 | --- | --- | --- |
-| OpenCode `1.18.31` | Top-level `model` | Exact native merged config, limited precedence |
+| OpenCode `1.18.31` | Top-level `model`, optionally one `SKILL.md` plus `skills.paths` | Exact native merged config and skill discovery/body loading, limited precedence |
 | Claude Code `2.1.278` | Top-level `model` | Exact ELF explicit settings-file consumption before no-auth termination |
 | Pi `0.86.1` | `defaultProvider`, `defaultModel`, `defaultThinkingLevel` | Exact settings-module getters and project-over-global precedence only |
 

@@ -297,7 +297,7 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		}
 		afterHash := installfs.Hash(file.Content)
 		ownedHash, owned := ownershipHash(ownership, path)
-		action, conflict := fileAction(request, patch, before, ownedHash, owned, afterHash)
+		action, conflict := fileAction(request, patch.OverrideAllowed && !file.NoOverride, before, ownedHash, owned, afterHash)
 		fields := fieldsForNames(file.Fields)
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...)})
@@ -313,7 +313,7 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 	return changes, targetPlan.Diagnostics.HasErrors()
 }
 
-func fileAction(request Request, patch Patch, before installfs.Snapshot, ownedHash string, owned bool, afterHash string) (string, bool) {
+func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot, ownedHash string, owned bool, afterHash string) (string, bool) {
 	if before.Exists && before.SHA256 == afterHash {
 		return ActionNoop, false
 	}
@@ -323,7 +323,7 @@ func fileAction(request Request, patch Patch, before installfs.Snapshot, ownedHa
 	if owned && before.SHA256 == ownedHash {
 		return ActionUpdate, false
 	}
-	if request.Override && patch.OverrideAllowed {
+	if request.Override && overrideAllowed {
 		return ActionOverride, false
 	}
 	return ActionUpdate, true

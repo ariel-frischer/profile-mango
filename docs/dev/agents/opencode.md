@@ -1,10 +1,12 @@
 # OpenCode configuration reference
 
-**Reference date:** 2026-09-21. **Status:** profile-mango has an exact-version,
-inert preview renderer and a narrowly install-capable top-level `model` field adapter
-for OpenCode `v1.18.31`. The deterministic JSONC `model` candidate has isolated
-native parser and merged-config evidence. Authentication identity, full precedence,
-delivery, provider options, and runtime enforcement remain blocked.
+**Reference date:** 2026-09-22. **Status:** profile-mango has an exact-version,
+inert preview renderer and a narrowly install-capable top-level `model` plus one
+target-owned skill resource for OpenCode `v1.18.31`. The deterministic JSONC
+`model` and `skills.paths` configuration, plus one synthetic `SKILL.md`, have
+isolated native acceptance and consumption evidence. Authentication identity,
+full precedence, instructions, multi-skill delivery, provider options, and runtime
+enforcement remain blocked.
 
 ## Immutable release evidence
 
@@ -38,6 +40,7 @@ The reviewed source and official documentation describe JSON and JSONC layers:
 - `OPENCODE_CONFIG` for an explicit custom file
 - `OPENCODE_CONFIG_DIR` for an explicit configuration directory
 - `OPENCODE_CONFIG_CONTENT` for an inline final layer
+- `skills.paths` for additional local skill directories scanned for `SKILL.md`
 
 The exact source loads global state, an explicit custom file, project state,
 `.opencode` and custom-directory state, inline content, and managed configuration.
@@ -74,12 +77,18 @@ Observed results:
 - the explicit candidate file remained byte-identical after inspection.
 - malformed JSONC was rejected.
 - a schema-unknown key was accepted and omitted from resolved output.
+- the isolated `debug skill` probe listed and loaded a synthetic `SKILL.md` from a
+  configured `skills.paths` directory without starting an agent session or making
+  a model call.
 - the command created target-owned scratch directories, logs, locks, `.gitignore`,
   and metadata. The independent backup was restored after testing, and recursive
   type, mode, size, and SHA-256 inventory matched byte-for-byte.
 
 The command therefore provides exact-version parser acceptance and partial merged
-state/precedence evidence, not a safe zero-write inspector or enforcement proof.
+state/precedence evidence. The separate skills probe establishes source-file
+discovery and loaded skill content for the qualified local skill field only. These
+probes do not establish a safe zero-write inspector, authentication identity,
+policy enforcement, or instruction delivery.
 
 ## Inert adapter boundary
 
@@ -102,22 +111,33 @@ flow. Native parsing and lossless explicit-path application of that exact field 
 supported for `1.18.31`; full profile fidelity is not. The renderer remains
 `applicable: false` and does not emit effort, authentication, credentials, provider
 options, transport, permissions, tools, instructions, skills, plugins, or MCP
-configuration.
+configuration. Install support is qualified separately below and does not make the
+inert renderer applicable.
 
 ## Narrow install-capable subset
 
-`profile-mango install` can patch only the top-level `model` field in one explicit
-OpenCode config file. It requires exact target `opencode@1.18.31`, native transport,
-and a profile with no permission, tool, instruction, or skill requirements. Existing
-unowned or externally edited files require the adapter-approved `--override` flag.
+`profile-mango install` can patch the top-level `model` field in one explicit
+OpenCode config file and, independently, install exactly one validated portable
+skill resource. The skill resource is written as a target-owned `SKILL.md` beside
+the explicit config, and the config receives an absolute `skills.paths` entry for
+that directory. It requires exact target `opencode@1.18.31`, native transport, and
+a profile with no permission, tool, or instruction requirements. Multi-skill
+profiles, instruction resources, and all other unqualified fields remain blocked.
+Existing unowned or externally edited config files require the adapter-approved
+`--override` flag, including when adding a skill. The skill resource cannot override
+an unowned or externally edited `SKILL.md`, even with that flag. Discovery scans the
+config directory and may include other skills: this is not an exclusive allowlist.
 The planner binds consent to a digest of the normalized config and manifest paths,
 while omitting raw absolute paths from public plan JSON.
 
-The patcher validates a top-level JSONC object, replaces only the model string span
-or inserts one deterministic property, and fails closed on malformed input,
-duplicate or non-string model fields, unsupported encoding, or ambiguous syntax.
+The patcher validates a top-level JSONC object, changes only the model string span
+and the required `skills.paths` span, or inserts deterministic properties, and fails
+closed on malformed input, duplicate or non-string model/skill fields, unsupported
+encoding, or ambiguous syntax.
 Comments, unknown keys, unrelated bytes, modes, provider options, and
-credential-shaped target-owned state are preserved. Application reuses create-only
+credential-shaped target-owned state are preserved. The skill patch preserves
+existing top-level config and unrelated `skills` members while adding only the
+qualified path. Application reuses create-only
 backups, stale-source and stale-target checks, atomic replacement, ownership
 manifests, journals, rollback, and guarded recovery. It never reads an auth store or
 runs OpenCode.
@@ -129,8 +149,9 @@ The following remain blocking or partial for this exact release:
 - complete global/project/custom/managed precedence and per-field provenance
 - authentication identity and credential selection
 - effort and transport mapping
+- instruction-file discovery, precedence, and delivery
+- more than one portable skill resource or target skill-directory layout
 - permission and tool equivalence or enforcement
-- instruction and skill discovery or delivery
 - plugin and MCP discovery or enforcement
 - runtime route and policy enforcement
 

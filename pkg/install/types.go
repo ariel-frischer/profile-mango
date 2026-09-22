@@ -99,9 +99,11 @@ type Adapter interface {
 }
 
 type FilePatch struct {
-	Path    string
-	Content []byte
-	Fields  []string
+	// NoOverride preserves an edited or unowned file even when the patch permits overrides.
+	NoOverride bool
+	Path       string
+	Content    []byte
+	Fields     []string
 }
 
 type FieldChange struct {
