@@ -19,3 +19,5 @@
 - [Project constitution](../.autospec/constitution.yaml) - Durable principles and lightweight governance for relevant project work.
 - [`dev/project-scope.md`](dev/project-scope.md) - North star, current M0, intended MVP targets, boundaries, success criteria, and proposed defaults.
 - [`dev/target-evidence.md`](dev/target-evidence.md) — Target evidence levels, exact inert preview-renderer boundaries for Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and Ariel's experimental-only custom Jcode fork, support policy, and deferred verification.
+
+- [`Hermes native installer evidence`](../pkg/adapters/hermes/hermes_native_evidence.md) - Exact imported-module hashes, isolated generated-patch consumption, and runtime limitations for Hermes 0.21.3.

@@ -90,7 +90,9 @@ Claude Code `2.1.278` additionally supports only strict-JSON top-level `model`
 replacement at one explicit path, backed by isolated exact-ELF model consumption
 and disposable built-binary application. Pi `0.86.1` applies only its three route
 defaults, qualified through native settings-module getters and project override
-tests. Other targets remain blocked pending evidence. None of these narrow
+tests. Hermes `0.21.3` applies model provider/default and agent reasoning effort,
+qualified through an exact source-native read-only config merge. Other targets
+remain blocked pending evidence. None of these narrow
 installers establishes authenticated full-route or policy enforcement.
 See [shared architecture](../architecture.md) for install/CLI ownership.
 
@@ -122,8 +124,9 @@ probe. Those are explicit blockers, not reasons to add a target-home inspector o
 plugin framework. See [target evidence](target-evidence.md) and the
 [OpenClaw reference](agents/openclaw.md).
 
-Hermes's exact source/archive identity is pinned, but the current system Python
-is outside its `>=3.11,<3.14` requirement and no runtime was built. The reviewed
+Hermes's initial source review found the system Python outside its
+`>=3.11,<3.14` requirement. Later isolated qualification uses Python 3.12.13 and
+only its exact read-only config module, not full startup. The reviewed
 `config get`, `status`, and `profile show` paths load dotenv, credential, profile,
 plugin, gateway, and session state before or during inspection, so no native
 Hermes command was accepted as a safe M0 probe. See [target evidence](target-evidence.md)

@@ -101,7 +101,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` inert preview renderer; native applicability remains blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` inert JSON5 preview renderer; native acceptance, effective state, delivery, precedence, auth, and enforcement remain blocked |
-| Hermes | Intended MVP target | Exact `0.21.3` inert YAML preview renderer; native acceptance, effective state, auth, delivery, and enforcement remain blocked |
+| Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
 | OpenCode | Intended MVP target | Exact `1.18.31`; top-level model plus one SKILL.md and skills.paths installable at one explicit path with lossless JSONC preservation and transactional safeguards; native skill discovery/body loading verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, and enforcement remain blocked |
 
 Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP

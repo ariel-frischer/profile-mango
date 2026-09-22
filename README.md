@@ -237,6 +237,7 @@ unsupported required permissions, tools, instructions, or skills remain blocked.
 
 | Target | Installed fields | Native evidence boundary |
 | --- | --- | --- |
+| Hermes `0.21.3` | `model.provider`, `model.default`, `agent.reasoning_effort` | Exact source-native read-only config merge, not full startup |
 | OpenCode `1.18.31` | Top-level `model`, optionally one `SKILL.md` plus `skills.paths` | Exact native merged config and skill discovery/body loading, limited precedence |
 | Claude Code `2.1.278` | Top-level `model` | Exact ELF explicit settings-file consumption before no-auth termination |
 | Pi `0.86.1` | `defaultProvider`, `defaultModel`, `defaultThinkingLevel` | Exact settings-module getters and project-over-global precedence only |

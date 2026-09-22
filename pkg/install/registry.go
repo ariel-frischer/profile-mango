@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 )
@@ -75,7 +74,7 @@ func DefaultRegistry() *Registry {
 	return NewRegistry(
 		claudeCodeAdapter{},
 		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
-		blockedAdapter{metadata: blockedMetadata(hermes.TargetName, hermes.TargetVersion, hermes.AdapterVersion, hermes.EvidenceSHA256, blockedReason)},
+		hermesAdapter{},
 		blockedAdapter{metadata: blockedMetadata(ohmypi.TargetName, ohmypi.TargetVersion, ohmypi.AdapterVersion, ohmypi.EvidenceSHA256, blockedReason)},
 		blockedAdapter{metadata: blockedMetadata(openclaw.TargetName, openclaw.TargetVersion, openclaw.AdapterVersion, openclaw.EvidenceSHA256, blockedReason)},
 		piAdapter{},

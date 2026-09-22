@@ -22,6 +22,7 @@ versions:
             - Lossless transactional application of the OpenCode 1.18.31 top-level model field at one explicit destination, with destination-bound consent, preservation, backups, journals, stale checks, and guarded recovery
             - Install the exact Claude Code 2.1.278 model field and Pi 0.86.1 route-default settings with native consumption evidence and transactional safeguards.
             - Install one qualified OpenCode 1.18.31 skill with native discovery evidence, lossless skills.paths edits, and non-overridable resource ownership protection
+            - Install qualified Hermes 0.21.3 model and reasoning config fields with exact isolated native merge evidence and transactional safeguards
         changed:
             - Successful profile-mango init output now shows the ANSI README logo
             - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together

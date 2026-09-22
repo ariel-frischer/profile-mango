@@ -875,3 +875,23 @@ stale-source rejection, and unowned-resource preservation. Directory discovery
 may include other skills and is not an exclusive allowlist. Multi-skill profiles,
 instructions, authenticated route identity, policy enforcement, and full-profile
 runtime behavior remain blocked.
+
+
+## Hermes bounded installation qualification, 2026-09-22
+
+Exact Hermes `0.21.3` source release `v2026.9.14`, commit
+`345cd2b057a452236de401d3534b8502a7465e8d`, consumed generated installer YAML via
+native `hermes_cli.config.load_config_readonly()`. Config module SHA-256
+`d76471ce54d40e68165e2cce7c2ade9c2164ed5ce4dbcf673b1b289cb89c7d84`
+and version module SHA-256
+`0d78a58a9f27f32adfdac959e89767cecde93a424bcfbd39d64fb95f6cf13e6c`
+are verified before and inside the probe. Python 3.12.13 runs under cleared
+environment, network/PID/IPC isolation, dropped capabilities, allowlisted runtime
+mounts, hidden personal homes/sockets, plugin-directory overlay, traps, and timeout.
+The generated `model.provider`, `model.default`, and `agent.reasoning_effort`
+values were observed, with unrelated synthetic state preserved. Root reran this
+probe after hardening and verified actual compiled CLI plan/apply/backups/noop/
+stale rejection/disposable restoration. This is config parsing and effective
+merge evidence only. Full startup, authenticated route, provider execution,
+delivery, permissions/tools, sessions, hooks, plugins, MCP, and enforcement remain
+unqualified. The ordinary installer never imports or launches Hermes.
