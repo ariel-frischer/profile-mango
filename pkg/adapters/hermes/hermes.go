@@ -16,6 +16,11 @@ const (
 	SourceCommit              = "345cd2b057a452236de401d3534b8502a7465e8d"
 	SourceTree                = "6e14b9791cdc5a47068685e9429dd5d6bdc5ef5f"
 	SourceArchiveSHA256       = "71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47"
+	NativeConfigModule        = "hermes_cli/config.py"
+	NativeConfigModuleSHA256  = "d76471ce54d40e68165e2cce7c2ade9c2164ed5ce4dbcf673b1b289cb89c7d84"
+	NativeVersionModule       = "hermes_cli/__init__.py"
+	NativeVersionModuleSHA256 = "0d78a58a9f27f32adfdac959e89767cecde93a424bcfbd39d64fb95f6cf13e6c"
+	NativeConfigEvidenceLevel = "isolated-native-config-effective-merge"
 	HermesSourceRelease       = SourceRelease
 	HermesSourceCommit        = SourceCommit
 	HermesSourceTree          = SourceTree
