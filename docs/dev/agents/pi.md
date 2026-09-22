@@ -1,6 +1,6 @@
 # Pi configuration reference
 
-**Reference and qualification date:** 2026-09-21 UTC. **Release pin:** `v0.86.1`, commit `13cbf77df2396303013a41646bcfa77b4271ae56`. **Status:** exact-version inert preview renderer only. Native acceptance, effective state, precedence, authentication, delivery, and enforcement remain blocked. Pi is qualified independently from [Oh My Pi](oh-my-pi.md).
+**Reference and qualification date:** 2026-09-21 UTC. **Release pin:** `v0.86.1`, commit `13cbf77df2396303013a41646bcfa77b4271ae56`. **Status:** exact-version inert preview plus a three-default settings installer. Native settings-module getters and project-over-global precedence were qualified on 2026-09-22; full startup, authentication, delivery, and enforcement remain blocked. Pi is qualified independently from [Oh My Pi](oh-my-pi.md).
 
 ## Immutable release and package evidence
 
@@ -101,3 +101,13 @@ qualification decision.
 [readme]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/README.md
 [package]: https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1
 [source]: https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent
+
+## Installation qualification update, 2026-09-22
+
+The opt-in settings-module probe verifies all three global defaults and project
+model override without full CLI startup. It pins the imported module hash, uses
+allowlisted runtime/package mounts and isolated network/PID/IPC namespaces, and
+checks a no-write inventory. Installation touches only an explicit settings file
+and shared transaction paths. See the [dated evidence](../target-evidence.md#bounded-settings-module-installation-2026-09-22)
+for hashes, checks, and the distinction between native module consumption and
+full authenticated runtime behavior.
