@@ -129,9 +129,9 @@ func newRenderCmd() *cobra.Command {
 	var options renderOptions
 	cmd := &cobra.Command{
 		Use:          "render <name>",
-		Aliases:      []string{"r"},
-		Short:        "Render an inert, version-qualified candidate without accessing agent homes",
-		Long:         "Render an inert, version-qualified candidate without accessing agent homes. The ariel-jcode target is the Ariel custom Jcode fork and is experimental-only, not upstream Jcode or a supported public target.",
+		Aliases:      []string{"r", "preview"},
+		Short:        "Preview a profile's settings for one coding agent, without touching that agent's real files",
+		Long:         "Build a preview of a profile's settings for one target and exact version. It never reads or writes the target's real home directory; output only goes to the folder given by --out.",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -141,10 +141,10 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target adapter name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, opencode, or ariel-jcode experimental-only)")
+	cmd.Flags().StringVar(&options.target, "target", "", "exact target name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, or opencode)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
-	cmd.Flags().StringVar(&options.out, "out", "", "new explicit staging directory")
-	cmd.Flags().BoolVar(&options.preview, "preview", false, "write inert preview artifacts despite applicability blockers")
+	cmd.Flags().StringVar(&options.out, "out", "", "new directory to write preview files into")
+	cmd.Flags().BoolVar(&options.preview, "preview", false, "write preview files even if the target isn't fully supported yet")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit a stable render report")
 	return cmd
 }

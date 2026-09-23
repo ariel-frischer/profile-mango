@@ -8,7 +8,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:     "profile-mango",
-	Short:   "Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.",
+	Short:   "Install one coding-agent profile across Claude Code, Codex, OpenCode, and more",
 	Version: version.Version,
 }
 
@@ -21,7 +21,7 @@ var (
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().StringVar(&homePathOverride, "home", "", "profile package home (default $PROFILE_MANGO_HOME or ~/.profile-mango)")
-	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "disable prompts; write commands still require explicit consent flags")
+	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "disable prompts; commands that write files still require --yes and --expect-plan")
 
 	rootCmd.SetHelpFunc(colorizedHelp)
 

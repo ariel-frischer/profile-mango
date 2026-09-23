@@ -309,8 +309,60 @@ func TestRenderUnknownTargetFailsClosedWithoutReadingInputs(t *testing.T) {
 func TestRenderHelpListsKnownTargets(t *testing.T) {
 	cmd := newRenderCmd()
 	flag := cmd.Flag("target")
-	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, hermes, opencode, or ariel-jcode experimental-only") || !strings.Contains(cmd.Long, "Ariel custom Jcode fork") || !strings.Contains(cmd.Long, "experimental-only") {
+	if flag == nil || !strings.Contains(flag.Usage, "claude-code, codex, pi, oh-my-pi, openclaw, hermes, or opencode") {
 		t.Fatalf("target help does not list explicit adapters: %#v", flag)
+	}
+}
+
+// TestRenderHelpHidesArielJcode ensures the experimental ariel-jcode target is
+// absent from the public --target help text and command Long description
+// while remaining an accepted --target value (see
+// TestRenderArielJcodePreviewUsesExperimentalDispatch).
+func TestRenderHelpHidesArielJcode(t *testing.T) {
+	cmd := newRenderCmd()
+	flag := cmd.Flag("target")
+	if flag == nil || strings.Contains(flag.Usage, "ariel-jcode") {
+		t.Fatalf("target help still mentions ariel-jcode: %#v", flag)
+	}
+	if strings.Contains(cmd.Long, "ariel-jcode") || strings.Contains(cmd.Short, "ariel-jcode") {
+		t.Fatalf("render help text still mentions ariel-jcode: short=%q long=%q", cmd.Short, cmd.Long)
+	}
+}
+
+// TestRenderPreviewAliasMatchesRenderCommand confirms "preview" is a working
+// alias for "render" through the real rootCmd dispatch path.
+func TestRenderPreviewAliasMatchesRenderCommand(t *testing.T) {
+	found, _, err := rootCmd.Find([]string{"preview"})
+	if err != nil {
+		t.Fatalf("find preview alias: %v", err)
+	}
+	if found.Name() != "render" {
+		t.Fatalf("preview alias resolved to %s, want render", found.Name())
+	}
+
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	homePathOverride = ""
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	resetHomeFlag()
+	resetNonInteractiveFlag()
+	rootCmd.SetArgs([]string{"preview", "route-only",
+		"--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", claudecode.TargetName, "--target-version", claudecode.TargetVersion,
+		"--out", out, "--preview", "--json",
+	})
+	err = rootCmd.Execute()
+	if err == nil {
+		t.Fatal("blocked Claude Code preview via alias unexpectedly succeeded")
+	}
+	var report render.Result
+	if jsonErr := json.Unmarshal(stdout.Bytes(), &report); jsonErr != nil {
+		t.Fatalf("stdout is not render JSON: %v\n%s", jsonErr, stdout.String())
+	}
+	if report.Target != claudecode.TargetName || !report.Preview || report.Applicable {
+		t.Fatalf("unexpected report via preview alias: %#v", report)
 	}
 }
 

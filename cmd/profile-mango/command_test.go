@@ -161,6 +161,59 @@ func TestNoColorFlagOutputIsPlain(t *testing.T) {
 	}
 }
 
+// bannedHelpJargon lists internal-sounding phrasing that must never reach the
+// public --help surface (Bead ap-uuz.6).
+var bannedHelpJargon = []string{
+	"capability-aware target artifacts",
+	"hash-bound consent",
+	"inert, version-qualified candidate",
+	"adapter-approved narrow ownership override",
+	"bounded",
+}
+
+func TestHelpSurfaceHasNoJargon(t *testing.T) {
+	var walk func(*cobra.Command)
+	walk = func(command *cobra.Command) {
+		text := strings.Join([]string{
+			command.Short, command.Long,
+			command.LocalFlags().FlagUsages(),
+			command.PersistentFlags().FlagUsages(),
+		}, "\n")
+		for _, term := range bannedHelpJargon {
+			if strings.Contains(text, term) {
+				t.Fatalf("%s help contains jargon %q", command.CommandPath(), term)
+			}
+		}
+		for _, sub := range command.Commands() {
+			walk(sub)
+		}
+	}
+	walk(rootCmd)
+}
+
+func TestRootHelpHidesAgentsCommand(t *testing.T) {
+	output := executeCommand(t, "--help")
+	if strings.Contains(output, "\n  agents") {
+		t.Fatalf("root help still lists hidden agents command:\n%s", output)
+	}
+}
+
+func TestAgentsCommandIsHiddenButStillWorks(t *testing.T) {
+	for _, command := range rootCmd.Commands() {
+		if command.Name() == "agents" && !command.Hidden {
+			t.Fatal("agents command is no longer hidden")
+		}
+	}
+	executeCommand(t, "agents", "check", "--help")
+}
+
+func TestRenderHelpHidesArielJcodeTarget(t *testing.T) {
+	output := executeCommand(t, "render", "--help")
+	if strings.Contains(output, "ariel-jcode") {
+		t.Fatalf("render --help still mentions ariel-jcode:\n%s", output)
+	}
+}
+
 func TestRootCommandOmitsRemovedConfigSurface(t *testing.T) {
 	for _, command := range rootCmd.Commands() {
 		if command.Name() == "config" {

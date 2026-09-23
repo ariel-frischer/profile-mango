@@ -42,7 +42,7 @@ func newInitCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "init [directory]",
 		Aliases: []string{"new"},
-		Short:   "Create a starter profile package",
+		Short:   "Create a starter profile you can edit",
 		Args:    cobra.MaximumNArgs(1),
 		RunE:    runInit,
 	}

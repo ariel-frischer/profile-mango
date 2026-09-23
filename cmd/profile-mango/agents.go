@@ -12,7 +12,8 @@ func newAgentsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "agents",
 		Aliases: []string{"a"},
-		Short:   "Inspect documented agent sources without changing local state.",
+		Short:   "Check whether documented agent sources are still reachable, without changing anything",
+		Hidden:  true,
 	}
 	cmd.AddCommand(newAgentsCheckCmd())
 	return cmd
@@ -29,7 +30,7 @@ func newAgentsCheckCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "check",
 		Aliases: []string{"c"},
-		Short:   "Check the agent source manifest for drift and availability.",
+		Short:   "Check each documented agent source for changes or outages",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			report, err := agentcheck.CheckFile(cmd.Context(), manifestPath, agentcheck.Options{
