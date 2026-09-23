@@ -346,8 +346,9 @@ func TestRenderPreviewAliasMatchesRenderCommand(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	rootCmd.SetOut(&stdout)
 	rootCmd.SetErr(&stderr)
-	resetHomeFlag()
-	resetNonInteractiveFlag()
+	resetHomeFlag(t)
+	resetNonInteractiveFlag(t)
+	resetSubcommandFlags(rootCmd)
 	rootCmd.SetArgs([]string{"preview", "route-only",
 		"--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", claudecode.TargetName, "--target-version", claudecode.TargetVersion,

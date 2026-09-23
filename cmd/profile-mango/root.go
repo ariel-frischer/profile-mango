@@ -33,6 +33,7 @@ func init() {
 	rootCmd.AddCommand(newRenderCmd())
 	rootCmd.AddCommand(newInstallCmd())
 	rootCmd.AddCommand(newRestoreCmd())
+	rootCmd.AddCommand(newDoctorCmd())
 }
 
 func selectedHome() (string, error) {

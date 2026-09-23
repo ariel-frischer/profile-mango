@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 )
 
@@ -17,10 +18,10 @@ func executeCommand(t *testing.T, args ...string) string {
 	var out bytes.Buffer
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
-	resetHomeFlag()
-	resetColorFlag()
-	resetNonInteractiveFlag()
-	resetHelpFlags(rootCmd)
+	resetHomeFlag(t)
+	resetColorFlag(t)
+	resetNonInteractiveFlag(t)
+	resetSubcommandFlags(rootCmd)
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -29,41 +30,71 @@ func executeCommand(t *testing.T, args ...string) string {
 	return out.String()
 }
 
-func resetColorFlag() {
-	noColor = false
-	if flag := rootCmd.PersistentFlags().Lookup("no-color"); flag != nil {
-		_ = flag.Value.Set("false")
-		flag.Changed = false
+// resetColorFlag clears the package-global noColor flag and, since tests share
+// rootCmd and its globals across the package, also restores it with
+// t.Cleanup so a later test never observes a value this test left behind.
+func resetColorFlag(t *testing.T) {
+	t.Helper()
+	reset := func() {
+		noColor = false
+		if flag := rootCmd.PersistentFlags().Lookup("no-color"); flag != nil {
+			_ = flag.Value.Set("false")
+			flag.Changed = false
+		}
 	}
+	reset()
+	t.Cleanup(reset)
 }
 
-func resetHomeFlag() {
-	homePathOverride = ""
-	if flag := rootCmd.PersistentFlags().Lookup("home"); flag != nil {
-		_ = flag.Value.Set("")
-		flag.Changed = false
+// resetHomeFlag clears the package-global homePathOverride flag and restores
+// it with t.Cleanup for the same cross-test isolation reason as resetColorFlag.
+func resetHomeFlag(t *testing.T) {
+	t.Helper()
+	reset := func() {
+		homePathOverride = ""
+		if flag := rootCmd.PersistentFlags().Lookup("home"); flag != nil {
+			_ = flag.Value.Set("")
+			flag.Changed = false
+		}
 	}
+	reset()
+	t.Cleanup(reset)
 }
 
-func resetNonInteractiveFlag() {
-	nonInteractive = false
-	if flag := rootCmd.PersistentFlags().Lookup("non-interactive"); flag != nil {
-		_ = flag.Value.Set("false")
-		flag.Changed = false
+// resetNonInteractiveFlag clears the package-global nonInteractive flag and
+// restores it with t.Cleanup for the same cross-test isolation reason as
+// resetColorFlag; without this, a test that sets --non-interactive can leak
+// the global into an unrelated later test regardless of run order.
+func resetNonInteractiveFlag(t *testing.T) {
+	t.Helper()
+	reset := func() {
+		nonInteractive = false
+		if flag := rootCmd.PersistentFlags().Lookup("non-interactive"); flag != nil {
+			_ = flag.Value.Set("false")
+			flag.Changed = false
+		}
 	}
+	reset()
+	t.Cleanup(reset)
 }
 
-func resetHelpFlags(command *cobra.Command) {
-	if flag := command.Flags().Lookup("help"); flag != nil {
-		_ = flag.Value.Set("false")
+// resetSubcommandFlags recursively resets every flag on command and its
+// descendants to its registered default, including --help. Every test in
+// this package shares the singleton rootCmd tree, and pflag never resets a
+// flag that a later cobra.Execute() call does not re-specify on its own
+// argv; without this, one test's --target, --apply, --yes, --profile, or
+// similar subcommand flag value can silently leak into a later test (the
+// same class of bug fixed for the package-global nonInteractive var in
+// ap-uuz.11).
+func resetSubcommandFlags(command *cobra.Command) {
+	reset := func(flag *pflag.Flag) {
+		_ = flag.Value.Set(flag.DefValue)
 		flag.Changed = false
 	}
-	if flag := command.PersistentFlags().Lookup("help"); flag != nil {
-		_ = flag.Value.Set("false")
-		flag.Changed = false
-	}
+	command.Flags().VisitAll(reset)
+	command.PersistentFlags().VisitAll(reset)
 	for _, child := range command.Commands() {
-		resetHelpFlags(child)
+		resetSubcommandFlags(child)
 	}
 }
 
