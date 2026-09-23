@@ -8,10 +8,10 @@ import (
 
 func testInstalledExampleProfiles(t *testing.T, binary, repoRoot string, env []string) {
 	t.Helper()
-	root := filepath.Join(repoRoot, "examples", "jcode-like")
+	root := filepath.Join(repoRoot, "examples")
 	profiles := filepath.Join(root, "profiles")
 	bindings := filepath.Join(root, "bindings", "local.example.yaml")
-	for _, profile := range []string{"base", "daily", "review", "research"} {
+	for _, profile := range []string{"coding", "review", "docs-research"} {
 		t.Run("example-"+profile, func(t *testing.T) {
 			result := runCommand(binary, repoRoot, env, validateArgs(filepath.Join(profiles, profile, "profile.yaml"), bindings)...)
 			if result.err != nil {
@@ -48,7 +48,7 @@ func assertExampleRenders(t *testing.T, binary, repoRoot string, env []string, r
 
 func assertExampleInstallGate(t *testing.T, binary, repoRoot string, env []string, root, profiles, bindings string) {
 	t.Helper()
-	result := runCommand(binary, repoRoot, env, "install", "daily", "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--all", "--json")
+	result := runCommand(binary, repoRoot, env, "install", "coding", "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--all", "--json")
 	if result.err == nil {
 		t.Fatal("production --all install unexpectedly succeeded")
 	}

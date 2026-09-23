@@ -1,7 +1,0 @@
-description: Shared route and instructions for the example workflow profiles
-labels:
-  example: jcode-like
-route: openai-oauth
-instructions:
-  append:
-    - instructions/base.md
