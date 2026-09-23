@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-22, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-23, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -44,10 +44,13 @@ As of 2026-09-22, the project ships the offline M0 canonical contract plus exact
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
 - A separate Codex `0.154.0` settings-only installer for root `model_provider`,
-  `model`, and source-qualified `model_reasoning_effort = "high"`. It patches an
+  `model`, and `model_reasoning_effort = "high"`, consumed by the exact installed
+  binary in an isolated synthetic home. It patches an
   explicit path with consent and backup, preserving unrelated TOML and target-owned
-  auth. OAuth identity, installed-binary equivalence, ambient precedence, delivery,
-  and full-profile applicability remain unverified and are warned, not claimed.
+  auth. Trusted project and runtime overrides can shadow root settings; the
+  installer neither inspects nor controls those layers. OAuth identity, live
+  delivery, and full-profile applicability remain unverified and are warned,
+  not claimed.
 - A Pi `0.86.1` preview renderer that emits deterministic source-grounded JSON
   settings candidates for `defaultProvider`, `defaultModel`, and
   `defaultThinkingLevel`, resource copies, and a versioned report only into an

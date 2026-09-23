@@ -17,7 +17,7 @@ func (codexAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: codex.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "settings-only: source-native exact-release evidence consumes model_provider, model, and model_reasoning_effort; installed-binary equivalence, project/runtime precedence, and OAuth identity remain unverified; full profile is not installed",
+		Reason:         "settings-only: isolated installed Codex 0.154.0 binary consumed root model_provider, model, and model_reasoning_effort; trusted project and runtime overrides can shadow root settings; OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified",
 	}
 }
 
@@ -34,7 +34,7 @@ func (codexAdapter) Plan(input AdapterInput) (Patch, error) {
 	for _, field := range configPatch.Fields {
 		patch.Fields = append(patch.Fields, FieldChange{Path: "config." + field.Key, Before: field.Before, After: field.After})
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; pinned Codex source consumed these fields in an isolated non-session probe, but installed-binary equivalence, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; isolated installed Codex 0.154.0 binary consumed these root fields, but OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.auth_unmanaged", "route.authentication", "authentication remains unmanaged and target-owned: run codex login status locally to distinguish API-key from ChatGPT login, but ChatGPT status also includes externally supplied tokens and does not prove exact OAuth; do not share credentials or status output containing key fragments", 0, 0)
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the supplied root config document after rejecting active profiles and provider shadow state; project-local layers and runtime overrides are not inspected or controlled", 0, 0)
 	return patch, nil

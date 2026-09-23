@@ -51,6 +51,11 @@ effect review.
 
 Future checks must use an isolated `CODEX_HOME` and project with no credentials
 or provider access. Native parsing does not prove runtime enforcement.
+In a bounded isolated empty-auth home, installed `codex-cli 0.154.0` app-server
+`config/read` reported all three installer-generated root fields and their user
+origins. A trusted synthetic project and session overrides shadowed root model
+and effort; an untrusted project did not. App-server startup initializes other
+subsystems, so this is not a safe personal-home inspector or OAuth proof.
 
 ## Bounded settings-only installation
 
@@ -89,8 +94,9 @@ unrelated keys/comments and target-owned authentication. It never runs Codex,
 reads auth stores, or selects OAuth. `codex login status` can tell a user whether
 the stored login is API-key or ChatGPT, but the same ChatGPT message covers
 Codex-managed OAuth and externally supplied tokens. Do not share status output
-containing key fragments. Project/runtime overrides, active-profile selection,
-installed-binary equivalence, authentication identity, model availability,
+containing key fragments. Project/runtime overrides were observed in a
+controlled synthetic home but are not inspected or controlled by installation.
+Active runtime-profile selection, authentication identity, model availability,
 resource delivery and policy enforcement remain unverified. Settings-only
 success must not be reported as full-profile applicability. No live target path
 was approved or used for the qualification.

@@ -36,6 +36,7 @@ versions:
             - Human-readable CLI output now uses semantic terminal colors with automatic non-TTY suppression and --no-color/NO_COLOR opt-outs, while JSON, completion, and path output remain ANSI-free
             - Add global --non-interactive consent handling and emit one JSON apply report instead of a concatenated plan/report stream.
             - Renamed the installed executable and user-facing CLI command to profile-mango while preserving profile-mango project, module, home, and environment identities
+            - Clarify Codex 0.154.0 settings-only installation warnings with isolated installed-binary field and precedence evidence; OAuth and runtime behavior remain unverified
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:

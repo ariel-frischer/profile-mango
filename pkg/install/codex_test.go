@@ -192,7 +192,7 @@ func TestCodexInstallRejectsMalformedTOMLWithoutWriting(t *testing.T) {
 	assertInstallTestFile(t, config, source)
 }
 
-func TestCodexInstallReportsSourceEvidenceAndBoundedPrecedence(t *testing.T) {
+func TestCodexInstallReportsNativeEvidenceAndBoundedPrecedence(t *testing.T) {
 	request, _ := codexTestRequest(t)
 	writeInstallTestFile(t, request.Targets[0].ConfigPath, "unknown = true\n")
 	plan, err := BuildPlan(request)
@@ -201,6 +201,14 @@ func TestCodexInstallReportsSourceEvidenceAndBoundedPrecedence(t *testing.T) {
 	}
 	if !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.route_fields_source_qualified") || !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.precedence_bounded") {
 		t.Fatalf("target diagnostics = %#v", plan.Targets[0].Diagnostics)
+	}
+	for _, diagnostic := range plan.Targets[0].Diagnostics {
+		if diagnostic.Code != "codex.install.route_fields_source_qualified" {
+			continue
+		}
+		if !strings.Contains(diagnostic.Message, "installed Codex 0.154.0 binary") || strings.Contains(diagnostic.Message, "installed-binary equivalence") {
+			t.Fatalf("native evidence warning = %q", diagnostic.Message)
+		}
 	}
 }
 
@@ -239,10 +247,13 @@ func TestCodexMetadataReportsSettingsOnlyQualification(t *testing.T) {
 	if !metadata.Installable || metadata.Status != StatusReady {
 		t.Fatalf("metadata = %#v, want settings-only installable", metadata)
 	}
-	for _, required := range []string{"settings-only", "model_provider", "installed-binary equivalence", "project/runtime precedence", "OAuth identity"} {
+	for _, required := range []string{"settings-only", "model_provider", "installed Codex 0.154.0 binary", "OAuth identity"} {
 		if !strings.Contains(metadata.Reason, required) {
 			t.Fatalf("metadata reason = %q, want %q", metadata.Reason, required)
 		}
+	}
+	if strings.Contains(metadata.Reason, "installed-binary equivalence") || strings.Contains(metadata.Reason, "project/runtime precedence") {
+		t.Fatalf("metadata reason retains obsolete uncertainty: %q", metadata.Reason)
 	}
 }
 
