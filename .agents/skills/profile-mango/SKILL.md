@@ -81,6 +81,23 @@ profile-mango validate profiles/default/profile.yaml \
 
 Use `--json` when another tool or agent will consume the validation result.
 
+## Optional repository examples
+
+When the user asks for an existing setup to use or adapt, look first at
+`examples/portable/README.md` relative to the profile-mango repository root,
+**if that package is present in the checkout**. It has settings-only examples
+for Claude Code, OpenCode, Pi, Oh My Pi, OpenClaw, and Hermes; Codex model
+previews; and separate coding, review, and documentation workflows with original
+AGENTS.md instructions and skills. `examples/jcode-like/README.md` is an older
+preview-only reference. Neither package is the default: do not copy,
+select, or install a sample unless requested. Prefer the user's existing profile
+package when one exists. Copy an example as a **whole package** to a new path
+before editing it; resource paths are relative to its root. Check its dated
+model bindings against the exact target version and account availability.
+Settings-only installation is limited to the qualified fields below, and
+workflow examples with required permissions/tools/resources remain preview-only.
+If `examples/portable/` is absent, say so rather than assuming it is on `main`.
+
 ## Authoring rules
 
 A richer package might look like this (the files beyond the starter scaffold are
