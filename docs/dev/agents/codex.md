@@ -96,10 +96,14 @@ the stored login is API-key or ChatGPT, but the same ChatGPT message covers
 Codex-managed OAuth and externally supplied tokens. Do not share status output
 containing key fragments. Project/runtime overrides were observed in a
 controlled synthetic home but are not inspected or controlled by installation.
-Active runtime-profile selection, authentication identity, model availability,
-resource delivery and policy enforcement remain unverified. Settings-only
-success must not be reported as full-profile applicability. No live target path
-was approved or used for the qualification.
+Active runtime-profile selection, installer-verified authentication identity,
+model availability, resource delivery and policy enforcement remain unverified.
+Settings-only success must not be reported as full-profile applicability.
+Settings-only qualification used disposable configuration, not a personal
+Codex config. Separately authorized read-only authentication metadata inspection
+and two bounded runtime requests later timed out without proving model delivery;
+no personal configuration was installed or changed. See the
+[evidence ledger](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
 
 [basic]: https://learn.chatgpt.com/docs/config-file/config-basic
 [advanced]: https://learn.chatgpt.com/docs/config-file/config-advanced

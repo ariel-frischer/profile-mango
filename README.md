@@ -55,8 +55,10 @@ For Codex `0.154.0`, a route-only OpenAI/native/OAuth binding with `high` effort
 can plan three root settings at an explicit disposable `config.toml`. The
 read-only plan shows warnings and a plan ID. Applying requires
 `--apply --yes --expect-plan <planID>` and backs up the config, but never changes
-login credentials or proves OAuth. `codex login status` distinguishes API-key
-from ChatGPT login, not Codex-managed OAuth from externally supplied tokens.
+login credentials or proves OAuth. Runtime model delivery, model availability,
+and effort enforcement have not been demonstrated. `codex login status`
+distinguishes API-key from ChatGPT login, not Codex-managed OAuth from
+externally supplied tokens.
 Other profile requirements stay blocked; do not use a personal Codex path
 without separate path-specific approval.
 
