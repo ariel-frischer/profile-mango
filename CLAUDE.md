@@ -60,6 +60,8 @@ The canonical core, validation, and rendering remain offline and pure. Only exac
 
 Always invoke the `/polish` skill after changes and before handoff.
 
+After a task is merged, pushed, and validated, automatically clean up its owned worktree. Verify the current HEAD is reachable from the fetched remote base, no agent still uses it, and staged, unstaged, untracked, and ignored contents contain no valuable data; preserve reports outside the worktree. Use ordinary `git worktree remove` without force and delete its local branch only if `git branch -d` permits it. Leave active, dirty, unmerged, or uncertain worktrees intact and report why.
+
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker

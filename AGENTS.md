@@ -114,6 +114,7 @@ CHANGELOG.md          # generated changelog output
 - Do not use `git stash`, `git reset --hard`, or broad checkout/revert commands in a shared worktree.
 - Stage explicit files only, not `git add .` or `git add -A`.
 - Run focused tests for the files you touched, then the relevant Make targets before handoff.
+- After a task is merged, pushed, and validated, automatically clean up its owned worktree: confirm its current HEAD is reachable from the fetched remote base, no agent still uses it, and staged, unstaged, untracked, and ignored contents contain no valuable data. Preserve reports outside the worktree. Use ordinary `git worktree remove` without force; delete its local branch only if `git branch -d` permits it. Leave active, dirty, unmerged, or uncertain worktrees intact and report why.
 
 ## Coding Standards
 
