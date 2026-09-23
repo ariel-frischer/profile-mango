@@ -84,6 +84,12 @@ Unchanged Mango-owned files can be updated directly; unowned or edited files nee
 an adapter-approved `--override`. Non-interactive apply requires
 `--apply --yes --expect-plan <planID>` from that new plan.
 
+For Codex `0.154.0` only, `profile-mango restore --help` describes a guarded,
+read-only backup reversal plan at an explicit configuration path. Applying its
+separate restore plan ID requires hash-bound consent and an unchanged adjacent
+install journal, backup, and ownership manifest. It is not a general reset or
+an authentication restore. See [the Codex boundary](docs/dev/agents/codex.md#bounded-settings-only-installation).
+
 This is not a full reset to the new profile. Switching or omitting the one
 installed OpenCode skill removes only a clean Mango-owned `SKILL.md` and a
 Mango-introduced discovery path; ambiguous legacy paths are preserved with a
