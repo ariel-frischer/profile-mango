@@ -139,7 +139,8 @@ coding agent through authoring profiles and planning supported installations.
 
 ## Documentation
 
-- [Example profiles](examples/jcode-like/README.md): starting points for daily work, reviews, and research; not fully installable yet.
+- [Portable example package](examples/portable/README.md): copyable settings-only target profiles plus original workflow instructions and skill packs; pinned versions and model caveats apply.
+- [Jcode-like example profiles](examples/jcode-like/README.md): older daily, review, and research examples; not fully installable yet.
 - [Roadmap](ROADMAP.md): where the project is heading.
 - [Technical documentation](docs/index.md): formats, architecture, and agent compatibility evidence.
 - [Contributing](CONTRIBUTING.md): development setup and checks.

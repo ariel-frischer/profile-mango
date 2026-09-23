@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: claude-code-daily
+  description: Claude Sonnet for daily coding; model-setting example only
+spec:
+  routeRef: claude-daily

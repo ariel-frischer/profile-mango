@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: codex-focused
+  description: Focused Codex model candidate; settings-only
+spec:
+  routeRef: openai-focused

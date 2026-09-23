@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: codex-hard
+  description: Hardest end-to-end Codex model candidate; settings-only
+spec:
+  routeRef: openai-hard

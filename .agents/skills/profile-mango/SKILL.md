@@ -86,8 +86,8 @@ Use `--json` when another tool or agent will consume the validation result.
 When the user asks for an existing setup to use or adapt, look first at
 `examples/portable/README.md` relative to the profile-mango repository root,
 **if that package is present in the checkout**. It has settings-only examples
-for Claude Code, OpenCode, Pi, Oh My Pi, OpenClaw, and Hermes; Codex model
-previews; and separate coding, review, and documentation workflows with original
+for Claude Code, OpenCode, Pi, Oh My Pi, OpenClaw, Hermes, and bounded Codex
+settings; and separate coding, review, and documentation workflows with original
 AGENTS.md instructions and skills. `examples/jcode-like/README.md` is an older
 preview-only reference. Neither package is the default: do not copy,
 select, or install a sample unless requested. Prefer the user's existing profile

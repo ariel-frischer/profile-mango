@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: claude-code
+  description: Claude Code model setting; settings-only example, not a full route guarantee
+spec:
+  routeRef: claude

@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: openclaw
+  description: OpenClaw agent defaults; settings-only example, not a full route guarantee
+spec:
+  routeRef: openai
