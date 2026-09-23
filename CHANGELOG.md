@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
 - Guarded public Codex 0.154.0 restore preview and hash-bound apply for adjacent committed install journals, original backups, and ownership manifests
 - Add copyable agent-oriented profile examples with original workflow instructions, skills, and version-scoped model bindings
+- Per-agent route overrides in bindings (routes.<name>.targets) so one profile installs across agents with different providers
 
 ### Changed
 
@@ -62,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Report install preflight rejection as not-attempted while preserving unchanged targets as noop in library and single-object CLI reports.
 - Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
 - Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
+- init now scaffolds a usable bindings/local.yaml with a current model, and missing-bindings errors name the fix
 
 ## [0.0.1] - 2026-01-01
 
