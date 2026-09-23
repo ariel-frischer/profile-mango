@@ -108,7 +108,7 @@ func probeGeneratedAgent(t *testing.T, root, binary, mode string) {
 	}
 	w.args = append(w.args, "--agent", "opencode@1.18.31="+mode+":"+name)
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
-	writeWorkflowFile(t, profile, string(readWorkflowFile(t, profile))+"  instructions:\n    append:\n      - instructions/first.md\n      - instructions/second.md\n")
+	writeWorkflowFile(t, profile, string(readWorkflowFile(t, profile))+"instructions:\n  append:\n    - instructions/first.md\n    - instructions/second.md\n")
 	if err := os.MkdirAll(filepath.Join(w.root, "instructions"), 0o700); err != nil {
 		t.Fatal(err)
 	}

@@ -12,7 +12,8 @@ import (
 
 var profileNamePattern = regexp.MustCompile(`^[a-z][a-z0-9-]{0,62}$`)
 
-// ParseProfile strictly decodes one profile document and validates its shape.
+// ParseProfile strictly decodes one flat profile document, or a deprecated
+// wrapped document with a warning, and validates its shape.
 func ParseProfile(data []byte) (PolicyProfile, Diagnostics) {
 	var node yaml.Node
 	var diagnostics Diagnostics
@@ -23,18 +24,47 @@ func ParseProfile(data []byte) (PolicyProfile, Diagnostics) {
 	inspectNode(&node, "", &diagnostics)
 
 	var profile PolicyProfile
+	var ok bool
+	if isLegacyProfile(&node) {
+		profile, ok = decodeLegacyProfile(data, &diagnostics)
+	} else {
+		ok = decodeStrictDocument(data, &profile, &diagnostics)
+	}
+	if !ok {
+		return PolicyProfile{}, diagnostics.Sorted()
+	}
+	validateProfile(profile, &diagnostics)
+	return profile, diagnostics.Sorted()
+}
+
+// ParseProfileAt parses a profile stored in the folder named dir. An omitted
+// name defaults to dir; a present name must match it.
+func ParseProfileAt(data []byte, dir string) (PolicyProfile, Diagnostics) {
+	profile, diagnostics := ParseProfile(data)
+	switch {
+	case profile.Name == "":
+		profile.Name = dir
+		if !profileNamePattern.MatchString(dir) {
+			diagnostics.Add(SeverityError, "profile.name_invalid", "name", "folder name must be lowercase kebab-case", 0, 0)
+		}
+	case profile.Name != dir:
+		diagnostics.Add(SeverityError, "repository.name_mismatch", "name", fmt.Sprintf("name %q must match folder %q", profile.Name, dir), 0, 0)
+	}
+	return profile, diagnostics.Sorted()
+}
+
+func decodeStrictDocument(data []byte, target any, diagnostics *Diagnostics) bool {
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
-	if err := decoder.Decode(&profile); err != nil {
+	if err := decoder.Decode(target); err != nil {
 		diagnostics.Add(SeverityError, "yaml.strict", "document", err.Error(), 0, 0)
-		return PolicyProfile{}, diagnostics.Sorted()
+		return false
 	}
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
 		diagnostics.Add(SeverityError, "yaml.multiple_documents", "document", "exactly one YAML document is allowed", 0, 0)
 	}
-	validateProfile(profile, &diagnostics)
-	return profile, diagnostics.Sorted()
+	return true
 }
 
 // ParseBindings strictly decodes local route bindings. It never resolves credentials.
@@ -62,35 +92,43 @@ func ParseBindings(data []byte) (Bindings, Diagnostics) {
 		if !profileNamePattern.MatchString(name) {
 			diagnostics.Add(SeverityError, "binding.name_invalid", path, "route name must be lowercase kebab-case", 0, 0)
 		}
-		if route.Provider == "" || route.Transport == "" || route.Authentication == "" || route.Model == "" || route.Effort == "" {
-			diagnostics.Add(SeverityError, "binding.route_incomplete", path, "provider, transport, authentication, model, and effort are required", 0, 0)
+		route = withRouteDefaults(route)
+		bindings.Routes[name] = route
+		if route.Provider == "" || route.Model == "" || route.Effort == "" {
+			diagnostics.Add(SeverityError, "binding.route_incomplete", path, "provider, model, and effort are required", 0, 0)
 		}
 		validateRouteTargets(path, route, &diagnostics)
 	}
 	return bindings, diagnostics.Sorted()
 }
 
+// withRouteDefaults fills an omitted base transport and authentication. Target
+// overrides that omit them inherit these base values through RouteBinding.For.
+func withRouteDefaults(route RouteBinding) RouteBinding {
+	if route.Transport == "" {
+		route.Transport = DefaultTransport
+	}
+	if route.Authentication == "" {
+		route.Authentication = DefaultAuthentication
+	}
+	return route
+}
+
 func validateProfile(profile PolicyProfile, diagnostics *Diagnostics) {
-	if profile.APIVersion != APIVersion {
-		diagnostics.Add(SeverityError, "profile.api_version", "apiVersion", fmt.Sprintf("expected %q", APIVersion), 0, 0)
+	if profile.Name != "" && !profileNamePattern.MatchString(profile.Name) {
+		diagnostics.Add(SeverityError, "profile.name_invalid", "name", "name must be lowercase kebab-case", 0, 0)
 	}
-	if profile.Kind != KindPolicyProfile {
-		diagnostics.Add(SeverityError, "profile.kind", "kind", fmt.Sprintf("expected %q", KindPolicyProfile), 0, 0)
-	}
-	if !profileNamePattern.MatchString(profile.Metadata.Name) {
-		diagnostics.Add(SeverityError, "profile.name_invalid", "metadata.name", "name must be lowercase kebab-case", 0, 0)
-	}
-	validatePermission(profile.Spec.Permissions, diagnostics)
-	validateRules(profile.Spec.Tools, diagnostics)
+	validatePermission(profile.Permissions, diagnostics)
+	validateRules(profile.Tools, diagnostics)
 }
 
 func validatePermission(policy *PermissionPolicy, diagnostics *Diagnostics) {
 	if policy == nil {
 		return
 	}
-	validateEnum(policy.Mode, "spec.permissions.mode", []string{"read-only", "workspace-write", "unrestricted"}, diagnostics)
-	validateEnum(policy.Network, "spec.permissions.network", []string{"allow", "deny", "unmanaged"}, diagnostics)
-	validateEnum(policy.Shell, "spec.permissions.shell", []string{"allow", "deny", "unmanaged"}, diagnostics)
+	validateEnum(policy.Mode, "permissions.mode", []string{"read-only", "workspace-write", "unrestricted"}, diagnostics)
+	validateEnum(policy.Network, "permissions.network", []string{"allow", "deny", "unmanaged"}, diagnostics)
+	validateEnum(policy.Shell, "permissions.shell", []string{"allow", "deny", "unmanaged"}, diagnostics)
 }
 
 func validateEnum(value *string, path string, allowed []string, diagnostics *Diagnostics) {
@@ -115,7 +153,7 @@ func validateRules(rules *AccessRules, diagnostics *Diagnostics) {
 	}
 	for _, item := range *rules.Allow {
 		if _, found := denied[item]; found {
-			diagnostics.Add(SeverityWarning, "policy.deny_wins", "spec.tools", fmt.Sprintf("%q appears in both allow and deny; deny wins", item), 0, 0)
+			diagnostics.Add(SeverityWarning, "policy.deny_wins", "tools", fmt.Sprintf("%q appears in both allow and deny; deny wins", item), 0, 0)
 		}
 	}
 }

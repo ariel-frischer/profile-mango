@@ -1,9 +1,4 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: workflow-base
-  description: Shared behavior for example workflows; preview-only workflow
-spec:
-  routeRef: openai
-  instructions:
-    append: [instructions/AGENTS.md]
+description: Shared behavior for example workflows; preview-only workflow
+route: openai
+instructions:
+  append: [instructions/AGENTS.md]

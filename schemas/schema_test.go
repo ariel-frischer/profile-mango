@@ -22,6 +22,9 @@ func TestSchemasAcceptValidDocuments(t *testing.T) {
 	}{
 		"profile":          {schema: "profile.schema.json", document: "../pkg/profilemango/testdata/fixtures/route-only/profile.yaml", yaml: true},
 		"bindings":         {schema: "bindings.schema.json", document: "../pkg/profilemango/testdata/fixtures/bindings.yaml", yaml: true},
+		"profile legacy":   {schema: "profile.schema.json", document: `{"apiVersion":"profilemango.dev/v1alpha1","kind":"PolicyProfile","metadata":{"name":"route-only"},"spec":{"routeRef":"codex-oauth"}}`},
+		"profile nameless": {schema: "profile.schema.json", document: `{"extends":"base","permissions":{"mode":"read-only"}}`},
+		"bindings minimal": {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-6-sol","effort":"high"}}}`},
 		"bindings targets": {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","transport":"native","authentication":"oauth","model":"gpt-5.6","effort":"high","targets":{"claude-code":{"provider":"anthropic","model":"claude-sonnet-5"}}}}}`},
 		"plan":             {schema: "plan.schema.json", document: `{"apiVersion":"profilemango.dev/plan/v1alpha1","kind":"Plan","profile":"route-only","target":"codex","route":{"provider":"openai","transport":"native","authentication":"oauth","model":"gpt-5.6","effort":"high"},"resources":[{"path":"instructions/system.md","kind":"instruction","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":12}]}`},
 		"manifest":         {schema: "manifest.schema.json", document: `{"apiVersion":"profilemango.dev/manifest/v1alpha1","kind":"Manifest","owner":"profile-mango","generation":1,"profile":"route-only","target":"codex","resources":[{"path":"instructions/system.md","kind":"instruction","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":12}]}`},
@@ -45,6 +48,10 @@ func TestSchemasRejectInvalidDocuments(t *testing.T) {
 		document string
 	}{
 		"profile missing metadata":     {schema: "profile.schema.json", document: `{"apiVersion":"profilemango.dev/v1alpha1","kind":"PolicyProfile","spec":{"routeRef":"codex-oauth"}}`},
+		"profile mixed wrapper":        {schema: "profile.schema.json", document: `{"kind":"PolicyProfile","route":"codex-oauth"}`},
+		"profile old route key":        {schema: "profile.schema.json", document: `{"routeRef":"codex-oauth"}`},
+		"profile invalid name":         {schema: "profile.schema.json", document: `{"name":"Default","route":"codex-oauth"}`},
+		"bindings missing model":       {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","effort":"high"}}}`},
 		"bindings empty auth":          {schema: "bindings.schema.json", document: `{"routes":{"codex-oauth":{"provider":"openai","transport":"native","authentication":"","model":"gpt-5.6","effort":"high"}}}`},
 		"bindings unknown target":      {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","transport":"native","authentication":"oauth","model":"gpt-5.6","effort":"high","targets":{"claude":{"provider":"anthropic"}}}}}`},
 		"bindings empty override":      {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","transport":"native","authentication":"oauth","model":"gpt-5.6","effort":"high","targets":{"codex":{}}}}}`},

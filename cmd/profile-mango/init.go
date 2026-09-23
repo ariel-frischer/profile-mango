@@ -10,21 +10,16 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-const starterProfileYAML = `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: default
-  description: Default profile scaffolded by profile-mango init
-spec:
-  routeRef: local
+const starterProfileYAML = `# The profile name defaults to its folder name (default).
+description: Default profile scaffolded by profile-mango init
+route: local
 `
 
 const starterBindingsYAML = `# Route identity only. Credentials remain target-owned and are never stored here.
+# transport defaults to native and authentication to oauth when omitted.
 routes:
   local:
     provider: openai
-    transport: native
-    authentication: oauth
     model: gpt-6-sol
     effort: high
 `
@@ -90,14 +85,14 @@ func starterFiles() []starterFile {
 }
 
 func validateStarterFiles(files []starterFile) error {
-	profile, profileDiagnostics := profilemango.ParseProfile(files[0].content)
+	profile, profileDiagnostics := profilemango.ParseProfileAt(files[0].content, "default")
 	bindings, bindingDiagnostics := profilemango.ParseBindings(files[1].content)
 	diagnostics := append(profileDiagnostics, bindingDiagnostics...)
 	if diagnostics.HasErrors() {
 		return fmt.Errorf("validating starter files: %w", diagnostics.Err())
 	}
-	if _, found := bindings.Routes[profile.Spec.RouteRef]; !found {
-		return fmt.Errorf("validating starter files: routeRef %q is absent from bindings", profile.Spec.RouteRef)
+	if _, found := bindings.Routes[profile.Route]; !found {
+		return fmt.Errorf("validating starter files: route %q is absent from bindings", profile.Route)
 	}
 	return nil
 }

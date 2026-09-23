@@ -2,48 +2,75 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://profilemango.dev/schemas/policy-profile-v1alpha1.json",
   "title": "PolicyProfile v1alpha1",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["apiVersion", "kind", "metadata", "spec"],
-  "properties": {
-    "apiVersion": {"const": "profilemango.dev/v1alpha1"},
-    "kind": {"const": "PolicyProfile"},
-    "metadata": {
-      "type": "object", "additionalProperties": false, "required": ["name"],
-      "properties": {
-        "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
-        "description": {"type": "string"},
-        "labels": {"type": "object", "additionalProperties": {"type": "string"}}
-      }
-    },
-    "spec": {
+  "description": "A flat profile document. name is optional and defaults to the profile folder name; when present it must match. The apiVersion/kind/metadata/spec wrapper is deprecated but still accepted.",
+  "oneOf": [
+    {"$ref": "#/$defs/flatProfile"},
+    {"$ref": "#/$defs/legacyProfile"}
+  ],
+  "$defs": {
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+    "labels": {"type": "object", "additionalProperties": {"type": "string"}},
+    "flatProfile": {
       "type": "object", "additionalProperties": false,
       "properties": {
-        "extends": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
-        "routeRef": {"type": "string", "minLength": 1},
-        "permissions": {
+        "name": {"$ref": "#/$defs/name"},
+        "description": {"type": "string"},
+        "labels": {"$ref": "#/$defs/labels"},
+        "extends": {"$ref": "#/$defs/name"},
+        "route": {"type": "string", "minLength": 1},
+        "permissions": {"$ref": "#/$defs/permissions"},
+        "tools": {"$ref": "#/$defs/accessRules"},
+        "instructions": {"$ref": "#/$defs/instructions"},
+        "skills": {"$ref": "#/$defs/paths"}
+      }
+    },
+    "legacyProfile": {
+      "deprecated": true,
+      "description": "Deprecated wrapped form; parsed with a profile.legacy_format warning.",
+      "type": "object", "additionalProperties": false,
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "properties": {
+        "apiVersion": {"const": "profilemango.dev/v1alpha1"},
+        "kind": {"const": "PolicyProfile"},
+        "metadata": {
           "type": "object", "additionalProperties": false,
           "properties": {
-            "mode": {"enum": ["read-only", "workspace-write", "unrestricted"]},
-            "network": {"enum": ["allow", "deny", "unmanaged"]},
-            "shell": {"enum": ["allow", "deny", "unmanaged"]}
+            "name": {"$ref": "#/$defs/name"},
+            "description": {"type": "string"},
+            "labels": {"$ref": "#/$defs/labels"}
           }
         },
-        "tools": {"$ref": "#/$defs/accessRules"},
-        "instructions": {
+        "spec": {
           "type": "object", "additionalProperties": false,
-          "properties": {"append": {"type": "array", "items": {"type": "string"}}}
-        },
-        "skills": {"type": "array", "items": {"type": "string"}}
+          "properties": {
+            "extends": {"$ref": "#/$defs/name"},
+            "routeRef": {"type": "string", "minLength": 1},
+            "permissions": {"$ref": "#/$defs/permissions"},
+            "tools": {"$ref": "#/$defs/accessRules"},
+            "instructions": {"$ref": "#/$defs/instructions"},
+            "skills": {"$ref": "#/$defs/paths"}
+          }
+        }
       }
-    }
-  },
-  "$defs": {
+    },
+    "permissions": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "mode": {"enum": ["read-only", "workspace-write", "unrestricted"]},
+        "network": {"enum": ["allow", "deny", "unmanaged"]},
+        "shell": {"enum": ["allow", "deny", "unmanaged"]}
+      }
+    },
+    "instructions": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"append": {"$ref": "#/$defs/paths"}}
+    },
+    "paths": {"type": "array", "items": {"type": "string"}},
     "accessRules": {
       "type": "object", "additionalProperties": false,
       "properties": {
-        "allow": {"type": "array", "items": {"type": "string"}},
-        "deny": {"type": "array", "items": {"type": "string"}}
+        "allow": {"$ref": "#/$defs/paths"},
+        "deny": {"$ref": "#/$defs/paths"}
       }
     }
   }

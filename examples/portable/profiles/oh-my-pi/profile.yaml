@@ -1,7 +1,2 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: oh-my-pi
-  description: Oh My Pi model role defaults; settings-only example, not a full route guarantee
-spec:
-  routeRef: openai
+description: Oh My Pi model role defaults; settings-only example, not a full route guarantee
+route: openai

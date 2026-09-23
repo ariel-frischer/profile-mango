@@ -16,21 +16,16 @@ import (
 const expectedReadmeLogo = `🥭 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█
 █▀▀ █▀▄ █▄█ █▀  █ █▄▄ ██▄       █ ▀ █ █▀█ █ ▀█ █▄█ █▄█`
 
-const expectedStarterProfile = `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: default
-  description: Default profile scaffolded by profile-mango init
-spec:
-  routeRef: local
+const expectedStarterProfile = `# The profile name defaults to its folder name (default).
+description: Default profile scaffolded by profile-mango init
+route: local
 `
 
 const expectedStarterBindings = `# Route identity only. Credentials remain target-owned and are never stored here.
+# transport defaults to native and authentication to oauth when omitted.
 routes:
   local:
     provider: openai
-    transport: native
-    authentication: oauth
     model: gpt-6-sol
     effort: high
 `
@@ -166,16 +161,16 @@ func TestInitCommandContentIsDeterministicAndStrictlyValid(t *testing.T) {
 		t.Fatalf("generated files differ:\nfirst=%v\nsecond=%v", firstFiles, secondFiles)
 	}
 
-	profile, profileDiagnostics := profilemango.ParseProfile(firstFiles["profiles/default/profile.yaml"])
-	if profileDiagnostics.HasErrors() {
+	profile, profileDiagnostics := profilemango.ParseProfileAt(firstFiles["profiles/default/profile.yaml"], "default")
+	if len(profileDiagnostics) > 0 || profile.Name != "default" {
 		t.Fatalf("generated profile diagnostics = %v", profileDiagnostics.Sorted())
 	}
 	bindings, bindingDiagnostics := profilemango.ParseBindings(firstFiles["bindings/local.example.yaml"])
 	if bindingDiagnostics.HasErrors() {
 		t.Fatalf("generated binding diagnostics = %v", bindingDiagnostics.Sorted())
 	}
-	if _, found := bindings.Routes[profile.Spec.RouteRef]; !found {
-		t.Fatalf("routeRef %q is absent from generated bindings", profile.Spec.RouteRef)
+	if _, found := bindings.Routes[profile.Route]; !found {
+		t.Fatalf("route %q is absent from generated bindings", profile.Route)
 	}
 	if strings.Contains(string(firstFiles["bindings/local.example.yaml"]), "token") || strings.Contains(string(firstFiles["bindings/local.example.yaml"]), "secret") {
 		t.Fatal("generated bindings contain token or secret guidance")
@@ -187,8 +182,8 @@ func TestInitCommandContentIsDeterministicAndStrictlyValid(t *testing.T) {
 	if localDiagnostics.HasErrors() {
 		t.Fatalf("generated local binding diagnostics = %v", localDiagnostics.Sorted())
 	}
-	if _, found := localBindings.Routes[profile.Spec.RouteRef]; !found {
-		t.Fatalf("routeRef %q is absent from generated bindings/local.yaml", profile.Spec.RouteRef)
+	if _, found := localBindings.Routes[profile.Route]; !found {
+		t.Fatalf("route %q is absent from generated bindings/local.yaml", profile.Route)
 	}
 	if strings.Contains(string(firstFiles["bindings/local.yaml"]), "gpt-5.6") {
 		t.Fatal("generated bindings reference the retired gpt-5.6 model")

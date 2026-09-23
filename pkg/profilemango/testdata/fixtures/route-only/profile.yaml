@@ -1,10 +1,6 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: route-only
-  description: Route and instructions with security fields intentionally unmanaged
-spec:
-  routeRef: codex-oauth
-  instructions:
-    append:
-      - fixtures/route-only/instructions/system.md
+name: route-only
+description: Route and instructions with security fields intentionally unmanaged
+route: codex-oauth
+instructions:
+  append:
+    - fixtures/route-only/instructions/system.md

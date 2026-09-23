@@ -1,7 +1,2 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: pi
-  description: Pi startup defaults; settings-only example, not a full route guarantee
-spec:
-  routeRef: openai
+description: Pi startup defaults; settings-only example, not a full route guarantee
+route: openai

@@ -1,7 +1,13 @@
 package profilemango
 
-// APIVersion is the only profile contract supported by M0.
+// APIVersion identifies the deprecated wrapped profile form and the resolved model.
 const APIVersion = "profilemango.dev/v1alpha1"
+
+// Route defaults applied by ParseBindings when a base route omits the field.
+const (
+	DefaultTransport      = "native"
+	DefaultAuthentication = "oauth"
+)
 
 const (
 	KindPolicyProfile = "PolicyProfile"
@@ -9,27 +15,25 @@ const (
 	ManifestVersion   = "profilemango.dev/manifest/v1alpha1"
 )
 
-// PolicyProfile is the strict YAML input document.
+// PolicyProfile is the strict, flat YAML input document. Name is optional in
+// YAML and defaults to the profile folder name; see ParseProfileAt.
 type PolicyProfile struct {
-	APIVersion string      `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string      `yaml:"kind" json:"kind"`
-	Metadata   Metadata    `yaml:"metadata" json:"metadata"`
-	Spec       ProfileSpec `yaml:"spec" json:"spec"`
-}
-
-type Metadata struct {
-	Name        string            `yaml:"name" json:"name"`
-	Description string            `yaml:"description,omitempty" json:"description,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
-}
-
-type ProfileSpec struct {
+	Name         string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Description  string            `yaml:"description,omitempty" json:"description,omitempty"`
+	Labels       map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Extends      string            `yaml:"extends,omitempty" json:"extends,omitempty"`
-	RouteRef     string            `yaml:"routeRef" json:"routeRef"`
+	Route        string            `yaml:"route,omitempty" json:"route,omitempty"`
 	Permissions  *PermissionPolicy `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 	Tools        *AccessRules      `yaml:"tools,omitempty" json:"tools,omitempty"`
 	Instructions InstructionsSpec  `yaml:"instructions,omitempty" json:"instructions,omitempty"`
 	Skills       *[]string         `yaml:"skills,omitempty" json:"skills,omitempty"`
+}
+
+// Metadata is the resolved identity carried by ResolvedProfile.
+type Metadata struct {
+	Name        string            `yaml:"name" json:"name"`
+	Description string            `yaml:"description,omitempty" json:"description,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 type PermissionPolicy struct {
@@ -53,7 +57,9 @@ type Bindings struct {
 }
 
 // RouteBinding is a base route plus optional explicit per-target overrides.
-// Targets is empty in every effective route returned by RouteFor.
+// Targets is empty in every effective route returned by RouteFor. ParseBindings
+// fills an omitted Transport with DefaultTransport and Authentication with
+// DefaultAuthentication.
 type RouteBinding struct {
 	Provider       string                   `yaml:"provider" json:"provider"`
 	Transport      string                   `yaml:"transport" json:"transport"`

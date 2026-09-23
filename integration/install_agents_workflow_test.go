@@ -23,7 +23,7 @@ func TestInstalledBinaryNamedOpenCodeAgent(t *testing.T) {
 	}
 	w.args = append(w.args, "--agent", "opencode@1.18.31=subagent:mango-synthetic")
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
-	writeWorkflowFile(t, profile, string(readWorkflowFile(t, profile))+"  instructions:\n    append:\n      - instructions/synthetic.md\n")
+	writeWorkflowFile(t, profile, string(readWorkflowFile(t, profile))+"instructions:\n  append:\n    - instructions/synthetic.md\n")
 	if err := os.MkdirAll(filepath.Join(w.root, "instructions"), 0o700); err != nil {
 		t.Fatal(err)
 	}

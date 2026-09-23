@@ -1,7 +1,2 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: codex
-  description: Codex inert model preview; settings-only example, not a full route guarantee
-spec:
-  routeRef: openai
+description: Codex inert model preview; settings-only example, not a full route guarantee
+route: openai
