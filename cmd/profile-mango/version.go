@@ -39,7 +39,7 @@ func printPlainVersion(writer io.Writer) {
 
 func printPrettyVersion(writer io.Writer) {
 	styles := stylesFor(writer, true)
-	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  profile-mango 🥭 — Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts."))
+	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  profile-mango 🥭 — Install one coding-agent profile across Claude Code, Codex, OpenCode, and more."))
 	printVersionBox(writer, styles)
 	_, _ = fmt.Fprintln(writer)
 }

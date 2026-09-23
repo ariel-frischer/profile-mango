@@ -16,7 +16,7 @@ type restoreOptions struct {
 
 func newRestoreCmd() *cobra.Command {
 	var options restoreOptions
-	cmd := &cobra.Command{Use: "restore", Short: "Preview or explicitly apply a guarded Codex install reversal", Args: cobra.NoArgs,
+	cmd := &cobra.Command{Use: "restore", Short: "Preview, then apply, undoing a previous Codex install and restoring the original settings", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error { return runRestore(cmd, options) }}
 	cmd.Flags().StringVar(&options.target, "target", "", "target codex or codex@0.154.0")
 	cmd.Flags().StringVar(&options.config, "config", "", "explicit original Codex config path")

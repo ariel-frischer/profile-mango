@@ -43,7 +43,7 @@ func newInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "install <profile>",
 		Aliases:      []string{"i"},
-		Short:        "Plan a bounded target installation; apply only with explicit hash-bound consent",
+		Short:        "Plan installing the supported settings from a profile into a target; nothing is written until you pass --apply",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,7 +65,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.yes, "yes", false, "confirm non-interactive apply; requires --expect-plan")
 	cmd.Flags().StringVar(&options.expectPlan, "expect-plan", "", "expected plan ID required for --yes and apply")
 	cmd.Flags().BoolVar(&options.noBackup, "no-backup", false, "disable create-only pre-apply backups")
-	cmd.Flags().BoolVar(&options.override, "override", false, "request an adapter-approved narrow ownership override")
+	cmd.Flags().BoolVar(&options.override, "override", false, "allow overwriting settings that were changed outside profile-mango, where the target supports it")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the deterministic plan as JSON")
 	return cmd
 }

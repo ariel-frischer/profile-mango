@@ -15,7 +15,7 @@ func newValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "validate <profile.yaml>",
 		Aliases: []string{"v"},
-		Short:   "Validate one PolicyProfile without accessing agent homes or the network",
+		Short:   "Check a profile.yaml file for errors, without touching any agent's files or the network",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			profileData, err := os.ReadFile(args[0])
