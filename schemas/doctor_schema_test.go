@@ -30,7 +30,7 @@ func compileDoctorSchema(t *testing.T) *jsonschema.Schema {
 func TestDoctorSchemaAcceptsValidReport(t *testing.T) {
 	t.Parallel()
 	schema := compileDoctorSchema(t)
-	document := `{"apiVersion":"profilemango.dev/doctor/v1alpha1","kind":"DoctorReport","profile":"default","targets":[{"target":"codex@0.154.0","binary":"codex","binaryFound":true,"binaryPath":"/usr/local/bin/codex","detectedVersion":"codex-cli 0.154.0","qualifiedVersion":"0.154.0","versionMatch":true,"configPath":"/home/user/.codex/config.toml","configExists":false,"planStatus":"ready"}]}`
+	document := `{"apiVersion":"profilemango.dev/doctor/v1alpha1","kind":"DoctorReport","profile":"default","targets":[{"target":"codex@0.154.0","binary":"codex","binaryFound":true,"binaryPath":"/usr/local/bin/codex","detectedVersion":"codex-cli 0.154.0","qualifiedVersion":"0.154.0","versionMatch":true,"compatibleRange":">=0.154.0 <0.155.0","inRange":true,"configPath":"/home/user/.codex/config.toml","configExists":false,"planStatus":"ready"}]}`
 	var parsed any
 	if err := json.Unmarshal([]byte(document), &parsed); err != nil {
 		t.Fatal(err)

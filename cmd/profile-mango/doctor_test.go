@@ -194,10 +194,11 @@ func TestDoctorHumanOutputHasSuggestion(t *testing.T) {
 	}
 }
 
-func TestDoctorJSONReportsVersionMatchAndMismatch(t *testing.T) {
+func TestDoctorJSONReportsVersionRange(t *testing.T) {
 	doctorFakeBinaries(t, map[string]string{
 		"codex":  "echo 'codex-cli " + codex.TargetVersion + "'",
 		"claude": "echo '9.9.9 (Claude Code)'",
+		"pi":     "echo '0.86.4'",
 	})
 	t.Setenv("HOME", filepath.Join(t.TempDir(), "home"))
 
@@ -210,17 +211,56 @@ func TestDoctorJSONReportsVersionMatchAndMismatch(t *testing.T) {
 		t.Fatalf("report envelope = %#v", report)
 	}
 	codexResult := doctorTargetNamed(t, report, "codex")
-	if !codexResult.BinaryFound || !codexResult.VersionMatch || codexResult.DetectedVersion != "codex-cli "+codex.TargetVersion {
+	if !codexResult.BinaryFound || !codexResult.VersionMatch || !codexResult.InRange || codexResult.CompatibleRange != ">=0.154.0 <0.155.0" || codexResult.DetectedVersion != "codex-cli "+codex.TargetVersion {
 		t.Fatalf("codex result = %#v", codexResult)
 	}
 	claudeResult := doctorTargetNamed(t, report, "claude-code")
-	if !claudeResult.BinaryFound || claudeResult.VersionMatch {
+	if !claudeResult.BinaryFound || claudeResult.VersionMatch || claudeResult.InRange || claudeResult.CompatibleRange != ">=2.1.278 <2.2.0" {
 		t.Fatalf("claude-code result = %#v", claudeResult)
 	}
 	piResult := doctorTargetNamed(t, report, "pi")
-	if piResult.BinaryFound || piResult.BinaryPath != "" {
-		t.Fatalf("pi (no fake binary) result = %#v", piResult)
+	if !piResult.BinaryFound || piResult.VersionMatch || !piResult.InRange {
+		t.Fatalf("pi patch update should be in range without an exact match: %#v", piResult)
 	}
+	hermesResult := doctorTargetNamed(t, report, "hermes")
+	if hermesResult.BinaryFound || hermesResult.BinaryPath != "" || hermesResult.InRange || hermesResult.CompatibleRange == "" {
+		t.Fatalf("hermes (no fake binary) result = %#v", hermesResult)
+	}
+}
+
+func TestDoctorHumanTableShowsInRange(t *testing.T) {
+	doctorFakeBinaries(t, map[string]string{
+		"codex":  "echo 'codex-cli 0.154.9'",
+		"claude": "echo '2.2.0 (Claude Code)'",
+	})
+	t.Setenv("HOME", filepath.Join(t.TempDir(), "home"))
+	output, err := runDoctorForTest(t)
+	if err != nil {
+		t.Fatalf("doctor: %v\n%s", err, output)
+	}
+	if !strings.Contains(output, "IN RANGE") || strings.Contains(output, "MATCH") {
+		t.Fatalf("doctor header should say IN RANGE:\n%s", output)
+	}
+	for prefix, want := range map[string]string{"codex@": "codex-cli 0.154.9  yes  ", "claude-code@": "(Claude Code)  no (tested >=2.1.278 <2.2.0)  "} {
+		if !strings.Contains(doctorRow(output, prefix), want) {
+			t.Fatalf("doctor row %s missing %q:\n%s", prefix, want, output)
+		}
+	}
+}
+
+// doctorRow returns the table row for a target with column padding collapsed
+// to two spaces (plus a trailing separator), so assertions ignore widths.
+func doctorRow(output, prefix string) string {
+	for _, line := range strings.Split(output, "\n") {
+		if !strings.HasPrefix(line, prefix) {
+			continue
+		}
+		for strings.Contains(line, "   ") {
+			line = strings.ReplaceAll(line, "   ", "  ")
+		}
+		return line + "  "
+	}
+	return ""
 }
 
 func TestDoctorProbeTimesOut(t *testing.T) {

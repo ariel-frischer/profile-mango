@@ -69,6 +69,8 @@ type doctorTarget struct {
 	ProbeError       string `json:"probeError,omitempty"`
 	QualifiedVersion string `json:"qualifiedVersion"`
 	VersionMatch     bool   `json:"versionMatch"`
+	CompatibleRange  string `json:"compatibleRange,omitempty"`
+	InRange          bool   `json:"inRange"`
 	ConfigPath       string `json:"configPath,omitempty"`
 	ConfigBlocked    string `json:"configBlocked,omitempty"`
 	ConfigExists     bool   `json:"configExists"`
@@ -89,7 +91,7 @@ func newDoctorCmd() *cobra.Command {
 		Use:   "doctor",
 		Short: "Check each supported agent's command, version, and default settings path; nothing is written",
 		Long: "doctor reports, for each supported target: whether its command is on PATH, the version it reports, " +
-			"whether that matches the version profile-mango supports, its default settings path and whether that path " +
+			"whether that version is inside the range profile-mango was tested with, its default settings path and whether that path " +
 			"exists, and whether installing the chosen profile would be ready or blocked. It never writes a file.",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
@@ -137,19 +139,23 @@ func doctorTargets(registry *install.Registry, experimental bool) []install.Targ
 
 func checkDoctorTarget(registry *install.Registry, target install.Target, planFor func(install.Target) (string, string)) doctorTarget {
 	result := doctorTarget{Target: target.String(), QualifiedVersion: target.Version}
-	result.Binary = doctorBinaryNames[target.Name]
-	if result.Binary == "" {
-		result.Binary = target.Name
-	}
-	if path, found := lookupDoctorBinary(result.Binary); found {
-		result.BinaryFound = true
-		result.BinaryPath = path
-		detected, err := probeDoctorVersion(path)
-		result.DetectedVersion = detected
-		if err != nil {
-			result.ProbeError = err.Error()
+	detection := detectAgentVersion(target)
+	result.Binary, result.BinaryFound = detection.Binary, detection.Found
+	if detection.Found {
+		result.BinaryPath = detection.Path
+		result.DetectedVersion = detection.Output
+		if detection.Err != nil {
+			result.ProbeError = detection.Err.Error()
 		}
-		result.VersionMatch = detected != "" && strings.Contains(detected, target.Version)
+		result.VersionMatch = detection.Output != "" && strings.Contains(detection.Output, target.Version)
+	}
+	metadata := install.AdapterMetadata{Version: target.Version}
+	if adapter, found := registry.Lookup(target); found {
+		metadata = adapter.Metadata()
+	}
+	if check, err := install.CheckVersion(metadata, detection); err == nil {
+		result.CompatibleRange = check.Range
+		result.InRange = check.Status == install.VersionInRange
 	}
 	env := install.OSPathEnv()
 	configPath, err := registry.DefaultConfigPath(target, env)
@@ -161,6 +167,21 @@ func checkDoctorTarget(registry *install.Registry, target install.Target, planFo
 	}
 	result.PlanStatus, result.PlanReason = planFor(target)
 	return result
+}
+
+// detectAgentVersion looks up a target's documented command on PATH and runs
+// its bounded "--version" probe. Doctor and install share it.
+func detectAgentVersion(target install.Target) install.VersionDetection {
+	binary := doctorBinaryNames[target.Name]
+	if binary == "" {
+		binary = target.Name
+	}
+	path, found := lookupDoctorBinary(binary)
+	if !found {
+		return install.VersionDetection{Binary: binary}
+	}
+	output, err := probeDoctorVersion(path)
+	return install.VersionDetection{Binary: binary, Path: path, Found: true, Output: output, Err: err}
 }
 
 func lookupDoctorBinary(name string) (string, bool) {
@@ -271,7 +292,7 @@ func writeDoctorJSON(cmd *cobra.Command, report doctorReport) error {
 func writeDoctorHuman(cmd *cobra.Command, report doctorReport) error {
 	output := cmd.OutOrStdout()
 	table := tabwriter.NewWriter(output, 0, 2, 2, ' ', 0)
-	if _, err := fmt.Fprintln(table, "TARGET\tBINARY\tDETECTED\tMATCH\tCONFIG\tPLAN"); err != nil {
+	if _, err := fmt.Fprintln(table, "TARGET\tBINARY\tDETECTED\tIN RANGE\tCONFIG\tPLAN"); err != nil {
 		return err
 	}
 	for _, target := range report.Targets {
@@ -295,7 +316,7 @@ func writeDoctorRow(table io.Writer, target doctorTarget) error {
 		target.Target,
 		doctorBinaryCell(target),
 		doctorVersionCell(target),
-		doctorMatchCell(target),
+		doctorRangeCell(target),
 		doctorConfigCell(target),
 		doctorPlanCell(target),
 	)
@@ -329,14 +350,19 @@ func doctorVersionCell(target doctorTarget) string {
 	}
 }
 
-func doctorMatchCell(target doctorTarget) string {
+// doctorRangeCell reports whether the detected version lies in the tested
+// range: "yes", "no" (with the range), or "-" when nothing was detected.
+func doctorRangeCell(target doctorTarget) string {
 	if !target.BinaryFound {
 		return "-"
 	}
-	if target.VersionMatch {
+	if target.InRange {
 		return "yes"
 	}
-	return "no"
+	if target.CompatibleRange == "" {
+		return "no"
+	}
+	return "no (tested " + target.CompatibleRange + ")"
 }
 
 func doctorConfigCell(target doctorTarget) string {

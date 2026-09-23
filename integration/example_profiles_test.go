@@ -48,7 +48,7 @@ func assertExampleRenders(t *testing.T, binary, repoRoot string, env []string, r
 
 func assertExampleInstallGate(t *testing.T, binary, repoRoot string, env []string, root, profiles, bindings string) {
 	t.Helper()
-	result := runCommand(binary, repoRoot, env, "install", "daily", "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--all", "--json")
+	result := runCommand(binary, repoRoot, withoutAgentCommands(env, root), "install", "daily", "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--all", "--json")
 	if result.err == nil {
 		t.Fatal("production --all install unexpectedly succeeded")
 	}

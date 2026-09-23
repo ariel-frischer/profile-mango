@@ -70,6 +70,10 @@ func newInstallCmd() *cobra.Command {
 	return cmd
 }
 
+// installVersionDetector reports each ready target's installed agent version.
+// Tests replace it so they never run real agent commands.
+var installVersionDetector install.VersionDetector = detectAgentVersion
+
 func runInstall(cmd *cobra.Command, profile string, options installOptions, registries ...*install.Registry) error {
 	if err := validateInstallOptions(options); err != nil {
 		return err
@@ -90,7 +94,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
 		Backup: !options.noBackup, Override: options.override, Registry: registry,
-		Env: install.OSPathEnv(),
+		Env: install.OSPathEnv(), DetectVersion: installVersionDetector,
 	}
 	plan, err := install.BuildPlan(request)
 	if err != nil {
@@ -478,6 +482,9 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 			return err
 		}
 	}
+	if err := writeHumanVersionCheck(output, target.VersionCheck); err != nil {
+		return err
+	}
 	seen := make(map[string]struct{}, len(target.Fields))
 	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {
 		return err
@@ -491,6 +498,27 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 		}
 	}
 	return nil
+}
+
+// writeHumanVersionCheck notes the installed agent version against the tested
+// range; any mismatch is also listed as a warning.
+func writeHumanVersionCheck(output io.Writer, check *install.VersionCheck) error {
+	if check == nil {
+		return nil
+	}
+	var note string
+	switch check.Status {
+	case install.VersionInRange:
+		note = fmt.Sprintf("%s (in tested range %s)", check.Detected, check.Range)
+	case install.VersionOutOfRange:
+		note = fmt.Sprintf("%s (outside tested range %s)", check.Detected, check.Range)
+	case install.VersionNotFound:
+		note = check.Binary + " not found on PATH"
+	default:
+		note = "unknown"
+	}
+	_, err := fmt.Fprintf(output, "    installed version: %s\n", humanPath(note))
+	return err
 }
 
 func writeHumanFields(output io.Writer, fields []install.FieldChange, indent string, seen map[string]struct{}, showEmpty bool) error {

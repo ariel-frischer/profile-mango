@@ -25,6 +25,8 @@
         "probeError": {"type": "string"},
         "qualifiedVersion": {"type": "string", "minLength": 1},
         "versionMatch": {"type": "boolean"},
+        "compatibleRange": {"type": "string"},
+        "inRange": {"type": "boolean"},
         "configPath": {"type": "string"},
         "configBlocked": {"type": "string"},
         "configExists": {"type": "boolean"},
