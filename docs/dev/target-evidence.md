@@ -28,9 +28,10 @@ versions, installed binaries and tested support must remain distinct.
 
 Codex is the first intended public adapter candidate. Public targets have inert
 exact-version renderers. Codex permits only three root route settings at an explicit
-path, with OAuth identity, installed-binary equivalence, and full-profile
-applicability unverified. Claude Code permits only model-field installation; Pi
-permits three route-default settings, Hermes three model/reasoning fields, and
+path; the exact installed binary consumed them in an isolated synthetic home,
+but OAuth identity and full-profile applicability remain unverified. Claude
+Code permits only model-field installation; Pi permits three route-default
+settings, Hermes three model/reasoning fields, and
 OpenCode model plus one qualified skill resource or an explicit named primary/
 subagent definition with model and instructions, and OpenClaw model-primary
 plus thinking-default settings. Other target gates
@@ -49,7 +50,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver consumed installer-generated provider/model/high-effort fields with negative controls; built profile-mango CLI synthetic plan/apply/reapply, backup and auth/outside sentinels | Three root settings installable only at an explicit path for OpenAI/native/OAuth binding with `high` effort; OAuth identity, installed-binary equivalence, project/runtime precedence and full-profile applicability remain unverified |
+| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; built profile-mango CLI synthetic plan/apply/reapply/restore | Three root settings installable only at an explicit path for OpenAI/native/OAuth binding with `high` effort; trusted project and runtime overrides can shadow them. OAuth identity, named runtime profile selection, model availability, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
@@ -524,7 +525,23 @@ permission requirement remained blocked even with apply flags. Synthetic
 `011e02a527fc678e665c87d60d899e3ac72be7ffcf4bd289ff400e0d44f686b3`
 and `4d0646b302547417167fe19f380c26f501c6fe912e959ec788ccbdd5eb0d63d2`.
 Internal transaction tests cover stale plans and synthetic guarded restoration.
-There is no public restore command, so built-binary restore remains unverified.
+The subsequently landed guarded public restore command reverses an eligible
+committed two-file install transaction at an explicit path with a fresh plan hash.
+Its built-binary disposable acceptance is recorded separately in
+`.worktrees/reports/ap-6fu.14/`; it does not verify Codex runtime state.
+
+On 2026-09-23, a separate offline probe fed the public installer's synthetic
+root config to the direct installed `codex-cli 0.154.0` binary (SHA-256
+`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`).
+Its app-server `config/read` returned `openai`, `gpt-5.6`, and `high`, all with
+user-config origins. An untrusted project override was ignored with a warning;
+after explicit synthetic trust, project model/effort `project-model`/`medium`
+won. Session `-c` overrides won with `runtime-model`/`minimal`. The app-server
+rejects `--profile`; neither named runtime-profile selection nor live model use
+was exercised. This endpoint starts auth/config/cloud, plugin and SQLite
+machinery, so it was confined to an empty-auth, network/PID/IPC-isolated sandbox,
+not used as a personal-home inspector. Retained requirement-to-check evidence:
+`.worktrees/reports/ap-6fu.14/native-qualification-20260923.md`.
 
 `codex login status` distinguishes stored API-key from ChatGPT login, but the
 same ChatGPT message covers both Codex-managed OAuth and externally supplied
