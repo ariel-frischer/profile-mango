@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -317,7 +318,14 @@ func doctorVersionCell(target doctorTarget) string {
 	case target.DetectedVersion == "":
 		return "(empty)"
 	default:
-		return target.DetectedVersion
+		// The table is one row per target; only show the first line of a
+		// chatty multi-line "--version" probe here. The full text stays in
+		// the JSON report's detectedVersion field.
+		firstLine, rest, multiline := strings.Cut(target.DetectedVersion, "\n")
+		if multiline && rest != "" {
+			return firstLine + " (+" + strconv.Itoa(strings.Count(rest, "\n")+1) + " more line(s))"
+		}
+		return firstLine
 	}
 }
 
