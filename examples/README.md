@@ -61,6 +61,6 @@ listed agent gets the base route with only its override fields applied, so
 one profile can drive several agents with different models from a single
 route key. Never place API keys, tokens, or account identifiers in this file.
 
-See the [root support table](../README.md#what-works-today) and
+See [agents](../docs/public/agents.md) and the
 [target evidence](../docs/dev/target-evidence.md) for exactly which fields
 each target version can install.

@@ -1,0 +1,125 @@
+# Concepts
+
+profile-mango keeps what you want from a coding agent in one place and writes
+the parts each agent supports into that agent's own config file.
+
+```text
+profiles/review/profile.yaml         bindings/local.yaml
+  description, route: local  ──────▶ routes.local: provider, model, effort
+  permissions, tools,                  targets:
+  instructions, skills                   claude-code: provider, model   (override)
+            │                                  │
+            └──────────────┬───────────────────┘
+                           ▼
+          profile-mango install review --all
+                           │  plan → consent → backup → write
+        ┌──────────────────┼──────────────────────┐
+        ▼                  ▼                      ▼
+ ~/.claude/settings.json  ~/.codex/config.toml   ...each installed agent
+```
+
+## Profile
+
+A profile is portable intent: a description, the name of a route, and optionally
+permissions, tools, instructions, and skills. It lives at
+`profiles/<name>/profile.yaml`, and its name is the folder name. A profile can
+`extend` another one. Profiles hold no credentials and no machine-specific model
+IDs, so you can share them.
+
+## Bindings, routes, and target overrides
+
+A route is the model choice a profile points at. Routes live in a separate local
+bindings file, `bindings/local.yaml`, which `init` creates and gitignores. Each
+route needs a `provider`, `model`, and `effort`.
+
+Agents don't all use the same provider. Under a route, `targets:` gives one
+agent its own fields. That agent gets the base route with only those fields
+replaced. The starter bindings from `init` already do this for Claude Code:
+
+```yaml
+routes:
+  local:
+    provider: openai
+    model: gpt-6-sol
+    effort: high
+    targets:
+      claude-code:
+        provider: anthropic
+        model: claude-sonnet-5
+```
+
+Bindings name a route. They never contain API keys, tokens, or account IDs.
+Sign-in stays with each agent.
+
+## What install does
+
+`profile-mango install <profile>` works in two steps:
+
+1. **Plan.** It resolves the profile and route for each target and prints a plan:
+   the config path, a field-by-field diff, warnings, and a plan ID. Nothing is
+   written. The plan ends with the exact command to apply it.
+2. **Apply.** `--apply` asks y/N on a terminal. In scripts, use
+   `--apply --yes --expect-plan <plan-id>`. If a file changed since the plan was
+   made, the apply fails and writes nothing.
+
+Choose targets with `--all` (every supported agent that is installed; others
+are listed as skipped) or `--target <name>` (repeatable). Without `--config`,
+each agent's standard user config path is used. Pass `--config <name>=<path>`
+to write somewhere else.
+
+**What it writes:** only the settings that agent supports (see
+[agents](agents.md)), plus an ownership manifest and an install journal next to
+the config. Other settings in the file are kept as they are.
+
+**What it skips:** profile requirements an agent can't install, such as
+permissions, tools, instructions, or skills on most agents. They are listed per
+agent as `not installed for this agent: ...` (JSON `skippedRequirements`) and
+are never claimed as applied. `--strict` blocks the plan instead. Unknown
+profile fields and unsupported targets always block.
+
+**What it backs up:** before changing an existing file, install makes a
+create-only backup. An existing config that profile-mango doesn't own yet is
+adopted on the first install. The plan shows `adopt`, and the backup is
+mandatory, so `--no-backup` blocks adoption. A file you edited after a
+profile-mango install is protected; `--override` replaces it only where that
+agent allows it.
+
+**What it never touches:** credentials and auth stores, sessions, plugins, MCP
+servers, providers, and the network. Installing a model does not sign you in
+or check that the model is available to your account.
+
+## Undo
+
+`profile-mango undo --target <name>` (alias `restore`) previews reversing the
+latest install for that target, with a diff and a new undo plan ID. Apply it
+with `--apply`, or `--apply --yes --expect-plan <undo-plan-id>`. Each target of
+a multi-target install is undone separately.
+
+- An existing config comes back byte-for-byte from its backup.
+- A config the install created is removed.
+- A config edited after the install is refused unless `--override` discards
+  those edits.
+- Undo needs the install's backup, so it can't reverse an install made with
+  `--no-backup`.
+
+Use `--original-plan <id>` to undo a specific earlier install.
+
+## Tested versions
+
+Agents update themselves, so the installed version often differs from the one
+profile-mango was tested with. Each agent has a tested range: from the tested
+version up to, but not including, the next minor release. `doctor` shows
+whether each installed agent is in range. `install` prints the installed version
+and warns when it is outside the range, missing, or unreadable. The plan still
+proceeds, but the settings are written as they were for the tested version, and
+nothing is claimed about the newer binary.
+
+## Checking and previewing
+
+- `profile-mango validate <profile.yaml> --bindings <file>` checks one profile
+  and its route offline.
+- `profile-mango doctor` lists agents, versions, config paths, and whether a
+  profile would install. It writes nothing.
+- `profile-mango preview` (alias of `render`) writes an inert preview of a
+  profile for one exact agent version into a new `--out` folder, without
+  touching the agent's real files.
