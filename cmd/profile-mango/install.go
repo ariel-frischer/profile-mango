@@ -60,7 +60,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&options.legacyConfigs, "config-path", nil, "deprecated alias for --config")
 	_ = cmd.Flags().MarkDeprecated("config-path", "use --config target[@version]=path instead")
 	cmd.Flags().StringArrayVar(&options.manifests, "manifest", nil, "target[@version]=explicit ownership manifest path")
-	cmd.Flags().BoolVar(&options.all, "all", false, "plan every statically registered public target")
+	cmd.Flags().BoolVar(&options.all, "all", false, "plan every supported agent that is installed; others are listed as skipped")
 	cmd.Flags().BoolVar(&options.apply, "apply", false, "apply the already displayed plan after consent")
 	cmd.Flags().BoolVar(&options.yes, "yes", false, "confirm non-interactive apply; requires --expect-plan")
 	cmd.Flags().StringVar(&options.expectPlan, "expect-plan", "", "expected plan ID required for --yes and apply")
@@ -94,7 +94,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
 		Backup: !options.noBackup, Override: options.override, Registry: registry,
-		Env: install.OSPathEnv(), DetectVersion: installVersionDetector,
+		Env: install.OSPathEnv(), DetectVersion: installVersionDetector, SkipNotInstalled: options.all,
 	}
 	plan, err := install.BuildPlan(request)
 	if err != nil {
@@ -105,6 +105,9 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		if err := writeInstallPlan(cmd, plan, options.jsonOutput); err != nil {
 			return err
 		}
+	}
+	if noAgentsFound(plan) {
+		return fmt.Errorf("install plan is blocked: no supported agents found; run profile-mango doctor")
 	}
 	if !options.apply {
 		if plan.Status == install.StatusBlocked {
@@ -132,6 +135,16 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		return applyErr
 	}
 	return writeApplyReport(cmd, report, options.jsonOutput)
+}
+
+// noAgentsFound reports an --all plan whose every target was skipped as not installed.
+func noAgentsFound(plan install.Plan) bool {
+	for _, target := range plan.Targets {
+		if target.Status != install.StatusSkipped {
+			return false
+		}
+	}
+	return len(plan.Targets) > 0
 }
 
 func validateInstallOptions(options installOptions) error {

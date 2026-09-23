@@ -49,6 +49,9 @@ func BuildPlan(request Request) (Plan, error) {
 	}
 	plan.Diagnostics = append(plan.Diagnostics, diagnostics...)
 	plan.Status = aggregateStatus(plan.Targets)
+	if allSkipped(plan.Targets) {
+		plan.Diagnostics.Add(profilemango.SeverityError, "install.no_agents_found", "targets", noAgentsFound, 0, 0)
+	}
 	plan.normalize()
 	plan.PlanID, err = planID(plan)
 	if err != nil {
@@ -236,6 +239,11 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		targetRequest.ConfigPath, targetPlan.ConfigPath, source = path, path, ConfigSourceDefault
 	}
 	targetPlan.Config = &ConfigDestination{Path: targetRequest.ConfigPath, Source: source}
+	if source == ConfigSourceDefault {
+		if missing, done := missingAgentFolder(request, targetPlan); done {
+			return missing
+		}
+	}
 	config, err := installfs.SnapshotFile(targetRequest.ConfigPath)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("inspect config path: %v", err), "install.config_path_unsafe")
@@ -605,11 +613,14 @@ func fieldNames(fields []FieldChange) []string {
 }
 
 func aggregateStatus(targets []TargetPlan) string {
-	if len(targets) == 0 {
+	if len(targets) == 0 || allSkipped(targets) {
 		return StatusBlocked
 	}
 	allNoop := true
 	for _, target := range targets {
+		if target.Status == StatusSkipped {
+			continue
+		}
 		if target.Status != StatusReady && target.Status != StatusNoop {
 			return StatusBlocked
 		}
