@@ -68,15 +68,18 @@ read-only, backups are enabled by default, and repeated application is a no-op.
 See [the version-qualified evidence](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
 
 For an installation made with the default adjacent manifest and backups, preview a
-guarded reversal with `profile-mango restore --target codex --config
-/explicit/disposable/config.toml --original-plan <64-hex-install-plan-ID> --json`.
+guarded reversal with `profile-mango undo --target codex --config
+/explicit/disposable/config.toml --json` (`restore` is an alias; `--config` defaults
+to the documented path and `--original-plan <64-hex-install-plan-ID>` pins a specific
+install instead of the latest committed journal).
 The read-only output contains a *new* restore plan ID and both file effects.
 Apply with the same flags plus `--apply --yes --expect-plan <restore-plan-ID>`
 for automation, or omit `--json` and use `--apply` on a terminal to answer the
 default-no y/N confirmation prompt.
-This requires an exact committed two-file install journal, unchanged installed
-config and manifest, matching ownership and adjacent original backup bytes/mode.
-An existing config installed with `--no-backup`, edited target state, alternate
+This requires a committed install journal beside the config, an unchanged installed
+config (or `--override` to discard later edits) and manifest, matching ownership and
+adjacent original backup bytes/mode.
+An existing config installed with `--no-backup`, edited target state without `--override`, alternate
 manifest destination, or stale preview is rejected. A manifest created by the
 original install is removed; an originally owned manifest is restored from its
 backup. No arbitrary journal or backup path is accepted. Restore is a file
