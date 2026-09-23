@@ -1,5 +1,5 @@
 #!/bin/sh
-# profile-mango private release installer.
+# profile-mango release installer.
 #
 # This script is for explicitly invoked, configured installations. It does not
 # edit shell profiles, and it refuses to install unless a matching SHA-256
@@ -8,7 +8,7 @@
 # Environment variables:
 #   PROFILE_MANGO_INSTALL_DIR       Installation directory (default: ~/.local/bin)
 #   PROFILE_MANGO_VERSION           Version/tag, or latest (default: latest)
-#   PROFILE_MANGO_RELEASE_BASE_URL  Release downloads base URL (private default)
+#   PROFILE_MANGO_RELEASE_BASE_URL  Release downloads base URL
 #   PROFILE_MANGO_LATEST_URL        Latest-release metadata URL
 #   PROFILE_MANGO_*_CMD             Optional command paths for offline fixtures
 

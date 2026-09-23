@@ -103,8 +103,9 @@ profile-mango undo --target <name>   # add --apply --yes --expect-plan <id> to a
 ```
 
 Without `--config`, plans use the target's documented default config path.
-Review the resolved path, field diff, and plan ID before applying; unowned
-or externally edited files need `--override` (no general force path) and
+Review the resolved path, field diff, skipped requirements, and plan ID
+before applying. An existing config is adopted with a backup; a
+Mango-installed value the user later edited needs `--override`, and
 `--non-interactive` never grants consent by itself. `undo` (alias `restore`)
 restores the latest committed install, or an explicit `--original-plan <id>`.
 
