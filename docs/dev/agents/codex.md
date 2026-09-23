@@ -62,6 +62,19 @@ profile home. An existing unowned config needs `--override`; apply requires
 read-only, backups are enabled by default, and repeated application is a no-op.
 See [the version-qualified evidence](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
 
+For an installation made with the default adjacent manifest and backups, preview a
+guarded reversal with `profile-mango restore --target codex@0.154.0 --config-path
+/explicit/disposable/config.toml --original-plan <64-hex-install-plan-ID> --json`.
+The read-only output contains a *new* restore plan ID and both file effects.
+Apply with the same flags plus `--apply --yes --expect-plan <restore-plan-ID>`.
+This requires an exact committed two-file install journal, unchanged installed
+config and manifest, matching ownership and adjacent original backup bytes/mode.
+An existing config installed with `--no-backup`, edited target state, alternate
+manifest destination, or stale preview is rejected. A manifest created by the
+original install is removed; an originally owned manifest is restored from its
+backup. No arbitrary journal or backup path is accepted. Restore is a file
+reversal, not proof of native effective state or OAuth behavior.
+
 The adapter rejects required permissions, tools, instructions, skills,
 non-qualified routes, malformed TOML, active profiles and provider shadow
 state. It patches only the explicit caller-supplied root document, preserving

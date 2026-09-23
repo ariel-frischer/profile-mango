@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact Oh My Pi 18.2.6 two-field YAML installation with source-native getter qualification, lossless patches, backups and guarded transactions
 - Install exact OpenCode 1.18.31 named primary and subagent definitions with model and ordered instructions at explicit owned paths, qualified by isolated native consumption
 - Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
+- Guarded public Codex 0.154.0 restore preview and hash-bound apply for adjacent committed install journals, original backups, and ownership manifests
 
 ### Changed
 

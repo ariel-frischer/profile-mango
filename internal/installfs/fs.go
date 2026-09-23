@@ -52,11 +52,13 @@ type Change struct {
 	Before  Snapshot
 	Content []byte
 	Delete  bool
+	Mode    fs.FileMode // optional replacement permission override for verified recovery
 }
 
 type ApplyOptions struct {
 	PlanID       string
 	Backup       bool
+	Checks       []Change // read-only source snapshots checked while holding the transaction lock
 	JournalPath  string
 	LockPath     string
 	FaultAfter   int
@@ -171,6 +173,9 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 		return ApplyResult{}, err
 	}
 	defer release()
+	if err := preflight(options.Checks); err != nil {
+		return ApplyResult{}, fmt.Errorf("preflight transaction sources: %w", err)
+	}
 	if err := preflight(changes); err != nil {
 		return ApplyResult{}, err
 	}
@@ -377,7 +382,11 @@ func applyChange(change Change) error {
 		}
 		return os.Remove(change.Path)
 	}
-	return atomicReplace(change.Path, change.Content, current, change.Before.Mode)
+	mode := change.Before.Mode
+	if change.Mode != 0 {
+		mode = change.Mode
+	}
+	return atomicReplace(change.Path, change.Content, current, mode)
 }
 
 func failTransaction(changes []Change, journal *Journal, options ApplyOptions, leave bool, cause ...error) (ApplyResult, error) {
