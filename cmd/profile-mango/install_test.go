@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -51,13 +52,122 @@ func TestInstallTargetAndConfigPathParsing(t *testing.T) {
 	if len(requests) != 2 || requests[0].Target.Name != "codex" || requests[1].ConfigPath != "/synthetic/opencode.json" {
 		t.Fatalf("requests = %#v", requests)
 	}
-	if _, err := installTargets(installOptions{targets: []string{"codex"}}, install.DefaultRegistry()); err == nil {
-		t.Fatal("target without exact version was accepted")
+}
+
+func TestInstallTargetSelectionTable(t *testing.T) {
+	type want struct{ target, config, manifest, agent string }
+	tests := map[string]struct {
+		options installOptions
+		want    []want
+		wantErr string
+	}{
+		"bare target and bare config": {options: installOptions{targets: []string{"claude-code"}, configs: []string{"claude-code=/s/settings.json"}},
+			want: []want{{target: "claude-code@2.1.278", config: "/s/settings.json"}}},
+		"config alone implies target": {options: installOptions{configs: []string{"claude-code=/s/settings.json"}},
+			want: []want{{target: "claude-code@2.1.278", config: "/s/settings.json"}}},
+		"versioned config implies target": {options: installOptions{configs: []string{"codex@0.154.0=/s/config.toml"}},
+			want: []want{{target: "codex@0.154.0", config: "/s/config.toml"}}},
+		"deprecated config-path alias": {options: installOptions{legacyConfigs: []string{"pi=/s/pi.json"}},
+			want: []want{{target: "pi@0.86.1", config: "/s/pi.json"}}},
+		"target order then implied": {options: installOptions{targets: []string{"pi"}, configs: []string{"codex=/s/c", "pi=/s/p"}},
+			want: []want{{target: "pi@0.86.1", config: "/s/p"}, {target: "codex@0.154.0", config: "/s/c"}}},
+		"explicit unqualified version kept": {options: installOptions{targets: []string{"codex@0.153.0"}, configs: []string{"codex=/s/c"}},
+			want: []want{{target: "codex@0.153.0", config: "/s/c"}}},
+		"config-only unqualified version kept": {options: installOptions{configs: []string{"codex@0.153.0=/s/c"}},
+			want: []want{{target: "codex@0.153.0", config: "/s/c"}}},
+		"exact mapping wins over bare": {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/s/bare", "codex@0.154.0=/s/exact"}, manifests: []string{"codex=/s/m"}},
+			want: []want{{target: "codex@0.154.0", config: "/s/exact", manifest: "/s/m"}}},
+		"bare agent selector": {options: installOptions{agents: []string{"opencode=subagent:mango-review"}, configs: []string{"opencode=/s/agents/mango-review.md"}},
+			want: []want{{target: "opencode@1.18.31", config: "/s/agents/mango-review.md", agent: "subagent:mango-review"}}},
+		"config version mismatch":  {options: installOptions{targets: []string{"codex"}, configs: []string{"codex@0.153.0=/s/c"}}, wantErr: "--config target codex@0.153.0 does not match"},
+		"manifest without target":  {options: installOptions{targets: []string{"codex"}, manifests: []string{"pi=/s/m"}}, wantErr: "--manifest target pi does not match"},
+		"agent without target":     {options: installOptions{targets: []string{"opencode"}, agents: []string{"codex=primary:x"}}, wantErr: "--agent target codex does not match"},
+		"all rejects unknown":      {options: installOptions{all: true, configs: []string{"nope=/s/c"}}, wantErr: "--config target nope does not match"},
+		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.154.0"}}, wantErr: "duplicate target: codex@0.154.0"},
+		"duplicate config":         {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/a"}, legacyConfigs: []string{"codex=/b"}}, wantErr: "duplicate --config mapping: codex"},
+		"unknown bare target":      {options: installOptions{targets: []string{"ariel-jcode"}}, wantErr: "ariel-jcode has no qualified version"},
+		"config missing separator": {options: installOptions{configs: []string{"/s/settings.json"}}, wantErr: "--config must use target[@version]=value"},
+		"config empty version":     {options: installOptions{configs: []string{"codex@=/s/c"}}, wantErr: "target or target@version"},
+		"config path as target":    {options: installOptions{configs: []string{"a/b=/s/c"}}, wantErr: "simple name"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			requests, err := installTargets(test.options, install.DefaultRegistry())
+			if test.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+					t.Fatalf("error = %v, want %q", err, test.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := make([]want, 0, len(requests))
+			for _, request := range requests {
+				agent := ""
+				if !request.Agent.Empty() {
+					agent = request.Agent.Mode + ":" + request.Agent.Name
+				}
+				got = append(got, want{target: request.Target.String(), config: request.ConfigPath, manifest: request.ManifestPath, agent: agent})
+			}
+			if !slices.Equal(got, test.want) {
+				t.Fatalf("requests = %+v, want %+v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestInstallCommandConfigFlagForms(t *testing.T) {
+	root := t.TempDir()
+	profiles, bindings := writeCodexInstallInputs(t, root)
+	config := filepath.Join(root, "target", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	base := []string{"route-only", "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--json"}
+	tests := map[string]struct {
+		args       []string
+		deprecated bool
+	}{
+		"bare target and config": {args: []string{"--target", "codex", "--config", "codex=" + config}},
+		"config alone":           {args: []string{"--config", "codex=" + config}},
+		"deprecated alias":       {args: []string{"--target", "codex@0.154.0", "--config-path", "codex=" + config}, deprecated: true},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			command := newInstallCmd()
+			command.SetOut(&stdout)
+			command.SetErr(&stderr)
+			command.SetArgs(append(append([]string(nil), base...), test.args...))
+			if err := command.Execute(); err != nil {
+				t.Fatalf("install: %v; stdout=%s stderr=%s", err, stdout.String(), stderr.String())
+			}
+			if !strings.Contains(stdout.String(), `"version": "0.154.0"`) || !strings.Contains(stdout.String(), `"status": "ready"`) {
+				t.Fatalf("unexpected plan: %s", stdout.String())
+			}
+			if got := strings.Contains(stdout.String()+stderr.String(), "use --config target[@version]=path instead"); got != test.deprecated {
+				t.Fatalf("deprecation note = %v; stdout=%s stderr=%s", got, stdout.String(), stderr.String())
+			}
+		})
+	}
+}
+
+func TestInstallHelpShowsOneConfigFlag(t *testing.T) {
+	var output bytes.Buffer
+	command := newInstallCmd()
+	command.SetOut(&output)
+	command.SetArgs([]string{"--help"})
+	if err := command.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "--config stringArray") || strings.Contains(output.String(), "--config-path") {
+		t.Fatalf("help must show only --config: %s", output.String())
 	}
 }
 
 func TestInstallNamedAgentSelection(t *testing.T) {
-	options := installOptions{targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=subagent:mango-review"}, configPaths: []string{"opencode@1.18.31=/synthetic/agents/mango-review.md"}}
+	options := installOptions{targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=subagent:mango-review"}, configs: []string{"opencode@1.18.31=/synthetic/agents/mango-review.md"}}
 	requests, err := installTargets(options, install.DefaultRegistry())
 	if err != nil || len(requests) != 1 || requests[0].Agent != (install.AgentDestination{Mode: "subagent", Name: "mango-review"}) {
 		t.Fatalf("requests = %#v, err = %v", requests, err)

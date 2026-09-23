@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 type Registry struct {
@@ -55,6 +56,33 @@ func (registry *Registry) Targets() []Target {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].String() < result[j].String() })
 	return result
+}
+
+// ResolveTarget parses "name" or "name@version". A bare name resolves to the
+// target's single installable registered version; an explicit version is kept
+// as given so an unqualified version still blocks during planning.
+func (registry *Registry) ResolveTarget(value string) (Target, error) {
+	selector, err := ParseTargetSelector(value)
+	if err != nil || selector.Version != "" {
+		return selector, err
+	}
+	var qualified []string
+	var result Target
+	for _, target := range registry.Targets() {
+		adapter, _ := registry.Lookup(target)
+		if target.Name == selector.Name && adapter.Metadata().Installable {
+			qualified = append(qualified, target.String())
+			result = target
+		}
+	}
+	switch len(qualified) {
+	case 1:
+		return result, nil
+	case 0:
+		return Target{}, fmt.Errorf("target %s has no qualified version; use %s@<version>", selector.Name, selector.Name)
+	default:
+		return Target{}, fmt.Errorf("target %s has several qualified versions (%s); use target@version", selector.Name, strings.Join(qualified, ", "))
+	}
 }
 
 func DefaultRegistry() *Registry {

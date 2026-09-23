@@ -38,6 +38,7 @@ versions:
             - Add global --non-interactive consent handling and emit one JSON apply report instead of a concatenated plan/report stream.
             - Renamed the installed executable and user-facing CLI command to profile-mango while preserving profile-mango project, module, home, and environment identities
             - Clarify Codex 0.154.0 settings-only installation warnings with isolated installed-binary field and precedence evidence; OAuth and runtime behavior remain unverified
+            - Install and restore accept a bare target name that resolves to its single qualified version; install uses one `--config target[@version]=path` flag that also selects its target, with `--config-path` kept as a hidden deprecated alias
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:

@@ -74,7 +74,7 @@ backups by default, and checks that the files have not changed since planning.
 A profile name in Mango does not by itself create a native agent profile or
 subagent. For OpenCode `1.18.31`, explicitly select `--agent
 opencode@1.18.31=primary:mango-review` or `subagent:mango-review` with a
-caller-supplied `--config-path` ending in `agents/mango-review.md`. This writes
+caller-supplied `--config opencode=<path>` ending in `agents/mango-review.md`. This writes
 a named definition and adjacent ownership manifest, not the main config. A
 primary is selectable by OpenCode, not automatically activated; a subagent is
 eligible for delegation, not proof of runtime orchestration. The generated

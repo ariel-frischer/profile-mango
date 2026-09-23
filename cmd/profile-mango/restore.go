@@ -10,16 +10,18 @@ import (
 )
 
 type restoreOptions struct {
-	target, config, originalPlan, expectPlan string
-	apply, yes, jsonOutput                   bool
+	target, config, legacyConfig, originalPlan, expectPlan string
+	apply, yes, jsonOutput                                 bool
 }
 
 func newRestoreCmd() *cobra.Command {
 	var options restoreOptions
 	cmd := &cobra.Command{Use: "restore", Short: "Preview or explicitly apply a guarded Codex install reversal", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error { return runRestore(cmd, options) }}
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target codex@0.154.0")
-	cmd.Flags().StringVar(&options.config, "config-path", "", "explicit original Codex config path")
+	cmd.Flags().StringVar(&options.target, "target", "", "target codex or codex@0.154.0")
+	cmd.Flags().StringVar(&options.config, "config", "", "explicit original Codex config path")
+	cmd.Flags().StringVar(&options.legacyConfig, "config-path", "", "deprecated alias for --config")
+	_ = cmd.Flags().MarkDeprecated("config-path", "use --config instead")
 	cmd.Flags().StringVar(&options.originalPlan, "original-plan", "", "original 64-hex installation plan ID")
 	cmd.Flags().BoolVar(&options.apply, "apply", false, "apply the previewed restore")
 	cmd.Flags().BoolVar(&options.yes, "yes", false, "confirm apply without a terminal; requires --expect-plan")
@@ -32,7 +34,11 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	if err := validateRestoreOptions(options); err != nil {
 		return err
 	}
-	plan, err := install.BuildRestorePlan(options.target, options.config, options.originalPlan)
+	target, err := install.DefaultRegistry().ResolveTarget(options.target)
+	if err != nil {
+		return fmt.Errorf("resolve restore target: %w", err)
+	}
+	plan, err := install.BuildRestorePlan(target.String(), options.configPath(), options.originalPlan)
 	if err != nil {
 		return fmt.Errorf("plan Codex restore: %w", err)
 	}
@@ -58,8 +64,11 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 }
 
 func validateRestoreOptions(options restoreOptions) error {
-	if strings.TrimSpace(options.config) == "" {
-		return fmt.Errorf("restore requires --config-path")
+	if options.config != "" && options.legacyConfig != "" {
+		return fmt.Errorf("use --config only; --config-path is a deprecated alias")
+	}
+	if strings.TrimSpace(options.configPath()) == "" {
+		return fmt.Errorf("restore requires --config")
 	}
 	if options.yes && !options.apply {
 		return fmt.Errorf("--yes requires --apply")
@@ -74,6 +83,13 @@ func validateRestoreOptions(options restoreOptions) error {
 		return fmt.Errorf("non-interactive or JSON restore apply requires --yes --expect-plan")
 	}
 	return nil
+}
+
+func (options restoreOptions) configPath() string {
+	if options.config != "" {
+		return options.config
+	}
+	return options.legacyConfig
 }
 
 func (options restoreOptions) expectedID(planID string) string {

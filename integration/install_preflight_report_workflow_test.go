@@ -51,7 +51,7 @@ func mixedPreflightWorkflow(t *testing.T) installWorkflow {
 	if err := os.WriteFile(pi, []byte("{\"defaultModel\":\"old\",\"keep\":true}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	w.args = append(w.args, "--target", "pi@0.86.1", "--config-path", "pi="+pi)
+	w.args = append(w.args, "--target", "pi@0.86.1", "--config", "pi="+pi)
 	return w
 }
 

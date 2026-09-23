@@ -297,15 +297,16 @@ profile-mango install <profile-name> \
   --profiles ./profiles \
   --resource-root . \
   --bindings ./bindings/local.yaml \
-  --target opencode@1.18.31 \
-  --config-path opencode=/explicit/disposable/opencode.jsonc \
+  --config opencode=/explicit/disposable/opencode.jsonc \
   --override --json
 ```
 
-For other qualified targets use `--target <name>@<exact-version>` and the
-matching explicit `--config-path <name>=<disposable-path>`. For Codex, use
-`--target codex@0.154.0` with
-`--config-path codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth
+`--config <name>[@<version>]=<disposable-path>` selects its target, so
+`--target` is only needed to plan a target without a config entry. A bare name
+resolves to that target's single qualified version; an explicit unqualified
+`@version` still blocks. `--config-path` is a deprecated hidden alias for
+`--config`. For Codex, use
+`--config codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth
 route, and `effort: high`. Treat this as **settings only**, not successful OAuth
 or full profile installation. The plan warns that `codex login status`
 distinguishes stored API-key from ChatGPT modes but cannot prove exact OAuth.
@@ -323,7 +324,7 @@ disposable backup/restore rehearsal.
 For a distinct named OpenCode agent definition, use an instruction-only profile
 with a native route and pass `--agent opencode@1.18.31=primary:mango-review` (or
 `subagent:mango-review`) plus
-`--config-path opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`.
+`--config opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`.
 The parent `agents` directory must already exist. This writes a custom Markdown
 prompt and adjacent ownership manifest, not the main JSONC config or a native
 named-profile preset. A primary is not activated by installation and a subagent

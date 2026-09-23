@@ -214,7 +214,7 @@ func TestRestoreCLIHelpAndConsent(t *testing.T) {
 	if err := command.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	for _, text := range []string{"--original-plan", "--expect-plan", "--config-path", "--json"} {
+	for _, text := range []string{"--original-plan", "--expect-plan", "--config", "--json"} {
 		if !strings.Contains(output.String(), text) {
 			t.Fatalf("help lacks %s", text)
 		}
@@ -222,6 +222,8 @@ func TestRestoreCLIHelpAndConsent(t *testing.T) {
 	config, id := installedRestoreFixture(t, true)
 	for name, options := range map[string]restoreOptions{
 		"omitted consent":      {target: "codex@0.154.0", config: config, originalPlan: id, apply: true},
+		"bare target":          {target: "codex", config: config, originalPlan: id, apply: true},
+		"deprecated alias":     {target: "codex", legacyConfig: config, originalPlan: id, apply: true},
 		"json without consent": {target: "codex@0.154.0", config: config, originalPlan: id, apply: true, jsonOutput: true},
 	} {
 		t.Run(name, func(t *testing.T) {
