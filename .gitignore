@@ -37,8 +37,9 @@ Thumbs.db
 .claude/*
 !.claude/skills/
 .claude/skills/*
-!.claude/skills/polish/
-!.claude/skills/polish/SKILL.md
+
+# Codex local configuration
+.codex/
 
 # Agent Skills (npx skills add)
 .agents/
