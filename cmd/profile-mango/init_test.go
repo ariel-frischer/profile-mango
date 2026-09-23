@@ -309,8 +309,9 @@ func executeCommandResult(t *testing.T, args ...string) (string, error) {
 	var out bytes.Buffer
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
-	resetHomeFlag()
-	resetNonInteractiveFlag()
+	resetHomeFlag(t)
+	resetNonInteractiveFlag(t)
+	resetSubcommandFlags(rootCmd)
 	rootCmd.SetArgs(args)
 	err := rootCmd.Execute()
 	return out.String(), err
