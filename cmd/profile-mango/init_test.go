@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
@@ -28,6 +29,11 @@ routes:
     provider: openai
     model: gpt-6-sol
     effort: high
+    # Each listed agent gets the route above with these fields replaced.
+    targets:
+      claude-code:
+        provider: anthropic
+        model: claude-sonnet-5
 `
 
 const expectedBindingsGitignore = `# Keep machine-local bindings out of version control.
@@ -391,4 +397,36 @@ func snapshotTree(root string) map[string]treeEntry {
 		return nil
 	})
 	return entries
+}
+
+func TestInitStarterPlansReadyForClaudeCodeAndCodex(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	t.Setenv("HOME", home)
+	t.Setenv("CODEX_HOME", "")
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	doctorFakeBinaries(t, nil)
+	withAgentDetection(t)
+	for _, folder := range []string{".claude", ".codex"} {
+		if err := os.MkdirAll(filepath.Join(home, folder), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	destination := filepath.Join(root, "project")
+	if _, err := executeCommandResult(t, "init", destination); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	var output bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetOut(&output)
+	cmd.SetErr(&output)
+	options := installOptions{profiles: filepath.Join(destination, "profiles"), resourceRoot: destination, bindings: filepath.Join(destination, "bindings", "local.yaml"), targets: []string{"claude-code", "codex"}}
+	if err := runInstall(cmd, "default", options); err != nil {
+		t.Fatalf("install after init: %v\n%s", err, output.String())
+	}
+	for _, want := range []string{" (ready)\n", "claude-code@", `"claude-sonnet-5"`, `"gpt-6-sol"`} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("fresh init plan lacks %q:\n%s", want, output.String())
+		}
+	}
 }

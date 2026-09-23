@@ -2,7 +2,7 @@
 name: profile-mango
 description: >
   Use the profile-mango CLI to scaffold, author, validate, preview, and plan
-  narrow installs of portable agent profiles; preserve its fail-closed safety.
+  narrow installs of portable agent profiles; preserve its safety boundary.
 license: MIT
 compatibility:
   - Codex
@@ -116,5 +116,9 @@ restores the latest committed install, or an explicit `--original-plan <id>`.
   profile-mango manifests, backups, journals, and locks; never auth stores,
   sessions, plugins, MCP, providers, or the network. Unqualified targets and
   unknown required properties block installation rather than being dropped.
+- Known requirements a target cannot install (permissions, tools,
+  instructions, skills) are skipped, not applied: the plan lists them under
+  each target (`not installed for this agent: ...`, JSON
+  `skippedRequirements`). Pass `--strict` to block instead.
 - `profile-mango agents check` is a separate network drift check; skip it
   when offline operation is required.

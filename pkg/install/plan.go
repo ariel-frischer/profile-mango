@@ -39,7 +39,7 @@ func BuildPlan(request Request) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
-	plan := Plan{APIVersion: PlanAPIVersion, Kind: PlanKind, Profile: request.ProfileName, Backup: request.Backup, Override: request.Override, InputSHA256: loaded.InputSHA256}
+	plan := Plan{APIVersion: PlanAPIVersion, Kind: PlanKind, Profile: request.ProfileName, Backup: request.Backup, Override: request.Override, Strict: request.Strict, InputSHA256: loaded.InputSHA256}
 	plan.sources = loaded.Sources
 	for _, targetRequest := range targets {
 		targetPlan := planTarget(request, registry, targetRequest, loaded)
@@ -277,7 +277,11 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
 		}
 	}
-	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
+	profile, resources := loaded.Profile, loaded.Resources
+	if !request.Strict {
+		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, loaded)
+	}
+	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
@@ -640,9 +644,10 @@ func planID(plan Plan) (string, error) {
 		InputSHA256 string
 		Backup      bool
 		Override    bool
+		Strict      bool
 		Targets     []TargetPlan
 	}
-	identityPlan := identity{Profile: plan.Profile, InputSHA256: plan.InputSHA256, Backup: plan.Backup, Override: plan.Override, Targets: append([]TargetPlan(nil), plan.Targets...)}
+	identityPlan := identity{Profile: plan.Profile, InputSHA256: plan.InputSHA256, Backup: plan.Backup, Override: plan.Override, Strict: plan.Strict, Targets: append([]TargetPlan(nil), plan.Targets...)}
 	for index := range identityPlan.Targets {
 		identityPlan.Targets[index].ConfigPath = ""
 		identityPlan.Targets[index].Config = nil

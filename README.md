@@ -42,8 +42,11 @@ agent, authenticate, or switch a running conversation.
 equivalent native named-profile feature for these agents. Mango installation does
 not depend on one. Native profiles are not proof of full Mango profile support.
 
-Unsupported permissions, tool rules, and resource requirements block installation
-rather than being silently dropped. Read the plan's warnings: installing a model
+Permissions, tool rules, instructions, and skills that an agent cannot install
+are never silently dropped: `install` applies the supported subset and lists the
+rest under each agent (`not installed for this agent: ...`, or
+`skippedRequirements` in `--json`). Pass `--strict` to block instead. Read the
+plan's warnings: installing a model
 does not verify authentication or enforce every route preference. OpenCode named
 definitions deliver a custom prompt, not permission enforcement or verified
 delegation. Without `--config`, `install <profile> --target <name>` plans
@@ -62,7 +65,7 @@ login credentials or proves OAuth. Runtime model delivery, model availability,
 and effort enforcement have not been demonstrated. `codex login status`
 distinguishes API-key from ChatGPT login, not Codex-managed OAuth from
 externally supplied tokens.
-Other profile requirements stay blocked.
+Other profile requirements are listed as skipped for Codex, or block with `--strict`.
 
 ## How does installation work without native profiles?
 

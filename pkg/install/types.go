@@ -191,6 +191,9 @@ type Request struct {
 	// SkipNotInstalled (install --all) skips a default-path target whose config folder is
 	// missing and whose command DetectVersion does not find, instead of blocking the plan.
 	SkipNotInstalled bool
+	// Strict blocks a target on any known requirement it cannot install instead
+	// of installing the supported subset and listing the rest as skipped.
+	Strict bool
 }
 
 type Manifest struct {
@@ -235,10 +238,12 @@ type TargetPlan struct {
 	Fields            []FieldChange            `json:"fields,omitempty"`
 	Diagnostics       profilemango.Diagnostics `json:"diagnostics,omitempty"`
 	VersionCheck      *VersionCheck            `json:"versionCheck,omitempty"`
-	ConfigPath        string                   `json:"-"`
-	ManifestPath      string                   `json:"-"`
-	changes           []installfs.Change       `json:"-"`
-	checks            []installfs.Change       `json:"-"`
+	// SkippedRequirements lists profile requirements this target does not install.
+	SkippedRequirements []SkippedRequirement `json:"skippedRequirements,omitempty"`
+	ConfigPath          string               `json:"-"`
+	ManifestPath        string               `json:"-"`
+	changes             []installfs.Change   `json:"-"`
+	checks              []installfs.Change   `json:"-"`
 }
 
 type Plan struct {
@@ -249,6 +254,7 @@ type Plan struct {
 	Status      string                   `json:"status"`
 	Backup      bool                     `json:"backup"`
 	Override    bool                     `json:"override"`
+	Strict      bool                     `json:"strict"`
 	InputSHA256 string                   `json:"inputSHA256"`
 	Targets     []TargetPlan             `json:"targets"`
 	Diagnostics profilemango.Diagnostics `json:"diagnostics,omitempty"`

@@ -127,6 +127,7 @@ spec:
 	for name, profileData := range tests {
 		t.Run(name, func(t *testing.T) {
 			request, root := openCodeTestRequest(t)
+			request.Strict = true
 			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), profileData)
 			if name == "multiple skills" {
 				for _, resourcePath := range []string{"skills/one/SKILL.md", "skills/two/SKILL.md"} {

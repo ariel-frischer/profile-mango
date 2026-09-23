@@ -151,7 +151,7 @@ func TestNamedOpenCodeAgentRejectsWrongPathAndTarget(t *testing.T) {
 	}
 }
 
-func TestNamedOpenCodeAgentRequiredPolicyRemainsBlocked(t *testing.T) {
+func TestNamedOpenCodeAgentRequiredPolicyBlocksUnderStrict(t *testing.T) {
 	for name, extra := range map[string]string{
 		"permissions": "  permissions:\n    mode: read-only\n    network: deny\n    shell: deny\n",
 		"tools":       "  tools:\n    allow: [read]\n    deny: [write]\n",
@@ -159,6 +159,7 @@ func TestNamedOpenCodeAgentRequiredPolicyRemainsBlocked(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			request, root := namedOpenCodeRequest(t, "primary")
+			request.Strict = true
 			profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 			writeInstallTestFile(t, profile, string(mustReadNamedTestFile(t, profile))+extra)
 			if name == "skills" {
