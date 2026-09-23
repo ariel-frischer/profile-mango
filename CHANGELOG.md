@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Guarded public Codex 0.154.0 restore preview and hash-bound apply for adjacent committed install journals, original backups, and ownership manifests
 - Add copyable agent-oriented profile examples with original workflow instructions, skills, and version-scoped model bindings
 - Per-agent route overrides in bindings (routes.<name>.targets) so one profile installs across agents with different providers
+- preview alias for render
 
 ### Changed
 
@@ -48,6 +49,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Renamed the installed executable and user-facing CLI command to profile-mango while preserving profile-mango project, module, home, and environment identities
 - Clarify Codex 0.154.0 settings-only installation warnings with isolated installed-binary field and precedence evidence; OAuth and runtime behavior remain unverified
 - Install and restore accept a bare target name that resolves to its single qualified version; install uses one `--config target[@version]=path` flag that also selects its target, with `--config-path` kept as a hidden deprecated alias
+- install uses each agent's documented default config path when --config is omitted, still behind the plan, backups, drift checks, and confirmation
+- Profiles use a flat YAML format (name, description, extends, route, permissions, tools, instructions, skills); the old apiVersion/kind/metadata/spec form still loads with a deprecation warning
+- Routes default transport to native and authentication to oauth
+- Plain-language help text; the agents maintenance command and the experimental ariel-jcode target are hidden from help
 
 ### Removed
 
