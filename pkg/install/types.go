@@ -28,6 +28,8 @@ const (
 	StatusConflict     = "conflict"
 	StatusUnavailable  = "unavailable"
 	StatusNotAttempted = "not-attempted"
+	// StatusSkipped marks a target left out because its agent is not installed (install --all).
+	StatusSkipped = "skipped"
 )
 
 const (
@@ -186,6 +188,9 @@ type Request struct {
 	Env PathEnv
 	// DetectVersion, when set, reports each ready target's installed agent version.
 	DetectVersion VersionDetector
+	// SkipNotInstalled (install --all) skips a default-path target whose config folder is
+	// missing and whose command DetectVersion does not find, instead of blocking the plan.
+	SkipNotInstalled bool
 }
 
 type Manifest struct {

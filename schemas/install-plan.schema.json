@@ -101,7 +101,7 @@
         "agent": {"type": "object", "additionalProperties": false, "required": ["mode", "name"], "properties": {"mode": {"enum": ["primary", "subagent"]}, "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}}},
         "config": {"type": "object", "additionalProperties": false, "required": ["source"], "properties": {"source": {"enum": ["default", "explicit"]}}},
         "metadata": {"$ref": "#/$defs/metadata"},
-        "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable"]},
+        "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable", "skipped"]},
         "reason": {"type": "string"},
 		"destinationSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},

@@ -1,7 +1,9 @@
 package install
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -161,4 +163,49 @@ func (openCodeAdapter) DefaultConfigPath(env PathEnv) (string, error) {
 	default:
 		return jsonPath, nil
 	}
+}
+
+const noAgentsFound = "no supported agents found; run profile-mango doctor"
+
+// missingAgentFolder handles a default config path whose folder does not exist. With
+// SkipNotInstalled, an agent whose command is also absent is skipped; otherwise the
+// target is blocked with the fix. It reports false when the folder exists or cannot
+// be classified, leaving other failures to the normal path inspection.
+func missingAgentFolder(request Request, targetPlan TargetPlan) (TargetPlan, bool) {
+	dir := filepath.Dir(targetPlan.ConfigPath)
+	if _, err := os.Stat(dir); !errors.Is(err, fs.ErrNotExist) {
+		return targetPlan, false
+	}
+	name := targetPlan.Target.Name
+	if request.SkipNotInstalled {
+		if binary, found := detectBinary(request.DetectVersion, targetPlan.Target); !found {
+			targetPlan.Status = StatusSkipped
+			targetPlan.Reason = "not installed: no config folder"
+			if binary != "" {
+				targetPlan.Reason = "not installed: no " + binary + " on PATH and no config folder"
+			}
+			return targetPlan, true
+		}
+	}
+	reason := fmt.Sprintf("%s config folder %s not found — is %s installed? Pass --config %s=<path> to choose a file.", name, dir, name, name)
+	return blockedTargetPlan(targetPlan, reason, "install.config_folder_missing"), true
+}
+
+// detectBinary reports the agent command name and whether it is on PATH; without a
+// detector nothing was checked, so the name is empty.
+func detectBinary(detect VersionDetector, target Target) (string, bool) {
+	if detect == nil {
+		return "", false
+	}
+	detection := detect(target)
+	return detection.Binary, detection.Found
+}
+
+func allSkipped(targets []TargetPlan) bool {
+	for _, target := range targets {
+		if target.Status != StatusSkipped {
+			return false
+		}
+	}
+	return len(targets) > 0
 }
