@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: opencode-focused
+  description: Focused OpenCode changes at a lower-cost model tier; model-setting example only
+spec:
+  routeRef: openai-focused

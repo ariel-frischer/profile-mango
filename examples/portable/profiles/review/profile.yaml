@@ -1,0 +1,17 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: review
+  description: Read-only code review; preview-only workflow
+spec:
+  extends: workflow-base
+  permissions:
+    mode: read-only
+    network: deny
+    shell: deny
+  tools:
+    allow: [read, search]
+    deny: [edit, write, shell, web, deploy]
+  instructions:
+    append: [instructions/review/AGENTS.md]
+  skills: [skills/code-review/SKILL.md]

@@ -1,0 +1,17 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: coding
+  description: Test-driven coding with explicit approval for consequential effects; preview-only workflow
+spec:
+  extends: workflow-base
+  permissions:
+    mode: workspace-write
+    network: deny
+    shell: allow
+  tools:
+    allow: [read, search, edit, write, shell]
+    deny: [deploy, web]
+  instructions:
+    append: [instructions/coding/AGENTS.md]
+  skills: [skills/test-driven-coding/SKILL.md]

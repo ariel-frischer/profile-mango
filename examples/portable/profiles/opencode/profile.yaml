@@ -1,0 +1,7 @@
+apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: opencode
+  description: OpenCode main model setting; settings-only example, not a full route guarantee
+spec:
+  routeRef: openai
