@@ -1,18 +1,13 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: read-only
-spec:
-  extends: route-only
-  permissions:
-    mode: read-only
-    network: allow
-    shell: deny
-  tools:
-    allow: [read, search, web]
-    deny: [write, edit, deploy]
-  instructions:
-    append:
-      - fixtures/read-only/instructions/research.md
-  skills:
-    - fixtures/read-only/skills/research/SKILL.md
+extends: route-only
+permissions:
+  mode: read-only
+  network: allow
+  shell: deny
+tools:
+  allow: [read, search, web]
+  deny: [write, edit, deploy]
+instructions:
+  append:
+    - fixtures/read-only/instructions/research.md
+skills:
+  - fixtures/read-only/skills/research/SKILL.md

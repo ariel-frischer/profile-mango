@@ -157,15 +157,15 @@ func loadProfileChain(root, name string, profiles map[string]profilemango.Policy
 	if !snapshot.Exists {
 		return fmt.Errorf("profile %q does not exist", name)
 	}
-	profile, foundDiagnostics := profilemango.ParseProfile(snapshot.Content)
+	profile, foundDiagnostics := profilemango.ParseProfileAt(snapshot.Content, name)
 	for _, diagnostic := range foundDiagnostics {
 		diagnostic.Path = name + "." + diagnostic.Path
 		*diagnostics = append(*diagnostics, diagnostic)
 	}
 	profiles[name] = profile
 	*sources = append(*sources, sourceCheck{Path: snapshot.Path, Snapshot: snapshot})
-	if profile.Spec.Extends != "" {
-		return loadProfileChain(root, profile.Spec.Extends, profiles, diagnostics, sources)
+	if profile.Extends != "" {
+		return loadProfileChain(root, profile.Extends, profiles, diagnostics, sources)
 	}
 	return nil
 }

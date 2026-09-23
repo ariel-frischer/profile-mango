@@ -195,7 +195,7 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		diagnostics = append(diagnostics, resolveDiagnostics...)
 		effective, exists := bindings.RouteFor(resolved.RouteRef, options.target)
 		if !exists {
-			diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "spec.routeRef", "routeRef is not present in bindings", 0, 0)
+			diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "route", "route is not present in bindings", 0, 0)
 		}
 		route = effective
 		if !diagnostics.HasErrors() {
@@ -290,17 +290,14 @@ func loadProfileChain(root, name string, profiles map[string]profilemango.Policy
 		diagnostics.Add(profilemango.SeverityError, "repository.read", name, err.Error(), 0, 0)
 		return
 	}
-	profile, found := profilemango.ParseProfile(data)
+	profile, found := profilemango.ParseProfileAt(data, name)
 	for _, diagnostic := range found {
 		diagnostic.Path = name + "." + diagnostic.Path
 		*diagnostics = append(*diagnostics, diagnostic)
 	}
-	if profile.Metadata.Name != "" && profile.Metadata.Name != name {
-		diagnostics.Add(profilemango.SeverityError, "repository.name_mismatch", name, "folder name must match metadata.name", 0, 0)
-	}
 	profiles[name] = profile
-	if profile.Spec.Extends != "" {
-		loadProfileChain(root, profile.Spec.Extends, profiles, diagnostics)
+	if profile.Extends != "" {
+		loadProfileChain(root, profile.Extends, profiles, diagnostics)
 	}
 }
 

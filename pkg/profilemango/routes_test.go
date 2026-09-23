@@ -125,3 +125,52 @@ func TestBuildPlanUsesTargetRoute(t *testing.T) {
 		})
 	}
 }
+
+func TestParseBindingsDefaultsTransportAndAuthentication(t *testing.T) {
+	t.Parallel()
+	minimal := "routes:\n  main:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n"
+	cases := map[string]struct {
+		yaml   string
+		target string
+		want   RouteBinding
+	}{
+		"minimal base": {yaml: minimal, target: "codex", want: RouteBinding{Provider: "openai", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "high"}},
+		"minimal override": {yaml: minimal + "    targets:\n      claude-code:\n        provider: anthropic\n        model: claude-sonnet-5\n", target: "claude-code",
+			want: RouteBinding{Provider: "anthropic", Transport: "native", Authentication: "oauth", Model: "claude-sonnet-5", Effort: "high"}},
+		"explicit kept": {yaml: "routes:\n  main:\n    provider: openai\n    transport: api\n    authentication: api-key\n    model: gpt-5.6\n    effort: high\n", target: "codex",
+			want: RouteBinding{Provider: "openai", Transport: "api", Authentication: "api-key", Model: "gpt-5.6", Effort: "high"}},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			bindings, diagnostics := ParseBindings([]byte(test.yaml))
+			if diagnostics.HasErrors() {
+				t.Fatal(diagnostics)
+			}
+			got, _ := bindings.RouteFor("main", test.target)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("RouteFor = %#v, want %#v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestParseBindingsStillRequiresProviderModelEffort(t *testing.T) {
+	t.Parallel()
+	cases := map[string]struct {
+		yaml string
+	}{
+		"provider": {yaml: "routes:\n  main:\n    model: gpt-5.6\n    effort: high\n"},
+		"model":    {yaml: "routes:\n  main:\n    provider: openai\n    effort: high\n"},
+		"effort":   {yaml: "routes:\n  main:\n    provider: openai\n    model: gpt-5.6\n"},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, diagnostics := ParseBindings([]byte(test.yaml))
+			if !hasCode(diagnostics, "binding.route_incomplete") {
+				t.Fatalf("missing binding.route_incomplete in %v", diagnostics)
+			}
+		})
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -22,7 +23,7 @@ func newValidateCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read profile: %w", err)
 			}
-			profile, diagnostics := profilemango.ParseProfile(profileData)
+			profile, diagnostics := profilemango.ParseProfileAt(profileData, profileFolderName(args[0]))
 			if bindingsPath != "" {
 				bindingsData, readErr := os.ReadFile(bindingsPath)
 				if readErr != nil {
@@ -33,9 +34,9 @@ func newValidateCmd() *cobra.Command {
 				}
 				bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)
 				diagnostics = append(diagnostics, bindingDiagnostics...)
-				if profile.Spec.RouteRef != "" {
-					if _, found := bindings.Routes[profile.Spec.RouteRef]; !found {
-						diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "spec.routeRef", "routeRef is not present in bindings", 0, 0)
+				if profile.Route != "" {
+					if _, found := bindings.Routes[profile.Route]; !found {
+						diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "route", "route is not present in bindings", 0, 0)
 					}
 				}
 			}
@@ -52,7 +53,7 @@ func newValidateCmd() *cobra.Command {
 				return fmt.Errorf("validation failed")
 			}
 			styles := stylesFor(cmd.OutOrStdout(), true)
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", styles.path(profile.Metadata.Name), styles.success("is valid")); err != nil {
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", styles.path(profile.Name), styles.success("is valid")); err != nil {
 				return fmt.Errorf("write validation result: %w", err)
 			}
 			return nil
@@ -63,12 +64,21 @@ func newValidateCmd() *cobra.Command {
 	return cmd
 }
 
+// profileFolderName is the folder that names a profile file when it omits name.
+func profileFolderName(path string) string {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		absolute = path
+	}
+	return filepath.Base(filepath.Dir(absolute))
+}
+
 func printValidationJSON(cmd *cobra.Command, profile profilemango.PolicyProfile, diagnostics profilemango.Diagnostics) error {
 	result := struct {
 		Valid       bool                     `json:"valid"`
 		ProfileName string                   `json:"profileName,omitempty"`
 		Diagnostics profilemango.Diagnostics `json:"diagnostics"`
-	}{Valid: !diagnostics.HasErrors(), ProfileName: profile.Metadata.Name, Diagnostics: diagnostics.Sorted()}
+	}{Valid: !diagnostics.HasErrors(), ProfileName: profile.Name, Diagnostics: diagnostics.Sorted()}
 	encoder := json.NewEncoder(cmd.OutOrStdout())
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(result); err != nil {

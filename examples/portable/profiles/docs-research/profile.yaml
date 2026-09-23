@@ -1,17 +1,12 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: docs-research
-  description: Read-only local documentation and research; preview-only workflow
-spec:
-  extends: workflow-base
-  permissions:
-    mode: read-only
-    network: deny
-    shell: deny
-  tools:
-    allow: [read, search]
-    deny: [edit, write, shell, web, deploy]
-  instructions:
-    append: [instructions/docs-research/AGENTS.md]
-  skills: [skills/docs-research/SKILL.md]
+description: Read-only local documentation and research; preview-only workflow
+extends: workflow-base
+permissions:
+  mode: read-only
+  network: deny
+  shell: deny
+tools:
+  allow: [read, search]
+  deny: [edit, write, shell, web, deploy]
+instructions:
+  append: [instructions/docs-research/AGENTS.md]
+skills: [skills/docs-research/SKILL.md]

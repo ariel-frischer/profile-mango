@@ -48,7 +48,7 @@ func TestInstalledBinaryOpenCodeSkillOmissionReconciles(t *testing.T) {
 		t.Fatalf("initial apply failed: %v\n%s", result.err, result.stderr)
 	}
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
-	content := strings.Replace(string(readWorkflowFile(t, profile)), "  skills:\n    - skills/research/SKILL.md\n", "", 1)
+	content := strings.Replace(string(readWorkflowFile(t, profile)), "skills:\n  - skills/research/SKILL.md\n", "", 1)
 	if err := os.WriteFile(profile, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func newSkillWorkflow(t *testing.T) (installWorkflow, string) {
 	t.Helper()
 	w := newInstallWorkflow(t, "opencode@1.18.31", "openai", "gpt-5.6", "{\"model\":\"openai/old\",\"theme\":\"system\"}\n", "")
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
-	content := append(readWorkflowFile(t, profile), []byte("  skills:\n    - skills/research/SKILL.md\n")...)
+	content := append(readWorkflowFile(t, profile), []byte("skills:\n  - skills/research/SKILL.md\n")...)
 	if err := os.WriteFile(profile, content, 0o600); err != nil {
 		t.Fatal(err)
 	}

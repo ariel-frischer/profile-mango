@@ -130,10 +130,27 @@ profile-mango validate ./my-profiles/profiles/default/profile.yaml \
   --bindings ./my-profiles/bindings/local.yaml
 ```
 
-Edit `profiles/default/profile.yaml` to change the profile. The separate
-`bindings/local.yaml` file (a gitignored copy of `bindings/local.example.yaml`)
-describes the provider and model, not passwords or tokens. Neither command
-changes your agent configuration.
+Edit `profiles/default/profile.yaml` to change the profile. Its fields sit at
+the top level, and the name defaults to the folder name:
+
+```yaml
+description: Default profile scaffolded by profile-mango init
+route: local
+```
+
+The separate `bindings/local.yaml` file (a gitignored copy of
+`bindings/local.example.yaml`) describes the provider and model, not passwords
+or tokens. `transport` defaults to `native` and `authentication` to `oauth`:
+
+```yaml
+routes:
+  local:
+    provider: openai
+    model: gpt-6-sol
+    effort: high
+```
+
+Neither command changes your agent configuration.
 
 Prefer a shared location? Run `profile-mango init` without a directory to use
 `~/.profile-mango`. Existing files are never overwritten.

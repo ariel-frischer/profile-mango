@@ -15,10 +15,13 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 		yaml string
 		code string
 	}{
-		"unknown key":   {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
-		"duplicate key": {yaml: strings.Replace(validProfileYAML(), "kind: PolicyProfile", "kind: PolicyProfile\nkind: PolicyProfile", 1), code: "yaml.duplicate_key"},
-		"null":          {yaml: strings.Replace(validProfileYAML(), "routeRef: research-primary", "routeRef: null", 1), code: "yaml.null"},
-		"version":       {yaml: strings.Replace(validProfileYAML(), APIVersion, "profilemango.dev/v9", 1), code: "profile.api_version"},
+		"unknown key":    {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
+		"duplicate key":  {yaml: validProfileYAML() + "route: other\n", code: "yaml.duplicate_key"},
+		"null":           {yaml: strings.Replace(validProfileYAML(), "route: research-primary", "route: null", 1), code: "yaml.null"},
+		"invalid name":   {yaml: strings.Replace(validProfileYAML(), "name: research", "name: Research", 1), code: "profile.name_invalid"},
+		"old route key":  {yaml: strings.Replace(validProfileYAML(), "route:", "routeRef:", 1), code: "yaml.strict"},
+		"mixed wrapper":  {yaml: validProfileYAML() + "kind: PolicyProfile\n", code: "yaml.strict"},
+		"legacy version": {yaml: "apiVersion: profilemango.dev/v9\nkind: PolicyProfile\nmetadata:\n  name: research\nspec:\n  routeRef: r\n", code: "profile.api_version"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -33,40 +36,31 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 
 func TestResolveInheritanceAndDenyWins(t *testing.T) {
 	t.Parallel()
-	base := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: base
-  labels: {team: core, tier: base}
-spec:
-  routeRef: primary
-  permissions:
-    mode: workspace-write
-    network: allow
-    shell: allow
-  tools:
-    allow: [read, edit, shell]
-    deny: [deploy]
-  instructions:
-    append: [instructions/base.md]
-  skills: [skills/base/SKILL.md]
+	base := mustParse(t, `name: base
+labels: {team: core, tier: base}
+route: primary
+permissions:
+  mode: workspace-write
+  network: allow
+  shell: allow
+tools:
+  allow: [read, edit, shell]
+  deny: [deploy]
+instructions:
+  append: [instructions/base.md]
+skills: [skills/base/SKILL.md]
 `)
-	child := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: research
-  labels: {tier: research}
-spec:
-  extends: base
-  permissions:
-    mode: read-only
-    shell: deny
-  tools:
-    allow: [read, search, edit]
-    deny: [edit]
-  instructions:
-    append: [instructions/research.md]
-  skills: []
+	child := mustParse(t, `labels: {tier: research}
+extends: base
+permissions:
+  mode: read-only
+  shell: deny
+tools:
+  allow: [read, search, edit]
+  deny: [edit]
+instructions:
+  append: [instructions/research.md]
+skills: []
 `)
 	resolved, diagnostics := Resolve(map[string]PolicyProfile{"base": base, "research": child}, "research")
 	if diagnostics.HasErrors() {
@@ -100,7 +94,7 @@ spec:
 
 func TestResolveFailures(t *testing.T) {
 	t.Parallel()
-	missing := mustParse(t, strings.Replace(validProfileYAML(), "name: research", "name: child", 1)+"  extends: absent\n")
+	missing := mustParse(t, strings.Replace(validProfileYAML(), "name: research", "name: child", 1)+"extends: absent\n")
 	_, diagnostics := Resolve(map[string]PolicyProfile{"child": missing}, "child")
 	if !hasCode(diagnostics, "resolution.missing_profile") {
 		t.Fatalf("missing parent: %#v", diagnostics)
@@ -160,7 +154,11 @@ func TestCheckedInFixtures(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		profiles[name] = mustParse(t, string(data))
+		profile, diagnostics := ParseProfileAt(data, name)
+		if len(diagnostics) > 0 {
+			t.Fatal(diagnostics)
+		}
+		profiles[name] = profile
 	}
 	resolved, diagnostics := Resolve(profiles, "read-only")
 	if diagnostics.HasErrors() {
@@ -260,21 +258,11 @@ func mustWrite(t *testing.T, path, content string) {
 }
 
 func validProfileYAML() string {
-	return `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: research
-spec:
-  routeRef: research-primary
+	return `name: research
+route: research-primary
 `
 }
 
 func profileWithParent(name, parent string) string {
-	return `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: ` + name + `
-spec:
-  extends: ` + parent + `
-`
+	return "name: " + name + "\nextends: " + parent + "\n"
 }

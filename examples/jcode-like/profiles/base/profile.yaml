@@ -1,12 +1,7 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: base
-  description: Shared route and instructions for the example workflow profiles
-  labels:
-    example: jcode-like
-spec:
-  routeRef: openai-oauth
-  instructions:
-    append:
-      - instructions/base.md
+description: Shared route and instructions for the example workflow profiles
+labels:
+  example: jcode-like
+route: openai-oauth
+instructions:
+  append:
+    - instructions/base.md

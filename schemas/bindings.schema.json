@@ -11,11 +11,11 @@
       "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$"},
       "additionalProperties": {
         "type": "object", "additionalProperties": false,
-        "required": ["provider", "transport", "authentication", "model", "effort"],
+        "required": ["provider", "model", "effort"],
         "properties": {
           "provider": {"$ref": "#/$defs/field"},
-          "transport": {"$ref": "#/$defs/field"},
-          "authentication": {"$ref": "#/$defs/field"},
+          "transport": {"$ref": "#/$defs/field", "default": "native"},
+          "authentication": {"$ref": "#/$defs/field", "default": "oauth"},
           "model": {"$ref": "#/$defs/field"},
           "effort": {"$ref": "#/$defs/field"},
           "targets": {

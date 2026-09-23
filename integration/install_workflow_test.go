@@ -104,8 +104,8 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 		t.Fatal(err)
 	}
 	files := map[string]string{
-		filepath.Join(profile, "profile.yaml"):  "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: minimal\nspec:\n  routeRef: primary\n",
-		filepath.Join(root, "bindings.yaml"):    fmt.Sprintf("routes:\n  primary:\n    provider: %s\n    transport: native\n    authentication: oauth\n    model: %s\n    effort: high\n", provider, model),
+		filepath.Join(profile, "profile.yaml"):  "route: primary\n",
+		filepath.Join(root, "bindings.yaml"):    fmt.Sprintf("routes:\n  primary:\n    provider: %s\n    model: %s\n    effort: high\n", provider, model),
 		filepath.Join(root, "outside-sentinel"): "untouched",
 	}
 	w.config = filepath.Join(root, "target.json")

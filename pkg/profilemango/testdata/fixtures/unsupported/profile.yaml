@@ -1,14 +1,10 @@
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: unsupported
-spec:
-  routeRef: missing-route
-  permissions:
-    mode: read-only
-    shell: deny
-  tools:
-    allow: [read]
-    deny: [read]
-  roles:
-    - reviewer
+name: unsupported
+route: missing-route
+permissions:
+  mode: read-only
+  shell: deny
+tools:
+  allow: [read]
+  deny: [read]
+roles:
+  - reviewer

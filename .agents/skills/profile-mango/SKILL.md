@@ -122,28 +122,32 @@ user-created):
     └── .gitignore
 ```
 
-`profiles/review/profile.yaml` contains the policy and *paths* to resources:
+`profiles/review/profile.yaml` contains the policy and *paths* to resources.
+Every field sits at the top level:
 
 ```yaml
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: review
-spec:
-  routeRef: local
-  permissions:
-    mode: read-only
-    network: deny
-    shell: deny
-  tools:
-    allow: [read, search]
-    deny: [write, edit, shell, deploy]
-  instructions:
-    append:
-      - instructions/AGENTS.md
-  skills:
-    - skills/review/SKILL.md
+description: Read-only code review
+route: local
+permissions:
+  mode: read-only
+  network: deny
+  shell: deny
+tools:
+  allow: [read, search]
+  deny: [write, edit, shell, deploy]
+instructions:
+  append:
+    - instructions/AGENTS.md
+skills:
+  - skills/review/SKILL.md
 ```
+
+`name` is optional and defaults to the folder name (`review` here); if present
+it must match the folder. Other fields are `description`, `labels`, `extends`,
+`route`, `permissions`, `tools`, `instructions`, and `skills`. The older
+`apiVersion`/`kind`/`metadata`/`spec` wrapper with `spec.routeRef` still parses
+but emits a `profile.legacy_format` deprecation warning; move the fields to the
+top level and rename `routeRef` to `route`.
 
 `instructions/AGENTS.md` is ordinary Markdown, for example:
 
@@ -174,7 +178,7 @@ The `tools` allow/deny lists and `permissions` are YAML policy fields, not files
 in the folder. This richer example is **not** fully installable on current targets:
 required permissions, tools, instructions, or skills that a target cannot
 preserve block installation. For a minimal installable settings profile, use the
-same `apiVersion`, `kind`, and `metadata` with only `spec.routeRef: local`, then
+a profile containing only `route: local`, then
 check the plan for the exact target and version. Profile names belong to Mango;
 installing one does not automatically create or activate a native named profile.
 
@@ -194,7 +198,7 @@ private to that folder or shared. For example:
 ```
 
 `profiles/base/profile.yaml` can reference `profiles/base/AGENTS.md` and define
-`routeRef: local`. A daily profile can use `spec.extends: base`, append
+`route: local`. A daily profile can use `extends: base`, append
 `profiles/daily/AGENTS.md`, and list `skills/coding/SKILL.md`; review can do the
 same with its own files and tools policy. Paths are still relative to the *home*
 (resource root), even when the Markdown sits next to a profile YAML. Inheritance
@@ -208,10 +212,10 @@ The local binding identifies a route, never credentials:
 routes:
   local:
     provider: openai
-    transport: native
-    authentication: oauth
     model: gpt-6-sol
     effort: high
+    # transport: native     # default when omitted
+    # authentication: oauth # default when omitted
     targets:              # optional explicit per-agent overrides
       claude-code:
         provider: anthropic
@@ -223,7 +227,9 @@ so one profile can install across agents that need different providers. Only
 agent names (`claude-code`, `codex`, `hermes`, `oh-my-pi`, `openclaw`,
 `opencode`, `pi`, `ariel-jcode`) are valid keys, and each override must set at
 least one field. An unknown key fails validation. Routes without `targets`
-behave as before.
+behave as before. `provider`, `model`, and `effort` are required; `transport`
+defaults to `native` and `authentication` to `oauth` when omitted, and a target
+override that omits them inherits the base values.
 
 Keep `bindings/local.yaml` untracked. Credentials remain owned by the target
 agent and must not be copied into profiles, bindings, generated artifacts, or
