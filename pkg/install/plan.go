@@ -102,7 +102,7 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	bindingsSnapshot, err := installfs.SnapshotFile(request.BindingsPath)
 	if err != nil || !bindingsSnapshot.Exists {
 		if err == nil {
-			err = fmt.Errorf("bindings file does not exist")
+			err = missingBindingsError(request.BindingsPath)
 		}
 		return loadedInput{}, diagnostics, fmt.Errorf("read bindings: %w", err)
 	}
@@ -132,6 +132,14 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
 	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources}, diagnostics.Sorted(), nil
+}
+
+// missingBindingsError names the exact fix for a missing local bindings file:
+// copy the starter example scaffolded by "profile-mango init", or run init
+// again in a fresh package.
+func missingBindingsError(path string) error {
+	example := filepath.Join(filepath.Dir(path), "local.example.yaml")
+	return fmt.Errorf("bindings file does not exist; create it with: cp %s %s, or run: profile-mango init", example, path)
 }
 
 func loadProfileChain(root, name string, profiles map[string]profilemango.PolicyProfile, diagnostics *profilemango.Diagnostics, sources *[]sourceCheck) error {

@@ -49,6 +49,18 @@ func TestDefaultRegistryPlansCodexSettingsWithoutWriting(t *testing.T) {
 	assertInstallTestFile(t, auth, "synthetic auth sentinel")
 }
 
+func TestBuildPlanMissingBindingsNamesFix(t *testing.T) {
+	request, root := testRequest(t, DefaultRegistry())
+	request.BindingsPath = filepath.Join(root, "bindings", "missing.yaml")
+	_, err := BuildPlan(request)
+	if err == nil {
+		t.Fatal("build plan succeeded despite missing bindings")
+	}
+	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "profile-mango init") {
+		t.Fatalf("missing bindings error lacks an exact fix: %v", err)
+	}
+}
+
 func TestPlanIDsAreStableAcrossTargetInputOrder(t *testing.T) {
 	registry := NewRegistry(
 		testAdapterFor("alpha", "1", "alpha", false),

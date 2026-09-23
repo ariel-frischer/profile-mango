@@ -31,7 +31,7 @@ routes:
     provider: openai
     transport: native
     authentication: oauth
-    model: gpt-5.6
+    model: gpt-6-sol
     effort: high
 `
 
@@ -94,6 +94,19 @@ func TestInitCommandDefaultsToEffectiveHome(t *testing.T) {
 			}
 			assertStarterTree(t, test.destination)
 		})
+	}
+}
+
+func TestInitBindingsAreImmediatelyUsableByValidate(t *testing.T) {
+	destination := filepath.Join(t.TempDir(), "project")
+	if _, err := executeCommandResult(t, "init", destination); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	profile := filepath.Join(destination, "profiles", "default", "profile.yaml")
+	bindings := filepath.Join(destination, "bindings", "local.yaml")
+	output, err := executeCommandResult(t, "validate", profile, "--bindings", bindings)
+	if err != nil {
+		t.Fatalf("validate immediately after init failed with no manual copy: %v\n%s", err, output)
 	}
 }
 
@@ -167,6 +180,19 @@ func TestInitCommandContentIsDeterministicAndStrictlyValid(t *testing.T) {
 	if strings.Contains(string(firstFiles["bindings/local.example.yaml"]), "token") || strings.Contains(string(firstFiles["bindings/local.example.yaml"]), "secret") {
 		t.Fatal("generated bindings contain token or secret guidance")
 	}
+	if !reflect.DeepEqual(firstFiles["bindings/local.yaml"], firstFiles["bindings/local.example.yaml"]) {
+		t.Fatalf("bindings/local.yaml = %q, want a copy of the example", firstFiles["bindings/local.yaml"])
+	}
+	localBindings, localDiagnostics := profilemango.ParseBindings(firstFiles["bindings/local.yaml"])
+	if localDiagnostics.HasErrors() {
+		t.Fatalf("generated local binding diagnostics = %v", localDiagnostics.Sorted())
+	}
+	if _, found := localBindings.Routes[profile.Spec.RouteRef]; !found {
+		t.Fatalf("routeRef %q is absent from generated bindings/local.yaml", profile.Spec.RouteRef)
+	}
+	if strings.Contains(string(firstFiles["bindings/local.yaml"]), "gpt-5.6") {
+		t.Fatal("generated bindings reference the retired gpt-5.6 model")
+	}
 }
 
 func TestInitCommandRejectsConflictsWithoutMutation(t *testing.T) {
@@ -180,6 +206,7 @@ func TestInitCommandRejectsConflictsWithoutMutation(t *testing.T) {
 		"profile file":            {conflict: "project/profiles/default/profile.yaml", content: []byte("profile")},
 		"bindings parent file":    {conflict: "project/bindings", content: []byte("bindings")},
 		"example binding file":    {conflict: "project/bindings/local.example.yaml", content: []byte("binding")},
+		"local binding file":      {conflict: "project/bindings/local.yaml", content: []byte("binding")},
 		"bindings gitignore file": {conflict: "project/bindings/.gitignore", content: []byte("ignore")},
 	}
 
@@ -299,6 +326,7 @@ func assertStarterTree(t *testing.T, destination string) {
 	expected := map[string][]byte{
 		"profiles/default/profile.yaml": []byte(expectedStarterProfile),
 		"bindings/local.example.yaml":   []byte(expectedStarterBindings),
+		"bindings/local.yaml":           []byte(expectedStarterBindings),
 		"bindings/.gitignore":           []byte(expectedBindingsGitignore),
 	}
 	actual := starterFileSnapshot(t, destination)
@@ -333,6 +361,7 @@ func readStarterFiles(t *testing.T, destination string) map[string][]byte {
 	for _, path := range []string{
 		"profiles/default/profile.yaml",
 		"bindings/local.example.yaml",
+		"bindings/local.yaml",
 		"bindings/.gitignore",
 	} {
 		data, err := os.ReadFile(filepath.Join(destination, path))

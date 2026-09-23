@@ -25,7 +25,7 @@ routes:
     provider: openai
     transport: native
     authentication: oauth
-    model: gpt-5.6
+    model: gpt-6-sol
     effort: high
 `
 
@@ -84,6 +84,7 @@ func starterFiles() []starterFile {
 	return []starterFile{
 		{path: "profiles/default/profile.yaml", content: []byte(starterProfileYAML)},
 		{path: "bindings/local.example.yaml", content: []byte(starterBindingsYAML)},
+		{path: "bindings/local.yaml", content: []byte(starterBindingsYAML)},
 		{path: "bindings/.gitignore", content: []byte(starterBindingsGitignore)},
 	}
 }

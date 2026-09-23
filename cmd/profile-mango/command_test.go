@@ -259,3 +259,15 @@ func TestValidateCommandSmoke(t *testing.T) {
 		t.Fatalf("validate JSON contains ANSI escapes: %q", out)
 	}
 }
+
+func TestValidateCommandMissingBindingsNamesFix(t *testing.T) {
+	profile := filepath.Join("..", "..", "pkg", "profilemango", "testdata", "fixtures", "route-only", "profile.yaml")
+	missing := filepath.Join(t.TempDir(), "bindings", "local.yaml")
+	_, err := executeCommandResult(t, "validate", profile, "--bindings", missing)
+	if err == nil {
+		t.Fatal("validate succeeded despite missing bindings")
+	}
+	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "profile-mango init") {
+		t.Fatalf("missing bindings error lacks an exact fix: %v", err)
+	}
+}
