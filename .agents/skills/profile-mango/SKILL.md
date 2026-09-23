@@ -1,10 +1,9 @@
 ---
 name: profile-mango
 description: >
-  Use the profile-mango CLI to scaffold, author, validate, and inspect portable
-  coding-agent profiles and machine-local route bindings. Use when working with
-  PolicyProfile YAML, local bindings, offline validation, or inert target
-  previews. Preserve its fail-closed safety and evidence boundaries.
+  Use the profile-mango CLI to scaffold, author, validate, preview, and plan
+  narrow installations of portable coding-agent profiles and machine-local
+  route bindings. Preserve its fail-closed safety and evidence boundaries.
 license: MIT
 compatibility:
   - Claude Code
@@ -22,8 +21,9 @@ allowed-tools: Bash Read Write Edit
 # profile-mango
 
 `profile-mango` separates portable coding-agent intent from machine-local route
-identity. Use it to create and validate strict profile packages, then inspect
-explicitly inert target previews without modifying an agent's configuration.
+identity. Create and validate profile packages, inspect inert previews, and plan
+only the version-qualified installation subsets below. No agent supports full
+Mango profile installation yet.
 
 ## Check the CLI
 
@@ -41,7 +41,7 @@ Choose one package location:
 ```bash
 profile-mango init                  # global package at ~/.profile-mango
 profile-mango init .                # explicit package in the current directory
-profile-mango init ./my-profiles # explicit package in a new directory
+profile-mango init ./my-profiles     # explicit package in a new directory
 ```
 
 `init` creates only absent paths and refuses to overwrite existing files:
@@ -51,6 +51,15 @@ profiles/default/profile.yaml
 bindings/local.example.yaml
 bindings/.gitignore
 ```
+
+The effective global home is `--home`, then `$PROFILE_MANGO_HOME`, then
+`~/.profile-mango`. `profile-mango home` prints it without creating it. A named
+profile lives at `profiles/<name>/profile.yaml`; `init` creates only `default`.
+Instruction and skill files are optional resources that you create separately.
+Their references are relative to the package/resource root, not to the profile
+YAML: `instructions/AGENTS.md` means `<root>/instructions/AGENTS.md`. Explicit
+project render/install inputs require `--profiles`, `--resource-root`, and
+`--bindings` together; global inputs default to the effective home.
 
 For the global package, create the ignored machine-local binding and validate
 the starter profile:
@@ -74,28 +83,104 @@ Use `--json` when another tool or agent will consume the validation result.
 
 ## Authoring rules
 
-A profile contains portable intent:
+A richer package might look like this (the files beyond the starter scaffold are
+user-created):
+
+```text
+~/.profile-mango/
+├── profiles/
+│   └── review/
+│       └── profile.yaml
+├── instructions/
+│   └── AGENTS.md
+├── skills/
+│   └── review/
+│       └── SKILL.md
+└── bindings/
+    ├── local.example.yaml
+    ├── local.yaml          # machine-local, ignored
+    └── .gitignore
+```
+
+`profiles/review/profile.yaml` contains the policy and *paths* to resources:
 
 ```yaml
 apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
-  name: research
+  name: review
 spec:
   routeRef: local
   permissions:
     mode: read-only
-    network: allow
+    network: deny
     shell: deny
   tools:
-    allow: [read, search, web]
-    deny: [write, edit, deploy]
+    allow: [read, search]
+    deny: [write, edit, shell, deploy]
   instructions:
     append:
-      - instructions/system.md
+      - instructions/AGENTS.md
   skills:
-    - skills/research/SKILL.md
+    - skills/review/SKILL.md
 ```
+
+`instructions/AGENTS.md` is ordinary Markdown, for example:
+
+```markdown
+# Review instructions
+
+Inspect the change and its tests. Report concrete findings with file and line
+references. Do not modify files.
+```
+
+`skills/review/SKILL.md` can contain target-consumable skill instructions:
+
+```markdown
+---
+name: review
+description: Review code without modifying it
+---
+
+# Review
+
+Check correctness, regressions, and test coverage. Report actionable findings.
+```
+
+The name `AGENTS.md` does not automatically install a native agent instruction
+file: Mango reads it only because the YAML refers to it. Likewise,
+`skills/review/SKILL.md` is a separately authored skill file, not inline YAML.
+The `tools` allow/deny lists and `permissions` are YAML policy fields, not files
+in the folder. This richer example is **not** fully installable on current targets:
+required permissions, tools, instructions, or skills that a target cannot
+preserve block installation. For a minimal installable settings profile, use the
+same `apiVersion`, `kind`, and `metadata` with only `spec.routeRef: local`, then
+check the plan for the exact target and version. Profile names belong to Mango;
+installing one does not automatically create or activate a native named profile.
+
+With multiple profiles, each folder has its own `profile.yaml`; resources may be
+private to that folder or shared. For example:
+
+```text
+~/.profile-mango/
+├── profiles/
+│   ├── base/   (profile.yaml, AGENTS.md)
+│   ├── daily/  (profile.yaml, AGENTS.md)
+│   └── review/ (profile.yaml, AGENTS.md)
+├── skills/
+│   ├── coding/SKILL.md
+│   └── review/SKILL.md
+└── bindings/local.yaml
+```
+
+`profiles/base/profile.yaml` can reference `profiles/base/AGENTS.md` and define
+`routeRef: local`. A daily profile can use `spec.extends: base`, append
+`profiles/daily/AGENTS.md`, and list `skills/coding/SKILL.md`; review can do the
+same with its own files and tools policy. Paths are still relative to the *home*
+(resource root), even when the Markdown sits next to a profile YAML. Inheritance
+appends instruction paths in parent-then-child order. A child's `skills` list
+replaces the parent's if present; omit it to inherit, or use `skills: []` to
+clear it. Parent and child must not resolve to the same instruction path twice.
 
 The local binding identifies a route, never credentials:
 
@@ -115,9 +200,11 @@ diagnostics.
 
 ## Validation and errors
 
-Validation is strict and offline. Unknown or duplicate keys, null values,
-unsupported versions, missing parents, inheritance cycles, missing routes, and
-resource paths that escape the selected root are blocking errors.
+`validate <profile.yaml> --bindings <file>` checks one profile's syntax and its
+route binding offline. Unknown or duplicate keys, null values, and unsupported
+versions block it. Parent resolution, inheritance cycles, and referenced resource
+files are checked when rendering or planning installation with a package root;
+do not treat a passing single-file validation as proof they exist.
 
 When validation fails:
 
@@ -148,21 +235,29 @@ Current target names are `claude-code`, `codex`, `pi`, `oh-my-pi`, `openclaw`,
 `hermes`, and `opencode`. `ariel-jcode` is experimental-only for Ariel's custom Jcode fork,
 not upstream Jcode or a supported public target.
 
-All current target renderers remain non-applicable previews. Expect blocking
-diagnostics and a nonzero exit status even when preview artifacts are written.
-OpenCode `1.18.31` separately supports lossless transactional application of
-top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit
-path. A distinct named primary/subagent definition can receive model and ordered
-instructions. Codex `0.154.0` separately supports only root `model_provider`,
-`model`, and `model_reasoning_effort = "high"`. Neither makes its renderer or full
-profile applicable. Never present installed settings as authentication, full
-delivery, or policy enforcement.
+All target renderers remain non-applicable previews. Expect blocking diagnostics
+and a nonzero exit status even when preview artifacts are written. The separate
+installer can apply only the qualified subsets below. Preview syntax and native
+config consumption do not prove authentication, full delivery, or policy
+enforcement.
 
 ## Plan-first install
 
-Only the exact subsets in the README install table and target evidence ledger
-are installable. Other targets remain blocked. OpenCode main-config installation
-requires exact version `1.18.31`, a route-only or single-skill profile, and one
+Only these exact versions and subsets are qualified for installation:
+
+| Target | Installable subset |
+| --- | --- |
+| Claude Code `2.1.278` | Main-config model only |
+| OpenCode `1.18.31` | Main-config model, optionally one owned `SKILL.md` and discovery path; alternatively an explicit named primary/subagent Markdown definition with model and ordered instructions |
+| Pi `0.86.1` | Provider, model, thinking level |
+| Oh My Pi `18.2.6` | Default model role and thinking level |
+| OpenClaw `2026.9.5` | Default agent model and thinking level |
+| Hermes `0.21.3` | Provider, default model, reasoning effort |
+| Codex `0.154.0` | Root `model_provider`, `model`, and `high` reasoning effort only; settings, not authentication or full-profile installation |
+
+Consult the repository README and `docs/dev/target-evidence.md` for exact field,
+route, and precedence limitations before planning. For example, OpenCode
+main-config installation requires a route-only or single-skill profile and one
 explicit config path. Plan first against synthetic or separately approved
 disposable state:
 
@@ -176,12 +271,15 @@ profile-mango install <profile-name> \
   --override --json
 ```
 
-For Codex, use `--target codex@0.154.0` with
-`--config-path codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth route, and
-`effort: high`. Treat this as **settings only**, not successful OAuth or full
-profile installation. The plan warns that `codex login status` distinguishes
-stored API-key from ChatGPT modes but cannot prove exact OAuth. Do not run it
-on another user's behalf or share status output containing key fragments.
+For other qualified targets use `--target <name>@<exact-version>` and the
+matching explicit `--config-path <name>=<disposable-path>`. For Codex, use
+`--target codex@0.154.0` with
+`--config-path codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth
+route, and `effort: high`. Treat this as **settings only**, not successful OAuth
+or full profile installation. The plan warns that `codex login status`
+distinguishes stored API-key from ChatGPT modes but cannot prove exact OAuth.
+Do not run it on another user's behalf or share status output containing key
+fragments.
 
 Review the destination digest, field diff, file hashes, and plan ID. Apply only by
 repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
@@ -193,9 +291,9 @@ disposable backup/restore rehearsal.
 
 For a distinct named OpenCode agent definition, use an instruction-only profile
 with a native route and pass `--agent opencode@1.18.31=primary:mango-review` (or
-`subagent:mango-review`) plus `--config-path
-opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`. The
-parent `agents` directory must already exist. This writes a custom Markdown
+`subagent:mango-review`) plus
+`--config-path opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`.
+The parent `agents` directory must already exist. This writes a custom Markdown
 prompt and adjacent ownership manifest, not the main JSONC config or a native
 named-profile preset. A primary is not activated by installation and a subagent
 is not proven delegated. Required permissions, tools and skills block. Unowned
