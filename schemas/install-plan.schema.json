@@ -98,6 +98,7 @@
       "properties": {
         "target": {"$ref": "#/$defs/target"},
         "agent": {"type": "object", "additionalProperties": false, "required": ["mode", "name"], "properties": {"mode": {"enum": ["primary", "subagent"]}, "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}}},
+        "config": {"type": "object", "additionalProperties": false, "required": ["source"], "properties": {"source": {"enum": ["default", "explicit"]}}},
         "metadata": {"$ref": "#/$defs/metadata"},
         "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable"]},
         "reason": {"type": "string"},

@@ -162,6 +162,10 @@ func cleanInstallEnv(t *testing.T, root string) []string {
 	return replaceEnvironment(os.Environ(), []string{
 		"HOME=" + filepath.Join(root, "home"),
 		"XDG_CONFIG_HOME=" + filepath.Join(root, "config"),
+		"CODEX_HOME=",
+		"HERMES_HOME=",
+		"PI_CODING_AGENT_DIR=",
+		"OPENCLAW_CONFIG_PATH=",
 		"GOCACHE=" + filepath.Join(root, "cache"),
 		"GOBIN=" + filepath.Join(root, "bin"),
 		"GOMODCACHE=" + moduleCache,
