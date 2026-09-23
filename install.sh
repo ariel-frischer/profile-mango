@@ -16,14 +16,14 @@ set -eu
 
 BINARY_NAME="profile-mango"
 RELEASE_NAME="profile-mango"
-GITLAB_REPO="ariel-frischer/profile-mango"
+GITHUB_REPO="ariel-frischer/profile-mango"
 if [ -n "${HOME:-}" ]; then
     DEFAULT_INSTALL_DIR="${HOME}/.local/bin"
 else
     DEFAULT_INSTALL_DIR=""
 fi
-DEFAULT_RELEASE_BASE_URL="https://gitlab.com/${GITLAB_REPO}/-/releases"
-DEFAULT_LATEST_URL="https://gitlab.com/api/v4/projects/ariel-frischer%2Fprofile-mango/releases/permalink/latest"
+DEFAULT_RELEASE_BASE_URL="https://github.com/${GITHUB_REPO}/releases/download"
+DEFAULT_LATEST_URL="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 
 CURL_CMD="${PROFILE_MANGO_CURL_CMD:-${PROFILE_MANGO_CURL:-curl}}"
 UNAME_CMD="${PROFILE_MANGO_UNAME_CMD:-${PROFILE_MANGO_UNAME:-uname}}"
