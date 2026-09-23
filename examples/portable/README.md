@@ -73,16 +73,15 @@ profile-mango install pi \
   --profiles ./my-agent-profiles/profiles \
   --resource-root ./my-agent-profiles \
   --bindings ./my-agent-profiles/bindings/local.yaml \
-  --target pi@0.86.1 \
-  --config-path pi=./synthetic-pi-settings.json --json
+  --config pi=./synthetic-pi-settings.json --json
 ```
 
 This command plans only. Do not add `--apply`, `--yes`, or an actual agent config path without reviewing the exact plan and obtaining path-specific approval. For other targets, use the exact version and appropriate target config format from the [evidence ledger](../../docs/dev/target-evidence.md), never infer the destination from this package.
 
 For Codex `0.154.0`, the `codex`, `codex-focused`, and `codex-hard` profiles can
-also plan the three qualified root settings with `--target codex@0.154.0` and
-`--config-path codex=./synthetic-codex-config.toml` in place of Pi's target and
-path above. The route must remain OpenAI/native/OAuth with `high` effort. This
+also plan the three qualified root settings with
+`--config codex=./synthetic-codex-config.toml` in place of Pi's config above;
+a bare target name selects its single qualified version (`codex@0.154.0`). The route must remain OpenAI/native/OAuth with `high` effort. This
 does not prove that a suggested model is available, which authentication method
 Codex will use, or that higher-precedence configuration will preserve the route.
 

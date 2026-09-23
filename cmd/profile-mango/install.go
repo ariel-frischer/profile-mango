@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ type installOptions struct {
 	agents         []string
 	configs        []string
 	manifests      []string
-	configPaths    []string
+	legacyConfigs  []string
 	all            bool
 	apply          bool
 	yes            bool
@@ -53,11 +54,12 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringArrayVar(&options.targets, "target", nil, "exact target@version; repeat for multiple targets")
-	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target@version=primary:name or subagent:name; requires --config-path ending agents/name.md")
-	cmd.Flags().StringArrayVar(&options.configs, "config-path", nil, "target=explicit config path; repeat for multiple targets")
-	cmd.Flags().StringArrayVar(&options.configPaths, "config", nil, "target@version=explicit config path; repeat for multiple targets")
-	cmd.Flags().StringArrayVar(&options.manifests, "manifest", nil, "target@version=explicit ownership manifest path")
+	cmd.Flags().StringArrayVar(&options.targets, "target", nil, "target or target@version; a bare name selects its single qualified version; repeat for multiple targets")
+	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name; requires --config ending agents/name.md")
+	cmd.Flags().StringArrayVar(&options.configs, "config", nil, "target[@version]=explicit config path; selects the target; repeat for multiple targets")
+	cmd.Flags().StringArrayVar(&options.legacyConfigs, "config-path", nil, "deprecated alias for --config")
+	_ = cmd.Flags().MarkDeprecated("config-path", "use --config target[@version]=path instead")
+	cmd.Flags().StringArrayVar(&options.manifests, "manifest", nil, "target[@version]=explicit ownership manifest path")
 	cmd.Flags().BoolVar(&options.all, "all", false, "plan every statically registered public target")
 	cmd.Flags().BoolVar(&options.apply, "apply", false, "apply the already displayed plan after consent")
 	cmd.Flags().BoolVar(&options.yes, "yes", false, "confirm non-interactive apply; requires --expect-plan")
@@ -128,8 +130,8 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 }
 
 func validateInstallOptions(options installOptions) error {
-	if !options.all && len(options.targets) == 0 {
-		return fmt.Errorf("at least one --target target@version or --all is required")
+	if !options.all && len(options.targets) == 0 && len(options.configValues()) == 0 {
+		return fmt.Errorf("at least one --target, --config target=path, or --all is required")
 	}
 	if options.all && len(options.targets) > 0 {
 		return fmt.Errorf("--all and --target are mutually exclusive")
@@ -180,113 +182,182 @@ func resolveInstallPaths(options installOptions) (installPaths, error) {
 	return installPaths{profiles: filepath.Join(home, "profiles"), resourceRoot: home, bindings: filepath.Join(home, "bindings", "local.yaml")}, nil
 }
 
+func (options installOptions) configValues() []string {
+	return append(append([]string(nil), options.configs...), options.legacyConfigs...)
+}
+
+// targetBinding is one target[@version]=value flag entry; an empty key version matches any version.
+type targetBinding struct {
+	flag, value string
+	key         install.Target
+}
+
 func installTargets(options installOptions, registry *install.Registry) ([]install.TargetRequest, error) {
+	configs, err := parseTargetBindings("--config", options.configValues())
+	if err != nil {
+		return nil, err
+	}
+	manifests, err := parseTargetBindings("--manifest", options.manifests)
+	if err != nil {
+		return nil, err
+	}
 	agents, err := parseAgentSelections(options.agents)
 	if err != nil {
 		return nil, err
 	}
-	configValues := append([]string(nil), options.configs...)
-	configValues = append(configValues, options.configPaths...)
-	configMap, err := parseTargetPaths(configValues)
+	targets, err := selectInstallTargets(options, registry, configs)
 	if err != nil {
 		return nil, err
 	}
-	manifestMap, err := parseTargetPaths(options.manifests)
-	if err != nil {
-		return nil, err
-	}
-	if options.all {
-		if len(agents) > 0 {
-			return nil, fmt.Errorf("--all and --agent are mutually exclusive")
-		}
-		return targetRequestsFromAll(registry, configMap, manifestMap), nil
-	}
-	if len(options.targets) == 0 {
-		return nil, fmt.Errorf("provide --target target@version or --all")
-	}
-	result := make([]install.TargetRequest, 0, len(options.targets))
-	seen := map[string]struct{}{}
-	for _, value := range options.targets {
-		target, err := install.ParseTarget(value)
-		if err != nil {
+	for _, bindings := range [][]targetBinding{configs, manifests, agents} {
+		if err := requireBindingsSelected(bindings, targets); err != nil {
 			return nil, err
 		}
-		if _, found := seen[target.String()]; found {
-			return nil, fmt.Errorf("duplicate target: %s", target.String())
-		}
-		seen[target.String()] = struct{}{}
-		result = append(result, install.TargetRequest{Target: target, Agent: agents[target.String()], ConfigPath: targetPath(configMap, target), ManifestPath: targetPath(manifestMap, target)})
 	}
-	for key := range agents {
-		if _, found := seen[key]; !found {
-			return nil, fmt.Errorf("--agent target %s must also be selected with --target", key)
-		}
-	}
-	return result, nil
-}
-
-func parseAgentSelections(values []string) (map[string]install.AgentDestination, error) {
-	result := make(map[string]install.AgentDestination, len(values))
-	for _, value := range values {
-		selector, spec, found := strings.Cut(value, "=")
-		if !found {
-			return nil, fmt.Errorf("--agent requires target@version=primary:name or subagent:name")
-		}
-		target, err := install.ParseTarget(selector)
-		if err != nil {
-			return nil, err
-		}
-		mode, name, found := strings.Cut(spec, ":")
-		if !found || mode == "" || name == "" {
-			return nil, fmt.Errorf("--agent requires target@version=primary:name or subagent:name")
-		}
-		if _, exists := result[target.String()]; exists {
-			return nil, fmt.Errorf("duplicate --agent selection for %s", target.String())
-		}
-		result[target.String()] = install.AgentDestination{Mode: mode, Name: name}
-	}
-	return result, nil
-}
-
-func targetRequestsFromAll(registry *install.Registry, configs, manifests map[string]string) []install.TargetRequest {
-	targets := registry.Targets()
 	result := make([]install.TargetRequest, 0, len(targets))
 	for _, target := range targets {
-		result = append(result, install.TargetRequest{Target: target, ConfigPath: targetPath(configs, target), ManifestPath: targetPath(manifests, target)})
-	}
-	return result
-}
-
-func parseTargetPaths(values []string) (map[string]string, error) {
-	result := make(map[string]string, len(values))
-	for _, value := range values {
-		key, path, found := strings.Cut(value, "=")
-		if !found || strings.TrimSpace(key) == "" || strings.TrimSpace(path) == "" {
-			return nil, fmt.Errorf("path mapping must use target@version=path syntax")
+		request := install.TargetRequest{Target: target, ConfigPath: bindingValue(configs, target), ManifestPath: bindingValue(manifests, target)}
+		if spec := bindingValue(agents, target); spec != "" {
+			request.Agent, _ = parseAgentSpec(spec)
 		}
-		mapKey := strings.TrimSpace(key)
-		if strings.Contains(mapKey, "@") {
-			target, err := install.ParseTarget(mapKey)
-			if err != nil {
-				return nil, err
-			}
-			mapKey = target.String()
-		} else if filepath.Base(mapKey) != mapKey || strings.ContainsAny(mapKey, "/\\") {
-			return nil, fmt.Errorf("path mapping target must be a simple name or target@version")
-		}
-		if _, found := result[mapKey]; found {
-			return nil, fmt.Errorf("duplicate path mapping: %s", mapKey)
-		}
-		result[mapKey] = path
+		result = append(result, request)
 	}
 	return result, nil
 }
 
-func targetPath(paths map[string]string, target install.Target) string {
-	if value := paths[target.String()]; value != "" {
-		return value
+// selectInstallTargets resolves --target values, then adds any target implied by a --config entry.
+func selectInstallTargets(options installOptions, registry *install.Registry, configs []targetBinding) ([]install.Target, error) {
+	if options.all {
+		if len(options.agents) > 0 {
+			return nil, fmt.Errorf("--all and --agent are mutually exclusive")
+		}
+		return registry.Targets(), nil
 	}
-	return paths[target.Name]
+	values := append([]string(nil), options.targets...)
+	result := make([]install.Target, 0, len(values)+len(configs))
+	for _, value := range values {
+		target, err := resolveInstallTarget(registry, value)
+		if err != nil {
+			return nil, err
+		}
+		if slices.Contains(result, target) {
+			return nil, fmt.Errorf("duplicate target: %s", target.String())
+		}
+		result = append(result, target)
+	}
+	for _, config := range configs {
+		if selectsName(result, config.key.Name) {
+			continue
+		}
+		target, err := resolveInstallTarget(registry, bindingKey(config.key))
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, target)
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("provide --target, --config target=path, or --all")
+	}
+	return result, nil
+}
+
+func resolveInstallTarget(registry *install.Registry, value string) (install.Target, error) {
+	target, err := registry.ResolveTarget(value)
+	if err != nil {
+		return install.Target{}, fmt.Errorf("resolve install target %q: %w", value, err)
+	}
+	return target, nil
+}
+
+func selectsName(targets []install.Target, name string) bool {
+	for _, target := range targets {
+		if target.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func parseTargetBindings(flag string, values []string) ([]targetBinding, error) {
+	result := make([]targetBinding, 0, len(values))
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		key, path, found := strings.Cut(value, "=")
+		if !found || strings.TrimSpace(path) == "" {
+			return nil, fmt.Errorf("%s must use target[@version]=value syntax", flag)
+		}
+		target, err := install.ParseTargetSelector(key)
+		if err != nil {
+			return nil, fmt.Errorf("parse %s %q: %w", flag, key, err)
+		}
+		if _, duplicate := seen[target.String()]; duplicate {
+			return nil, fmt.Errorf("duplicate %s mapping: %s", flag, strings.TrimSpace(key))
+		}
+		seen[target.String()] = struct{}{}
+		result = append(result, targetBinding{flag: flag, key: target, value: path})
+	}
+	return result, nil
+}
+
+func parseAgentSelections(values []string) ([]targetBinding, error) {
+	bindings, err := parseTargetBindings("--agent", values)
+	if err != nil {
+		return nil, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name: %w", err)
+	}
+	for _, binding := range bindings {
+		if _, err := parseAgentSpec(binding.value); err != nil {
+			return nil, err
+		}
+	}
+	return bindings, nil
+}
+
+func parseAgentSpec(spec string) (install.AgentDestination, error) {
+	mode, name, found := strings.Cut(spec, ":")
+	if !found || mode == "" || name == "" {
+		return install.AgentDestination{}, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name")
+	}
+	return install.AgentDestination{Mode: mode, Name: name}, nil
+}
+
+func requireBindingsSelected(bindings []targetBinding, targets []install.Target) error {
+	for _, binding := range bindings {
+		if bindingSelected(binding, targets) {
+			continue
+		}
+		return fmt.Errorf("%s target %s does not match any selected target", binding.flag, bindingKey(binding.key))
+	}
+	return nil
+}
+
+func bindingSelected(binding targetBinding, targets []install.Target) bool {
+	for _, target := range targets {
+		if binding.key.Matches(target) {
+			return true
+		}
+	}
+	return false
+}
+
+// bindingValue prefers an exact target@version entry over a bare-name entry.
+func bindingValue(bindings []targetBinding, target install.Target) string {
+	fallback := ""
+	for _, binding := range bindings {
+		if binding.key == target {
+			return binding.value
+		}
+		if binding.key.Version == "" && binding.key.Name == target.Name {
+			fallback = binding.value
+		}
+	}
+	return fallback
+}
+
+func bindingKey(target install.Target) string {
+	if target.Version == "" {
+		return target.Name
+	}
+	return target.String()
 }
 
 func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) error {

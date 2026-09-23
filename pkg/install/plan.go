@@ -658,7 +658,7 @@ func validateAgentDestination(target TargetRequest) error {
 		}
 	}
 	if filepath.Base(target.ConfigPath) != name+".md" || filepath.Base(filepath.Dir(target.ConfigPath)) != "agents" {
-		return fmt.Errorf("named agent --config-path must end in agents/%s.md", name)
+		return fmt.Errorf("named agent --config path must end in agents/%s.md", name)
 	}
 	return nil
 }

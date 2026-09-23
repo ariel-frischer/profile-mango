@@ -77,7 +77,7 @@ func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	if err := os.WriteFile(piPath, before, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	w.args = append(w.args, "--target", "pi@0.86.1", "--config-path", "pi="+piPath)
+	w.args = append(w.args, "--target", "pi@0.86.1", "--config", "pi="+piPath)
 	plan := w.plan(t)
 	if len(plan.Targets) != 2 {
 		t.Fatalf("expected two targets, got %#v", plan.Targets)
@@ -116,7 +116,7 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 		}
 	}
 	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
-		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config-path", target + "=" + w.config, "--override", "--json"}
+		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config", target + "=" + w.config, "--override", "--json"}
 	return w
 }
 

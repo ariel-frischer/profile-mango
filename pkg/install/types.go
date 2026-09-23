@@ -46,14 +46,31 @@ type Target struct {
 func (target Target) String() string { return target.Name + "@" + target.Version }
 
 func ParseTarget(value string) (Target, error) {
-	name, version, found := strings.Cut(strings.TrimSpace(value), "@")
-	if !found || name == "" || version == "" || strings.ContainsAny(name+version, "\x00\r\n") {
+	target, err := ParseTargetSelector(value)
+	if err != nil {
+		return Target{}, err
+	}
+	if target.Version == "" {
 		return Target{}, fmt.Errorf("target must use exact target@version syntax")
+	}
+	return target, nil
+}
+
+// ParseTargetSelector parses "name" or "name@version"; Version is empty for a bare name.
+func ParseTargetSelector(value string) (Target, error) {
+	name, version, found := strings.Cut(strings.TrimSpace(value), "@")
+	if name == "" || (found && version == "") || strings.ContainsAny(name+version, "\x00\r\n") {
+		return Target{}, fmt.Errorf("target must use target or target@version syntax")
 	}
 	if filepath.Base(name) != name || strings.ContainsAny(name, "/\\") {
 		return Target{}, fmt.Errorf("target name must be a simple name")
 	}
 	return Target{Name: name, Version: version}, nil
+}
+
+// Matches reports whether selector names target, treating an empty selector version as any version.
+func (selector Target) Matches(target Target) bool {
+	return selector.Name == target.Name && (selector.Version == "" || selector.Version == target.Version)
 }
 
 type AdapterMetadata struct {

@@ -59,7 +59,7 @@ subsystems, so this is not a safe personal-home inspector or OAuth proof.
 
 ## Bounded settings-only installation
 
-`profile-mango install <name> --target codex@0.154.0 --config-path codex=/explicit/disposable/config.toml` plans only the root `model_provider`,
+`profile-mango install <name> --config codex=/explicit/disposable/config.toml` (bare `codex` resolves to the single qualified `codex@0.154.0`) plans only the root `model_provider`,
 `model`, and `model_reasoning_effort = "high"` settings for an OpenAI/native/OAuth
 binding. Use all three explicit project input flags together if not using the
 profile home. An existing unowned config needs `--override`; apply requires
@@ -68,7 +68,7 @@ read-only, backups are enabled by default, and repeated application is a no-op.
 See [the version-qualified evidence](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
 
 For an installation made with the default adjacent manifest and backups, preview a
-guarded reversal with `profile-mango restore --target codex@0.154.0 --config-path
+guarded reversal with `profile-mango restore --target codex --config
 /explicit/disposable/config.toml --original-plan <64-hex-install-plan-ID> --json`.
 The read-only output contains a *new* restore plan ID and both file effects.
 Apply with the same flags plus `--apply --yes --expect-plan <restore-plan-ID>`
