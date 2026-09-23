@@ -81,9 +81,9 @@ func DigestResources(root string, profile ResolvedProfile) ([]ResourceDigest, Di
 	return resources, diagnostics.Sorted()
 }
 
-// BuildPlan binds an already resolved profile to one exact local route.
+// BuildPlan binds an already resolved profile to its effective route for target.
 func BuildPlan(profile ResolvedProfile, target string, bindings Bindings, resources []ResourceDigest) (Plan, error) {
-	route, found := bindings.Routes[profile.RouteRef]
+	route, found := bindings.RouteFor(profile.RouteRef, target)
 	if !found {
 		return Plan{}, fmt.Errorf("route %q is not present in bindings", profile.RouteRef)
 	}

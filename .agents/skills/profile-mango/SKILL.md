@@ -212,7 +212,18 @@ routes:
     authentication: oauth
     model: gpt-6-sol
     effort: high
+    targets:              # optional explicit per-agent overrides
+      claude-code:
+        provider: anthropic
+        model: claude-sonnet-5
 ```
+
+Each target gets the base route with any fields from `targets.<target>` applied,
+so one profile can install across agents that need different providers. Only
+agent names (`claude-code`, `codex`, `hermes`, `oh-my-pi`, `openclaw`,
+`opencode`, `pi`, `ariel-jcode`) are valid keys, and each override must set at
+least one field. An unknown key fails validation. Routes without `targets`
+behave as before.
 
 Keep `bindings/local.yaml` untracked. Credentials remain owned by the target
 agent and must not be copied into profiles, bindings, generated artifacts, or

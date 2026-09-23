@@ -1,6 +1,8 @@
 # Optional catalog suggestions as of 2026-09-22, NOT qualified on pinned agents.
 # Keep separate from local.example.yaml. Verify model access, client compatibility,
 # provider prefix/transport, and effort handling before any actual installation.
+# Optional per-agent overrides: add `targets: {claude-code: {provider: anthropic, model: ...}}`
+# under a route; each agent gets the base route with its override fields applied.
 routes:
   claude:
     provider: anthropic

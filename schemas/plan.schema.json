@@ -7,7 +7,7 @@
     "apiVersion": {"const": "profilemango.dev/plan/v1alpha1"},
     "kind": {"const": "Plan"},
     "profile": {"type": "string"}, "target": {"type": "string"},
-    "route": {"$ref": "bindings.schema.json#/properties/routes/additionalProperties"},
+    "route": {"$ref": "bindings.schema.json#/$defs/effectiveRoute"},
     "resources": {"type": "array", "items": {"$ref": "#/$defs/resource"}}
   },
   "$defs": {"resource": {"type": "object", "additionalProperties": false, "required": ["path", "kind", "sha256", "size"], "properties": {"path": {"type": "string"}, "kind": {"enum": ["instruction", "skill"]}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "size": {"type": "integer", "minimum": 0}}}}

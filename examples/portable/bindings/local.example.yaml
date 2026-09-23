@@ -1,5 +1,7 @@
 # Copy to local.yaml and choose models available to your own agent and account.
 # These are illustrative IDs, not pinned-client compatibility or authentication proof.
+# Optional per-agent overrides: add `targets: {claude-code: {provider: anthropic, model: ...}}`
+# under a route; each agent gets the base route with its override fields applied.
 routes:
   claude:
     provider: anthropic

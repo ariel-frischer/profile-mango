@@ -193,11 +193,11 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		var resolveDiagnostics profilemango.Diagnostics
 		resolved, resolveDiagnostics = profilemango.Resolve(profiles, name)
 		diagnostics = append(diagnostics, resolveDiagnostics...)
-		if _, exists := bindings.Routes[resolved.RouteRef]; !exists {
+		effective, exists := bindings.RouteFor(resolved.RouteRef, options.target)
+		if !exists {
 			diagnostics.Add(profilemango.SeverityError, "binding.route_missing", "spec.routeRef", "routeRef is not present in bindings", 0, 0)
-		} else {
-			route = bindings.Routes[resolved.RouteRef]
 		}
+		route = effective
 		if !diagnostics.HasErrors() {
 			resourceDigests, resourceDiagnostics := profilemango.DigestResources(options.resourceRoot, resolved)
 			diagnostics = append(diagnostics, resourceDiagnostics...)
