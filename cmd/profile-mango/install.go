@@ -90,6 +90,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
 		Backup: !options.noBackup, Override: options.override, Registry: registry,
+		Env: install.OSPathEnv(),
 	}
 	plan, err := install.BuildPlan(request)
 	if err != nil {
@@ -410,6 +411,11 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 	}
 	if _, err := fmt.Fprintln(output); err != nil {
 		return err
+	}
+	if target.Config != nil {
+		if _, err := fmt.Fprintf(output, "    config: %s (%s)\n", humanPath(target.Config.Path), humanPath(target.Config.Source)); err != nil {
+			return err
+		}
 	}
 	seen := make(map[string]struct{}, len(target.Fields))
 	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {

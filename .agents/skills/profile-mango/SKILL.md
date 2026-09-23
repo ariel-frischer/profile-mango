@@ -289,25 +289,29 @@ Only these exact versions and subsets are qualified for installation:
 Consult the repository README and `docs/dev/target-evidence.md` for exact field,
 route, and precedence limitations before planning. For example, OpenCode
 main-config installation requires a route-only or single-skill profile and one
-explicit config path. Plan first against synthetic or separately approved
-disposable state:
+config path. Without `--config`, `--target <name>` plans against the target's
+documented default user config (for example `~/.codex/config.toml` or
+`${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`); the human plan prints
+`config: <path> (default)`. See `docs/dev/target-evidence.md#default-config-destinations-2026-09-22`
+for every target's default and relocation variable. Always plan first and review:
 
 ```bash
+profile-mango install <profile-name> --target opencode
 profile-mango install <profile-name> \
   --profiles ./profiles \
   --resource-root . \
   --bindings ./bindings/local.yaml \
-  --config opencode=/explicit/disposable/opencode.jsonc \
+  --config opencode=/explicit/path/opencode.jsonc \
   --override --json
 ```
 
-`--config <name>[@<version>]=<disposable-path>` selects its target, so
-`--target` is only needed to plan a target without a config entry. A bare name
+`--config <name>[@<version>]=<path>` overrides the default and selects its
+target, so `--target` is only needed to plan a target without a config entry. A bare name
 resolves to that target's single qualified version; an explicit unqualified
 `@version` still blocks. `--config-path` is a deprecated hidden alias for
-`--config`. For Codex, use
-`--config codex=/explicit/disposable/config.toml`, an OpenAI/native/OAuth
-route, and `effort: high`. Treat this as **settings only**, not successful OAuth
+`--config`. For Codex, use `--target codex` (default
+`$CODEX_HOME/config.toml` or `~/.codex/config.toml`) or `--config codex=<path>`,
+an OpenAI/native/OAuth route, and `effort: high`. Treat this as **settings only**, not successful OAuth
 or full profile installation. The plan warns that `codex login status`
 distinguishes stored API-key from ChatGPT modes but cannot prove exact OAuth.
 Do not run it on another user's behalf or share status output containing key
@@ -318,13 +322,14 @@ repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
 unowned or externally edited files require `--override`; there is no general force
 path. OpenCode skill files cannot override unowned or externally edited resources,
 even with `--override`. Its directory-wide discovery is not an exclusive allowlist.
-Never use a live path without new path-specific user approval after a verified
-disposable backup/restore rehearsal.
+Default paths are the user's live agent config: confirm the printed `config:`
+path and field diff before applying, and keep the create-only backup.
 
 For a distinct named OpenCode agent definition, use an instruction-only profile
 with a native route and pass `--agent opencode@1.18.31=primary:mango-review` (or
 `subagent:mango-review`) plus
-`--config opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`.
+`--config opencode@1.18.31=<opencode-config-dir>/agents/mango-review.md` (named
+definitions have no default path).
 The parent `agents` directory must already exist. This writes a custom Markdown
 prompt and adjacent ownership manifest, not the main JSONC config or a native
 named-profile preset. A primary is not activated by installation and a subagent
@@ -344,10 +349,10 @@ its blocked plan and exits nonzero. Check exit status even when JSON is present.
 - `init`, `home`, `validate`, and `render` do not inspect agent homes, access
   credentials, call providers, or launch target agents.
 - `install` may apply only qualified target-specific subsets. It may touch only
-  explicit config paths and adjacent Profile Mango manifests, backups, journals,
-  and locks.
+  the planned config (explicit `--config` or the documented default user path)
+  and adjacent Profile Mango manifests, backups, journals, and locks.
   It must not read auth stores, sessions, plugins, MCP, providers, or the network.
-  Do not point it at a live config without new path-specific user approval.
+  Apply only after the user reviews the plan's resolved path and diff.
 - `render` writes only beneath the new path supplied by `--out` and never applies
   the candidate.
 - `scripts/opencode-config-probe.sh` is an opt-in exact-binary developer probe. Run

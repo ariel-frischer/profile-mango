@@ -177,6 +177,8 @@ type Request struct {
 	Backup       bool
 	Override     bool
 	Registry     *Registry
+	// Env resolves documented default config paths for targets without an explicit path.
+	Env PathEnv
 }
 
 type Manifest struct {
@@ -212,6 +214,7 @@ type FilePlan struct {
 type TargetPlan struct {
 	Target            Target                   `json:"target"`
 	Agent             *AgentDestination        `json:"agent,omitempty"`
+	Config            *ConfigDestination       `json:"config,omitempty"`
 	Metadata          AdapterMetadata          `json:"metadata"`
 	Status            string                   `json:"status"`
 	Reason            string                   `json:"reason,omitempty"`

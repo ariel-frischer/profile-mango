@@ -59,7 +59,7 @@ subsystems, so this is not a safe personal-home inspector or OAuth proof.
 
 ## Bounded settings-only installation
 
-`profile-mango install <name> --config codex=/explicit/disposable/config.toml` (bare `codex` resolves to the single qualified `codex@0.154.0`) plans only the root `model_provider`,
+`profile-mango install <name> --target codex` plans against `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); `--config codex=<path>` overrides it. Bare `codex` resolves to the single qualified `codex@0.154.0`. The installer plans only the root `model_provider`,
 `model`, and `model_reasoning_effort = "high"` settings for an OpenAI/native/OAuth
 binding. Use all three explicit project input flags together if not using the
 profile home. An existing unowned config needs `--override`; apply requires
@@ -89,7 +89,7 @@ Same-content file replacement after preview also invalidates restore consent.
 
 The adapter rejects required permissions, tools, instructions, skills,
 non-qualified routes, malformed TOML, active profiles and provider shadow
-state. It patches only the explicit caller-supplied root document, preserving
+state. It patches only the selected root document (explicit or [default config destinations](../target-evidence.md#default-config-destinations-2026-09-22)), preserving
 unrelated keys/comments and target-owned authentication. It never runs Codex,
 reads auth stores, or selects OAuth. `codex login status` can tell a user whether
 the stored login is API-key or ChatGPT, but the same ChatGPT message covers

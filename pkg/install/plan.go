@@ -226,13 +226,20 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if !metadata.Installable {
 		return blockedTargetPlan(targetPlan, metadata.Reason, "install.target.blocked")
 	}
+	source := ConfigSourceExplicit
 	if strings.TrimSpace(targetRequest.ConfigPath) == "" {
-		return blockedTargetPlan(targetPlan, "an explicit synthetic or disposable config path is required", "install.config_path_required")
+		path, reason := resolveDefaultConfigPath(adapter, targetRequest, request.Env)
+		if reason != "" {
+			return blockedTargetPlan(targetPlan, reason, "install.config_path_required")
+		}
+		targetRequest.ConfigPath, targetPlan.ConfigPath, source = path, path, ConfigSourceDefault
 	}
+	targetPlan.Config = &ConfigDestination{Path: targetRequest.ConfigPath, Source: source}
 	config, err := installfs.SnapshotFile(targetRequest.ConfigPath)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("inspect config path: %v", err), "install.config_path_unsafe")
 	}
+	targetPlan.Config.Path = config.Path
 	manifestPath := targetRequest.ManifestPath
 	if manifestPath == "" {
 		manifestPath = targetRequest.ConfigPath + ".profile-mango.manifest.json"
@@ -604,6 +611,7 @@ func planID(plan Plan) (string, error) {
 	identityPlan := identity{Profile: plan.Profile, InputSHA256: plan.InputSHA256, Backup: plan.Backup, Override: plan.Override, Targets: append([]TargetPlan(nil), plan.Targets...)}
 	for index := range identityPlan.Targets {
 		identityPlan.Targets[index].ConfigPath = ""
+		identityPlan.Targets[index].Config = nil
 		identityPlan.Targets[index].ManifestPath = ""
 		identityPlan.Targets[index].changes = nil
 		identityPlan.Targets[index].checks = nil

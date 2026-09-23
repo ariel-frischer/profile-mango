@@ -24,7 +24,7 @@ func (openCodeAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: opencode.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact OpenCode 1.18.31 model, one owned skill, or named primary/subagent definition is installable at an explicit path",
+		Reason:         "exact OpenCode 1.18.31 model or one owned skill is installable at an explicit or documented default config path; a named primary/subagent definition requires an explicit path",
 	}
 }
 

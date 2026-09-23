@@ -29,8 +29,10 @@ versions, installed binaries and tested support must remain distinct.
 ## Product boundary
 
 Codex is the first intended public adapter candidate. Public targets have inert
-exact-version renderers. Codex permits only three root route settings at an explicit
-path; the exact installed binary consumed them in an isolated synthetic home,
+exact-version renderers. Installable subsets apply at an explicit `--config` path
+or, when omitted, at the documented default user path listed under
+[default config destinations](#default-config-destinations-2026-09-22).
+Codex permits only three root route settings; the exact installed binary consumed them in an isolated synthetic home,
 but OAuth identity and full-profile applicability remain unverified. Claude
 Code permits only model-field installation; Pi permits three route-default
 settings, Hermes three model/reasoning fields, and
@@ -52,7 +54,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; built profile-mango CLI synthetic plan/apply/reapply/restore | Three root settings installable only at an explicit path for OpenAI/native/OAuth binding with `high` effort; trusted project and runtime overrides can shadow them. OAuth identity, named runtime profile selection, model availability, delivery and full-profile applicability remain unverified |
+| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; built profile-mango CLI synthetic plan/apply/reapply/restore | Three root settings installable only at an explicit or documented default path for OpenAI/native/OAuth binding with `high` effort; trusted project and runtime overrides can shadow them. OAuth identity, named runtime profile selection, model availability, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
@@ -672,8 +674,8 @@ The compiled CLI checks demonstrated deterministic read-only plans, wrong-hash
 and stale-plan zero writes, lossless application, default byte-equal backup and
 no-op reapply. Shared transaction tests separately establish fault rollback and
 hash-guarded recovery. There is no public restore CLI command.
-Only `modelRoles.default` and `defaultThinkingLevel` are installable at an explicit
-path. Full-profile previews remain non-applicable. This evidence does not prove
+Only `modelRoles.default` and `defaultThinkingLevel` are installable at an explicit or
+documented default path. Full-profile previews remain non-applicable. This evidence does not prove
 model/provider resolution, authentication, precedence, delivery or enforcement.
 See the [target reference](agents/oh-my-pi.md) for the bounded patch contract.
 
@@ -1074,3 +1076,34 @@ differs from retained archive SHA-256
 `0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4`.
 Neither replaces the other. Exact peeled Git identity and actual imported hashes,
 recorded in the target's native evidence fixture, underpin this qualification.
+
+## Default config destinations, 2026-09-22
+
+When `install` receives a target without `--config`, it plans against that
+target's documented user-level config file. The plan's human output shows
+`config: <path> (default)` and JSON reports `config.source`; JSON omits absolute
+paths. An explicit `--config` always overrides the default. Writes keep the plan
+diff, create-only backups, hash/drift checks, adjacent ownership manifests, and
+interactive or `--yes --expect-plan` consent. Resolution reads only `HOME`,
+`XDG_CONFIG_HOME`, and the documented relocation variables below, and stats only the
+OpenCode candidate files. It does not read auth stores, sessions, plugins, MCP, or
+providers. Relative relocation values block with a reason.
+
+| Target | Default path | Relocation | Documentation source |
+| --- | --- | --- | --- |
+| Claude Code `2.1.278` | `~/.claude/settings.json` | none | [claude-code.md](agents/claude-code.md#configuration-and-precedence) |
+| Codex `0.154.0` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml` | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
+| OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
+| Pi `0.86.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
+| Oh My Pi `18.2.6` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |
+| OpenClaw `2026.9.5` | `~/.openclaw/openclaw.json` | `OPENCLAW_CONFIG_PATH` | [openclaw.md](agents/openclaw.md#configuration-and-precedence) |
+| Hermes `0.21.3` | `~/.hermes/config.yaml` | `HERMES_HOME` | [hermes.md](agents/hermes.md#configuration-and-precedence) |
+
+These paths are documentation-derived destinations, not new native evidence.
+Field consumption remains qualified only as recorded in each target section; for
+example, Claude Code consumption was observed through an explicit `--settings`
+file, and project, managed, or runtime layers can still shadow a user-level value.
+OpenCode named `--agent` definitions and adapters without a documented default
+still require an explicit `--config`. Tests isolate `HOME`, `XDG_CONFIG_HOME`, and
+the relocation variables in a temporary sandbox and refuse to run if any default
+resolves outside it.
