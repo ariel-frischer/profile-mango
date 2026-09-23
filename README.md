@@ -84,9 +84,13 @@ instructions replace that named agent's stock prompt.
 
 To switch settings, run `profile-mango install <other-profile>` with the same target,
 configuration path, and ownership manifest, then review and approve the new plan.
-Unchanged Mango-owned files can be updated directly; unowned or edited files need
-an adapter-approved `--override`. Non-interactive apply requires
-`--apply --yes --expect-plan <planID>` from that new plan.
+Unchanged Mango-owned files can be updated directly. An existing agent config
+file that Mango does not own yet is adopted on the first install: the plan shows
+`adopt`, keeps unrelated settings, and backs the file up first (so `--no-backup`
+blocks adoption). A Mango-owned file edited since the last install, and
+whole-file resources such as named agents and skills, still need an
+adapter-approved `--override` or stay protected. A ready plan ends with the exact
+`--apply --yes --expect-plan <planID>` command to apply it.
 
 For Codex `0.154.0` only, `profile-mango restore --help` describes a guarded,
 read-only backup reversal plan at an explicit configuration path. Applying its

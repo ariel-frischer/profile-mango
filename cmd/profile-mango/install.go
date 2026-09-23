@@ -106,7 +106,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		if plan.Status == install.StatusBlocked {
 			return fmt.Errorf("install plan is blocked")
 		}
-		return nil
+		return writeApplyHint(cmd.OutOrStdout(), profile, options, plan)
 	}
 	if plan.Status == install.StatusBlocked {
 		return fmt.Errorf("install plan is blocked; no files were written")
@@ -374,7 +374,7 @@ func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) er
 }
 
 func writeHumanInstallPlan(output io.Writer, plan install.Plan) error {
-	if _, err := fmt.Fprintf(output, "plan %s: %s\n", humanPath(plan.PlanID), humanPath(plan.Status)); err != nil {
+	if _, err := fmt.Fprintf(output, "plan %s (%s)\n", humanPath(plan.PlanID), humanPath(plan.Status)); err != nil {
 		return err
 	}
 	for _, target := range orderedTargetPlans(plan.Targets) {
@@ -386,6 +386,67 @@ func writeHumanInstallPlan(output io.Writer, plan install.Plan) error {
 		}
 	}
 	return nil
+}
+
+// writeApplyHint ends a ready human plan with the exact command that applies it.
+func writeApplyHint(output io.Writer, profile string, options installOptions, plan install.Plan) error {
+	if options.jsonOutput || plan.Status != install.StatusReady {
+		return nil
+	}
+	_, err := fmt.Fprintf(output, "\nNothing was written. Apply this plan with --apply to confirm interactively, or run:\n  %s\n", installApplyCommand(profile, options, plan.PlanID))
+	return err
+}
+
+// installApplyCommand rebuilds the planning arguments, then appends non-interactive consent.
+func installApplyCommand(profile string, options installOptions, planID string) string {
+	args := []string{"profile-mango"}
+	if homePathOverride != "" {
+		args = append(args, "--home", homePathOverride)
+	}
+	args = append(args, "install", profile)
+	args = append(args, installPlanArgs(options)...)
+	args = append(args, "--apply", "--yes", "--expect-plan", planID)
+	for index, arg := range args {
+		args[index] = shellQuote(arg)
+	}
+	return strings.Join(args, " ")
+}
+
+func installPlanArgs(options installOptions) []string {
+	var args []string
+	for _, pair := range [][2]string{{"--profiles", options.profiles}, {"--resource-root", options.resourceRoot}, {"--bindings", options.bindings}} {
+		if pair[1] != "" {
+			args = append(args, pair[0], pair[1])
+		}
+	}
+	for _, group := range []struct {
+		flag   string
+		values []string
+	}{{"--target", options.targets}, {"--agent", options.agents}, {"--config", options.configValues()}, {"--manifest", options.manifests}} {
+		for _, value := range group.values {
+			args = append(args, group.flag, value)
+		}
+	}
+	for _, flag := range []struct {
+		name string
+		set  bool
+	}{{"--all", options.all}, {"--no-backup", options.noBackup}, {"--override", options.override}} {
+		if flag.set {
+			args = append(args, flag.name)
+		}
+	}
+	return args
+}
+
+// shellQuote leaves plain words alone and single-quotes anything a POSIX shell would reinterpret.
+func shellQuote(value string) string {
+	plain := value != "" && strings.IndexFunc(value, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune("@%+=:,./_-", r)
+	}) < 0
+	if plain {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
 
 func writeTargetWarnings(output io.Writer, diagnostics profilemango.Diagnostics) error {

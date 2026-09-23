@@ -129,7 +129,7 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 	}
 }
 
-func TestClaudeCodeInstallRejectsMalformedAndUnownedConflict(t *testing.T) {
+func TestClaudeCodeInstallRejectsMalformedAndAdoptsUnowned(t *testing.T) {
 	request, _ := claudeCodeTestRequest(t)
 	config := request.Targets[0].ConfigPath
 	writeInstallTestFile(t, config, "")
@@ -154,8 +154,8 @@ func TestClaudeCodeInstallRejectsMalformedAndUnownedConflict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if conflict.Status != StatusBlocked || conflict.Targets[0].Status != StatusConflict {
-		t.Fatalf("conflict plan = %#v", conflict)
+	if conflict.Status != StatusReady || conflict.Targets[0].Files[0].Action != ActionAdopt {
+		t.Fatalf("unowned config was not adopted: %#v", conflict)
 	}
 }
 

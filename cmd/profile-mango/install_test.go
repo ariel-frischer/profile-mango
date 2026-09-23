@@ -356,7 +356,7 @@ func TestWriteInstallPlanHumanFieldDiffs(t *testing.T) {
 				}},
 			}},
 			want: []string{
-				"plan plan-123: ready\n",
+				"plan plan-123 (ready)\n",
 				"  alpha@1: ready\n",
 				"    field config.model: \"old\" -> \"new\"\n",
 				"    a.json: update\n",
@@ -392,7 +392,7 @@ func TestWriteInstallPlanHumanFieldDiffs(t *testing.T) {
 				Fields: []install.FieldChange{{Path: "config.same", Before: "same", After: "same"}, {Path: "config.empty"}},
 				Files:  []install.FilePlan{{Path: "config.json", Action: install.ActionNoop, Fields: []install.FieldChange{{Path: "config.same"}, {Path: "config.empty"}}}},
 			}}},
-			want:       []string{"plan plan-noop: noop\n", "  same@1: noop\n", "    config.json: noop\n"},
+			want:       []string{"plan plan-noop (noop)\n", "  same@1: noop\n", "    config.json: noop\n"},
 			wantAbsent: []string{"config.same:", "config.empty", " -> "},
 		},
 		"create fields show an empty before value": {
@@ -646,5 +646,41 @@ func TestInstallOpenCodeModelAtExplicitDisposablePath(t *testing.T) {
 	want := strings.Replace(before, `"old/model"`, `"openai/gpt-5.6"`, 1)
 	if string(data) != want {
 		t.Fatalf("config = %q, want %q", data, want)
+	}
+}
+
+func TestInstallApplyCommand(t *testing.T) {
+	tests := map[string]struct {
+		home    string
+		options installOptions
+		want    string
+	}{
+		"default inputs": {
+			options: installOptions{targets: []string{"claude-code"}},
+			want:    "profile-mango install default --target claude-code --apply --yes --expect-plan abc",
+		},
+		"every planning flag is carried and quoted": {
+			home: "/tmp/my home",
+			options: installOptions{
+				profiles: "/p", resourceRoot: "/r", bindings: "/b.yaml",
+				targets: []string{"opencode"}, agents: []string{"opencode=primary:mango"},
+				configs: []string{"opencode=/c/agents/mango.md"}, legacyConfigs: []string{"codex=/x's.toml"},
+				manifests: []string{"opencode=/m.json"}, noBackup: true, override: true,
+			},
+			want: "profile-mango --home '/tmp/my home' install default --profiles /p --resource-root /r --bindings /b.yaml --target opencode --agent opencode=primary:mango --config opencode=/c/agents/mango.md --config 'codex=/x'\\''s.toml' --manifest opencode=/m.json --no-backup --override --apply --yes --expect-plan abc",
+		},
+		"all targets": {
+			options: installOptions{all: true},
+			want:    "profile-mango install default --all --apply --yes --expect-plan abc",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			homePathOverride = test.home
+			t.Cleanup(func() { homePathOverride = "" })
+			if got := installApplyCommand("default", test.options, "abc"); got != test.want {
+				t.Fatalf("apply command:\n got %s\nwant %s", got, test.want)
+			}
+		})
 	}
 }

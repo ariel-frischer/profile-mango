@@ -34,8 +34,10 @@ const (
 	ActionCreate   = "create"
 	ActionUpdate   = "update"
 	ActionOverride = "override"
-	ActionNoop     = "noop"
-	ActionDelete   = "delete"
+	// ActionAdopt patches managed fields into an existing unowned file after a required backup.
+	ActionAdopt  = "adopt"
+	ActionNoop   = "noop"
+	ActionDelete = "delete"
 )
 
 type Target struct {
