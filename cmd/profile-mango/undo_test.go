@@ -25,7 +25,7 @@ func installCodexAtDefault(t *testing.T, before string) string {
 	}
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, override: true}
-	planID := regexp.MustCompile(`plan ([0-9a-f]{64}): ready`).FindStringSubmatch(runInstallForTest(t, options))
+	planID := regexp.MustCompile(`plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(runInstallForTest(t, options))
 	if planID == nil {
 		t.Fatal("install plan not ready")
 	}
@@ -51,7 +51,7 @@ func TestUndoBareTargetDefaultPathPreviewThenApply(t *testing.T) {
 	if err != nil {
 		t.Fatalf("preview: %v\n%s", err, preview)
 	}
-	planID := regexp.MustCompile(`undo plan ([0-9a-f]{64}): ready`).FindStringSubmatch(preview)
+	planID := regexp.MustCompile(`undo plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(preview)
 	if planID == nil || !strings.Contains(preview, "update "+config) || !strings.Contains(preview, `-model = "gpt-5.6"`) {
 		t.Fatalf("preview lacks plan, default config, or diff:\n%s", preview)
 	}
@@ -77,7 +77,7 @@ func TestUndoRefusesDriftAndShowsDiffUnlessOverride(t *testing.T) {
 		t.Fatalf("drift error = %v", err)
 	}
 	preview, err := runUndoForTest(t, restoreOptions{target: "codex", config: config, override: true})
-	planID := regexp.MustCompile(`undo plan ([0-9a-f]{64}): ready`).FindStringSubmatch(preview)
+	planID := regexp.MustCompile(`undo plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(preview)
 	if err != nil || planID == nil {
 		t.Fatalf("override preview: %v\n%s", err, preview)
 	}

@@ -133,7 +133,7 @@ func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON bool)
 		return json.NewEncoder(cmd.OutOrStdout()).Encode(plan)
 	}
 	output := cmd.OutOrStdout()
-	if _, err := fmt.Fprintf(output, "undo plan %s: %s (original install %s)\n  target: %s\n", plan.PlanID, plan.Status, plan.OriginalPlanID, humanPath(plan.Target)); err != nil {
+	if _, err := fmt.Fprintf(output, "undo plan %s (%s), original install %s\n  target: %s\n", plan.PlanID, plan.Status, plan.OriginalPlanID, humanPath(plan.Target)); err != nil {
 		return err
 	}
 	for _, file := range plan.Files {
