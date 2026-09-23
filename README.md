@@ -1,183 +1,73 @@
 # profile-mango 🥭
 
-**Your coding-agent setup, without the copy-paste.**
+**Set up your coding agents once: one profile, installed into Claude Code, Codex, OpenCode, and more.**
 
-Switching agents shouldn't mean rewriting your instructions, copying skills, and
-setting up the same preferences again. Profile Mango aims to keep those choices in
-one reusable profile, while making it clear what each agent can actually support.
+## What is a profile?
 
-A profile is a reusable bundle of coding-agent preferences:
-
-- **Instructions and skills:** how you want your agent to work.
-- **Permissions:** which tools and actions it should be allowed to use.
-- **Model preferences:** which provider, model, and effort level to use.
-
-**Profile Mango unifies profiles, not entire agent configurations.** It manages
-native settings where needed to support a profile, leaving the rest to each agent.
-
-Your credentials stay with your agents, not in your profiles. Agent-specific
-settings such as themes and session history stay outside Profile Mango too.
-
-## What works today?
-
-**This is a private prototype. Full-profile installation is not available for any
-agent yet**, even if it has its own native named profiles.
-
-You can create profiles, check them for errors offline, and generate previews.
-For the exact versions below, `profile-mango install` can also apply a limited set of
-settings to an explicitly chosen agent configuration file. It does not launch an
-agent, authenticate, or switch a running conversation.
-
-| Agent | Native named profiles | Main-agent settings installable from a Mango profile | Explicit named agent destination |
-| --- | --- | --- | --- |
-| Claude Code `2.1.278` | Not established* | Model only | Not qualified |
-| OpenCode `1.18.31` | Not established* | Model, optionally one `SKILL.md` and its discovery path | Named primary or subagent Markdown definition with model and ordered instructions |
-| Pi `0.86.1` | Not established* | Provider, model, and thinking level | Not qualified |
-| Oh My Pi `18.2.6` | Not established* | Default model role and thinking level | Not qualified |
-| OpenClaw `2026.9.5` | Yes, separate config/state | Default agent model and thinking level | Not qualified |
-| Hermes `0.21.3` | Yes, separate config/state | Provider, default model, and reasoning effort | Not qualified |
-| Codex `0.154.0` | Yes, named config presets | Root provider, model, and `high` reasoning effort only | Separately in progress |
-
-\*Our [versioned references](docs/dev/agents/README.md) do not establish an
-equivalent native named-profile feature for these agents. Mango installation does
-not depend on one. Native profiles are not proof of full Mango profile support.
-
-Permissions, tool rules, instructions, and skills that an agent cannot install
-are never silently dropped: `install` applies the supported subset and lists the
-rest under each agent (`not installed for this agent: ...`, or
-`skippedRequirements` in `--json`). Pass `--strict` to block instead. Read the
-plan's warnings: installing a model
-does not verify authentication or enforce every route preference. OpenCode named
-definitions deliver a custom prompt, not permission enforcement or verified
-delegation. Without `--config`, `install <profile> --target <name>` plans
-against that agent's documented default user config (for example
-`~/.codex/config.toml`) and shows the resolved path in the plan; pass
-`--config <name>=<path>` to use a different file. Review the plan before applying.
-See [agent versions and limitations](docs/dev/target-evidence.md) for the exact
-fields, native evidence, and precedence limits.
-
-For Codex `0.154.0`, a route-only OpenAI/native/OAuth binding with `high` effort
-can plan three root settings at `$CODEX_HOME/config.toml` (default
-`~/.codex/config.toml`) or an explicit `config.toml`. The
-read-only plan shows warnings and a plan ID. Applying requires
-`--apply --yes --expect-plan <planID>` and backs up the config, but never changes
-login credentials or proves OAuth. Runtime model delivery, model availability,
-and effort enforcement have not been demonstrated. `codex login status`
-distinguishes API-key from ChatGPT login, not Codex-managed OAuth from
-externally supplied tokens.
-Other profile requirements are listed as skipped for Codex, or block with `--strict`.
-
-## How does installation work without native profiles?
-
-Profile Mango owns the profile names. It translates the selected profile into the
-supported settings in the destination agent's main configuration, preserving
-unrelated settings and credentials. The agent does not need a native named-profile
-feature for this.
-
-Installing starts with a diff and a plan. Applying requires confirmation, creates
-backups by default, and checks that the files have not changed since planning.
-A profile name in Mango does not by itself create a native agent profile or
-subagent. For OpenCode `1.18.31`, explicitly select `--agent
-opencode@1.18.31=primary:mango-review` or `subagent:mango-review` with a
-caller-supplied `--config opencode=<path>` ending in `agents/mango-review.md`. This writes
-a named definition and adjacent ownership manifest, not the main config. A
-primary is selectable by OpenCode, not automatically activated; a subagent is
-eligible for delegation, not proof of runtime orchestration. The generated
-instructions replace that named agent's stock prompt.
-
-To switch settings, run `profile-mango install <other-profile>` with the same target,
-configuration path, and ownership manifest, then review and approve the new plan.
-Unchanged Mango-owned files can be updated directly. An existing agent config
-file that Mango does not own yet is adopted on the first install: the plan shows
-`adopt`, keeps unrelated settings, and backs the file up first (so `--no-backup`
-blocks adoption). A Mango-owned file edited since the last install, and
-whole-file resources such as named agents and skills, still need an
-adapter-approved `--override` or stay protected. A ready plan ends with the exact
-`--apply --yes --expect-plan <planID>` command to apply it.
-
-To reverse an install, run `profile-mango undo --target <target>` (`restore` is an
-alias). It resolves the config like install (`--config` or the documented default
-path), selects the latest committed install journal beside that config (or the one
-named by `--original-plan`), and previews the restored bytes as a redacted diff with a
-new undo plan ID. Apply with `--apply` on a terminal or `--apply --yes --expect-plan
-<undo-plan-ID>`. An existing config returns byte-for-byte from its adjacent backup; a
-config the install created is removed, and an install-created ownership manifest is
-removed only while unchanged. A config edited after the install is refused, with the
-diff shown, unless `--override` discards those edits. Undo needs the install's backup
-(not `--no-backup`) and does not reverse file deletions or restore authentication.
-See [the Codex boundary](docs/dev/agents/codex.md#bounded-settings-only-installation).
-
-This is not a full reset to the new profile. Switching or omitting the one
-installed OpenCode skill removes only a clean Mango-owned `SKILL.md` and a
-Mango-introduced discovery path; ambiguous legacy paths are preserved with a
-warning. Edited or unowned skill files cannot be deleted or overridden.
+- **Profile:** portable intent, such as a description, a route name, and later permissions, instructions, and skills. It is a flat YAML file named by its folder.
+- **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides. They stay local and never hold credentials.
+- **Install:** writes the settings each agent supports into that agent's own config file. It shows a plan first, backs up what it changes, and can be undone.
 
 ## Install
 
-You'll need Go and Make. The pinned development tools are listed in
-[`mise.toml`](mise.toml). Repository access is required while the project is private.
+```bash
+go install gitlab.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
+```
+
+Once the first release is tagged, you can also install a checksum-verified binary
+from GitLab releases:
 
 ```bash
-git clone git@gitlab.com:ariel-frischer/profile-mango.git
-cd profile-mango
-make deps
-make install
-profile-mango version
+curl -fsSL https://gitlab.com/ariel-frischer/profile-mango/-/raw/main/install.sh | sh
 ```
 
-The binary is called `profile-mango` and goes into your Go bin directory, usually
-`~/go/bin`. Make sure it is on your `PATH`.
-
-## Try it
-
-Create a starter profile in a new project folder:
+## Quickstart
 
 ```bash
-profile-mango init ./my-profiles
+profile-mango init                      # starter profile and bindings in ~/.profile-mango
+profile-mango doctor                    # which agents are installed, versions, config paths
+profile-mango install default --all     # show the plan; nothing is written yet
+profile-mango install default --all --apply --yes --expect-plan <plan-id>
+profile-mango undo --target codex       # preview reversing that install
+profile-mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 ```
 
-Check it using the starter model settings `init` already scaffolded:
+The plan ends with the exact apply command, including its plan ID. On a terminal,
+`--apply` alone asks for y/N confirmation instead. `--all` skips agents that are
+not installed, and an existing config is adopted with a backup.
 
-```bash
-profile-mango validate ./my-profiles/profiles/default/profile.yaml \
-  --bindings ./my-profiles/bindings/local.yaml
-```
+To change the model, edit `~/.profile-mango/bindings/local.yaml`. See the
+[profile reference](docs/public/profile-reference.md).
 
-Edit `profiles/default/profile.yaml` to change the profile. Its fields sit at
-the top level, and the name defaults to the folder name:
+## What installs today
 
-```yaml
-description: Default profile scaffolded by profile-mango init
-route: local
-```
+Today mainly the model and route settings install. OpenCode can also take one
+skill and named agents. Anything else an agent can't take, such as instructions,
+permissions, tools, or skills, is listed in the plan as
+`not installed for this agent: ...` and skipped. Pass `--strict` to block
+instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 
-The separate `bindings/local.yaml` file (a gitignored copy of
-`bindings/local.example.yaml`) describes the provider and model, not passwords
-or tokens. `transport` defaults to `native` and `authentication` to `oauth`:
+| Agent | Installs | Details |
+| --- | --- | --- |
+| Claude Code | Model | [agents](docs/public/agents.md#claude-code) |
+| Codex | Provider, model, effort | [agents](docs/public/agents.md#codex) |
+| OpenCode | Model, one skill, named agents | [agents](docs/public/agents.md#opencode) |
+| Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
+| Oh My Pi | Model, thinking level | [agents](docs/public/agents.md#oh-my-pi) |
+| OpenClaw | Model, thinking level | [agents](docs/public/agents.md#openclaw) |
+| Hermes | Provider, model, effort | [agents](docs/public/agents.md#hermes) |
 
-```yaml
-routes:
-  local:
-    provider: openai
-    model: gpt-6-sol
-    effort: high
-```
-
-Neither command changes your agent configuration.
-
-Prefer a shared location? Run `profile-mango init` without a directory to use
-`~/.profile-mango`. Existing files are never overwritten.
-
-For installation flags and consent requirements, run `profile-mango install --help`.
-The bundled [agent skill](.agents/skills/profile-mango/SKILL.md) can also guide a
-coding agent through authoring profiles and planning supported installations.
+Each agent has a tested version range. Outside it, install still works but warns.
+Credentials, sessions, plugins, and MCP are never read or written.
 
 ## Documentation
 
-- [Example profiles](examples/README.md): three cross-agent workflow profiles (coding, review, docs-research) with original instructions, skills, and a `targets`-override binding example.
-- [Roadmap](ROADMAP.md): where the project is heading.
-- [Technical documentation](docs/index.md): formats, architecture, and agent compatibility evidence.
-- [Contributing](CONTRIBUTING.md): development setup and checks.
+- [Concepts](docs/public/concepts.md): profiles, bindings, routes, and what install writes, skips, backs up, and undoes.
+- [Profile and bindings reference](docs/public/profile-reference.md): every field and its default.
+- [Agents](docs/public/agents.md): per-agent settings, default paths, tested versions, and caveats.
+- [Example profiles](examples/README.md): coding, review, and docs-research workflows.
+- [All docs](docs/index.md), including developer evidence and architecture.
+- [Roadmap](ROADMAP.md) and [Contributing](CONTRIBUTING.md).
 
 ## License
 
