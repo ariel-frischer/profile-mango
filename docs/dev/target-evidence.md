@@ -1,10 +1,12 @@
 # Target evidence ledger
 
-**Evidence dates:** initial 2026-09-20 local / 2026-09-21 UTC; installation updates 2026-09-22 UTC
+**Evidence dates:** initial 2026-09-20 local / 2026-09-21 UTC; installation updates 2026-09-22 UTC; Codex runtime diagnostics 2026-09-23 UTC
 **Platform:** Linux x86_64
 **Scope:** Canonical contract, shared transaction, exact-version renderer, and
-narrow installation evidence. All native qualification and install validation use
-synthetic disposable state, not personal agent homes or authenticated providers.
+narrow installation evidence. Installer qualification and validation use synthetic
+disposable state, not personal agent homes or authenticated providers. Separate,
+explicitly authorized Codex runtime diagnostics are recorded below and do not
+upgrade the installer's evidence level.
 The dated target sections below distinguish initial source/package review from
 subsequent isolated native commands or settings-module probes. Native probes may
 write only within their disposable sandbox. No full-profile runtime or policy
@@ -542,6 +544,22 @@ was exercised. This endpoint starts auth/config/cloud, plugin and SQLite
 machinery, so it was confined to an empty-auth, network/PID/IPC-isolated sandbox,
 not used as a personal-home inspector. Retained requirement-to-check evidence:
 `.worktrees/reports/ap-6fu.14/native-qualification-20260923.md`.
+
+Separately authorized Codex runtime diagnostics on 2026-09-23 inspected only
+read-only authentication metadata and mounted the confirmed credential file
+read-only inside disposable state. The stored `chatgpt` mode and pinned-binary
+ChatGPT login status were observed, but neither proves that profile-mango
+enforces an exact OAuth route. Two bounded provider-capable requests timed out;
+the first retained no partial events and the second retained no JSON events or
+usage. Model availability, delivery, effort enforcement, and the cause of either
+timeout remain unknown. Later credential-free, network-blocked cold-start
+probes sometimes emitted no event, while instrumented runs reached
+`thread.started`; no common blocking stage was identified. State-DB migration
+counts and zero thread rows do not locate the stall because a successful
+`--ephemeral` run also had zero persisted thread rows. These diagnostics do not
+alter the settings-only install claim and authorize no further provider call.
+Retained sanitized evidence: `.worktrees/reports/ap-6fu.14/live-qualification-20260923.md`
+and `.worktrees/reports/ap-6fu.14/cold-start-stages-20260923.md`.
 
 `codex login status` distinguishes stored API-key from ChatGPT login, but the
 same ChatGPT message covers both Codex-managed OAuth and externally supplied
