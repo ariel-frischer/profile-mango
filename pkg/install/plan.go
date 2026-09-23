@@ -277,7 +277,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
 	if blocked {
 		targetPlan.Status = StatusConflict
-		targetPlan.Reason = "one or more target files conflict with unowned or edited state"
+		targetPlan.Reason = conflictReason(targetPlan.Diagnostics)
 		return targetPlan
 	}
 	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, targetRequest, request.ProfileName, patch, targetPlan.Files, changes)
@@ -344,12 +344,8 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		fields := fieldsForNames(file.Fields)
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: append([]string(nil), file.Ownership...)})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
+		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
-			message := "target file is edited or unowned; use an adapter-approved override only when the effect is understood"
-			if file.Delete {
-				message = "deletion requires an unchanged profile-mango-owned file and cannot be overridden"
-			}
-			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", filepath.Base(path), message, 0, 0)
 			continue
 		}
 		if action != ActionNoop && (!file.Delete || before.Exists) {
@@ -382,7 +378,33 @@ func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot
 	if request.Override && overrideAllowed {
 		return ActionOverride, false
 	}
+	if !owned && overrideAllowed {
+		return ActionAdopt, !request.Backup
+	}
 	return ActionUpdate, true
+}
+
+func conflictReason(diagnostics profilemango.Diagnostics) string {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == "install.adopt_requires_backup" {
+			return "adopting an existing file that profile-mango does not own requires a backup; remove --no-backup"
+		}
+	}
+	return "one or more target files conflict with unowned or edited state"
+}
+
+// addFileDiagnostic explains an adoption backup or a file conflict for one planned file.
+func addFileDiagnostic(targetPlan *TargetPlan, name, action string, conflict, deleteFile bool) {
+	switch {
+	case action == ActionAdopt && conflict:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.adopt_requires_backup", name, "adopting an existing file that profile-mango does not own requires a backup; remove --no-backup", 0, 0)
+	case action == ActionAdopt:
+		targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.adopt_backup", name, "existing "+name+" is not managed by profile-mango yet; it will be backed up before the first managed change, and unrelated settings are kept", 0, 0)
+	case conflict && deleteFile:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", name, "deletion requires an unchanged profile-mango-owned file and cannot be overridden", 0, 0)
+	case conflict:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", name, "target file is edited or unowned; use an adapter-approved override only when the effect is understood", 0, 0)
+	}
 }
 
 func ownershipHash(manifest Manifest, path string) (string, bool) {

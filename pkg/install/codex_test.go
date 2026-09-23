@@ -85,13 +85,13 @@ func TestCodexSettingsInstallLeavesAuthenticationUntouched(t *testing.T) {
 	}
 }
 
-func TestCodexInstallRejectsUnownedConflictAndAllowsOverride(t *testing.T) {
+func TestCodexInstallAdoptsUnownedConfigAndAllowsOverride(t *testing.T) {
 	request, _ := codexTestRequest(t)
 	config := request.Targets[0].ConfigPath
 	writeInstallTestFile(t, config, "unknown = true\n")
-	conflict, err := BuildPlan(request)
-	if err != nil || conflict.Targets[0].Status != StatusConflict {
-		t.Fatalf("conflict = %#v, err=%v", conflict, err)
+	adopt, err := BuildPlan(request)
+	if err != nil || adopt.Status != StatusReady || !hasFileAction(adopt.Targets[0], ActionAdopt) {
+		t.Fatalf("adopt = %#v, err=%v", adopt, err)
 	}
 	request.Override = true
 	override, err := BuildPlan(request)

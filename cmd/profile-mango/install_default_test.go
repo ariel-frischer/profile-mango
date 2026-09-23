@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
@@ -23,20 +24,27 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	}
 	before := "# keep\nunknown = true\n"
 	writeFile(t, config, before)
-	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, override: true}
+	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}}
 	output := runInstallForTest(t, options)
-	if !strings.Contains(output, "    config: "+config+" (default)\n") {
-		t.Fatalf("plan omitted default config path:\n%s", output)
+	if !strings.Contains(output, "    config: "+config+" (default)\n") || !strings.Contains(output, "config.toml: adopt\n") || !strings.Contains(output, "backed up") {
+		t.Fatalf("plan omitted default config path or adoption backup:\n%s", output)
 	}
-	planID := regexp.MustCompile(`plan ([0-9a-f]{64}): ready`).FindStringSubmatch(output)
+	planID := regexp.MustCompile(`(?m)^plan ([0-9a-f]{64}) \(ready\)$`).FindStringSubmatch(output)
 	if planID == nil {
 		t.Fatalf("plan not ready:\n%s", output)
+	}
+	want := "  profile-mango install route-only --profiles " + profiles + " --resource-root " + root + " --bindings " + bindings + " --target codex --apply --yes --expect-plan " + planID[1] + "\n"
+	if !strings.HasSuffix(output, want) {
+		t.Fatalf("plan does not end with the apply command %q:\n%s", want, output)
 	}
 	options.apply, options.yes, options.expectPlan = true, true, planID[1]
 	runInstallForTest(t, options)
 	data, err := os.ReadFile(config)
 	if err != nil || !strings.HasPrefix(string(data), before) || !strings.Contains(string(data), `model = "gpt-5.6"`) {
 		t.Fatalf("installed config = %q, err=%v", data, err)
+	}
+	if backup, err := os.ReadFile(installfs.BackupPath(config, planID[1])); err != nil || string(backup) != before {
+		t.Fatalf("adoption backup = %q, err=%v", backup, err)
 	}
 }
 

@@ -74,12 +74,12 @@ func TestPiInstallConflictAndStaleApply(t *testing.T) {
 	}
 	writeInstallTestFile(t, config, `{ "defaultProvider": "third-party", "defaultModel": "third-party", "defaultThinkingLevel": "low" }`)
 	request.Targets[0].ConfigPath = config
-	conflict, err := BuildPlan(request)
+	adopt, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if conflict.Status != StatusBlocked || conflict.Targets[0].Status != StatusConflict {
-		t.Fatalf("unowned Pi config was not blocked: %#v", conflict)
+	if adopt.Status != StatusReady || adopt.Targets[0].Files[0].Action != ActionAdopt {
+		t.Fatalf("unowned Pi config was not adopted: %#v", adopt)
 	}
 	request.Override = true
 	initial, err := BuildPlan(request)
@@ -195,7 +195,7 @@ func TestPiInstallRejectsStalePlanWithoutWrites(t *testing.T) {
 	assertInstallTestFile(t, config, stale)
 }
 
-func TestPiInstallBlocksUnownedConfigUntilOverride(t *testing.T) {
+func TestPiInstallAdoptsUnownedConfigOrOverrides(t *testing.T) {
 	request, _ := piInstallTestRequest(t)
 	config := request.Targets[0].ConfigPath
 	writeInstallTestFile(t, config, "{\"defaultProvider\":\"old\",\"defaultModel\":\"old\",\"defaultThinkingLevel\":\"low\"}\n")
@@ -203,8 +203,8 @@ func TestPiInstallBlocksUnownedConfigUntilOverride(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusConflict {
-		t.Fatalf("unowned Pi config was not blocked: %#v", plan)
+	if plan.Status != StatusReady || piFilePlan(plan.Targets[0], "settings.json").Action != ActionAdopt {
+		t.Fatalf("unowned Pi config was not adopted: %#v", plan)
 	}
 	request.Override = true
 	override, err := BuildPlan(request)
