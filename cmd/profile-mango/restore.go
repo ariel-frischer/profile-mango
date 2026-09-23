@@ -29,17 +29,8 @@ func newRestoreCmd() *cobra.Command {
 }
 
 func runRestore(cmd *cobra.Command, options restoreOptions) error {
-	if strings.TrimSpace(options.config) == "" {
-		return fmt.Errorf("restore requires --config-path")
-	}
-	if options.yes && !options.apply {
-		return fmt.Errorf("--yes requires --apply")
-	}
-	if options.expectPlan != "" && (!options.apply || !options.yes) {
-		return fmt.Errorf("--expect-plan requires --apply --yes")
-	}
-	if options.apply && (!options.yes || options.expectPlan == "") {
-		return fmt.Errorf("restore apply requires --yes --expect-plan")
+	if err := validateRestoreOptions(options); err != nil {
+		return err
 	}
 	plan, err := install.BuildRestorePlan(options.target, options.config, options.originalPlan)
 	if err != nil {
@@ -53,7 +44,10 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	if !options.apply {
 		return nil
 	}
-	if err := install.ApplyRestorePlan(plan, options.expectPlan); err != nil {
+	if err := authorizeRestore(cmd, options, plan.PlanID, terminalInput(cmd.InOrStdin())); err != nil {
+		return err
+	}
+	if err := install.ApplyRestorePlan(plan, options.expectedID(plan.PlanID)); err != nil {
 		return err
 	}
 	if options.jsonOutput {
@@ -61,6 +55,42 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	}
 	_, err = fmt.Fprintf(cmd.OutOrStdout(), "restore %s: committed\n", plan.PlanID)
 	return err
+}
+
+func validateRestoreOptions(options restoreOptions) error {
+	if strings.TrimSpace(options.config) == "" {
+		return fmt.Errorf("restore requires --config-path")
+	}
+	if options.yes && !options.apply {
+		return fmt.Errorf("--yes requires --apply")
+	}
+	if options.expectPlan != "" && (!options.apply || !options.yes) {
+		return fmt.Errorf("--expect-plan requires --apply --yes")
+	}
+	if options.yes && options.expectPlan == "" {
+		return fmt.Errorf("--yes requires --expect-plan")
+	}
+	if options.apply && (options.jsonOutput || nonInteractive) && !options.yes {
+		return fmt.Errorf("non-interactive or JSON restore apply requires --yes --expect-plan")
+	}
+	return nil
+}
+
+func (options restoreOptions) expectedID(planID string) string {
+	if options.yes {
+		return options.expectPlan
+	}
+	return planID
+}
+
+func authorizeRestore(cmd *cobra.Command, options restoreOptions, planID string, isTerminal bool) error {
+	if options.yes {
+		return nil
+	}
+	if !isTerminal || options.jsonOutput || nonInteractive {
+		return fmt.Errorf("interactive restore apply requires a terminal; use --yes --expect-plan")
+	}
+	return confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), planID)
 }
 
 func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON bool) error {
@@ -71,7 +101,7 @@ func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON bool)
 		return err
 	}
 	for _, file := range plan.Files {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "  %s %s: %s -> %s\n", file.Action, file.Path, file.BeforeSHA256, file.AfterSHA256); err != nil {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "  %s %s: %s -> %s\n", humanPath(file.Action), humanPath(file.Path), humanPath(file.BeforeSHA256), humanPath(file.AfterSHA256)); err != nil {
 			return err
 		}
 	}

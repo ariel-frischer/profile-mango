@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
@@ -94,6 +95,30 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 				t.Fatal(err)
 			}
 			writeFile(t, path, strings.Replace(string(data), `"entries": [`, `"entries": [{"path":"/unrelated"},`, 1))
+		},
+		"duplicate journal key": func(t *testing.T, config, id string) {
+			path := config + ".profile-mango.journal." + id[:16] + ".json"
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, path, strings.Replace(string(data), `"status": "committed",`, `"status": "committed", "status": "committed",`, 1))
+		},
+		"duplicate manifest key": func(t *testing.T, config, _ string) {
+			path := config + ".profile-mango.manifest.json"
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, path, strings.Replace(string(data), `"owner": "profile-mango",`, `"owner": "profile-mango", "owner": "profile-mango",`, 1))
+		},
+		"trailing manifest JSON": func(t *testing.T, config, _ string) {
+			path := config + ".profile-mango.manifest.json"
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, path, string(data)+"{}")
 		},
 		"symlinked backup": func(t *testing.T, config, id string) {
 			path := config + ".profile-mango.bak." + id[:16]
@@ -194,13 +219,140 @@ func TestRestoreCLIHelpAndConsent(t *testing.T) {
 			t.Fatalf("help lacks %s", text)
 		}
 	}
+	config, id := installedRestoreFixture(t, true)
 	for name, options := range map[string]restoreOptions{
-		"omitted consent":      {target: "codex@0.154.0", config: "/unused", originalPlan: strings.Repeat("0", 64), apply: true},
-		"json without consent": {target: "codex@0.154.0", config: "/unused", originalPlan: strings.Repeat("0", 64), apply: true, jsonOutput: true},
+		"omitted consent":      {target: "codex@0.154.0", config: config, originalPlan: id, apply: true},
+		"json without consent": {target: "codex@0.154.0", config: config, originalPlan: id, apply: true, jsonOutput: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := runRestore(command, options); err == nil || !strings.Contains(err.Error(), "--yes --expect-plan") {
 				t.Fatalf("error = %v", err)
+			}
+		})
+	}
+}
+
+func TestRestoreInteractiveConsentAndHumanPath(t *testing.T) {
+	for name, test := range map[string]struct {
+		input           string
+		terminal, allow bool
+	}{
+		"terminal yes":   {input: "y\n", terminal: true, allow: true},
+		"terminal empty": {input: "\n", terminal: true},
+		"terminal no":    {input: "n\n", terminal: true},
+		"redirected yes": {input: "y\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+			cmd := &cobra.Command{}
+			cmd.SetIn(strings.NewReader(test.input))
+			cmd.SetOut(&output)
+			err := authorizeRestore(cmd, restoreOptions{apply: true}, strings.Repeat("a", 64), test.terminal)
+			if (err == nil) != test.allow {
+				t.Fatalf("authorization = %v", err)
+			}
+		})
+	}
+	var output bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetOut(&output)
+	path := "/synthetic/unsafe\n\x1b[31m.toml"
+	plan := install.RestorePlan{PlanID: strings.Repeat("a", 64), Status: "ready", Files: []install.RestoreFile{{Path: path, Action: "update"}}}
+	if err := writeRestorePlan(cmd, plan, false); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(output.String(), path) || !strings.Contains(output.String(), `\n\x1b`) {
+		t.Fatalf("unsanitized human restore path: %q", output.String())
+	}
+}
+
+func TestCodexRestoreRejectsSameContentReplacementAfterPreview(t *testing.T) {
+	for name, pathFor := range map[string]func(string, string) string{
+		"config":   func(config, _ string) string { return config },
+		"manifest": func(config, _ string) string { return config + ".profile-mango.manifest.json" },
+		"journal":  func(config, id string) string { return config + ".profile-mango.journal." + id[:16] + ".json" },
+		"backup":   func(config, id string) string { return config + ".profile-mango.bak." + id[:16] },
+	} {
+		t.Run(name, func(t *testing.T) {
+			config, id := installedRestoreFixture(t, true)
+			plan, err := install.BuildRestorePlan("codex@0.154.0", config, id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := pathFor(config, id)
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			info, err := os.Stat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			replacement := path + ".replacement"
+			if err := os.WriteFile(replacement, data, info.Mode().Perm()); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(replacement, path); err != nil {
+				t.Fatal(err)
+			}
+			if err := install.ApplyRestorePlan(plan, plan.PlanID); err == nil {
+				t.Fatal("same-content replacement accepted")
+			}
+			if _, err := os.Stat(config); err != nil {
+				t.Fatalf("restore wrote on stale source: %v", err)
+			}
+		})
+	}
+}
+
+func TestCodexRestoreOriginalManifestCanonicalBoundary(t *testing.T) {
+	for name, canonical := range map[string]bool{"generated": true, "reformatted": false} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			profiles, bindings := writeCodexInstallInputs(t, root)
+			config := filepath.Join(root, "config.toml")
+			original := []byte("# original\n")
+			if err := os.WriteFile(config, original, 0o640); err != nil {
+				t.Fatal(err)
+			}
+			manifestPath := config + ".profile-mango.manifest.json"
+			owner := install.Manifest{APIVersion: install.ManifestAPIVersion, Kind: install.ManifestKind, Owner: "profile-mango", Generation: 1,
+				Profile: "route-only", Target: install.Target{Name: "codex", Version: "0.154.0"}, Files: []install.ManifestFile{{Path: config, SHA256: installfs.Hash(original)}}}
+			prior, err := json.MarshalIndent(owner, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			prior = append(prior, '\n')
+			if !canonical {
+				prior = append(prior, '\n')
+			}
+			if err := os.WriteFile(manifestPath, prior, 0o640); err != nil {
+				t.Fatal(err)
+			}
+			plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
+				Targets: []install.TargetRequest{{Target: owner.Target, ConfigPath: config}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+				t.Fatal(err)
+			}
+			restore, err := install.BuildRestorePlan("codex@0.154.0", config, plan.PlanID)
+			if !canonical {
+				if err == nil {
+					t.Fatal("reformatted original ownership manifest accepted")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := install.ApplyRestorePlan(restore, restore.PlanID); err != nil {
+				t.Fatal(err)
+			}
+			got, err := os.ReadFile(manifestPath)
+			if err != nil || !bytes.Equal(got, prior) {
+				t.Fatalf("manifest restoration: %v, bytes=%q", err, got)
 			}
 		})
 	}

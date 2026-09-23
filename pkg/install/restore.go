@@ -7,6 +7,7 @@ import (
 	"io"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
@@ -107,6 +108,9 @@ func parseRestoreJournal(snapshot installfs.Snapshot, id, config, manifest strin
 	if err := decoder.Decode(new(any)); err != io.EOF {
 		return journal, fmt.Errorf("install journal contains trailing data")
 	}
+	if err := requireGeneratedJSON(snapshot.Content, journal, "install journal"); err != nil {
+		return journal, err
+	}
 	if journal.APIVersion != installfs.JournalVersion || journal.PlanID != id || journal.Status != "committed" || journal.LockPath != config+".profile-mango.lock" || len(journal.Entries) != 2 {
 		return journal, fmt.Errorf("install journal does not describe a committed Codex config and manifest transaction")
 	}
@@ -124,6 +128,9 @@ func validateRestoreManifest(snapshot, config installfs.Snapshot, id string) err
 	if err != nil {
 		return fmt.Errorf("validate ownership manifest: %w", err)
 	}
+	if err := requireGeneratedJSON(snapshot.Content, manifest, "ownership manifest"); err != nil {
+		return err
+	}
 	if manifest.Owner != "profile-mango" || manifest.Target.String() != "codex@0.154.0" || manifest.PlanID != "" || len(manifest.Files) != 1 || manifest.Files[0].Path != config.Path || manifest.Files[0].SHA256 != config.SHA256 || len(manifest.Fields) != 0 {
 		return fmt.Errorf("ownership manifest does not exclusively own the current Codex config for install %s", id)
 	}
@@ -132,14 +139,14 @@ func validateRestoreManifest(snapshot, config installfs.Snapshot, id string) err
 
 func restoreChange(entry installfs.JournalEntry, current installfs.Snapshot, id string) (installfs.Change, installfs.Change, error) {
 	if !entry.Applied || entry.Delete || entry.Path != current.Path || !restoreID.MatchString(entry.AfterSHA256) || !current.Exists || current.SHA256 != entry.AfterSHA256 {
-		return installfs.Change{}, installfs.Change{}, fmt.Errorf("installed file %s is edited or journal entry invalid", entry.Path)
+		return installfs.Change{}, installfs.Change{}, fmt.Errorf("installed file %q is edited or journal entry invalid", entry.Path)
 	}
 	expectedMode := uint32(0o600)
 	if entry.BeforeExists {
 		expectedMode = entry.BeforeMode
 	}
 	if uint32(current.Mode) != expectedMode {
-		return installfs.Change{}, installfs.Change{}, fmt.Errorf("installed file %s mode differs from recorded transaction", entry.Path)
+		return installfs.Change{}, installfs.Change{}, fmt.Errorf("installed file %q mode differs from recorded transaction", entry.Path)
 	}
 	change := installfs.Change{Path: entry.Path, Before: current, Delete: !entry.BeforeExists}
 	if !entry.BeforeExists {
@@ -158,10 +165,33 @@ func restoreChange(entry installfs.JournalEntry, current installfs.Snapshot, id 
 	if !backup.Exists || backup.SHA256 != entry.BeforeSHA256 || uint32(backup.Mode) != entry.BeforeMode {
 		return change, installfs.Change{}, fmt.Errorf("restore backup hash or mode differs from journal")
 	}
+	if strings.HasSuffix(entry.Path, ".profile-mango.manifest.json") {
+		original, err := decodeManifest(backup.Content, Target{Name: "codex", Version: "0.154.0"})
+		if err != nil {
+			return change, installfs.Change{}, fmt.Errorf("decode original ownership manifest: %w", err)
+		}
+		if original.Owner != "profile-mango" {
+			return change, installfs.Change{}, fmt.Errorf("original ownership manifest has another owner")
+		}
+		if err := requireGeneratedJSON(backup.Content, original, "original ownership manifest"); err != nil {
+			return change, installfs.Change{}, err
+		}
+	}
 	change.Content = backup.Content
 	// Transaction engine preserves the current mode by default; record the original mode explicitly.
 	change.Mode = backup.Mode
 	return change, installfs.Change{Path: backup.Path, Before: backup}, nil
+}
+
+func requireGeneratedJSON(data []byte, value any, label string) error {
+	canonical, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode %s: %w", label, err)
+	}
+	if !bytes.Equal(data, append(canonical, '\n')) {
+		return fmt.Errorf("%s is not a canonical installer-generated JSON artifact", label)
+	}
+	return nil
 }
 
 func restorePlanID(plan RestorePlan, journal, config, manifest installfs.Snapshot) (string, error) {
@@ -169,15 +199,27 @@ func restorePlanID(plan RestorePlan, journal, config, manifest installfs.Snapsho
 		OriginalID, Target, Config, JournalHash, ConfigHash, ManifestHash string
 		Files                                                             []RestoreFile
 		Modes                                                             []uint32
+		Sources                                                           []installfs.Identity
 	}{
 		plan.OriginalPlanID, plan.Target, filepath.Clean(plan.ConfigPath), journal.SHA256, config.SHA256, manifest.SHA256, plan.Files,
-		[]uint32{uint32(config.Mode), uint32(manifest.Mode)},
+		[]uint32{uint32(config.Mode), uint32(manifest.Mode)}, restoreSourceIdentities(plan),
 	}
 	data, err := json.Marshal(identity)
 	if err != nil {
 		return "", err
 	}
 	return installfs.Hash(data), nil
+}
+
+func restoreSourceIdentities(plan RestorePlan) []installfs.Identity {
+	identities := make([]installfs.Identity, 0, len(plan.changes)+len(plan.checks))
+	for _, change := range plan.changes {
+		identities = append(identities, change.Before.Identity)
+	}
+	for _, check := range plan.checks {
+		identities = append(identities, check.Before.Identity)
+	}
+	return identities
 }
 
 func ApplyRestorePlan(plan RestorePlan, expected string) error {

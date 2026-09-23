@@ -66,7 +66,9 @@ For an installation made with the default adjacent manifest and backups, preview
 guarded reversal with `profile-mango restore --target codex@0.154.0 --config-path
 /explicit/disposable/config.toml --original-plan <64-hex-install-plan-ID> --json`.
 The read-only output contains a *new* restore plan ID and both file effects.
-Apply with the same flags plus `--apply --yes --expect-plan <restore-plan-ID>`.
+Apply with the same flags plus `--apply --yes --expect-plan <restore-plan-ID>`
+for automation, or omit `--json` and use `--apply` on a terminal to answer the
+default-no y/N confirmation prompt.
 This requires an exact committed two-file install journal, unchanged installed
 config and manifest, matching ownership and adjacent original backup bytes/mode.
 An existing config installed with `--no-backup`, edited target state, alternate
@@ -74,6 +76,11 @@ manifest destination, or stale preview is rejected. A manifest created by the
 original install is removed; an originally owned manifest is restored from its
 backup. No arbitrary journal or backup path is accepted. Restore is a file
 reversal, not proof of native effective state or OAuth behavior.
+The journal and manifest must match the installer's exact generated JSON form;
+an originally present ownership manifest must also have that form. A previously
+accepted but manually reformatted manifest is not automatically restored, even
+if its parsed ownership is otherwise valid. Keep its backup for manual review.
+Same-content file replacement after preview also invalidates restore consent.
 
 The adapter rejects required permissions, tools, instructions, skills,
 non-qualified routes, malformed TOML, active profiles and provider shadow
