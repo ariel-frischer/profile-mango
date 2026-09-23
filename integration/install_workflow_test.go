@@ -125,7 +125,7 @@ func (w installWorkflow) run(t *testing.T, extra ...string) commandResult {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, w.binary, append(append([]string(nil), w.args...), extra...)...)
-	cmd.Dir, cmd.Env = w.root, w.env
+	cmd.Dir, cmd.Env = w.root, withoutAgentCommands(w.env, w.root)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
@@ -196,4 +196,10 @@ func assertWorkflowBytes(t *testing.T, path string, want []byte) {
 	if got := readWorkflowFile(t, path); !bytes.Equal(got, want) {
 		t.Fatalf("unexpected contents at %s: %q, want %q", path, got, want)
 	}
+}
+
+// withoutAgentCommands points PATH at an empty directory so install's
+// installed-version check never runs a real agent command on this machine.
+func withoutAgentCommands(env []string, root string) []string {
+	return replaceEnvironment(env, []string{"PATH=" + filepath.Join(root, "no-agent-commands")})
 }

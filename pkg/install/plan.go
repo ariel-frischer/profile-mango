@@ -43,6 +43,7 @@ func BuildPlan(request Request) (Plan, error) {
 	plan.sources = loaded.Sources
 	for _, targetRequest := range targets {
 		targetPlan := planTarget(request, registry, targetRequest, loaded)
+		attachVersionCheck(&targetPlan, request.DetectVersion)
 		plan.Targets = append(plan.Targets, targetPlan)
 		plan.Diagnostics = append(plan.Diagnostics, targetPlan.Diagnostics...)
 	}

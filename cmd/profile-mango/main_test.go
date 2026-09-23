@@ -17,6 +17,9 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	// Never run real agent commands from install tests; tests that cover
+	// detection install their own detector over fake binaries.
+	installVersionDetector = nil
 	code := 1
 	if err := guardDefaultPaths(root); err != nil {
 		fmt.Fprintln(os.Stderr, err)

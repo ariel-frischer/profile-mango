@@ -66,6 +66,35 @@ The observations are version-qualified snapshots, not compatibility ranges.
 Dated initial M0 source reviews below are historical; later installation
 qualification sections and this summary record the current narrow support gates.
 
+## Installed-version policy (ap-uuz.14)
+
+Agents auto-update, so the installed binary often differs from the qualified
+version above. Each install adapter states a *tested range*. By default it is
+the tilde range of the qualified version: at least the qualified version and
+below the next minor (`2.1.278` gives `>=2.1.278 <2.2.0`; `0.154.0` gives
+`>=0.154.0 <0.155.0`). CalVer `year.month.patch` versions keep the same
+year and month (`2026.9.5` gives `>=2026.9.5 <2026.10.0`). An adapter may set an
+explicit `compatibleRange`, but only when new evidence recorded in this ledger
+supports the wider range.
+
+- `install` runs the target's documented command with `--version` (bounded
+  timeout, capped output, and credential-free environment, as `doctor` does)
+  for each ready or no-op target. It records the result as `versionCheck` in the
+  plan JSON and plan ID, and prints an `installed version:` line.
+- Inside the range, the plan proceeds with that note only.
+- Outside the range, the command is missing, or its version is unreadable, the
+  plan still proceeds with status `ready`. It shows a visible warning (human
+  and JSON diagnostic `install.version_out_of_range`, `install.version_not_found`
+  or `install.version_unknown`). The settings are still written for the qualified
+  version, and profile-mango makes no compatibility claim for that binary.
+- An explicit `--target name@version` is still exact. An unregistered version
+  stays blocked, and no version check runs for it.
+- `doctor` shows `IN RANGE` (`yes`, `no (tested <range>)`, or `-`) and adds
+  `inRange` and `compatibleRange` to `--json`. `versionMatch` keeps its earlier
+  exact-substring meaning.
+- A tested range is a stated claim, not new evidence. Qualification evidence
+  still belongs to the exact version recorded above.
+
 ## Pi v0.86.1 evidence
 
 ### Immutable artifact, release, and platform

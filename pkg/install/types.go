@@ -80,9 +80,12 @@ type AdapterMetadata struct {
 	Version        string `json:"version"`
 	AdapterVersion string `json:"adapterVersion"`
 	EvidenceSHA256 string `json:"evidenceSHA256,omitempty"`
-	Installable    bool   `json:"installable"`
-	Status         string `json:"status"`
-	Reason         string `json:"reason"`
+	// CompatibleRange overrides the default tilde range (">=A <B") of tested
+	// agent versions; widen it only with recorded evidence.
+	CompatibleRange string `json:"compatibleRange,omitempty"`
+	Installable     bool   `json:"installable"`
+	Status          string `json:"status"`
+	Reason          string `json:"reason"`
 }
 
 type Snapshot struct {
@@ -181,6 +184,8 @@ type Request struct {
 	Registry     *Registry
 	// Env resolves documented default config paths for targets without an explicit path.
 	Env PathEnv
+	// DetectVersion, when set, reports each ready target's installed agent version.
+	DetectVersion VersionDetector
 }
 
 type Manifest struct {
@@ -224,6 +229,7 @@ type TargetPlan struct {
 	Files             []FilePlan               `json:"files,omitempty"`
 	Fields            []FieldChange            `json:"fields,omitempty"`
 	Diagnostics       profilemango.Diagnostics `json:"diagnostics,omitempty"`
+	VersionCheck      *VersionCheck            `json:"versionCheck,omitempty"`
 	ConfigPath        string                   `json:"-"`
 	ManifestPath      string                   `json:"-"`
 	changes           []installfs.Change       `json:"-"`
