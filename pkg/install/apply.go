@@ -77,6 +77,11 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 	if err != nil {
 		return report, fmt.Errorf("apply installation transaction: %w", err)
 	}
+	if applied.Status == "committed" {
+		if err := writeJournalRefs(targets, plan.PlanID, applied); err != nil {
+			return report, fmt.Errorf("install committed, but undo cannot locate its journal: %w", err)
+		}
+	}
 	return report, nil
 }
 

@@ -151,6 +151,11 @@ func JournalPath(path, planID string) string {
 	return filepath.Clean(path) + ".profile-mango.journal." + shortID(planID) + ".json"
 }
 
+// WriteSidecar atomically writes a small installer-owned 0600 file outside a transaction.
+func WriteSidecar(path string, data []byte) error {
+	return writeAtomicUnconditional(path, data, 0o600)
+}
+
 func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	changes, err := normalizeChanges(changes)
 	if err != nil {

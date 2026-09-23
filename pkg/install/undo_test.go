@@ -217,11 +217,10 @@ func TestUndoOfMultiTargetInstallLeavesOtherTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The shared journal sits beside the lexically first path, so only that target is discoverable.
-	if _, err := BuildUndoPlan(UndoRequest{Target: piTarget, ConfigPath: piConfig}); err == nil {
-		t.Fatal("undo found a journal that is not beside the pi config")
-	}
 	applyUndo(t, UndoRequest{Target: codexTarget, ConfigPath: codexConfig})
 	assertInstallTestFile(t, codexConfig, "# codex original\n")
 	assertInstallTestFile(t, piConfig, string(installedPi))
+	// The shared journal sits beside the lexically first path; a reference beside the pi config locates it.
+	applyUndo(t, UndoRequest{Target: piTarget, ConfigPath: piConfig})
+	assertInstallTestFile(t, piConfig, "{}\n")
 }
