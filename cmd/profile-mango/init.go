@@ -22,6 +22,11 @@ routes:
     provider: openai
     model: gpt-6-sol
     effort: high
+    # Each listed agent gets the route above with these fields replaced.
+    targets:
+      claude-code:
+        provider: anthropic
+        model: claude-sonnet-5
 `
 
 const starterBindingsGitignore = `# Keep machine-local bindings out of version control.

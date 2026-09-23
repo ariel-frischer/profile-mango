@@ -34,6 +34,7 @@ type installOptions struct {
 	expectPlan     string
 	noBackup       bool
 	override       bool
+	strict         bool
 	jsonOutput     bool
 	nonInteractive bool
 }
@@ -66,6 +67,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.expectPlan, "expect-plan", "", "expected plan ID required for --yes and apply")
 	cmd.Flags().BoolVar(&options.noBackup, "no-backup", false, "disable create-only pre-apply backups")
 	cmd.Flags().BoolVar(&options.override, "override", false, "allow overwriting settings that were changed outside profile-mango, where the target supports it")
+	cmd.Flags().BoolVar(&options.strict, "strict", false, "stop instead of skipping profile settings an agent cannot install")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the deterministic plan as JSON")
 	return cmd
 }
@@ -93,7 +95,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	request := install.Request{
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
-		Backup: !options.noBackup, Override: options.override, Registry: registry,
+		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Registry: registry,
 		Env: install.OSPathEnv(), DetectVersion: installVersionDetector, SkipNotInstalled: options.all,
 	}
 	plan, err := install.BuildPlan(request)
@@ -447,7 +449,7 @@ func installPlanArgs(options installOptions) []string {
 	for _, flag := range []struct {
 		name string
 		set  bool
-	}{{"--all", options.all}, {"--no-backup", options.noBackup}, {"--override", options.override}} {
+	}{{"--all", options.all}, {"--no-backup", options.noBackup}, {"--override", options.override}, {"--strict", options.strict}} {
 		if flag.set {
 			args = append(args, flag.name)
 		}
@@ -498,6 +500,9 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 	if err := writeHumanVersionCheck(output, target.VersionCheck); err != nil {
 		return err
 	}
+	if err := writeSkippedRequirements(output, target.SkippedRequirements); err != nil {
+		return err
+	}
 	seen := make(map[string]struct{}, len(target.Fields))
 	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {
 		return err
@@ -511,6 +516,28 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 		}
 	}
 	return nil
+}
+
+// writeSkippedRequirements lists, on one line, the profile settings this agent does not receive.
+func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequirement) error {
+	if len(skipped) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(skipped))
+	for _, requirement := range skipped {
+		switch {
+		case requirement.Requirement == install.RequirementInstructions && requirement.Count == 1:
+			names = append(names, requirement.Requirement+" (1 file)")
+		case requirement.Requirement == install.RequirementInstructions:
+			names = append(names, fmt.Sprintf("%s (%d files)", requirement.Requirement, requirement.Count))
+		case requirement.Count > 0:
+			names = append(names, fmt.Sprintf("%s (%d)", requirement.Requirement, requirement.Count))
+		default:
+			names = append(names, requirement.Requirement)
+		}
+	}
+	_, err := fmt.Fprintf(output, "    not installed for this agent: %s\n", strings.Join(names, ", "))
+	return err
 }
 
 // writeHumanVersionCheck notes the installed agent version against the tested

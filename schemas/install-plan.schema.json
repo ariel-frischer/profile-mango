@@ -12,6 +12,7 @@
     "status": {"enum": ["ready", "noop", "blocked"]},
     "backup": {"type": "boolean"},
     "override": {"type": "boolean"},
+    "strict": {"type": "boolean"},
     "inputSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "targets": {"type": "array", "items": {"$ref": "#/$defs/targetPlan"}},
     "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
@@ -107,7 +108,17 @@
         "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
         "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
         "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
-        "versionCheck": {"$ref": "#/$defs/versionCheck"}
+        "versionCheck": {"$ref": "#/$defs/versionCheck"},
+        "skippedRequirements": {"type": "array", "items": {"$ref": "#/$defs/skippedRequirement"}}
+      }
+    },
+    "skippedRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement"],
+      "properties": {
+        "requirement": {"enum": ["permissions", "tools", "instructions", "skills"]},
+        "count": {"type": "integer", "minimum": 1}
       }
     },
     "versionCheck": {

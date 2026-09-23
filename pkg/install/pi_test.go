@@ -216,8 +216,9 @@ func TestPiInstallAdoptsUnownedConfigOrOverrides(t *testing.T) {
 	}
 }
 
-func TestPiInstallBlocksUnverifiedRequirements(t *testing.T) {
+func TestPiStrictInstallBlocksUnverifiedRequirements(t *testing.T) {
 	request, root := piInstallTestRequest(t)
+	request.Strict = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile

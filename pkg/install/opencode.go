@@ -258,3 +258,12 @@ func validOpenCodeSkillName(value string) bool {
 	}
 	return true
 }
+
+// SupportedRequirements reports that a named OpenCode agent installs
+// instructions and the default config installs one skill.
+func (openCodeAdapter) SupportedRequirements(agent AgentDestination) []string {
+	if !agent.Empty() {
+		return []string{RequirementInstructions}
+	}
+	return []string{RequirementSkills}
+}

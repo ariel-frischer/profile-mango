@@ -268,8 +268,9 @@ func TestOpenCodePlanBindsDestinationAndRejectsStaleApply(t *testing.T) {
 	assertInstallTestFile(t, first, `{ "model": "third-party/edit" }`)
 }
 
-func TestOpenCodeInstallBlocksUnverifiedProfileRequirements(t *testing.T) {
+func TestOpenCodeStrictInstallBlocksUnverifiedProfileRequirements(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Strict = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile

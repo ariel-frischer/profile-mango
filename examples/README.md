@@ -20,10 +20,11 @@ examples/
 
 `coding`, `review`, and `docs-research` all `extends: workflow-base` and select
 their own `permissions`, `tools`, `instructions`, and `skills`. None is fully
-installable today: their permissions, tools, instructions, and skills exceed
-every target's qualified settings-only subset, so `install` and `render`
-correctly stay blocked. Use them to see profile structure, inheritance, and
-route/target-override syntax, not to install a full policy.
+installable today: those requirements exceed every target's qualified subset.
+`install` applies the supported subset (the route's model settings) and lists
+the rest per target as `not installed for this agent: ...`; add `--strict` to
+block instead. `render` previews stay non-applicable. Use them to see profile
+structure, inheritance, and route/target-override syntax, not as a full policy.
 
 ## Start locally
 

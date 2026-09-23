@@ -116,8 +116,9 @@ func TestCodexInstallRejectsStalePlanWithoutWriting(t *testing.T) {
 	assertInstallTestFile(t, config, "third-party = true\n")
 }
 
-func TestCodexInstallBlocksPermissionRequirements(t *testing.T) {
+func TestCodexStrictInstallBlocksPermissionRequirements(t *testing.T) {
 	request, _ := codexTestRequest(t)
+	request.Strict = true
 	profile := filepath.Join(request.ProfilesRoot, "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile

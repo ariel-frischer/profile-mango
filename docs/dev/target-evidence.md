@@ -39,7 +39,12 @@ settings, Hermes three model/reasoning fields, and
 OpenCode model plus one qualified skill resource or an explicit named primary/
 subagent definition with model and instructions, and OpenClaw model-primary
 plus thinking-default settings. Other target gates
-remain blocked unless explicitly qualified below. Field consumption, full-route
+remain blocked unless explicitly qualified below. By default `install` applies
+only a target's qualified subset and lists every known profile requirement it
+cannot install (permissions, tools, instructions, skills) as skipped for that
+target, in the human plan and as JSON `skippedRequirements`; a skipped
+requirement is never claimed as honored. `install --strict` blocks on them
+instead. Unknown required properties and unqualified targets always block. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
 Native probes require approved disposable scope and exact evidence. Ariel's custom
 Jcode fork is experimental developer evidence, not a supported public target.

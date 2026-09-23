@@ -55,10 +55,16 @@ principles:
       different provider or authentication route. Account for relevant precedence
       and bypass surfaces before claiming enforcement. A diagnostic or inert
       preview may explain a rejected mapping but must not present it as applicable.
-    rationale: "A portable profile must not become less safe merely because the target changes."
+      Install may apply a target's qualified subset of a profile, but skipped
+      requirements are never hidden: every known requirement a target cannot
+      install is listed per target in the human plan and as skippedRequirements
+      in the JSON plan, is covered by the plan ID, and is never claimed as honored.
+      `install --strict` restores blocking on any skipped requirement. Unknown
+      required properties and unqualified targets always block.
+    rationale: "A portable profile must not become less safe merely because the target changes, and a user must always see what a target did not receive."
     enforcement:
       - mechanism: "Boundary and negative tests"
-        description: "Check invalid input, unsupported requirements, overrides, and route mismatch for rejection without application."
+        description: "Check invalid input, unsupported requirements, overrides, and route mismatch for rejection without application; check that non-strict plans list every skipped requirement and that --strict blocks."
     exceptions: []
 
   - name: "Deterministic, inspectable contracts"
