@@ -88,11 +88,17 @@ Unchanged Mango-owned files can be updated directly; unowned or edited files nee
 an adapter-approved `--override`. Non-interactive apply requires
 `--apply --yes --expect-plan <planID>` from that new plan.
 
-For Codex `0.154.0` only, `profile-mango restore --help` describes a guarded,
-read-only backup reversal plan at an explicit configuration path. Applying its
-separate restore plan ID requires hash-bound consent and an unchanged adjacent
-install journal, backup, and ownership manifest. It is not a general reset or
-an authentication restore. See [the Codex boundary](docs/dev/agents/codex.md#bounded-settings-only-installation).
+To reverse an install, run `profile-mango undo --target <target>` (`restore` is an
+alias). It resolves the config like install (`--config` or the documented default
+path), selects the latest committed install journal beside that config (or the one
+named by `--original-plan`), and previews the restored bytes as a redacted diff with a
+new undo plan ID. Apply with `--apply` on a terminal or `--apply --yes --expect-plan
+<undo-plan-ID>`. An existing config returns byte-for-byte from its adjacent backup; a
+config the install created is removed, and an install-created ownership manifest is
+removed only while unchanged. A config edited after the install is refused, with the
+diff shown, unless `--override` discards those edits. Undo needs the install's backup
+(not `--no-backup`) and does not reverse file deletions or restore authentication.
+See [the Codex boundary](docs/dev/agents/codex.md#bounded-settings-only-installation).
 
 This is not a full reset to the new profile. Switching or omitting the one
 installed OpenCode skill removes only a clean Mango-owned `SKILL.md` and a
