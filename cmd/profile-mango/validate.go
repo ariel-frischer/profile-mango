@@ -26,6 +26,9 @@ func newValidateCmd() *cobra.Command {
 			if bindingsPath != "" {
 				bindingsData, readErr := os.ReadFile(bindingsPath)
 				if readErr != nil {
+					if os.IsNotExist(readErr) {
+						return fmt.Errorf("read bindings %s (%s): %w", bindingsPath, bindingsCreateHint(bindingsPath), readErr)
+					}
 					return fmt.Errorf("read bindings: %w", readErr)
 				}
 				bindings, bindingDiagnostics := profilemango.ParseBindings(bindingsData)

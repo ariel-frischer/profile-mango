@@ -49,6 +49,7 @@ profile-mango init ./my-profiles     # explicit package in a new directory
 ```text
 profiles/default/profile.yaml
 bindings/local.example.yaml
+bindings/local.yaml       # a create-only copy of the example, gitignored
 bindings/.gitignore
 ```
 
@@ -61,12 +62,10 @@ YAML: `instructions/AGENTS.md` means `<root>/instructions/AGENTS.md`. Explicit
 project render/install inputs require `--profiles`, `--resource-root`, and
 `--bindings` together; global inputs default to the effective home.
 
-For the global package, create the ignored machine-local binding and validate
-the starter profile:
+`init` already creates the ignored machine-local binding, so the global
+package validates the starter profile with no manual copy:
 
 ```bash
-cp ~/.profile-mango/bindings/local.example.yaml \
-   ~/.profile-mango/bindings/local.yaml
 profile-mango validate ~/.profile-mango/profiles/default/profile.yaml \
   --bindings ~/.profile-mango/bindings/local.yaml
 ```
@@ -74,10 +73,14 @@ profile-mango validate ~/.profile-mango/profiles/default/profile.yaml \
 For an explicit project package, run the same workflow relative to its root:
 
 ```bash
-cp bindings/local.example.yaml bindings/local.yaml
 profile-mango validate profiles/default/profile.yaml \
   --bindings bindings/local.yaml
 ```
+
+If `bindings/local.yaml` is missing (for example, deleted after init), the
+missing-bindings error from `validate`, `render`, and `install` names the
+exact fix: copy `local.example.yaml` back over it, or run `profile-mango init`
+again in a fresh package.
 
 Use `--json` when another tool or agent will consume the validation result.
 
@@ -207,7 +210,7 @@ routes:
     provider: openai
     transport: native
     authentication: oauth
-    model: gpt-5.6
+    model: gpt-6-sol
     effort: high
 ```
 

@@ -376,7 +376,7 @@ func TestRenderMissingHomeBindingsIsActionable(t *testing.T) {
 		"default", "--target", codex.TargetName, "--target-version", codex.TargetVersion,
 		"--out", filepath.Join(t.TempDir(), "candidate"),
 	})
-	if err == nil || !strings.Contains(err.Error(), "copy") || !strings.Contains(err.Error(), "local.example.yaml") {
+	if err == nil || !strings.Contains(err.Error(), "copy") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "profile-mango init") {
 		t.Fatalf("missing home bindings error = %v", err)
 	}
 }

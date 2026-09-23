@@ -121,16 +121,17 @@ Create a starter profile in a new project folder:
 profile-mango init ./my-profiles
 ```
 
-Check it using the included example model settings:
+Check it using the starter model settings `init` already scaffolded:
 
 ```bash
 profile-mango validate ./my-profiles/profiles/default/profile.yaml \
-  --bindings ./my-profiles/bindings/local.example.yaml
+  --bindings ./my-profiles/bindings/local.yaml
 ```
 
 Edit `profiles/default/profile.yaml` to change the profile. The separate
-`bindings/local.example.yaml` file describes the provider and model, not passwords
-or tokens. Neither command changes your agent configuration.
+`bindings/local.yaml` file (a gitignored copy of `bindings/local.example.yaml`)
+describes the provider and model, not passwords or tokens. Neither command
+changes your agent configuration.
 
 Prefer a shared location? Run `profile-mango init` without a directory to use
 `~/.profile-mango`. Existing files are never overwritten.
