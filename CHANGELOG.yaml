@@ -51,6 +51,7 @@ versions:
             - A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
             - Examples consolidated into examples/ (coding, review, docs-research) with a per-agent bindings example; the bundled agent skill is shorter and its compatibility list is corrected
             - install --all skips agents that are not installed (listed as skipped); a named target with a missing config folder gets a clear message
+            - install applies the supported subset of a profile by default and lists every skipped requirement per agent; --strict restores blocking; init starter bindings include a Claude Code override
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:
