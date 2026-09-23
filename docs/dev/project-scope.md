@@ -46,7 +46,7 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
 - A separate Codex `0.154.0` settings-only installer for root `model_provider`,
   `model`, and `model_reasoning_effort = "high"`, consumed by the exact installed
   binary in an isolated synthetic home. It patches an
-  explicit path with consent and backup, preserving unrelated TOML and target-owned
+  explicit or documented default path with consent and backup, preserving unrelated TOML and target-owned
   auth. Trusted project and runtime overrides can shadow root settings; the
   installer neither inspects nor controls those layers. OAuth identity, live
   delivery, and full-profile applicability remain unverified and are warned,
@@ -76,7 +76,7 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
   definition with model and ordered instructions, pinned to immutable release,
   source, archive and extracted-binary hashes. Exact native config, skill and
   generated named-agent consumption were observed in isolated disposable state.
-  Installation requires explicit paths, destination-bound consent and transactional
+  Installation uses explicit or documented default paths, destination-bound consent and transactional
   safeguards, preserving unrelated JSONC and credentials. Authentication identity,
   effort, permissions, tools, plugins, MCP, full precedence, active selection,
   delegation and runtime enforcement remain blocked or unverified.
@@ -84,9 +84,10 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
   destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
   stale checks, atomic replacement, ownership evidence, journals, rollback, and
   guarded recovery. Only the qualified target-specific subsets in the table below
-  can be installed at explicit paths; other targets remain blocked.
-  Validation uses fake adapters and synthetic disposable target state.
-  It never implicitly inspects or modifies global agent configuration.
+  can be installed at an explicit `--config` path or, when omitted, the target's
+  documented default user config path shown in the plan; other targets remain
+  blocked. Validation uses fake adapters and synthetic disposable target state and
+  never resolves to the real user home.
 - An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
@@ -94,8 +95,8 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
 **No full-profile production target adapter is shipped.** Only the exact subsets
 in the table below are installable. Renderers remain non-applicable for full
 profiles. The ordinary core, validation, and render paths stay offline and pure.
-Installers touch only explicit caller-supplied configuration and adjacent transaction
-paths. Separate opt-in native probes use disposable network-blocked state and do
+Installers touch only the selected configuration (explicit or documented default)
+and adjacent transaction paths. Separate opt-in native probes use disposable network-blocked state and do
 not establish authentication, full-profile delivery, or runtime enforcement.
 Ariel's Jcode fork remains experimental-only.
 
@@ -155,8 +156,8 @@ does not promise roles, MCP projection, or any other expansion.
 
 **Current exclusions:** full-profile application, import, generalized drift repair,
 user-level preference storage, credential handling, provider calls, implicit
-target-home inspection, roles, MCP projection, and identity management. Only the
-version-qualified subsets in the table above are installable at explicit paths. `init`
+target-home inspection beyond the planned config destination, roles, MCP projection, and identity management. Only the
+version-qualified subsets in the table above are installable at explicit or documented default paths. `init`
 scaffolds portable files and a route-identity example only. Home resolution selects
 only profile-mango-owned inputs; it does not resolve credentials, inspect target
 homes, or call providers. These are milestone boundaries, not all permanent bans.

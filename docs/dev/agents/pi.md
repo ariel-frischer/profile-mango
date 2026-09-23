@@ -107,7 +107,7 @@ qualification decision.
 The opt-in settings-module probe verifies all three global defaults and project
 model override without full CLI startup. It pins the imported module hash, uses
 allowlisted runtime/package mounts and isolated network/PID/IPC namespaces, and
-checks a no-write inventory. Installation touches only an explicit settings file
-and shared transaction paths. See the [dated evidence](../target-evidence.md#bounded-settings-module-installation-2026-09-22)
+checks a no-write inventory. Installation touches only one settings file (explicit or the
+[default config destinations](../target-evidence.md#default-config-destinations-2026-09-22)) and shared transaction paths. See the [dated evidence](../target-evidence.md#bounded-settings-module-installation-2026-09-22)
 for hashes, checks, and the distinction between native module consumption and
 full authenticated runtime behavior.

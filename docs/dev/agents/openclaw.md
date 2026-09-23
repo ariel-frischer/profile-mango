@@ -32,8 +32,8 @@ shows root `--profile <name>` parsing and projection into `OPENCLAW_PROFILE`,
 `OPENCLAW_STATE_DIR`, and `OPENCLAW_CONFIG_PATH`. These select profile-specific
 config/state, distinct from provider-local authentication profiles. This is source
 evidence, not a new runtime probe or proof that Mango can create or activate native
-profiles. Mango installation still patches only its qualified fields at an explicit
-caller-supplied path.
+profiles. Mango installation still patches only its qualified fields at an explicit path or
+the [default config destinations](../target-evidence.md#default-config-destinations-2026-09-22).
 
 Pinned documentation and source describe strict JSON5 at
 `~/.openclaw/openclaw.json`, relocatable with `OPENCLAW_CONFIG_PATH`; invalid or

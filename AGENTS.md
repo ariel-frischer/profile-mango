@@ -84,7 +84,8 @@ CHANGELOG.md          # generated changelog output
 ## Target Safety Boundary
 
 - Canonical parsing, validation, and rendering remain offline and pure: no target homes, credentials, subprocesses, providers, or network access.
-- Only the exact installation subsets in `docs/dev/target-evidence.md` may be applied at explicit caller-supplied paths. Use synthetic or separately approved disposable state unless new path-specific live approval is recorded.
+- Only the exact installation subsets in `docs/dev/target-evidence.md` may modify target config: an explicit `--config` path or, when omitted, the target's documented default user path listed there. Every write keeps the displayed plan diff and resolved path, create-only backups, hash/drift checks, ownership manifests, and interactive or `--yes --expect-plan` consent.
+- Tests and native probes use synthetic or disposable state and must never resolve to the real user home.
 - Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unknown required properties and unqualified targets remain blocked.
 - Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated and timeout-bounded. Hide personal homes and sockets; writes may occur only inside the disposable sandbox.
 - Codex remains the first intended public target. Jcode is experimental developer evidence, not a supported product target or README promise.

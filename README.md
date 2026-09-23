@@ -46,21 +46,23 @@ Unsupported permissions, tool rules, and resource requirements block installatio
 rather than being silently dropped. Read the plan's warnings: installing a model
 does not verify authentication or enforce every route preference. OpenCode named
 definitions deliver a custom prompt, not permission enforcement or verified
-delegation. Use disposable test configuration for now; live paths require
-separate, path-specific approval.
+delegation. Without `--config`, `install <profile> --target <name>` plans
+against that agent's documented default user config (for example
+`~/.codex/config.toml`) and shows the resolved path in the plan; pass
+`--config <name>=<path>` to use a different file. Review the plan before applying.
 See [agent versions and limitations](docs/dev/target-evidence.md) for the exact
 fields, native evidence, and precedence limits.
 
 For Codex `0.154.0`, a route-only OpenAI/native/OAuth binding with `high` effort
-can plan three root settings at an explicit disposable `config.toml`. The
+can plan three root settings at `$CODEX_HOME/config.toml` (default
+`~/.codex/config.toml`) or an explicit `config.toml`. The
 read-only plan shows warnings and a plan ID. Applying requires
 `--apply --yes --expect-plan <planID>` and backs up the config, but never changes
 login credentials or proves OAuth. Runtime model delivery, model availability,
 and effort enforcement have not been demonstrated. `codex login status`
 distinguishes API-key from ChatGPT login, not Codex-managed OAuth from
 externally supplied tokens.
-Other profile requirements stay blocked; do not use a personal Codex path
-without separate path-specific approval.
+Other profile requirements stay blocked.
 
 ## How does installation work without native profiles?
 

@@ -90,7 +90,7 @@ The exact source addon was subsequently built with `nightly-2026-08-12`
 The build used upstream `scripts/bazel-natives.ts host --dest packages/natives/native`.
 
 The separate installer patches only `modelRoles.default` and
-`defaultThinkingLevel` at an explicit path. Actual compiled CLI output was loaded
+`defaultThinkingLevel` at an explicit or [default config destination](../target-evidence.md#default-config-destinations-2026-09-22) path. Actual compiled CLI output was loaded
 through exact `Settings.loadReadOnly`, with model-role and thinking getters
 returning the installed synthetic values. A control without either field returned
 no default model role and the built-in `high` thinking level. Unknown-key and
