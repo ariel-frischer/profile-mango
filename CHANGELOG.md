@@ -61,6 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - install --all skips agents that are not installed (listed as skipped); a named target with a missing config folder gets a clear message
 - install applies the supported subset of a profile by default and lists every skipped requirement per agent; --strict restores blocking; init starter bindings include a Claude Code override
 - User-first README and new docs/public pages (concepts, profile reference, agents); docs index split into user and developer sections
+- The curl installer one-liner and install.sh release defaults now point at GitHub
 
 ### Removed
 
