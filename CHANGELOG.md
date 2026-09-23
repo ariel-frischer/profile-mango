@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - preview alias for render
 - doctor command: read-only report of installed agents, detected vs qualified versions, default config paths, and what a profile would install
 - undo command (restore kept as alias) reverses the latest install for any installable target
+- install and doctor check the installed agent version against a tested range and warn outside it
 
 ### Changed
 
@@ -56,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Routes default transport to native and authentication to oauth
 - Plain-language help text; the agents maintenance command and the experimental ariel-jcode target are hidden from help
 - A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
+- Examples consolidated into examples/ (coding, review, docs-research) with a per-agent bindings example; the bundled agent skill is shorter and its compatibility list is corrected
 
 ### Removed
 
@@ -73,6 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
 - init now scaffolds a usable bindings/local.yaml with a current model, and missing-bindings errors name the fix
 - Command tests no longer leak flag state between tests
+- undo works for every target of a multi-target install
 
 ## [0.0.1] - 2026-01-01
 
