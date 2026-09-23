@@ -58,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Plain-language help text; the agents maintenance command and the experimental ariel-jcode target are hidden from help
 - A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
 - Examples consolidated into examples/ (coding, review, docs-research) with a per-agent bindings example; the bundled agent skill is shorter and its compatibility list is corrected
+- install --all skips agents that are not installed (listed as skipped); a named target with a missing config folder gets a clear message
 
 ### Removed
 
