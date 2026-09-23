@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add copyable agent-oriented profile examples with original workflow instructions, skills, and version-scoped model bindings
 - Per-agent route overrides in bindings (routes.<name>.targets) so one profile installs across agents with different providers
 - preview alias for render
+- doctor command: read-only report of installed agents, detected vs qualified versions, default config paths, and what a profile would install
+- undo command (restore kept as alias) reverses the latest install for any installable target
 
 ### Changed
 
@@ -53,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Profiles use a flat YAML format (name, description, extends, route, permissions, tools, instructions, skills); the old apiVersion/kind/metadata/spec form still loads with a deprecation warning
 - Routes default transport to native and authentication to oauth
 - Plain-language help text; the agents maintenance command and the experimental ariel-jcode target are hidden from help
+- A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
 
 ### Removed
 
@@ -69,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
 - Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
 - init now scaffolds a usable bindings/local.yaml with a current model, and missing-bindings errors name the fix
+- Command tests no longer leak flag state between tests
 
 ## [0.0.1] - 2026-01-01
 
