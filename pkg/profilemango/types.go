@@ -52,12 +52,24 @@ type Bindings struct {
 	Routes map[string]RouteBinding `yaml:"routes" json:"routes"`
 }
 
+// RouteBinding is a base route plus optional explicit per-target overrides.
+// Targets is empty in every effective route returned by RouteFor.
 type RouteBinding struct {
-	Provider       string `yaml:"provider" json:"provider"`
-	Transport      string `yaml:"transport" json:"transport"`
-	Authentication string `yaml:"authentication" json:"authentication"`
-	Model          string `yaml:"model" json:"model"`
-	Effort         string `yaml:"effort" json:"effort"`
+	Provider       string                   `yaml:"provider" json:"provider"`
+	Transport      string                   `yaml:"transport" json:"transport"`
+	Authentication string                   `yaml:"authentication" json:"authentication"`
+	Model          string                   `yaml:"model" json:"model"`
+	Effort         string                   `yaml:"effort" json:"effort"`
+	Targets        map[string]RouteOverride `yaml:"targets,omitempty" json:"targets,omitempty"`
+}
+
+// RouteOverride replaces any non-empty base route field for one target.
+type RouteOverride struct {
+	Provider       string `yaml:"provider,omitempty" json:"provider,omitempty"`
+	Transport      string `yaml:"transport,omitempty" json:"transport,omitempty"`
+	Authentication string `yaml:"authentication,omitempty" json:"authentication,omitempty"`
+	Model          string `yaml:"model,omitempty" json:"model,omitempty"`
+	Effort         string `yaml:"effort,omitempty" json:"effort,omitempty"`
 }
 
 // ResolvedProfile is the deterministic canonical model after inheritance.

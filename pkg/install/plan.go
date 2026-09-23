@@ -253,7 +253,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
 		}
 	}
-	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route, Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
+	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
