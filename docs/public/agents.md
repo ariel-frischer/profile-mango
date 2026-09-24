@@ -10,6 +10,28 @@ to the next minor release. Outside the range, or when the agent isn't found,
 install warns but still plans. See [concepts](concepts.md#tested-versions).
 `--config <agent>=<path>` replaces any default path below.
 
+## Before a live test
+
+**A working install does not mean a free or OAuth-backed model call.** Mango
+writes settings, not credentials, and cannot verify the effective account or
+billing route. Before sending any prompt, check the plan's `use it:` command and
+destination, the agent's selected provider/model, its active authentication
+method, any environment/project/CLI overrides or fallbacks, and the provider's
+billing terms or spend limit. Inspect credential status privately: never paste
+tokens, full auth files, or unredacted status output. If any of these are unclear,
+skip the live test. OAuth or a subscription in one agent does not establish how
+another agent is billed. A successful reply still does not prove its billing route.
+
+| Agent | Check before sending a prompt |
+| --- | --- |
+| [Codex](#codex) | Inspect `<profile>.config.toml` and use `codex --profile <profile>`. Check `codex login status` yourself, but its ChatGPT result cannot prove exact OAuth or rule out external tokens; project config and `-c` can override the model. Do not share status output. |
+| [OpenCode](#opencode) | Inspect `agents/<profile>.md` and select it with `--agent`. Check the actual provider account and billing separately; project, explicit, inline, and managed config may override the route. Mango does not install effort or authenticate OpenCode. |
+| [OpenClaw](#openclaw) | Inspect `~/.openclaw-<profile>/openclaw.json`. Verify profile-specific sign-in, `OPENCLAW_CONFIG_PATH`/`OPENCLAW_STATE_DIR`, per-agent model overrides and fallbacks, then the account's billing. The default profile's credentials are not copied. |
+| [Hermes](#hermes) | Inspect `~/.hermes/profiles/<profile>/config.yaml`. Verify sign-in for that profile, CLI/environment overrides and provider fallbacks, then the account's billing. The default profile's credentials are not copied. |
+| [Claude Code](#claude-code) | Check the plan's `--settings` path, other active settings layers, the agent's login method and account billing. Mango installs only the model. |
+| [Pi](#pi) | Check global and project settings for the effective provider/model, then the agent's active credentials and provider billing. Project settings can win. |
+| [Oh My Pi](#oh-my-pi) | Check the default model role and any other role selected for the test, then active credentials and provider billing. |
+
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
 | Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/profiles/<profile>.json` next to `~/.claude/settings.json` |

@@ -71,6 +71,11 @@ Repeat `mango install <name> -t codex,opencode,openclaw,hermes` without `--apply
 `unchanged` confirms the installed files match the plan, not that an agent used
 that route. The plan prints each agent's selection command. For `sol-daily`:
 
+**Warning: a smoke test can incur paid API charges.** Mango does not check your
+sign-in, API keys, effective configuration, or billing. Before running a test,
+follow the [per-agent cost and authentication preflight](docs/public/agents.md#before-a-live-test).
+If you cannot verify the route and who pays for it, do not send a prompt.
+
 ```bash
 codex --profile sol-daily
 opencode run --agent sol-daily "Reply with exactly OK."
@@ -78,8 +83,8 @@ hermes -p sol-daily -z "Reply with exactly OK."
 openclaw --profile sol-daily agent --local --message "Reply with exactly OK." --timeout 30
 ```
 
-The last three make a model call and may create a session or incur usage. A reply
-alone does not prove which model or authentication route served it; check the
+The last three make a model call and may create a session. A Codex prompt does too.
+A reply alone does not prove which model or authentication route served it; check the
 agent's own model/session details. Do not override model or thinking while testing.
 OpenClaw and Hermes named profiles may need separate sign-in. Version warnings
 mean native behavior is unqualified, and OpenCode does not install effort.
