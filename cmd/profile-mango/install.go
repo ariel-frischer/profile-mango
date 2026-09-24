@@ -450,7 +450,7 @@ func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outp
 	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(target.Target.String())), styledPlanStatus(target.Status, styles)); err != nil {
 		return err
 	}
-	if target.Reason != "" {
+	if target.Reason != "" && (target.Status == install.StatusBlocked || target.Status == install.StatusSkipped) {
 		if _, err := fmt.Fprintf(output, " (%s)", humanPath(target.Reason)); err != nil {
 			return err
 		}
@@ -459,17 +459,57 @@ func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outp
 		return err
 	}
 	if target.Config != nil {
-		if _, err := fmt.Fprintf(output, "    destination: %s\n", styles.path(humanPath(target.Config.Path))); err != nil {
+		if _, err := fmt.Fprintf(output, "    destination: %s\n", styles.path(humanPath(primaryInstallPath(target)))); err != nil {
 			return err
+		}
+		if target.Install != nil && target.Install.SetsDefault {
+			if _, err := fmt.Fprintf(output, "    also default: %s\n", styles.path(humanPath(target.Config.Path))); err != nil {
+				return err
+			}
 		}
 	}
 	if err := writeCompactRoute(output, target); err != nil {
 		return err
 	}
-	if err := writeInstallMode(output, target.Install); err != nil {
+	mode := target.Install
+	if mode != nil && target.Config != nil && target.Target.Name == "claude-code" && mode.Mode == install.InstallModeNamedProfile {
+		copy := *mode
+		copy.UseCommand = "claude --settings " + shellQuote(primaryInstallPath(target))
+		mode = &copy
+	}
+	if err := writeInstallMode(output, mode); err != nil {
 		return err
 	}
-	return writeCompactEffects(output, target)
+	return writeCompactEffects(output, target, styles)
+}
+
+// primaryInstallPath asks the qualified adapter where its named profile lives.
+// This only calls the path resolver, never target inspection or I/O.
+func primaryInstallPath(target install.TargetPlan) string {
+	config := target.Config.Path
+	if target.Install == nil || target.Install.Mode != install.InstallModeNamedProfile {
+		return config
+	}
+	adapter, ok := install.DefaultRegistry().Lookup(target.Target)
+	if !ok {
+		return config
+	}
+	if resolver, ok := adapter.(interface {
+		NamedProfilePath(string, string) (string, error)
+	}); ok {
+		if path, err := resolver.NamedProfilePath(config, target.Install.ProfileName); err == nil {
+			return path
+		}
+	}
+	if resolver, ok := adapter.(interface{ NamedProfileFile(string) (string, error) }); ok {
+		if path, err := resolver.NamedProfileFile(target.Install.ProfileName); err == nil {
+			if filepath.IsAbs(path) {
+				return path
+			}
+			return filepath.Join(filepath.Dir(config), path)
+		}
+	}
+	return config
 }
 
 func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
@@ -503,31 +543,85 @@ func orUnknown(value string) string {
 	return value
 }
 
-func writeCompactEffects(output io.Writer, target install.TargetPlan) error {
-	if err := writeSkippedRequirements(output, target.SkippedRequirements); err != nil {
+func writeCompactEffects(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
 		return err
 	}
-	if err := writeCompactWarnings(output, target); err != nil {
+	if err := writeCompactWarnings(output, target, styles); err != nil {
 		return err
 	}
 	seen := make(map[string]struct{})
-	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {
-		return err
-	}
+	effects := compactFieldEffects(target.Fields, seen, target.Status != install.StatusNoop)
 	for _, file := range orderedFilePlans(target.Files) {
-		if _, err := fmt.Fprintf(output, "    %s: %s\n", humanPath(file.Path), humanPath(file.Action)); err != nil {
+		if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.path(humanPath(file.Path)), humanPath(file.Action)); err != nil {
 			return err
 		}
-		if err := writeHumanFields(output, file.Fields, "      ", seen, file.Action != install.ActionNoop); err != nil {
-			return err
-		}
+		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
+	}
+	if len(effects) > 0 {
+		_, err := fmt.Fprintf(output, "    changes: %s\n", strings.Join(effects, ", "))
+		return err
 	}
 	return nil
 }
 
-func writeCompactWarnings(output io.Writer, target install.TargetPlan) error {
+func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement, styles outputStyles) error {
+	if len(skipped) == 0 {
+		return nil
+	}
+	var line strings.Builder
+	if err := writeSkippedRequirements(&line, skipped); err != nil {
+		return err
+	}
+	_, err := fmt.Fprint(output, strings.Replace(line.String(), "not installed for this agent", styles.warning("not installed for this agent"), 1))
+	return err
+}
+
+func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{}, showEmpty bool) []string {
+	var effects []string
+	for _, field := range orderedFieldChanges(fields) {
+		if field.Path == "" {
+			continue
+		}
+		if _, exists := seen[field.Path]; exists {
+			continue
+		}
+		if field.Before == field.After && !field.Sensitive {
+			continue
+		}
+		if field.Before == field.After && !showEmpty {
+			continue
+		}
+		seen[field.Path] = struct{}{}
+		label := humanPath(semanticFieldLabel(field.Path))
+		if field.Sensitive {
+			field.Before, field.After = "<redacted>", "<redacted>"
+		}
+		effects = append(effects, fmt.Sprintf("%s %s -> %s", label, strconv.Quote(field.Before), strconv.Quote(field.After)))
+	}
+	return effects
+}
+
+func semanticFieldLabel(path string) string {
+	name := path[strings.LastIndex(path, ".")+1:]
+	switch name {
+	case "default", "primary":
+		return "model"
+	case "model_reasoning_effort", "reasoning_effort":
+		return "effort"
+	case "defaultThinkingLevel", "thinkingDefault":
+		return "thinking level"
+	case "model_provider", "defaultProvider", "provider":
+		return "provider"
+	case "defaultModel", "modelRoles":
+		return "model"
+	}
+	return name
+}
+
+func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles outputStyles) error {
 	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {
-		if _, err := fmt.Fprintf(output, "    warning: installed version %s is outside tested range %s; check agent compatibility before applying\n", humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
+		if _, err := fmt.Fprintf(output, "    %s: installed version %s is outside tested range %s; check agent compatibility before applying\n", styles.warning("warning"), humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
 			return err
 		}
 	}
@@ -536,13 +630,17 @@ func writeCompactWarnings(output io.Writer, target install.TargetPlan) error {
 			continue
 		}
 		if strings.HasSuffix(diagnostic.Code, ".install.profile_state_separate") {
-			if _, err := fmt.Fprintf(output, "    warning: %s; sign in there if needed (authentication was not inspected)\n", humanPath(diagnostic.Message)); err != nil {
+			note := "named profile has separate target-owned state; sign in there if needed (authentication was not inspected)"
+			if target.Target.Name == "openclaw" {
+				note += "; OPENCLAW_CONFIG_PATH or OPENCLAW_STATE_DIR may override its location"
+			}
+			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), note); err != nil {
 				return err
 			}
 			continue
 		}
-		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && diagnostic.Code != "install.version_out_of_range" {
-			if _, err := fmt.Fprintf(output, "    warning: %s\n", humanPath(diagnostic.Message)); err != nil {
+		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && (diagnostic.Code == "install.version_not_found" || diagnostic.Code == "install.version_unknown" || diagnostic.Code == "install.adopt_backup") {
+			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), humanPath(diagnostic.Message)); err != nil {
 				return err
 			}
 		}

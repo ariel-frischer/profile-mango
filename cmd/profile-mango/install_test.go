@@ -260,8 +260,15 @@ func TestInstallHumanPlanDisplaysTargetWarning(t *testing.T) {
 	if err := writeInstallPlan(command, plan, false, false); err != nil {
 		t.Fatal(err)
 	}
+	if strings.Contains(output.String(), "authentication is unmanaged") {
+		t.Fatalf("compact plan included generic auth caveat: %s", output.String())
+	}
+	output.Reset()
+	if err := writeInstallPlan(command, plan, false, true); err != nil {
+		t.Fatal(err)
+	}
 	if !strings.Contains(output.String(), "warning: authentication is unmanaged; codex login status does not prove exact OAuth") {
-		t.Fatalf("human plan omitted required warning: %s", output.String())
+		t.Fatalf("verbose plan omitted full warning: %s", output.String())
 	}
 }
 

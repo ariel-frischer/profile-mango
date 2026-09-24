@@ -13,15 +13,29 @@ import (
 func TestCompactInstallGolden(t *testing.T) {
 	plan := install.Plan{PlanID: "example-id", Status: install.StatusReady, Targets: []install.TargetPlan{
 		{Target: install.Target{Name: "zeta", Version: "1"}, Status: install.StatusBlocked, Reason: "not qualified"},
-		{Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady, Config: &install.ConfigDestination{Path: "/sandbox/config.toml"}, Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"}, Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}, {Path: "config.secret", Before: "secret", After: "changed", Sensitive: true}}, Files: []install.FilePlan{{Path: "/sandbox/demo.toml", Action: install.ActionCreate}}, SkippedRequirements: []install.SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}, {Requirement: "skills", Count: 1}}, Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning, Code: "codex.install.auth_unmanaged", Message: "Authentication remains target-owned; check it locally."}}},
+		{Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady, Reason: "long adapter evidence caveat", Config: &install.ConfigDestination{Path: "/sandbox/config.toml"}, Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"}, Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}, {Path: "config.secret", Before: "secret", After: "changed", Sensitive: true}}, Files: []install.FilePlan{{Path: "/sandbox/demo.toml", Action: install.ActionCreate}}, SkippedRequirements: []install.SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}, {Requirement: "skills", Count: 1}}, Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning, Code: "codex.install.auth_unmanaged", Message: "Authentication remains target-owned; check it locally."}}},
 	}}
 	var output bytes.Buffer
 	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
 		t.Fatal(err)
 	}
-	const golden = "plan example-id (ready)\n  codex@0.154.0: ready\n    destination: /sandbox/config.toml\n    route: model gpt-test, effort high\n    use it: codex --profile demo\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n    warning: Authentication remains target-owned; check it locally.\n    field config.secret: \"<redacted>\" -> \"<redacted>\"\n    field demo.config.model: \"\" -> \"gpt-test\"\n    field demo.config.model_reasoning_effort: \"\" -> \"high\"\n    /sandbox/demo.toml: create\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	const golden = "plan example-id (ready)\n  codex@0.154.0: ready\n    destination: /sandbox/demo.config.toml\n    route: model gpt-test, effort high\n    use it: codex --profile demo\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n    /sandbox/demo.toml: create\n    changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
 	if output.String() != golden {
 		t.Fatalf("compact golden mismatch:\n%s", output.String())
+	}
+	for _, hidden := range []string{"demo.config.model", "config.secret", "long adapter evidence caveat", "Authentication remains target-owned"} {
+		if strings.Contains(output.String(), hidden) {
+			t.Fatalf("compact plan leaked detail %q: %s", hidden, output.String())
+		}
+	}
+	var verbose bytes.Buffer
+	if err := writeInstallPlan(commandOutput(&verbose), plan, false, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, detail := range []string{"demo.config.model", "long adapter evidence caveat", "Authentication remains target-owned"} {
+		if !strings.Contains(verbose.String(), detail) {
+			t.Fatalf("verbose plan omitted %q: %s", detail, verbose.String())
+		}
 	}
 	if strings.Contains(output.String(), "\"secret\"") || strings.Contains(output.String(), "\"changed\"") {
 		t.Fatal("sensitive value leaked")
@@ -104,6 +118,21 @@ func TestCompactRouteUsesInstalledFieldsOnly(t *testing.T) {
 				t.Fatalf("route = %q", output.String())
 			}
 		})
+	}
+}
+
+func TestCompactClaudeExplicitDestinationAndUse(t *testing.T) {
+	target := install.TargetPlan{Target: install.Target{Name: "claude-code", Version: "2.1.278"}, Status: install.StatusReady,
+		Config:  &install.ConfigDestination{Path: "/sandbox/agent home/settings.json"},
+		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "claude --settings ~/.claude/profiles/demo.json"}}
+	var output bytes.Buffer
+	if err := writeCompactTarget(&output, target, newOutputStyles(false)); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"destination: /sandbox/agent home/profiles/demo.json", "use it: claude --settings '/sandbox/agent home/profiles/demo.json'"} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("missing %q in %s", want, output.String())
+		}
 	}
 }
 

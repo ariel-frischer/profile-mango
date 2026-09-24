@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/agentcheck"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
@@ -31,6 +32,43 @@ func TestOutputStylesColorModes(t *testing.T) {
 			}
 			if visible := stripANSI(got); visible != "valid" {
 				t.Fatalf("visible value = %q, want %q", visible, "valid")
+			}
+		})
+	}
+}
+
+func TestCompactInstallWarningAndPathStyles(t *testing.T) {
+	tests := map[string]struct {
+		enabled       bool
+		noColor, term string
+		wantANSI      bool
+	}{
+		"terminal":  {true, "", "xterm", true},
+		"nonTTY":    {false, "", "xterm", false},
+		"NO_COLOR":  {true, "1", "xterm", false},
+		"TERM dumb": {true, "", "dumb", false},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("NO_COLOR", test.noColor)
+			t.Setenv("TERM", test.term)
+			var output bytes.Buffer
+			target := install.TargetPlan{Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+				Config:              &install.ConfigDestination{Path: "/sandbox/config.toml"},
+				Files:               []install.FilePlan{{Path: "profile.toml", Action: install.ActionCreate}},
+				SkippedRequirements: []install.SkippedRequirement{{Requirement: "tools"}},
+				VersionCheck:        &install.VersionCheck{Status: install.VersionOutOfRange, Detected: "0.155.0", Range: ">=0.154.0 <0.155.0"}}
+			if err := writeCompactTarget(&output, target, newOutputStyles(test.enabled)); err != nil {
+				t.Fatal(err)
+			}
+			got := output.String()
+			if strings.Contains(got, "\x1b[") != test.wantANSI {
+				t.Fatalf("ANSI mismatch: %q", got)
+			}
+			for _, want := range []string{"destination: /sandbox/config.toml", "profile.toml: create", "warning: installed version", "not installed for this agent: tools"} {
+				if !strings.Contains(stripANSI(got), want) {
+					t.Fatalf("missing %q in %q", want, got)
+				}
 			}
 		})
 	}

@@ -22,7 +22,7 @@ func TestInstallHermesNamedProfileAtDefaultHome(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"hermes"}}
 	output := runInstallForTest(t, options)
-	for _, want := range []string{"    destination: " + config + "\n", "    use it: hermes -p route-only\n", "config.yaml: create\n"} {
+	for _, want := range []string{"    destination: " + filepath.Join(filepath.Dir(config), "profiles", "route-only", "config.yaml") + "\n", "    use it: hermes -p route-only\n", "config.yaml: create\n"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("plan omitted %q:\n%s", want, output)
 		}

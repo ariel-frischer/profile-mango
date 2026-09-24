@@ -27,7 +27,7 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}}
 	output := runInstallForTest(t, options)
-	for _, want := range []string{"    destination: " + config + "\n", "    use it: codex --profile route-only\n", "    route-only.config.toml: create\n"} {
+	for _, want := range []string{"    destination: " + filepath.Join(filepath.Dir(config), "route-only.config.toml") + "\n", "    use it: codex --profile route-only\n", "    route-only.config.toml: create\n"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("plan omitted %q:\n%s", want, output)
 		}
@@ -93,7 +93,7 @@ func TestInstallExplicitConfigOverridesDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := runInstallForTest(t, installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, configs: []string{"codex=" + explicit}})
-	if !strings.Contains(output, "    destination: "+explicit+"\n") || strings.Contains(output, home) {
+	if !strings.Contains(output, "    destination: "+filepath.Join(filepath.Dir(explicit), "route-only.config.toml")+"\n") || strings.Contains(output, home) {
 		t.Fatalf("explicit config not used:\n%s", output)
 	}
 	if _, err := os.Stat(home); !os.IsNotExist(err) {
