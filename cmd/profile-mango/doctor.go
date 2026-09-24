@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -56,6 +57,7 @@ var doctorBinaryNames = map[string]string{
 
 type doctorOptions struct {
 	profile      string
+	targets      []string
 	jsonOutput   bool
 	experimental bool
 }
@@ -100,6 +102,7 @@ func newDoctorCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&options.profile, "profile", "", "profile to check install readiness for (defaults to \"default\")")
+	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; omit for all public agents")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit a stable JSON report")
 	cmd.Flags().BoolVar(&options.experimental, "experimental", false, "also check Ariel's experimental Jcode fork")
 	_ = cmd.Flags().MarkHidden("experimental")
@@ -108,19 +111,52 @@ func newDoctorCmd() *cobra.Command {
 
 func runDoctor(cmd *cobra.Command, options doctorOptions) error {
 	registry := install.DefaultRegistry()
+	targets, err := selectedDoctorTargets(registry, options)
+	if err != nil {
+		return err
+	}
 	profileName := options.profile
 	if strings.TrimSpace(profileName) == "" {
 		profileName = defaultDoctorProfile
 	}
 	report := doctorReport{APIVersion: doctorAPIVersion, Kind: doctorKind, Profile: profileName}
 	planFor := doctorPlanner(registry, profileName)
-	for _, target := range doctorTargets(registry, options.experimental) {
+	for _, target := range targets {
 		report.Targets = append(report.Targets, checkDoctorTarget(registry, target, planFor))
 	}
 	if options.jsonOutput {
 		return writeDoctorJSON(cmd, report)
 	}
 	return writeDoctorHuman(cmd, report)
+}
+
+func selectedDoctorTargets(registry *install.Registry, options doctorOptions) ([]install.Target, error) {
+	available := doctorTargets(registry, options.experimental)
+	selected, err := targetList(options.targets)
+	if err != nil || len(selected) == 0 {
+		return available, err
+	}
+	result := make([]install.Target, 0, len(selected))
+	for _, value := range selected {
+		selector, err := install.ParseTargetSelector(value)
+		if err != nil {
+			return nil, fmt.Errorf("resolve doctor target %q: %w", value, err)
+		}
+		found := false
+		for _, target := range available {
+			if selector.Matches(target) {
+				if !slices.Contains(result, target) {
+					result = append(result, target)
+				}
+				found = true
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("unknown or unqualified doctor target %q (experimental fork needs --experimental)", value)
+		}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].String() < result[j].String() })
+	return result, nil
 }
 
 // doctorTargets lists every public registered target, sorted by name@version.

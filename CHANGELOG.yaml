@@ -61,6 +61,7 @@ versions:
             - OpenCode install without --agent now writes a named primary agent (agents/<name>.md beside opencode.json, with model and instructions, used with opencode --agent <name>) and leaves opencode.json unchanged; skills are skipped with a reason unless --default, which also keeps the main-config model and skill write
             - Hermes install now writes a native named profile (<hermes-home>/profiles/<name>/config.yaml, used with hermes -p <name>) and leaves config.yaml unchanged; --default also writes it; the profile named default patches the default config
             - The CLI command is now mango (make build gives bin/mango; the installer, make install and releases ship mango plus a profile-mango compatibility alias); the ~/.profile-mango home, PROFILE_MANGO_HOME and on-disk .profile-mango.* files are unchanged
+            - Accept comma-separated, repeated, and -t agent selectors across install, undo, render, agents check, and doctor, with per-target undo consent
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:

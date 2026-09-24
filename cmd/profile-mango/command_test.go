@@ -88,7 +88,11 @@ func resetNonInteractiveFlag(t *testing.T) {
 // ap-uuz.11).
 func resetSubcommandFlags(command *cobra.Command) {
 	reset := func(flag *pflag.Flag) {
-		_ = flag.Value.Set(flag.DefValue)
+		if value, ok := flag.Value.(pflag.SliceValue); ok {
+			_ = value.Replace(nil)
+		} else {
+			_ = flag.Value.Set(flag.DefValue)
+		}
 		flag.Changed = false
 	}
 	command.Flags().VisitAll(reset)

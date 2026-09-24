@@ -63,6 +63,7 @@ type Source struct {
 type Options struct {
 	Client       *http.Client
 	TargetID     string
+	TargetIDs    []string
 	Timeout      time.Duration
 	MaxBodyBytes int64
 	MaxRedirects int
@@ -147,7 +148,13 @@ func Check(ctx context.Context, manifest Manifest, options Options) (Report, err
 	}
 
 	options = options.withDefaults()
-	targets, err := selectTargets(manifest.Targets, options.TargetID)
+	var targets []Target
+	var err error
+	if len(options.TargetIDs) > 0 {
+		targets, err = selectTargetIDs(manifest.Targets, options.TargetIDs)
+	} else {
+		targets, err = selectTargets(manifest.Targets, options.TargetID)
+	}
 	if err != nil {
 		return Report{}, err
 	}
@@ -205,6 +212,25 @@ func selectTargets(targets []Target, targetID string) ([]Target, error) {
 	sort.SliceStable(selected, func(i, j int) bool {
 		return selected[i].ID < selected[j].ID
 	})
+	return selected, nil
+}
+
+func selectTargetIDs(targets []Target, ids []string) ([]Target, error) {
+	selected := make([]Target, 0, len(ids))
+	for _, id := range ids {
+		found := false
+		for _, target := range targets {
+			if target.ID == id {
+				selected = append(selected, target)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("target %q not found in source manifest", id)
+		}
+	}
+	sort.Slice(selected, func(i, j int) bool { return selected[i].ID < selected[j].ID })
 	return selected, nil
 }
 

@@ -56,7 +56,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringArrayVar(&options.targets, "target", nil, "target or target@version; a bare name selects its single qualified version; repeat for multiple targets")
+	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; a bare name selects its single qualified version")
 	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name; requires --config ending agents/name.md")
 	cmd.Flags().StringArrayVar(&options.configs, "config", nil, "target[@version]=explicit config path; selects the target; repeat for multiple targets")
 	cmd.Flags().StringArrayVar(&options.legacyConfigs, "config-path", nil, "deprecated alias for --config")
@@ -255,17 +255,19 @@ func selectInstallTargets(options installOptions, registry *install.Registry, co
 		}
 		return registry.Targets(), nil
 	}
-	values := append([]string(nil), options.targets...)
+	values, err := targetList(options.targets)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]install.Target, 0, len(values)+len(configs))
 	for _, value := range values {
 		target, err := resolveInstallTarget(registry, value)
 		if err != nil {
 			return nil, err
 		}
-		if slices.Contains(result, target) {
-			return nil, fmt.Errorf("duplicate target: %s", target.String())
+		if !slices.Contains(result, target) {
+			result = append(result, target)
 		}
-		result = append(result, target)
 	}
 	for _, config := range configs {
 		if selectsName(result, config.key.Name) {

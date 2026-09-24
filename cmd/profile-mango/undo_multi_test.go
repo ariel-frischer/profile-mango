@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -106,6 +107,29 @@ func TestUndoEachTargetOfMultiTargetInstall(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUndoListPreviewRequiresPerTargetApply(t *testing.T) {
+	configs := installClaudeAndCodexAtDefault(t)
+	preview, err := runUndoForTest(t, restoreOptions{targets: []string{"codex,claude-code", "codex@0.154.0"}, jsonOutput: true})
+	if err != nil {
+		t.Fatalf("multi-preview: %v\n%s", err, preview)
+	}
+	var plans []struct{ PlanID, Target string }
+	if err := json.Unmarshal([]byte(preview), &plans); err != nil || len(plans) != 2 || plans[0].Target != "codex@0.154.0" && plans[0].Target != "claude-code@2.1.278" || plans[0].PlanID == plans[1].PlanID {
+		t.Fatalf("multi-preview plans: %v, %s", err, preview)
+	}
+	if _, err := runUndoForTest(t, restoreOptions{targets: []string{"codex,claude-code"}, apply: true, yes: true, expectPlan: plans[0].PlanID}); err == nil || !strings.Contains(err.Error(), "preview-only") {
+		t.Fatalf("multi-apply unexpectedly accepted shared consent: %v", err)
+	}
+	for _, config := range configs {
+		data, err := os.ReadFile(config.path)
+		if err != nil || !bytes.Equal(data, config.installed) {
+			t.Fatalf("multi-apply touched %s: %v", config.target, err)
+		}
+	}
+	undoTargetForTest(t, configs[0].target)
+	undoTargetForTest(t, configs[1].target)
 }
 
 func TestUndoMultiTargetByOriginalPlanAndRejectsForgedReference(t *testing.T) {
