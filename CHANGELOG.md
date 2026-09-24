@@ -63,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - User-first README and new docs/public pages (concepts, profile reference, agents); docs index split into user and developer sections
 - The curl installer one-liner and install.sh release defaults now point at GitHub
 - Codex install now writes a native named profile ($CODEX_HOME/<name>.config.toml, used with codex --profile <name>) and leaves config.toml unchanged; --default also writes the root settings; plans and JSON report the install mode and use command, and agents without profiles get a note
+- Install creates missing private parent directories for a new file (undo removes the file and leaves the directory), and named profiles may live in a nested or absolute path
 
 ### Removed
 

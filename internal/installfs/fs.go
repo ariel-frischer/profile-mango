@@ -167,11 +167,15 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	if options.PlanID == "" {
 		options.PlanID = Hash(changeIdentity(changes))
 	}
+	anchor, err := journalAnchor(changes)
+	if err != nil {
+		return ApplyResult{}, err
+	}
 	if options.JournalPath == "" {
-		options.JournalPath = JournalPath(changes[0].Path, options.PlanID)
+		options.JournalPath = JournalPath(anchor, options.PlanID)
 	}
 	if options.LockPath == "" {
-		options.LockPath = changes[0].Path + ".profile-mango.lock"
+		options.LockPath = anchor + ".profile-mango.lock"
 	}
 	release, err := acquireLock(options.LockPath)
 	if err != nil {
@@ -210,6 +214,17 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 		return ApplyResult{}, err
 	}
 	return ApplyResult{Status: "committed", JournalPath: options.JournalPath, Backups: backups, Changed: changePaths(changes)}, nil
+}
+
+// journalAnchor is the first changed path whose directory already exists, so the lock and
+// journal never need directories that apply has yet to create.
+func journalAnchor(changes []Change) (string, error) {
+	for _, change := range changes {
+		if info, err := os.Lstat(filepath.Dir(change.Path)); err == nil && info.IsDir() {
+			return change.Path, nil
+		}
+	}
+	return "", fmt.Errorf("no changed file has an existing directory for the install journal")
 }
 
 func changePaths(changes []Change) []string {
@@ -391,7 +406,37 @@ func applyChange(change Change) error {
 	if change.Mode != 0 {
 		mode = change.Mode
 	}
+	if !current.Exists {
+		if err := ensureParentDirs(change.Path); err != nil {
+			return err
+		}
+	}
 	return atomicReplace(change.Path, change.Content, current, mode)
+}
+
+// ensureParentDirs creates missing private parent directories without following symlinks.
+// Undo removes created files but leaves created directories in place.
+func ensureParentDirs(path string) error {
+	parent := filepath.Dir(path)
+	parts := strings.Split(strings.TrimPrefix(parent, string(os.PathSeparator)), string(os.PathSeparator))
+	current := string(os.PathSeparator)
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		current = filepath.Join(current, part)
+		if err := os.Mkdir(current, 0o700); err != nil && !os.IsExist(err) {
+			return fmt.Errorf("create directory %s: %w", current, err)
+		}
+		info, err := os.Lstat(current)
+		if err != nil {
+			return fmt.Errorf("inspect directory %s: %w", current, err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+			return fmt.Errorf("path parent is not a directory: %s", current)
+		}
+	}
+	return nil
 }
 
 func failTransaction(changes []Change, journal *Journal, options ApplyOptions, leave bool, cause ...error) (ApplyResult, error) {
@@ -766,7 +811,9 @@ func inspectPath(path string, allowMissing bool) (string, os.FileInfo, error) {
 		current = filepath.Join(current, part)
 		info, statErr := os.Lstat(current)
 		if statErr != nil {
-			if os.IsNotExist(statErr) && allowMissing && index == len(parts)-1 {
+			// A missing file or missing parent directories mean the file is absent; apply
+			// creates the directories.
+			if os.IsNotExist(statErr) && allowMissing {
 				return abs, nil, nil
 			}
 			return "", nil, fmt.Errorf("inspect path %s: %w", current, statErr)

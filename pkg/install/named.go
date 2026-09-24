@@ -2,7 +2,6 @@ package install
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
@@ -27,7 +26,8 @@ type InstallMode struct {
 
 // namedProfileInstaller is implemented by adapters whose agent has native named profiles.
 type namedProfileInstaller interface {
-	// NamedProfileFile names the profile's file, relative to the main config directory.
+	// NamedProfileFile names the profile's file: absolute, or relative to the main config
+	// directory without escaping it.
 	NamedProfileFile(name string) (string, error)
 	// NamedProfileUse is the command that starts the agent with the named profile.
 	NamedProfileUse(name string) string
@@ -55,10 +55,11 @@ func snapshotNamedFile(adapter Adapter, mode *InstallMode, config installfs.Snap
 	if err != nil {
 		return installfs.Snapshot{}, err
 	}
-	if filepath.Base(name) != name {
-		return installfs.Snapshot{}, fmt.Errorf("named profile file must stay in the config directory")
+	path, err := patchPath(config.Path, name)
+	if err != nil || path == config.Path {
+		return installfs.Snapshot{}, fmt.Errorf("named profile file must be a separate file inside the config directory or an absolute path")
 	}
-	snapshot, err := installfs.SnapshotFile(filepath.Join(filepath.Dir(config.Path), name))
+	snapshot, err := installfs.SnapshotFile(path)
 	if err != nil {
 		return snapshot, fmt.Errorf("inspect named profile file: %w", err)
 	}

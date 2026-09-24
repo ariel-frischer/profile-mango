@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 const codexNamedBase = "# keep\nmodel = \"root-model\"\n[features]\napps = false\n[profiles.dev]\nmodel = \"legacy\"\n"
@@ -166,3 +168,42 @@ func TestAgentsWithoutProfilesReportDefaultConfigMode(t *testing.T) {
 		t.Fatalf("install mode = %#v", got)
 	}
 }
+
+type pathNamedAdapter struct {
+	codexAdapter
+	file string
+}
+
+func (adapter pathNamedAdapter) NamedProfileFile(string) (string, error) { return adapter.file, nil }
+
+func TestSnapshotNamedFilePaths(t *testing.T) {
+	root := t.TempDir()
+	config := filepath.Join(root, "settings.json")
+	outside := filepath.Join(t.TempDir(), "profile", "config.yaml")
+	cases := map[string]struct {
+		file string
+		want string
+	}{
+		"nested relative": {file: "profiles/coding.json", want: filepath.Join(root, "profiles", "coding.json")},
+		"absolute":        {file: outside, want: outside},
+		"escape":          {file: "../coding.json"},
+		"main config":     {file: "settings.json"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			mode := &InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding"}
+			snapshot, err := snapshotNamedFile(pathNamedAdapter{file: tc.file}, mode, installfsSnapshot(config))
+			if tc.want == "" {
+				if err == nil {
+					t.Fatalf("path %q was accepted", tc.file)
+				}
+				return
+			}
+			if err != nil || snapshot.Path != tc.want || snapshot.Exists {
+				t.Fatalf("snapshot = %+v, %v", snapshot, err)
+			}
+		})
+	}
+}
+
+func installfsSnapshot(path string) installfs.Snapshot { return installfs.Snapshot{Path: path} }
