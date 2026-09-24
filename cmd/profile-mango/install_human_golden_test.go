@@ -160,28 +160,6 @@ func TestCompactConflictGolden(t *testing.T) {
 	}
 }
 
-func TestCompactReadyTargetUsesThreeLines(t *testing.T) {
-	target := install.TargetPlan{
-		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
-		Config: &install.ConfigDestination{Path: "/sandbox/config.toml"},
-		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"},
-		Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}},
-		Files: []install.FilePlan{{Path: "demo.config.toml", Action: install.ActionCreate}},
-	}
-	var output bytes.Buffer
-	if err := writeCompactTarget(&output, target, stylesFor(&output, true)); err != nil {
-		t.Fatal(err)
-	}
-	if got := strings.Count(output.String(), "\n"); got != 3 {
-		t.Fatalf("ready target uses %d lines, want 3:\n%s", got, output.String())
-	}
-	for _, want := range []string{"destination: /sandbox/demo.config.toml", "use it: codex --profile demo", "route: model gpt-test", "changes: model", "files: demo.config.toml create"} {
-		if !strings.Contains(output.String(), want) {
-			t.Fatalf("missing %q in compact plan:\n%s", want, output.String())
-		}
-	}
-}
-
 func TestTypicalReadyTargetFitsThreeLines(t *testing.T) {
 	plan := install.Plan{PlanID: "ready-id", Status: install.StatusReady, Targets: []install.TargetPlan{{
 		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
