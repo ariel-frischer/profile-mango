@@ -227,6 +227,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err := validateAgentDestination(targetRequest); err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
 	}
+	targetPlan.Install = installModeFor(adapter, request, targetRequest)
 	if !metadata.Installable {
 		return blockedTargetPlan(targetPlan, metadata.Reason, "install.target.blocked")
 	}
@@ -277,11 +278,19 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
 		}
 	}
+	namedFile, err := snapshotNamedFile(adapter, targetPlan.Install, config)
+	if err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), "install.named_profile_path_unsafe")
+	}
 	profile, resources := loaded.Profile, loaded.Resources
 	if !request.Strict {
 		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, loaded)
 	}
-	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
+	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
+	if targetPlan.Install != nil {
+		input.Install = *targetPlan.Install
+	}
+	patch, err := adapter.Plan(input)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
@@ -304,6 +313,9 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		changes = append(changes, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(manifestSnapshot.Path), Action: manifestAction(manifestSnapshot), BeforeSHA256: manifestSnapshot.SHA256, AfterSHA256: installfs.Hash(manifestData), Owned: manifestSnapshot.Exists, targetPath: manifestSnapshot.Path})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
+	}
+	if targetPlan.Install != nil && targetPlan.Install.Mode == InstallModeNamedProfile {
+		guardUnchangedConfig(&targetPlan, config)
 	}
 	targetPlan.changes = changes
 	if len(changes) == 0 {
@@ -440,7 +452,10 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 	manifest.APIVersion = ManifestAPIVersion
 	manifest.Kind = ManifestKind
 	manifest.Owner = "profile-mango"
-	manifest.Profile = profile
+	// A reinstall that changes no file keeps the recorded profile, so it stays a no-op.
+	if len(changes) > 0 || !snapshot.Exists {
+		manifest.Profile = profile
+	}
 	manifest.Target = target.Target
 	manifest.Fields = nil
 	if !target.Agent.Empty() {

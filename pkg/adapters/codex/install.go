@@ -175,9 +175,8 @@ func scanConfig(data []byte) (configDocument, error) {
 }
 
 func validateInstallPrecedence(document configDocument) error {
-	if hasConfigPath(document.rootKeys, document.tableNames, "profile") ||
-		hasConfigPath(document.rootKeys, document.tableNames, "profiles") {
-		return fmt.Errorf("codex config contains profile selection or definitions; install requires an unprofiled root config")
+	if hasConfigPath(document.rootKeys, document.tableNames, "profile") {
+		return errLegacyProfileSelector
 	}
 	if hasProviderShadow(document) ||
 		hasRootKey(document.rootKeys, "openai_base_url") {

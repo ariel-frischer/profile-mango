@@ -13,7 +13,7 @@ install warns but still plans. See [concepts](concepts.md#tested-versions).
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
 | Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/settings.json` |
-| Codex | `0.154.0` | `>=0.154.0 <0.155.0` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml` |
+| Codex | `0.154.0` | `>=0.154.0 <0.155.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
 | Pi | `0.86.1` | `>=0.86.1 <0.87.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
 | Oh My Pi | `18.2.6` | `>=18.2.6 <18.3.0` | `~/.omp/agent/config.yml` |
@@ -34,16 +34,24 @@ The evidence behind every row is in the developer
 
 ## Codex
 
-- **Installs:** root `model_provider`, `model`, and `model_reasoning_effort`
-  in `config.toml`.
+- **Installs:** a native Codex profile: `model_provider`, `model`, and
+  `model_reasoning_effort` in `<profile>.config.toml` next to `config.toml`.
+  Start it with `codex --profile <profile>`. `config.toml` is not changed
+  unless you pass `--default`, which also writes the same three settings there
+  so plain `codex` uses them. Each profile you install gets its own file.
+- **Blocks:** a legacy `profile = ...` line, or a `[profiles.<profile>]` table
+  with the same name, in `config.toml`. Codex 0.154.0 refuses to start with
+  either one, so remove or move it first. Other `[profiles.*]` tables are kept.
 - **Route:** needs provider `openai`, `high` effort, native transport, and
   OAuth. Any other route blocks.
 - **Caveats:** profile-mango never writes or reads login data, and installing
   doesn't prove you're signed in with OAuth. Run `codex login status` yourself.
   It tells an API key apart from a ChatGPT login, but not Codex-managed OAuth
   from externally supplied tokens. Don't share its output. Trusted project
-  config and `-c` overrides can replace these values at run time. Model
-  availability and effort enforcement haven't been verified.
+  config and `-c` overrides can replace these values at run time. Codex
+  treats a `--profile` name with no file as empty, so a mistyped name silently
+  runs your default settings. Model availability and effort enforcement haven't
+  been verified.
 - [Reference](../dev/agents/codex.md)
 
 ## OpenCode

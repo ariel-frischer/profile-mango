@@ -67,6 +67,16 @@ are listed as skipped) or `--target <name>` (repeatable). Without `--config`,
 each agent's standard user config path is used. Pass `--config <name>=<path>`
 to write somewhere else.
 
+**Named profiles:** for an agent with its own named profiles (Codex today),
+install writes the profile under its name and leaves the agent's default
+settings alone, so several profiles can sit side by side. The plan shows how to
+start it, for example `use it: codex --profile review`. Add `--default` to also
+write the agent's default settings. An agent without named profiles gets the
+settings as its default, and the plan says so with a `note:` line. In JSON each
+target has `install.mode` (`named-profile` or `default-config`), plus
+`install.profileName`, `install.useCommand`, and `install.setsDefault` for a
+named profile.
+
 **What it writes:** only the settings that agent supports (see
 [agents](agents.md)), plus an ownership manifest and an install journal next to
 the config. Other settings in the file are kept as they are.
@@ -96,7 +106,9 @@ with `--apply`, or `--apply --yes --expect-plan <undo-plan-id>`. Each target of
 a multi-target install is undone separately.
 
 - An existing config comes back byte-for-byte from its backup.
-- A config the install created is removed.
+- A config or profile file the install created is removed. Undoing a named
+  profile install removes that profile only; earlier installs stay until you
+  undo them too.
 - A config edited after the install is refused unless `--override` discards
   those edits.
 - Undo needs the install's backup, so it can't reverse an install made with

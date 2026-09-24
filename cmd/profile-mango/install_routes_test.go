@@ -37,7 +37,7 @@ func TestInstallAllUsesPerTargetRoutes(t *testing.T) {
 			if test.claudeModel != "" && !planHasField(claude, "config.model", test.claudeModel) {
 				t.Fatalf("claude-code fields %#v", claude.Fields)
 			}
-			if codex.Status != install.StatusReady || !planHasField(codex, "config.model_provider", "openai") || !planHasField(codex, "config.model", "gpt-6-sol") {
+			if codex.Status != install.StatusReady || !planHasField(codex, "default.config.model_provider", "openai") || !planHasField(codex, "default.config.model", "gpt-6-sol") {
 				t.Fatalf("codex plan %#v", codex)
 			}
 		})

@@ -24,7 +24,7 @@ func installCodexAtDefault(t *testing.T, before string) string {
 		t.Fatal(err)
 	}
 	writeFile(t, config, before)
-	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, override: true}
+	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, override: true, makeDefault: true}
 	planID := regexp.MustCompile(`plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(runInstallForTest(t, options))
 	if planID == nil {
 		t.Fatal("install plan not ready")
