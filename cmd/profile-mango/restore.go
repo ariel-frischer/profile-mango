@@ -12,6 +12,7 @@ import (
 
 type restoreOptions struct {
 	target, config, legacyConfig, originalPlan, expectPlan string
+	targets                                                []string
 	apply, yes, override, jsonOutput                       bool
 }
 
@@ -20,7 +21,7 @@ func newRestoreCmd() *cobra.Command {
 	var options restoreOptions
 	cmd := &cobra.Command{Use: "undo", Aliases: []string{"restore"}, Short: "Preview, then apply, undoing the latest install for a target and restoring its original settings", Args: cobra.NoArgs,
 		SilenceUsage: true, RunE: func(cmd *cobra.Command, _ []string) error { return runRestore(cmd, options) }}
-	cmd.Flags().StringVar(&options.target, "target", "", "target or target@version; a bare name selects its single qualified version")
+	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; a bare name selects its single qualified version")
 	cmd.Flags().StringVar(&options.config, "config", "", "config path the install wrote (defaults to the target's documented config path)")
 	cmd.Flags().StringVar(&options.legacyConfig, "config-path", "", "deprecated alias for --config")
 	_ = cmd.Flags().MarkDeprecated("config-path", "use --config instead")
@@ -37,6 +38,22 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	if err := validateRestoreOptions(options); err != nil {
 		return err
 	}
+	values := options.targets
+	if options.target != "" {
+		values = append([]string{options.target}, values...)
+	}
+	selected, err := targetList(values)
+	if err != nil {
+		return err
+	}
+	selected, err = resolvedUndoTargets(selected)
+	if err != nil {
+		return err
+	}
+	if len(selected) > 1 {
+		return previewMultipleUndo(cmd, options, selected)
+	}
+	options.target = selected[0]
 	request, err := undoRequest(options, install.DefaultRegistry(), install.OSPathEnv())
 	if err != nil {
 		return err
@@ -66,6 +83,53 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	return err
 }
 
+func resolvedUndoTargets(values []string) ([]string, error) {
+	registry := install.DefaultRegistry()
+	selected := make([]string, 0, len(values))
+	seen := make(map[string]struct{})
+	for _, value := range values {
+		target, err := registry.ResolveTarget(value)
+		if err != nil {
+			return nil, fmt.Errorf("resolve undo target %q: %w", value, err)
+		}
+		if _, exists := seen[target.String()]; !exists {
+			seen[target.String()] = struct{}{}
+			selected = append(selected, target.String())
+		}
+	}
+	return selected, nil
+}
+
+// Multi-target undo is preview-only: each plan ID authorizes exactly one target.
+// Re-run apply once per target so a single consent cannot partially undo a set.
+func previewMultipleUndo(cmd *cobra.Command, options restoreOptions, selected []string) error {
+	if options.apply || options.configPath() != "" || options.originalPlan != "" {
+		return fmt.Errorf("multi-target undo is preview-only; apply each target separately with its own --expect-plan (and --config or --original-plan)")
+	}
+	var plans []install.RestorePlan
+	for _, name := range selected {
+		options.target = name
+		request, err := undoRequest(options, install.DefaultRegistry(), install.OSPathEnv())
+		if err != nil {
+			return err
+		}
+		plan, err := install.BuildUndoPlan(request)
+		if err != nil {
+			return fmt.Errorf("plan undo %s: %w", name, err)
+		}
+		plans = append(plans, plan)
+	}
+	if options.jsonOutput {
+		return json.NewEncoder(cmd.OutOrStdout()).Encode(plans)
+	}
+	for _, plan := range plans {
+		if err := writeRestorePlan(cmd, plan, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // undoRequest resolves the target like install: a bare name selects its qualified version, and an omitted
 // --config falls back to the target's documented default config path.
 func undoRequest(options restoreOptions, registry *install.Registry, env install.PathEnv) (install.UndoRequest, error) {
@@ -86,7 +150,7 @@ func validateRestoreOptions(options restoreOptions) error {
 	if options.config != "" && options.legacyConfig != "" {
 		return fmt.Errorf("use --config only; --config-path is a deprecated alias")
 	}
-	if strings.TrimSpace(options.target) == "" {
+	if strings.TrimSpace(options.target) == "" && len(options.targets) == 0 {
 		return fmt.Errorf("undo requires --target")
 	}
 	if options.yes && !options.apply {

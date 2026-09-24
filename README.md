@@ -37,6 +37,19 @@ The plan ends with the exact apply command, including its plan ID. On a terminal
 `--apply` alone asks for y/N confirmation instead. `--all` skips agents that are
 not installed, and an existing config is adopted with a backup.
 
+Use `-t` as shorthand for `--target`. Install, undo, doctor, and `agents check`
+accept comma-separated or repeated target flags, for example
+`mango install default -t codex,opencode` or
+`mango doctor -t codex -t opencode`. Repeated entries are deduplicated.
+`render`/`preview` accept the same selector syntax but require exactly one
+unique target and one `--out` directory. Multi-target `undo` previews one plan
+per target (`--json` returns an array); apply each target separately with its
+own `--expect-plan` ID. A shared consent cannot partially undo multiple agents.
+`--config target=path`, `--manifest target=path`, and `--agent target=value`
+remain repeatable mappings; commas inside their values are not split.
+`agents check` selects documentation-source IDs, not version-qualified adapter
+installations; checking a source is not a claim of version compatibility.
+
 The command is `mango`; `profile-mango` keeps working as a compatibility alias
 installed alongside it. If you already use MangoWC's unrelated `mango`
 compositor CLI, keep invoking `profile-mango` (or adjust `PATH` ordering) to

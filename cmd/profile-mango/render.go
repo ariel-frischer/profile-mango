@@ -16,6 +16,7 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
 )
@@ -25,6 +26,7 @@ type renderOptions struct {
 	resourceRoot  string
 	bindings      string
 	target        string
+	targets       []string
 	targetVersion string
 	out           string
 	preview       bool
@@ -141,7 +143,7 @@ func newRenderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profiles, "profiles", "", "profile repository root (defaults to <home>/profiles)")
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
-	cmd.Flags().StringVar(&options.target, "target", "", "exact target name (claude-code, codex, pi, oh-my-pi, openclaw, hermes, or opencode)")
+	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; render accepts exactly one (claude-code, codex, pi, oh-my-pi, openclaw, hermes, or opencode)")
 	cmd.Flags().StringVar(&options.targetVersion, "target-version", "", "exact target version")
 	cmd.Flags().StringVar(&options.out, "out", "", "new directory to write preview files into")
 	cmd.Flags().BoolVar(&options.preview, "preview", false, "write preview files even if the target isn't fully supported yet")
@@ -150,6 +152,34 @@ func newRenderCmd() *cobra.Command {
 }
 
 func runRender(cmd *cobra.Command, name string, options renderOptions) error {
+	values := options.targets
+	if options.target != "" {
+		values = append([]string{options.target}, values...)
+	}
+	selected, err := targetList(values)
+	if err != nil {
+		return err
+	}
+	selected, err = resolvedRenderTargets(selected, options.targetVersion)
+	if err != nil {
+		return err
+	}
+	if len(selected) > 1 {
+		return fmt.Errorf("render accepts exactly one --target; run one preview per target with a separate --out")
+	}
+	if len(selected) == 1 {
+		selector, err := install.ParseTargetSelector(selected[0])
+		if err != nil {
+			return err
+		}
+		options.target = selector.Name
+		if selector.Version != "" {
+			if options.targetVersion != "" && options.targetVersion != selector.Version {
+				return fmt.Errorf("--target version conflicts with --target-version")
+			}
+			options.targetVersion = selector.Version
+		}
+	}
 	resolvedOptions, err := resolveRenderInputs(options)
 	if err != nil {
 		return err
@@ -215,6 +245,33 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 	result.Diagnostics = append(result.Diagnostics, diagnostics...)
 	result.Diagnostics = result.Diagnostics.Sorted()
 	return finishRender(cmd, result, options, true)
+}
+
+func resolvedRenderTargets(values []string, version string) ([]string, error) {
+	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{})
+	for _, value := range values {
+		selector, err := install.ParseTargetSelector(value)
+		if err != nil {
+			return nil, err
+		}
+		if selector.Version == "" {
+			selector.Version = version
+			if selector.Version == "" && selector.Name == arieljcode.TargetName {
+				selector.Version = arieljcode.TargetVersion
+			}
+			if selector.Version == "" {
+				if qualified, err := install.DefaultRegistry().ResolveTarget(selector.Name); err == nil {
+					selector.Version = qualified.Version
+				}
+			}
+		}
+		if _, exists := seen[selector.String()]; !exists {
+			seen[selector.String()] = struct{}{}
+			result = append(result, selector.String())
+		}
+	}
+	return result, nil
 }
 
 // bindingsCreateHint names the exact fix for a missing local bindings file:
