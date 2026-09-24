@@ -133,7 +133,9 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 	}
 	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
 		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config", target + "=" + w.config, "--override", "--json"}
-	if strings.HasPrefix(target, "openclaw@") {
+	// OpenClaw and Hermes default to installing a native named profile ("minimal", from
+	// the project profile above); --default also patches this main config.
+	if strings.HasPrefix(target, "openclaw@") || strings.HasPrefix(target, "hermes@") {
 		w.args = append(w.args, "--default")
 	}
 	return w

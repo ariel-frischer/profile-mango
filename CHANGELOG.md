@@ -67,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - OpenClaw install now writes a native named profile (<home>/.openclaw-<name>/openclaw.json, used with openclaw --profile <name>) and leaves the default config unchanged; --default also writes it; a main config outside <home>/.openclaw/openclaw.json blocks named install; the profile named default patches the default config
 - Claude Code install now writes an emulated named profile (~/.claude/profiles/<name>.json with the model, used with claude --settings <file>) and leaves settings.json unchanged; --default also writes settings.json
 - OpenCode install without --agent now writes a named primary agent (agents/<name>.md beside opencode.json, with model and instructions, used with opencode --agent <name>) and leaves opencode.json unchanged; skills are skipped with a reason unless --default, which also keeps the main-config model and skill write
+- Hermes install now writes a native named profile (<hermes-home>/profiles/<name>/config.yaml, used with hermes -p <name>) and leaves config.yaml unchanged; --default also writes it; the profile named default patches the default config
 
 ### Removed
 
