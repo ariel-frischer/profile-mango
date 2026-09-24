@@ -65,7 +65,9 @@ func TestInstallReportsInstalledAgentVersion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			doctorFakeBinaries(t, test.scripts)
 			withAgentDetection(t)
-			human := runInstallCapture(t, codexVersionInstallOptions(t, false))
+			options := codexVersionInstallOptions(t, false)
+			options.verbose = true
+			human := runInstallCapture(t, options)
 			if !strings.Contains(human, "(ready)\n") {
 				t.Fatalf("version check must not block the plan:\n%s", human)
 			}

@@ -257,7 +257,7 @@ func TestInstallHumanPlanDisplaysTargetWarning(t *testing.T) {
 		Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning,
 			Code: "codex.install.auth_unmanaged", Message: "authentication is unmanaged; codex login status does not prove exact OAuth"}},
 	}}}
-	if err := writeInstallPlan(command, plan, false); err != nil {
+	if err := writeInstallPlan(command, plan, false, false); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "warning: authentication is unmanaged; codex login status does not prove exact OAuth") {
@@ -410,7 +410,7 @@ func TestWriteInstallPlanHumanFieldDiffs(t *testing.T) {
 			var output bytes.Buffer
 			cmd := &cobra.Command{}
 			cmd.SetOut(&output)
-			if err := writeInstallPlan(cmd, test.plan, false); err != nil {
+			if err := writeInstallPlan(cmd, test.plan, false, true); err != nil {
 				t.Fatal(err)
 			}
 			got := output.String()
@@ -443,7 +443,7 @@ func TestWriteInstallPlanHumanOutputIsDeterministic(t *testing.T) {
 	for _, output := range []*bytes.Buffer{&first, &second} {
 		cmd := &cobra.Command{}
 		cmd.SetOut(output)
-		if err := writeInstallPlan(cmd, plan, false); err != nil {
+		if err := writeInstallPlan(cmd, plan, false, false); err != nil {
 			t.Fatal(err)
 		}
 	}

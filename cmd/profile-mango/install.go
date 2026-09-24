@@ -37,6 +37,7 @@ type installOptions struct {
 	strict         bool
 	makeDefault    bool
 	jsonOutput     bool
+	verbose        bool
 	nonInteractive bool
 }
 
@@ -71,6 +72,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.strict, "strict", false, "stop instead of skipping profile settings an agent cannot install")
 	cmd.Flags().BoolVar(&options.makeDefault, "default", false, "also make this profile the agent's default, used without choosing a profile")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the deterministic plan as JSON")
+	cmd.Flags().BoolVarP(&options.verbose, "verbose", "v", false, "show full plan details, field paths, and diagnostics")
 	return cmd
 }
 
@@ -106,7 +108,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	}
 	writePlan := !options.apply || !options.jsonOutput || plan.Status == install.StatusBlocked
 	if writePlan {
-		if err := writeInstallPlan(cmd, plan, options.jsonOutput); err != nil {
+		if err := writeInstallPlan(cmd, plan, options.jsonOutput, options.verbose); err != nil {
 			return err
 		}
 	}
@@ -396,7 +398,7 @@ func bindingKey(target install.Target) string {
 	return target.String()
 }
 
-func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) error {
+func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput, verbose bool) error {
 	if jsonOutput {
 		data, err := plan.JSON()
 		if err != nil {
@@ -405,7 +407,147 @@ func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) er
 		_, err = cmd.OutOrStdout().Write(data)
 		return err
 	}
-	return writeHumanInstallPlan(cmd.OutOrStdout(), plan)
+	if verbose {
+		return writeHumanInstallPlan(cmd.OutOrStdout(), plan)
+	}
+	return writeCompactInstallPlan(cmd.OutOrStdout(), plan)
+}
+
+func writeCompactInstallPlan(output io.Writer, plan install.Plan) error {
+	styles := stylesFor(output, true)
+	if _, err := fmt.Fprintf(output, "%s %s (%s)\n", styles.heading("plan"), humanPath(plan.PlanID), styledPlanStatus(plan.Status, styles)); err != nil {
+		return err
+	}
+	counts := map[string]int{}
+	files := map[string]int{}
+	for _, target := range orderedTargetPlans(plan.Targets) {
+		counts[target.Status]++
+		for _, file := range target.Files {
+			files[file.Action]++
+		}
+		if err := writeCompactTarget(output, target, styles); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d skipped; files: %d create, %d update, %d unchanged. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop])
+	return err
+}
+
+func styledPlanStatus(status string, styles outputStyles) string {
+	switch status {
+	case install.StatusReady, "committed":
+		return styles.success(status)
+	case install.StatusBlocked, "failed":
+		return styles.failure(status)
+	case install.StatusSkipped:
+		return styles.warning(status)
+	default:
+		return styles.dim(status)
+	}
+}
+
+func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(target.Target.String())), styledPlanStatus(target.Status, styles)); err != nil {
+		return err
+	}
+	if target.Reason != "" {
+		if _, err := fmt.Fprintf(output, " (%s)", humanPath(target.Reason)); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(output); err != nil {
+		return err
+	}
+	if target.Config != nil {
+		if _, err := fmt.Fprintf(output, "    destination: %s\n", styles.path(humanPath(target.Config.Path))); err != nil {
+			return err
+		}
+	}
+	if err := writeCompactRoute(output, target); err != nil {
+		return err
+	}
+	if err := writeInstallMode(output, target.Install); err != nil {
+		return err
+	}
+	return writeCompactEffects(output, target)
+}
+
+func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
+	var model, effort string
+	for _, field := range target.Fields {
+		if field.Sensitive {
+			continue
+		}
+		path := field.Path
+		if target.Install != nil && target.Install.ProfileName != "" {
+			path = strings.TrimPrefix(path, target.Install.ProfileName+".")
+		}
+		switch path {
+		case "profile.model", "agent.model", "config.model", "config.model.default", "config.modelRoles.default", "config.defaultModel", "config.agents.defaults.model.primary":
+			model = field.After
+		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault":
+			effort = field.After
+		}
+	}
+	if model == "" && effort == "" {
+		return nil
+	}
+	_, err := fmt.Fprintf(output, "    route: model %s, effort %s\n", humanPath(orUnknown(model)), humanPath(orUnknown(effort)))
+	return err
+}
+
+func orUnknown(value string) string {
+	if value == "" {
+		return "not installed"
+	}
+	return value
+}
+
+func writeCompactEffects(output io.Writer, target install.TargetPlan) error {
+	if err := writeSkippedRequirements(output, target.SkippedRequirements); err != nil {
+		return err
+	}
+	if err := writeCompactWarnings(output, target); err != nil {
+		return err
+	}
+	seen := make(map[string]struct{})
+	if err := writeHumanFields(output, target.Fields, "    ", seen, target.Status != install.StatusNoop); err != nil {
+		return err
+	}
+	for _, file := range orderedFilePlans(target.Files) {
+		if _, err := fmt.Fprintf(output, "    %s: %s\n", humanPath(file.Path), humanPath(file.Action)); err != nil {
+			return err
+		}
+		if err := writeHumanFields(output, file.Fields, "      ", seen, file.Action != install.ActionNoop); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeCompactWarnings(output io.Writer, target install.TargetPlan) error {
+	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {
+		if _, err := fmt.Fprintf(output, "    warning: installed version %s is outside tested range %s; check agent compatibility before applying\n", humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
+			return err
+		}
+	}
+	for _, diagnostic := range target.Diagnostics {
+		if diagnostic.Message == target.Reason {
+			continue
+		}
+		if strings.HasSuffix(diagnostic.Code, ".install.profile_state_separate") {
+			if _, err := fmt.Fprintf(output, "    warning: %s; sign in there if needed (authentication was not inspected)\n", humanPath(diagnostic.Message)); err != nil {
+				return err
+			}
+			continue
+		}
+		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && diagnostic.Code != "install.version_out_of_range" {
+			if _, err := fmt.Fprintf(output, "    warning: %s\n", humanPath(diagnostic.Message)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func writeHumanInstallPlan(output io.Writer, plan install.Plan) error {
@@ -726,8 +868,9 @@ func writeApplyReport(cmd *cobra.Command, report install.ApplyReport, jsonOutput
 	}
 	statuses := append([]install.ApplyTargetResult(nil), report.Targets...)
 	sort.Slice(statuses, func(i, j int) bool { return statuses[i].Target < statuses[j].Target })
+	styles := stylesFor(cmd.OutOrStdout(), true)
 	for _, target := range statuses {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "applied %s: %s\n", target.Target, target.Status); err != nil {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "applied %s: %s\n", humanPath(target.Target), styledPlanStatus(target.Status, styles)); err != nil {
 			return err
 		}
 	}
