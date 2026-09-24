@@ -112,8 +112,17 @@ The evidence behind every row is in the developer
 
 ## Hermes
 
-- **Installs:** `model.provider`, `model.default`, and `agent.reasoning_effort`
-  in `config.yaml`.
+- **Installs:** a native Hermes profile: `model.provider`, `model.default`,
+  and `agent.reasoning_effort` in
+  `<hermes-home>/profiles/<profile>/config.yaml`. Start it with
+  `hermes -p <profile>`. `~/.hermes/config.yaml` is not changed unless you
+  pass `--default`, which also writes the same three settings there. A
+  profile named `default` is Hermes' own default config, so it is written in
+  place.
+- **Caveats:** a new profile has its own state directory, with no memories,
+  sessions, skills, or credentials from your default profile. profile-mango
+  doesn't copy them. Reserved Hermes profile names (`hermes`, `test`, `tmp`,
+  `root`, `sudo`) are blocked, matching what `hermes -p` itself refuses.
 - [Reference](../dev/agents/hermes.md)
 
 ## Not supported

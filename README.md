@@ -6,7 +6,7 @@
 
 - **Profile:** portable intent, such as a description, a route name, and later permissions, instructions, and skills. It is a flat YAML file named by its folder.
 - **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides. They stay local and never hold credentials.
-- **Install:** writes the settings each agent supports into that agent's own config. Where the agent has named profiles (Codex, OpenClaw), the profile is installed under its own name and your default settings are left alone unless you pass `--default`. It shows a plan first, backs up what it changes, and can be undone.
+- **Install:** writes the settings each agent supports into that agent's own config. Where the agent has named profiles (Codex, OpenClaw, Hermes), the profile is installed under its own name and your default settings are left alone unless you pass `--default`. It shows a plan first, backs up what it changes, and can be undone.
 
 ## Install
 
@@ -56,7 +56,7 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 | Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
 | Oh My Pi | Model, thinking level | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |
-| Hermes | Provider, model, effort | [agents](docs/public/agents.md#hermes) |
+| Hermes | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#hermes) |
 
 Each agent has a tested version range. Outside it, install still works but warns.
 Credentials, sessions, plugins, and MCP are never read or written.
