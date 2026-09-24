@@ -1,10 +1,11 @@
 # Claude Code configuration reference
 
-**Reference date:** 2026-09-20 local / 2026-09-21 UTC. **Documentation:** official
+**Reference date:** 2026-09-23 local / 2026-09-21 UTC. **Documentation:** official
 mutable, unversioned pages. **Release context:** `v2.1.278`, commit
 `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`. The release pin does not version
 the documentation. **Status:** profile-mango ships an exact-version inert preview
-renderer plus a model-only installer. Exact explicit-file model consumption was qualified on 2026-09-22; full effective-state support remains blocked.
+renderer plus a model-only installer that writes an emulated named profile file by
+default. Exact explicit-file model consumption was qualified on 2026-09-22; full effective-state support remains blocked.
 
 ## Immutable artifact and release context
 
@@ -48,6 +49,23 @@ do not prove an effective route or authentication mode.
 The inert adapter emits only the route model as a documentation-context
 `model` candidate in `preview/<profile>.settings.json.preview`. It never emits
 provider, transport, authentication, credentials, or effort values.
+
+## Emulated named profiles
+
+Claude Code has no native concept of named profiles: `--settings <file>` loads
+strict JSON from any path the caller supplies. `profile-mango install <name>
+--target claude-code` uses this to emulate one: the top-level `model` is written
+to a Mango-owned `profiles/<name>.json` beside `settings.json`, and the plan
+prints `use it: claude --settings <path>` so you can start Claude Code with it.
+`settings.json` itself is read only to check it exists and is not byte-empty,
+and stays byte-for-byte unchanged unless `--default` is also given, which then
+patches `settings.json` the same way the installer did before this file
+existed. Profile names use the same safe ASCII letters/digits/`_`/`-` subset
+as the Codex named-profile convention; this is a profile-mango naming choice,
+not observed Claude Code behavior. The exact-ELF evidence below establishes
+model consumption from an explicit `--settings` path in general, not a
+`profiles/` directory specifically. See the
+[dated evidence](../target-evidence.md#bounded-model-installation-2026-09-22).
 
 ## Permissions, instructions, and skills
 

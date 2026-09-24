@@ -12,7 +12,7 @@ install warns but still plans. See [concepts](concepts.md#tested-versions).
 
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
-| Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/settings.json` |
+| Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/profiles/<profile>.json` next to `~/.claude/settings.json` |
 | Codex | `0.154.0` | `>=0.154.0 <0.155.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
 | Pi | `0.86.1` | `>=0.86.1 <0.87.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
@@ -25,11 +25,18 @@ The evidence behind every row is in the developer
 
 ## Claude Code
 
-- **Installs:** the top-level `model` in `settings.json`.
+- **Installs:** the top-level `model` in an emulated named profile:
+  `profiles/<profile>.json` next to `settings.json`. Start it with
+  `claude --settings <path>`, printed by the plan as `use it:`. `settings.json`
+  is not changed unless you pass `--default`, which also writes `model` there
+  so plain `claude` uses it. Claude Code has no native named profiles; this is
+  a profile-mango file-placement convention over the qualified `--settings`
+  consumption.
 - **Route:** needs provider `anthropic` and native transport. The `init`
   starter bindings already include a `claude-code` override for this.
 - **Caveats:** effort, provider, and sign-in are not set. Project, managed, or
-  command-line settings can override the user file.
+  command-line settings can override the user file. An existing `settings.json`
+  must not be empty.
 - [Reference](../dev/agents/claude-code.md)
 
 ## Codex

@@ -93,7 +93,7 @@ readiness, read-only. `render` (alias `preview`) only writes beneath the new
 ## Plan, apply, undo
 
 Only exact versions/subsets in `docs/dev/target-evidence.md` are installable
-(e.g. Claude Code `2.1.278` main-config model only). `install` always plans
+(e.g. Claude Code `2.1.278` model only). `install` always plans
 first, then repeats the same inputs to apply:
 
 ```bash
@@ -102,9 +102,11 @@ profile-mango install <profile-name> --target <name> --apply --yes --expect-plan
 profile-mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
 ```
 
-Agents with native named profiles get the profile under its own name and
-leave the agent's default settings alone; the plan prints `use it: <command>`
-(Codex: `codex --profile <profile-name>`, from `$CODEX_HOME/<profile-name>.config.toml`).
+Agents with named profiles, native or emulated, get the profile under its own
+name and leave the agent's default settings alone; the plan prints
+`use it: <command>` (Codex: `codex --profile <profile-name>`, from
+`$CODEX_HOME/<profile-name>.config.toml`; Claude Code, which has no native
+profiles: `claude --settings ~/.claude/profiles/<profile-name>.json`).
 Add `--default` to also write the agent's default settings. Agents without
 profiles are installed as their default settings, with a plan note saying so.
 Without `--config`, plans use the target's documented default config path.

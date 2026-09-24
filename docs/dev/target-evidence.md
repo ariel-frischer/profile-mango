@@ -253,6 +253,22 @@ fault tests establish transaction rollback and tamper-checked recovery. This doe
 not promote the full-profile renderer or establish authentication, effort,
 permissions, tools, instruction/skill delivery, or runtime enforcement.
 
+### Emulated named profile installation, 2026-09-23
+
+Claude Code `2.1.278` has no native named-profile mechanism; the probe above
+only shows that `--settings <explicit-file>` consumes that file's `model`
+regardless of the path chosen. `profile-mango install <name> --target
+claude-code` now uses this to write the model to a Mango-owned
+`profiles/<name>.json` beside `settings.json` by default, and prints `use it:
+claude --settings <path>`. `settings.json` is read for the existing
+empty/malformed/permission checks above but is left byte-for-byte unchanged in
+this mode. `--default` additionally patches `settings.json` with the same
+byte-preserving single-field patch qualified above, so plain `claude` also
+picks it up. Undo removes only the profile file (and manifest) from the install
+it reverses; earlier named-profile installs are untouched. This is a
+profile-mango file-placement and CLI-flag convention layered on the qualified
+explicit-file consumption; it is not additional native evidence.
+
 ### Capability classification
 
 | Portable property | Evidence | Applicability consequence |
@@ -1204,7 +1220,7 @@ providers. Relative relocation values block with a reason.
 
 | Target | Default path | Relocation | Documentation source |
 | --- | --- | --- | --- |
-| Claude Code `2.1.278` | `~/.claude/settings.json` | none | [claude-code.md](agents/claude-code.md#configuration-and-precedence) |
+| Claude Code `2.1.278` | `~/.claude/settings.json`; emulated named profiles go to `profiles/<name>.json` in the same folder | none | [claude-code.md](agents/claude-code.md#emulated-named-profiles) |
 | Codex `0.154.0` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml`; named profiles go to `<name>.config.toml` in the same folder | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
 | OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
 | Pi `0.86.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
