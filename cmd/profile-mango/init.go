@@ -11,7 +11,7 @@ import (
 )
 
 const starterProfileYAML = `# The profile name defaults to its folder name (default).
-description: Default profile scaffolded by profile-mango init
+description: Default profile scaffolded by mango init
 route: local
 `
 

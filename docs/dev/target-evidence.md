@@ -261,7 +261,7 @@ permissions, tools, instruction/skill delivery, or runtime enforcement.
 
 Claude Code `2.1.278` has no native named-profile mechanism; the probe above
 only shows that `--settings <explicit-file>` consumes that file's `model`
-regardless of the path chosen. `profile-mango install <name> --target
+regardless of the path chosen. `mango install <name> --target
 claude-code` now uses this to write the model to a Mango-owned
 `profiles/<name>.json` beside `settings.json` by default, and prints `use it:
 claude --settings <path>`. `settings.json` is read for the existing

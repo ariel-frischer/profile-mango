@@ -1,6 +1,6 @@
 # Profile and bindings reference
 
-A profile package has this layout. `profile-mango init` creates it in
+A profile package has this layout. `mango init` creates it in
 `~/.profile-mango` (or `--home`, or `$PROFILE_MANGO_HOME`). `init <dir>`
 creates it in a new folder instead.
 
@@ -91,7 +91,7 @@ native transport, and OAuth. The plan says why when a route doesn't fit. See [ag
 ## Checking a profile
 
 ```bash
-profile-mango validate ~/.profile-mango/profiles/default/profile.yaml \
+mango validate ~/.profile-mango/profiles/default/profile.yaml \
   --bindings ~/.profile-mango/bindings/local.yaml
 ```
 

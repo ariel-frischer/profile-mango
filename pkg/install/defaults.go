@@ -165,7 +165,7 @@ func (openCodeAdapter) DefaultConfigPath(env PathEnv) (string, error) {
 	}
 }
 
-const noAgentsFound = "no supported agents found; run profile-mango doctor"
+const noAgentsFound = "no supported agents found; run mango doctor"
 
 // missingAgentFolder handles a default config path whose folder does not exist. With
 // SkipNotInstalled, an agent whose command is also absent is skipped; otherwise the

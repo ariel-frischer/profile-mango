@@ -136,7 +136,7 @@ Earlier M0 inspection observations above are historical, not current install gat
 
 ## Named-profile installation, 2026-09-23
 
-`profile-mango install <profile> --target openclaw` writes the two qualified
+`mango install <profile> --target openclaw` writes the two qualified
 fields to the config that `openclaw --profile <profile>` reads, and leaves
 the default config alone unless you pass `--default`. The plan prints
 `use it: openclaw --profile <profile>`. Evidence is **source-only**: the pinned

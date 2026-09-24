@@ -25,7 +25,7 @@ func executeCommand(t *testing.T, args ...string) string {
 	rootCmd.SetArgs(args)
 
 	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("profile-mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
+		t.Fatalf("mango %s failed: %v\n%s", strings.Join(args, " "), err, out.String())
 	}
 	return out.String()
 }
@@ -107,8 +107,8 @@ func TestVersionAliasSmoke(t *testing.T) {
 }
 
 func TestRootCommandUsesMangoIdentity(t *testing.T) {
-	if rootCmd.Use != "profile-mango" {
-		t.Fatalf("root command use = %q, want profile-mango", rootCmd.Use)
+	if rootCmd.Use != "mango" {
+		t.Fatalf("root command use = %q, want mango", rootCmd.Use)
 	}
 }
 
@@ -270,7 +270,7 @@ func TestNonInteractiveFlagIsGlobal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("non-interactive version failed: %v", err)
 	}
-	if !strings.Contains(output, "profile-mango ") {
+	if !strings.Contains(output, "mango ") {
 		t.Fatalf("version output = %q", output)
 	}
 }
@@ -351,7 +351,7 @@ func TestValidateCommandMissingBindingsNamesFix(t *testing.T) {
 	if err == nil {
 		t.Fatal("validate succeeded despite missing bindings")
 	}
-	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "profile-mango init") {
+	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "mango init") {
 		t.Fatalf("missing bindings error lacks an exact fix: %v", err)
 	}
 }

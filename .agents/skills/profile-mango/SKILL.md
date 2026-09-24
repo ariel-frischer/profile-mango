@@ -1,8 +1,9 @@
 ---
 name: profile-mango
 description: >
-  Use the profile-mango CLI to scaffold, author, validate, preview, and plan
-  narrow installs of portable agent profiles; preserve its safety boundary.
+  Use the mango CLI (profile-mango compatibility alias) to scaffold, author,
+  validate, preview, and plan narrow installs of portable agent profiles;
+  preserve its safety boundary.
 license: MIT
 compatibility:
   - Codex
@@ -20,26 +21,26 @@ allowed-tools: Bash Read Write Edit
 
 # profile-mango
 
-`profile-mango` separates portable coding-agent intent from machine-local route
+`mango` separates portable coding-agent intent from machine-local route
 identity: author/validate profiles, render inert previews, and plan only the
 version-qualified installs below. Install the CLI first if not on PATH:
 
 ```bash
 git clone git@gitlab.com:ariel-frischer/profile-mango.git
-cd profile-mango && make deps && make install && profile-mango version
+cd profile-mango && make deps && make install && mango version
 ```
 
 ## Scaffold a package
 
 ```bash
-profile-mango init                # global package at ~/.profile-mango
-profile-mango init ./my-profiles  # explicit package in a new directory
+mango init                # global package at ~/.profile-mango
+mango init ./my-profiles  # explicit package in a new directory
 ```
 
 `init` creates only absent paths, never overwriting: `profiles/default/profile.yaml`,
 `bindings/local.example.yaml`, a gitignored `bindings/local.yaml` copy, and
 `bindings/.gitignore`. Home precedence is `--home`, `$PROFILE_MANGO_HOME`,
-then `~/.profile-mango` (`profile-mango home` prints it). Explicit project
+then `~/.profile-mango` (`mango home` prints it). Explicit project
 `render`/`install` inputs (`--profiles`/`--resource-root`/`--bindings`) are
 all-or-none; else they default from the home.
 
@@ -76,9 +77,9 @@ routes:
 ## Validate, preview, check readiness
 
 ```bash
-profile-mango validate <profile.yaml> --bindings <file> --json
-profile-mango doctor --json
-profile-mango render <profile-name> --profiles ./profiles --resource-root . \
+mango validate <profile.yaml> --bindings <file> --json
+mango doctor --json
+mango render <profile-name> --profiles ./profiles --resource-root . \
   --bindings ./bindings/local.yaml --target <name> --target-version <exact> \
   --out ./preview --preview --json
 ```
@@ -97,9 +98,9 @@ Only exact versions/subsets in `docs/dev/target-evidence.md` are installable
 first, then repeats the same inputs to apply:
 
 ```bash
-profile-mango install <profile-name> --target <name>
-profile-mango install <profile-name> --target <name> --apply --yes --expect-plan <planID>
-profile-mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
+mango install <profile-name> --target <name>
+mango install <profile-name> --target <name> --apply --yes --expect-plan <planID>
+mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
 ```
 
 Agents with named profiles, native or emulated, get the profile under its own
@@ -131,5 +132,5 @@ restores the latest committed install, or an explicit `--original-plan <id>`.
   instructions, skills) are skipped, not applied: the plan lists them under
   each target (`not installed for this agent: ...`, JSON
   `skippedRequirements`). Pass `--strict` to block instead.
-- `profile-mango agents check` is a separate network drift check; skip it
+- `mango agents check` is a separate network drift check; skip it
   when offline operation is required.

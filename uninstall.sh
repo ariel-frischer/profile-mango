@@ -2,9 +2,11 @@
 # profile-mango uninstaller for profile-mango releases
 set -eu
 
-BINARY_NAME="profile-mango"
+BINARY_NAME="mango"
+ALIAS_NAME="profile-mango"
 INSTALL_DIR="${PROFILE_MANGO_INSTALL_DIR:-$HOME/.local/bin}"
 TARGET="${INSTALL_DIR}/${BINARY_NAME}"
+ALIAS_TARGET="${INSTALL_DIR}/${ALIAS_NAME}"
 
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
@@ -34,6 +36,12 @@ esac
 
 rm -f "$TARGET"
 
+alias_removed=0
+if [ -e "$ALIAS_TARGET" ] || [ -L "$ALIAS_TARGET" ]; then
+    rm -f "$ALIAS_TARGET"
+    alias_removed=1
+fi
+
 # Clean up backups
 backup_count=0
 for f in "${TARGET}.backup."*; do
@@ -43,6 +51,9 @@ for f in "${TARGET}.backup."*; do
 done
 
 printf '%b==>%b %s has been removed from %s\n' "${GREEN}" "${NC}" "$BINARY_NAME" "$INSTALL_DIR"
+if [ "$alias_removed" -eq 1 ]; then
+    printf '%b==>%b %s compatibility alias has been removed from %s\n' "${GREEN}" "${NC}" "$ALIAS_NAME" "$INSTALL_DIR"
+fi
 if [ "$backup_count" -gt 0 ]; then
     printf '%b==>%b Cleaned up %d backup(s)\n' "${GREEN}" "${NC}" "$backup_count"
 fi

@@ -657,7 +657,7 @@ func TestInstallApplyCommand(t *testing.T) {
 	}{
 		"default inputs": {
 			options: installOptions{targets: []string{"claude-code"}},
-			want:    "profile-mango install default --target claude-code --apply --yes --expect-plan abc",
+			want:    "mango install default --target claude-code --apply --yes --expect-plan abc",
 		},
 		"every planning flag is carried and quoted": {
 			home: "/tmp/my home",
@@ -667,11 +667,11 @@ func TestInstallApplyCommand(t *testing.T) {
 				configs: []string{"opencode=/c/agents/mango.md"}, legacyConfigs: []string{"codex=/x's.toml"},
 				manifests: []string{"opencode=/m.json"}, noBackup: true, override: true,
 			},
-			want: "profile-mango --home '/tmp/my home' install default --profiles /p --resource-root /r --bindings /b.yaml --target opencode --agent opencode=primary:mango --config opencode=/c/agents/mango.md --config 'codex=/x'\\''s.toml' --manifest opencode=/m.json --no-backup --override --apply --yes --expect-plan abc",
+			want: "mango --home '/tmp/my home' install default --profiles /p --resource-root /r --bindings /b.yaml --target opencode --agent opencode=primary:mango --config opencode=/c/agents/mango.md --config 'codex=/x'\\''s.toml' --manifest opencode=/m.json --no-backup --override --apply --yes --expect-plan abc",
 		},
 		"all targets": {
 			options: installOptions{all: true},
-			want:    "profile-mango install default --all --apply --yes --expect-plan abc",
+			want:    "mango install default --all --apply --yes --expect-plan abc",
 		},
 	}
 	for name, test := range tests {

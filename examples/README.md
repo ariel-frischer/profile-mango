@@ -32,7 +32,7 @@ structure, inheritance, and route/target-override syntax, not as a full policy.
 cp -R examples ./my-agent-profiles   # choose a new, absent destination
 cp ./my-agent-profiles/bindings/local.example.yaml ./my-agent-profiles/bindings/local.yaml
 # Edit local.yaml: your real provider, bare model ID, effort, and any per-agent targets.
-profile-mango validate ./my-agent-profiles/profiles/coding/profile.yaml \
+mango validate ./my-agent-profiles/profiles/coding/profile.yaml \
   --bindings ./my-agent-profiles/bindings/local.yaml
 ```
 
@@ -41,7 +41,7 @@ resolution or referenced resources. To resolve the whole package, render it
 into a new staging directory instead:
 
 ```bash
-profile-mango render coding \
+mango render coding \
   --profiles ./my-agent-profiles/profiles \
   --resource-root ./my-agent-profiles \
   --bindings ./my-agent-profiles/bindings/local.yaml \

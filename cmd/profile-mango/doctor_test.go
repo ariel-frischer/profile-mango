@@ -189,7 +189,7 @@ func TestDoctorHumanOutputHasSuggestion(t *testing.T) {
 	if !strings.Contains(output, "not found") {
 		t.Fatalf("doctor output should report missing binaries:\n%s", output)
 	}
-	if !strings.Contains(output, "next: run profile-mango init") {
+	if !strings.Contains(output, "next: run mango init") {
 		t.Fatalf("doctor output missing next-step suggestion:\n%s", output)
 	}
 }

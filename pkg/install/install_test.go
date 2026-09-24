@@ -56,7 +56,7 @@ func TestBuildPlanMissingBindingsNamesFix(t *testing.T) {
 	if err == nil {
 		t.Fatal("build plan succeeded despite missing bindings")
 	}
-	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "profile-mango init") {
+	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "mango init") {
 		t.Fatalf("missing bindings error lacks an exact fix: %v", err)
 	}
 }

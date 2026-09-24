@@ -30,7 +30,7 @@ func init() {
 }
 
 func printPlainVersion(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "profile-mango %s\n", version.Version)
+	_, _ = fmt.Fprintf(writer, "mango %s\n", version.Version)
 	_, _ = fmt.Fprintf(writer, "commit: %s\n", version.Commit)
 	_, _ = fmt.Fprintf(writer, "built: %s\n", version.BuildDate)
 	_, _ = fmt.Fprintf(writer, "go: %s\n", runtime.Version())
@@ -39,7 +39,7 @@ func printPlainVersion(writer io.Writer) {
 
 func printPrettyVersion(writer io.Writer) {
 	styles := stylesFor(writer, true)
-	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  profile-mango 🥭 — Install one coding-agent profile across Claude Code, Codex, OpenCode, and more."))
+	_, _ = fmt.Fprintf(writer, "\n%s\n\n", styles.dim("  mango 🥭 — Install one coding-agent profile across Claude Code, Codex, OpenCode, and more."))
 	printVersionBox(writer, styles)
 	_, _ = fmt.Fprintln(writer)
 }

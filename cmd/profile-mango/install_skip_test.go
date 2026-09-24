@@ -67,7 +67,7 @@ func TestInstallAllWithNoAgentsPointsToDoctor(t *testing.T) {
 		t.Fatal(err)
 	}
 	output, err := runInstallResult(t, options)
-	if err == nil || !strings.Contains(err.Error(), "no supported agents found; run profile-mango doctor") {
+	if err == nil || !strings.Contains(err.Error(), "no supported agents found; run mango doctor") {
 		t.Fatalf("all-skipped install error = %v\n%s", err, output)
 	}
 	if !strings.Contains(output, "(blocked)\n") {

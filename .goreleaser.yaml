@@ -1,12 +1,14 @@
 version: 2
 
+project_name: profile-mango
+
 before:
   hooks:
     - go mod tidy
 
 builds:
   - main: ./cmd/profile-mango/
-    binary: profile-mango
+    binary: mango
     ldflags:
       - -s -w
       - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Version={{.Version}}

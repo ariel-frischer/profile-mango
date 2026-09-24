@@ -1,6 +1,6 @@
 # Agents
 
-What `profile-mango install` writes for each agent, where, and for which
+What `mango install` writes for each agent, where, and for which
 versions. Everything not listed for an agent is skipped and shown in the plan as
 `not installed for this agent: ...`, or blocks with `--strict`. No agent gets
 authentication, permissions, tools, plugins, MCP, or runtime enforcement.

@@ -70,7 +70,7 @@ of those effects before execution.
 
 ## Inert preview boundary
 
-`profile-mango render <name> --target hermes --target-version 0.21.3` emits a
+`mango render <name> --target hermes --target-version 0.21.3` emits a
 deterministic `preview/<name>.config.yaml.preview` candidate through the
 versioned render report. Its source-grounded YAML fields are `model.provider`,
 `model.default`, and `agent.reasoning_effort`. It never copies authentication
@@ -114,7 +114,7 @@ for exact hashes, invocation, and limitations.
 
 ## Named-profile installation, 2026-09-23
 
-`profile-mango install <profile> --target hermes` writes the three qualified
+`mango install <profile> --target hermes` writes the three qualified
 fields to the config that `hermes -p <profile>` reads, and leaves the default
 config alone unless you pass `--default`. The plan prints
 `use it: hermes -p <profile>`. Evidence is **source-only**: the pinned files
