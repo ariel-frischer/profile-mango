@@ -116,6 +116,8 @@ CHANGELOG.md          # generated changelog output
 - Stage explicit files only, not `git add .` or `git add -A`.
 - Run focused tests for the files you touched, then the relevant Make targets before handoff.
 - After a task is merged, pushed, and validated, automatically clean up its owned worktree: confirm its current HEAD is reachable from the fetched remote base, no agent still uses it, and staged, unstaged, untracked, and ignored contents contain no valuable data. Preserve reports outside the worktree. Use ordinary `git worktree remove` without force; delete its local branch only if `git branch -d` permits it. Leave active, dirty, unmerged, or uncertain worktrees intact and report why.
+- After landing through an integration worktree, fetch the remote base and fast-forward the primary checkout if it is clean, on its expected branch, and its HEAD is an ancestor of the fetched base (`git merge --ff-only origin/main`). Verify the primary checkout HEAD matches the fetched base and contains the landed commit before reporting local availability. If dirty or diverged, leave it untouched and explicitly report that it is behind. Never use rebase or reset to synchronize it.
+- When the task includes installing a newly landed CLI locally, synchronize that checkout first, run `make install`, and verify `mango version` reports the landed commit. A successful install from a stale checkout is not evidence that the new CLI is installed.
 
 ## Coding Standards
 
