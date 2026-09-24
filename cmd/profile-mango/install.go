@@ -429,7 +429,7 @@ func writeCompactInstallPlan(output io.Writer, plan install.Plan) error {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d skipped; files: %d create, %d update, %d unchanged. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop])
+	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d conflict, %d skipped; files: %d create, %d update, %d unchanged. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusConflict], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop])
 	return err
 }
 
@@ -437,7 +437,7 @@ func styledPlanStatus(status string, styles outputStyles) string {
 	switch status {
 	case install.StatusReady, "committed":
 		return styles.success(status)
-	case install.StatusBlocked, "failed":
+	case install.StatusBlocked, install.StatusConflict, "failed":
 		return styles.failure(status)
 	case install.StatusSkipped:
 		return styles.warning(status)
@@ -450,7 +450,7 @@ func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outp
 	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(target.Target.String())), styledPlanStatus(target.Status, styles)); err != nil {
 		return err
 	}
-	if target.Reason != "" && (target.Status == install.StatusBlocked || target.Status == install.StatusSkipped) {
+	if target.Reason != "" && (target.Status == install.StatusBlocked || target.Status == install.StatusConflict || target.Status == install.StatusSkipped) {
 		if _, err := fmt.Fprintf(output, " (%s)", humanPath(target.Reason)); err != nil {
 			return err
 		}

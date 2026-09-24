@@ -19,7 +19,7 @@ func TestCompactInstallGolden(t *testing.T) {
 	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
 		t.Fatal(err)
 	}
-	const golden = "plan example-id (ready)\n  codex@0.154.0: ready\n    destination: /sandbox/demo.config.toml\n    route: model gpt-test, effort high\n    use it: codex --profile demo\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n    /sandbox/demo.toml: create\n    changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	const golden = "plan example-id (ready)\n  codex@0.154.0: ready\n    destination: /sandbox/demo.config.toml\n    route: model gpt-test, effort high\n    use it: codex --profile demo\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n    /sandbox/demo.toml: create\n    changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 conflict, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
 	if output.String() != golden {
 		t.Fatalf("compact golden mismatch:\n%s", output.String())
 	}
@@ -133,6 +133,30 @@ func TestCompactClaudeExplicitDestinationAndUse(t *testing.T) {
 		if !strings.Contains(output.String(), want) {
 			t.Fatalf("missing %q in %s", want, output.String())
 		}
+	}
+}
+
+func TestCompactConflictGolden(t *testing.T) {
+	plan := install.Plan{PlanID: "conflict-id", Status: install.StatusBlocked, Targets: []install.TargetPlan{{
+		Target: install.Target{Name: "opencode", Version: "1.18.31"}, Status: install.StatusConflict,
+		Reason:      "owned profile was edited; review drift before using --override",
+		Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning, Code: "opencode.install.evidence", Message: "long adapter evidence caveat"}},
+	}}}
+	var output bytes.Buffer
+	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
+		t.Fatal(err)
+	}
+	const golden = "plan conflict-id (blocked)\n  opencode@1.18.31: conflict (owned profile was edited; review drift before using --override)\nSummary: 0 ready, 0 unchanged, 0 blocked, 1 conflict, 0 skipped; files: 0 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	if output.String() != golden {
+		t.Fatalf("conflict golden mismatch: %s", output.String())
+	}
+	if strings.Contains(output.String(), "long adapter evidence caveat") {
+		t.Fatalf("generic warning leaked: %s", output.String())
+	}
+	t.Setenv("NO_COLOR", "")
+	t.Setenv("TERM", "xterm")
+	if !strings.Contains(styledPlanStatus(install.StatusConflict, newOutputStyles(true)), "\x1b[") {
+		t.Fatal("conflict status is not failure-colored")
 	}
 }
 
