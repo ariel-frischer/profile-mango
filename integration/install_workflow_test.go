@@ -34,6 +34,11 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	for target, test := range tests {
 		t.Run(target, func(t *testing.T) {
 			w := newInstallWorkflow(t, target, test.provider, test.model, test.original, test.expected)
+			if target == "claude-code@2.1.278" {
+				// Claude Code writes its model to a Mango-owned profile file by default;
+				// --default exercises the direct settings.json patch this test checks.
+				w.args = append(w.args, "--default")
+			}
 			w.checkInstall(t)
 		})
 	}
@@ -73,6 +78,9 @@ func (w installWorkflow) checkInstall(t *testing.T) {
 func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	w := newInstallWorkflow(t, "claude-code@2.1.278", "anthropic", "claude-sonnet-4-5",
 		"{\"model\":\"old\",\"keep\":true}\n", "{\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
+	// Claude Code writes its model to a Mango-owned profile file by default;
+	// --default exercises the direct settings.json patch this test checks.
+	w.args = append(w.args, "--default")
 	piPath := filepath.Join(w.root, "pi-settings.json")
 	before := []byte("{\"defaultProvider\":\"old\",\"defaultModel\":\"old\",\"defaultThinkingLevel\":\"low\",\"keep\":true}\n")
 	if err := os.WriteFile(piPath, before, 0o600); err != nil {

@@ -34,7 +34,7 @@ func TestInstallAllUsesPerTargetRoutes(t *testing.T) {
 			if !strings.Contains(claude.Reason, test.claudeWhy) {
 				t.Fatalf("claude-code reason %q", claude.Reason)
 			}
-			if test.claudeModel != "" && !planHasField(claude, "config.model", test.claudeModel) {
+			if test.claudeModel != "" && !planHasField(claude, "profile.model", test.claudeModel) {
 				t.Fatalf("claude-code fields %#v", claude.Fields)
 			}
 			if codex.Status != install.StatusReady || !planHasField(codex, "default.config.model_provider", "openai") || !planHasField(codex, "default.config.model", "gpt-6-sol") {
