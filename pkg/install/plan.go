@@ -284,7 +284,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	profile, resources := loaded.Profile, loaded.Resources
 	if !request.Strict {
-		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, loaded)
+		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, request.Default, loaded)
 	}
 	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
 	if targetPlan.Install != nil {

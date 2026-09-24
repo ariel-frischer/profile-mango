@@ -16,6 +16,9 @@ type openCodeAdapter struct{}
 
 const openCodeSkillsPathOwnership = "opencode.skills.paths.profile-mango"
 
+// openCodeReservedAgentNames are OpenCode 1.18.31 built-in agents a named definition cannot reuse.
+var openCodeReservedAgentNames = []string{"build", "plan", "general", "explore", "compaction", "title", "summary"}
+
 func (openCodeAdapter) Metadata() AdapterMetadata {
 	return AdapterMetadata{
 		Target:         opencode.TargetName,
@@ -24,14 +27,85 @@ func (openCodeAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: opencode.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact OpenCode 1.18.31 model or one owned skill is installable at an explicit or documented default config path; a named primary/subagent definition requires an explicit path",
+		Reason:         "an install without --agent writes a Mango-owned primary agent definition (model and instructions) to agents/<profile>.md beside the config, prints its use-it command, and leaves the main config untouched unless --default, which also writes the exact top-level model field and one owned skill into that main config; an explicit --agent opencode@1.18.31=primary:name or subagent:name writes the same kind of definition at an explicit --config path instead",
 	}
 }
 
 func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	if !input.Agent.Empty() {
-		return planOpenCodeAgent(input)
+		if input.Profile.Permissions != nil || input.Profile.Tools != nil || len(input.Profile.Skills) > 0 {
+			return Patch{}, fmt.Errorf("OpenCode named agent permissions, tools, and skills remain unqualified; remove these requirements or use a supported destination")
+		}
+		return planOpenCodeAgent(input, input.Agent.Mode, "")
 	}
+	return planOpenCodeDefaultAgent(input)
+}
+
+// planOpenCodeDefaultAgent renders the Mango-owned primary agent for an install without
+// --agent, and, with --default, also patches the main config exactly as before.
+func planOpenCodeDefaultAgent(input AdapterInput) (Patch, error) {
+	if len(input.Profile.Skills) > 0 && !input.Install.SetsDefault {
+		return Patch{}, fmt.Errorf("OpenCode skills are global (skills.paths), not per-agent; install with --default to also install one skill and the top-level model, or remove this requirement")
+	}
+	filePath, err := (openCodeAdapter{}).NamedProfileFile(input.Install.ProfileName)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch, err := planOpenCodeAgent(input, "primary", filePath)
+	if err != nil {
+		return Patch{}, err
+	}
+	if !input.Install.SetsDefault {
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_global", "target.profile.skills", "OpenCode skills are global (skills.paths), not per-agent; install with --default to also install one skill and the top-level model into the main config", 0, 0)
+		return patch, nil
+	}
+	mainPatch, err := planOpenCodeMainConfig(input)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch.Files = append(patch.Files, mainPatch.Files...)
+	patch.Fields = append(patch.Fields, mainPatch.Fields...)
+	patch.Diagnostics = append(patch.Diagnostics, mainPatch.Diagnostics...)
+	patch.OverrideAllowed = patch.OverrideAllowed || mainPatch.OverrideAllowed
+	return patch, nil
+}
+
+// planOpenCodeAgent renders the shared primary/subagent Markdown definition at filePath
+// ("" writes directly to the explicit --config path).
+func planOpenCodeAgent(input AdapterInput, mode, filePath string) (Patch, error) {
+	if input.Target.Name != opencode.TargetName || input.Target.Version != opencode.TargetVersion {
+		return Patch{}, fmt.Errorf("OpenCode install adapter requires exact target %s@%s", opencode.TargetName, opencode.TargetVersion)
+	}
+	if input.Profile.Permissions != nil || input.Profile.Tools != nil {
+		return Patch{}, fmt.Errorf("OpenCode named agent permissions and tools remain unqualified; remove these requirements or use a supported destination")
+	}
+	contentByPath := make(map[string][]byte, len(input.Resources))
+	for _, resource := range input.Resources {
+		if resource.Digest.Kind == "instruction" {
+			contentByPath[resource.Digest.Path] = resource.Content
+		}
+	}
+	instructions := make([]string, 0, len(input.Profile.Instructions))
+	for _, path := range input.Profile.Instructions {
+		content, found := contentByPath[path]
+		if !found {
+			return Patch{}, fmt.Errorf("OpenCode named agent instruction %q is missing", path)
+		}
+		instructions = append(instructions, string(content))
+	}
+	definition, err := opencode.AgentDefinition(input.Route, mode, instructions)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch := Patch{Files: []FilePatch{{Path: filePath, Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}}}
+	patch.Fields = []FieldChange{{Path: "agent.mode", After: mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.agent_limits", "agent", "custom prompt replaces the stock agent prompt and native trimming applies; a primary is selectable but not made default, a subagent is eligible but delegation is unverified; higher-precedence config and runtime enforcement remain unverified", 0, 0)
+	return patch, nil
+}
+
+// planOpenCodeMainConfig patches the top-level model field and, independently, installs
+// exactly one validated portable skill resource into the explicit main config file.
+func planOpenCodeMainConfig(input AdapterInput) (Patch, error) {
 	skill, err := validateOpenCodeProfile(input)
 	if err != nil {
 		return Patch{}, err
@@ -85,40 +159,41 @@ func (openCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 		}
 	}
 	if skill == nil {
-		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.model_only", "target.config.model", "only the exact top-level model field is applied; authentication, effort, provider options, permissions, tools, instructions, skills, plugins, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.model_only", "target.config.model", "only the exact top-level model field is applied; authentication, effort, provider options, permissions, tools, instructions, skills, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
 	} else {
 		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.skills_narrow", "target.config.skills.paths", "one skill is copied beside the explicit config and exposed through a directory-wide skills.paths entry; other skills in that directory may also be discovered, so this is not an exclusive allowlist; instructions, additional skills, permissions, tools, authentication, effort, plugins, MCP, and runtime enforcement remain unmanaged", 0, 0)
 	}
 	return patch, nil
 }
 
-func planOpenCodeAgent(input AdapterInput) (Patch, error) {
-	if input.Profile.Permissions != nil || input.Profile.Tools != nil || len(input.Profile.Skills) > 0 {
-		return Patch{}, fmt.Errorf("OpenCode named agent permissions, tools, and skills remain unqualified; remove these requirements or use a supported destination")
+// NamedProfileFile is the Mango-owned OpenCode 1.18.31 primary agent definition that
+// `opencode --agent <name>` selects.
+func (openCodeAdapter) NamedProfileFile(name string) (string, error) {
+	if !validOpenCodeAgentName(name) {
+		return "", fmt.Errorf("OpenCode agent name must be simple lowercase letters, digits, or hyphens")
 	}
-	contentByPath := make(map[string][]byte, len(input.Resources))
-	for _, resource := range input.Resources {
-		if resource.Digest.Kind != "instruction" {
-			return Patch{}, fmt.Errorf("OpenCode named agent only supports instruction resources")
+	for _, reserved := range openCodeReservedAgentNames {
+		if name == reserved {
+			return "", fmt.Errorf("agent name %q is a reserved OpenCode built-in", name)
 		}
-		contentByPath[resource.Digest.Path] = resource.Content
 	}
-	instructions := make([]string, 0, len(input.Profile.Instructions))
-	for _, path := range input.Profile.Instructions {
-		content, found := contentByPath[path]
-		if !found {
-			return Patch{}, fmt.Errorf("OpenCode named agent instruction %q is missing", path)
+	return filepath.Join("agents", name+".md"), nil
+}
+
+func (openCodeAdapter) NamedProfileUse(name string) string { return "opencode --agent " + name }
+
+func validOpenCodeAgentName(name string) bool {
+	if name == "" || name[0] < 'a' || name[0] > 'z' {
+		return false
+	}
+	for _, character := range name {
+		letter := character >= 'a' && character <= 'z'
+		digit := character >= '0' && character <= '9'
+		if !letter && !digit && character != '-' {
+			return false
 		}
-		instructions = append(instructions, string(content))
 	}
-	definition, err := opencode.AgentDefinition(input.Route, input.Agent.Mode, instructions)
-	if err != nil {
-		return Patch{}, err
-	}
-	patch := Patch{Files: []FilePatch{{Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}}}
-	patch.Fields = []FieldChange{{Path: "agent.mode", After: input.Agent.Mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.agent_limits", "agent", "custom prompt replaces the stock agent prompt and native trimming applies; a primary is selectable but not made default, a subagent is eligible but delegation is unverified; higher-precedence config and runtime enforcement remain unverified", 0, 0)
-	return patch, nil
+	return true
 }
 
 func manifestHasFile(manifest Manifest, path string) bool {
@@ -157,9 +232,6 @@ func validateOpenCodeProfile(input AdapterInput) (*render.Resource, error) {
 		return nil, err
 	}
 	if len(input.Profile.Skills) == 0 {
-		if len(input.Resources) > 0 {
-			return nil, fmt.Errorf("OpenCode resources are not referenced by an installable profile field")
-		}
 		return nil, nil
 	}
 	return validateOpenCodeSkillResource(input)
@@ -175,9 +247,6 @@ func validateOpenCodeBase(input AdapterInput) error {
 	if input.Profile.Tools != nil {
 		return fmt.Errorf("OpenCode tool requirements remain install-blocking")
 	}
-	if len(input.Profile.Instructions) > 0 {
-		return fmt.Errorf("OpenCode instruction delivery remains install-blocking")
-	}
 	return nil
 }
 
@@ -185,11 +254,20 @@ func validateOpenCodeSkillResource(input AdapterInput) (*render.Resource, error)
 	if len(input.Profile.Skills) != 1 {
 		return nil, fmt.Errorf("OpenCode install supports exactly one skill resource")
 	}
-	if len(input.Resources) != 1 {
+	var resource *render.Resource
+	for index := range input.Resources {
+		if input.Resources[index].Digest.Kind != "skill" {
+			continue
+		}
+		if resource != nil {
+			return nil, fmt.Errorf("OpenCode install requires exactly one matching skill resource")
+		}
+		resource = &input.Resources[index]
+	}
+	if resource == nil {
 		return nil, fmt.Errorf("OpenCode install requires exactly one matching skill resource")
 	}
-	resource := input.Resources[0]
-	if resource.Digest.Kind != "skill" || resource.Digest.Path != input.Profile.Skills[0] || filepath.Base(resource.Digest.Path) != "SKILL.md" {
+	if resource.Digest.Path != input.Profile.Skills[0] || filepath.Base(resource.Digest.Path) != "SKILL.md" {
 		return nil, fmt.Errorf("OpenCode install requires one canonical skills/**/SKILL.md resource")
 	}
 	if err := validateOpenCodeSkill(resource.Content); err != nil {
@@ -205,7 +283,7 @@ func validateOpenCodeSkillResource(input AdapterInput) (*render.Resource, error)
 	if err != nil || filepath.Base(configPath) == "SKILL.md" {
 		return nil, fmt.Errorf("OpenCode skill install requires a config path beside a distinct SKILL.md")
 	}
-	return &resource, nil
+	return resource, nil
 }
 
 func skillConfigDir(configPath string) string {
@@ -259,11 +337,12 @@ func validOpenCodeSkillName(value string) bool {
 	return true
 }
 
-// SupportedRequirements reports that a named OpenCode agent installs
-// instructions and the default config installs one skill.
-func (openCodeAdapter) SupportedRequirements(agent AgentDestination) []string {
-	if !agent.Empty() {
-		return []string{RequirementInstructions}
+// SupportedRequirements reports that a named OpenCode agent always installs instructions;
+// an install without --agent also installs one skill, but only alongside --default, since
+// OpenCode skills are a global skills.paths entry rather than a per-agent one.
+func (openCodeAdapter) SupportedRequirements(agent AgentDestination, setsDefault bool) []string {
+	if agent.Empty() && setsDefault {
+		return []string{RequirementInstructions, RequirementSkills}
 	}
-	return []string{RequirementSkills}
+	return []string{RequirementInstructions}
 }

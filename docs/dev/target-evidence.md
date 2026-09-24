@@ -38,10 +38,14 @@ and, only with `--default`, also as root `config.toml` settings; the exact insta
 binary loaded both forms in an isolated synthetic home,
 but OAuth identity and full-profile applicability remain unverified. Claude
 Code permits only model-field installation; Pi permits three route-default
-settings, Hermes three model/reasoning fields, and
-OpenCode model plus one qualified skill resource or an explicit named primary/
-subagent definition with model and instructions, and OpenClaw model-primary
-plus thinking-default settings. Other target gates
+settings, Hermes three model/reasoning fields, and OpenCode a named primary
+agent definition (model and instructions) written by default as
+`agents/<profile>.md` next to `opencode.json` and selected with
+`opencode --agent <profile>`, or explicitly as `primary:<name>`/
+`subagent:<name>`; only with `--default` does it also patch the top-level
+`model` field and one qualified skill resource into `opencode.json`, since
+OpenCode skills are a directory-wide `skills.paths` setting, not per-agent.
+OpenClaw permits model-primary plus thinking-default settings. Other target gates
 remain blocked unless explicitly qualified below. By default `install` applies
 only a target's qualified subset and lists every known profile requirement it
 cannot install (permissions, tools, instructions, skills) as skipped for that
@@ -1140,6 +1144,26 @@ authentication, higher-precedence target state, policy enforcement, and runtime
 behavior were not executed or inferred. Other targets have no qualified named
 instruction/subagent installer; their required fields remain blocked.
 
+## OpenCode default-install named primary agent, 2026-09-23 (ap-vjc.5)
+
+An install without `--agent` now reuses the qualified primary-agent renderer
+above (same `AgentDefinition` code path, same `mode: primary` frontmatter and
+model/instructions rendering) at `agents/<profile>.md` beside the resolved
+config, and reports it through the shared named-profile install mode already
+qualified for Codex (`docs/dev/target-evidence.md` Codex sections): the plan
+carries `install.mode: named-profile` and a `use it: opencode --agent
+<profile>` command, and `opencode.json`/`opencode.jsonc` is left byte-identical
+unless `--default` is also passed. This reuses the exact-binary evidence
+recorded above for the primary definition; no new native OpenCode probe was
+run for this change. `--default` additionally reuses the qualified top-level
+`model` patch and one-skill install exactly as documented under "OpenCode
+single-skill installation qualification, 2026-09-22", now gated behind that
+flag instead of being the unconditional default, since OpenCode's
+`skills.paths` is a directory-wide setting rather than a per-agent one.
+Compiled-CLI checks cover: default install creates the agent file only,
+`--default` also patches the model and skill fields, undo removes only the
+agent file and manifest it created, and an edited or unowned agent file at the
+default path is protected exactly as an explicit `--agent` destination.
 
 ## Hermes bounded installation qualification, 2026-09-22
 

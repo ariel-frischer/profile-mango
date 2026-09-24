@@ -23,34 +23,36 @@ type SkippedRequirement struct {
 }
 
 // requirementSupporter lets an adapter declare the profile requirements it installs.
+// setsDefault reports the request's --default flag, since some adapters (OpenCode) only
+// support an additional requirement alongside the main-config write --default triggers.
 type requirementSupporter interface {
-	SupportedRequirements(agent AgentDestination) []string
+	SupportedRequirements(agent AgentDestination, setsDefault bool) []string
 }
 
-func supportsRequirement(adapter Adapter, agent AgentDestination, name string) bool {
+func supportsRequirement(adapter Adapter, agent AgentDestination, setsDefault bool, name string) bool {
 	supporter, ok := adapter.(requirementSupporter)
-	return ok && slices.Contains(supporter.SupportedRequirements(agent), name)
+	return ok && slices.Contains(supporter.SupportedRequirements(agent, setsDefault), name)
 }
 
 // supportedSubset strips the requirements adapter cannot install from the
 // profile and its resources for the given destination, and returns what it stripped in a fixed order.
-func supportedSubset(adapter Adapter, agent AgentDestination, loaded loadedInput) (profilemango.ResolvedProfile, []render.Resource, []SkippedRequirement) {
+func supportedSubset(adapter Adapter, agent AgentDestination, setsDefault bool, loaded loadedInput) (profilemango.ResolvedProfile, []render.Resource, []SkippedRequirement) {
 	profile, resources := loaded.Profile, loaded.Resources
 	var skipped []SkippedRequirement
-	if profile.Permissions != nil && !supportsRequirement(adapter, agent, RequirementPermissions) {
+	if profile.Permissions != nil && !supportsRequirement(adapter, agent, setsDefault, RequirementPermissions) {
 		profile.Permissions = nil
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementPermissions})
 	}
-	if profile.Tools != nil && !supportsRequirement(adapter, agent, RequirementTools) {
+	if profile.Tools != nil && !supportsRequirement(adapter, agent, setsDefault, RequirementTools) {
 		profile.Tools = nil
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementTools})
 	}
-	if count := len(profile.Instructions); count > 0 && !supportsRequirement(adapter, agent, RequirementInstructions) {
+	if count := len(profile.Instructions); count > 0 && !supportsRequirement(adapter, agent, setsDefault, RequirementInstructions) {
 		profile.Instructions = nil
 		resources = withoutResourceKind(resources, "instruction")
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementInstructions, Count: count})
 	}
-	if count := len(profile.Skills); count > 0 && !supportsRequirement(adapter, agent, RequirementSkills) {
+	if count := len(profile.Skills); count > 0 && !supportsRequirement(adapter, agent, setsDefault, RequirementSkills) {
 		profile.Skills = nil
 		resources = withoutResourceKind(resources, "skill")
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementSkills, Count: count})

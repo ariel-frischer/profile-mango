@@ -18,7 +18,7 @@ func TestOpenCodeSkillOverrideProtectsExistingResource(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			request, root := openCodeTestRequest(t)
 			addOpenCodeTestSkill(t, root)
-			request.Override = true
+			request.Override, request.Default = true, true
 			config := request.Targets[0].ConfigPath
 			before := "{\"model\":\"openai/old\",\"unknown\":true}\n"
 			writeInstallTestFile(t, config, before)
@@ -57,7 +57,7 @@ func addOpenCodeTestSkill(t *testing.T, root string) {
 func TestOpenCodeSkillOverrideProtectsEditedOwnedResource(t *testing.T) {
 	request, root := openCodeTestRequest(t)
 	addOpenCodeTestSkill(t, root)
-	request.Override = true
+	request.Override, request.Default = true, true
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)

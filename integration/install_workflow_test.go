@@ -33,6 +33,11 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 	for target, test := range tests {
 		t.Run(target, func(t *testing.T) {
 			w := newInstallWorkflow(t, target, test.provider, test.model, test.original, test.expected)
+			if target == "opencode@1.18.31" {
+				// OpenCode installs a named agent by default; --default also keeps the
+				// main-config model write this table asserts against.
+				w.args = append(w.args, "--default")
+			}
 			w.checkInstall(t)
 		})
 	}

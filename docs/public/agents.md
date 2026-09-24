@@ -56,23 +56,27 @@ The evidence behind every row is in the developer
 
 ## OpenCode
 
-- **Installs:** the top-level `model` (as `provider/model`) in `opencode.json`.
-  If only `opencode.jsonc` exists, that file is used; if both exist, install
-  blocks.
-- **One skill:** a profile with exactly one skill gets it copied to a
-  `SKILL.md` next to the config, and that folder is added to `skills.paths`.
-  Removing the skill from the profile later removes only an unchanged skill
-  file that profile-mango created. Other skills in those folders can still be
-  found, so this is not an allowlist.
-- **Named agents:** `--agent opencode=primary:<name>` or
+- **Installs:** a named primary agent definition, `agents/<profile>.md` next
+  to `opencode.json` (or `opencode.jsonc`), with the route's model and the
+  profile's instructions in order. The instructions replace that agent's
+  built-in prompt. Start it with `opencode --agent <profile>`. `opencode.json`
+  is not changed unless you pass `--default`.
+- **`--default` also writes:** the top-level `model` (as `provider/model`)
+  in `opencode.json`, plus, if the profile has exactly one skill, a
+  `SKILL.md` copied next to the config with that folder added to
+  `skills.paths`. Skills are a directory-wide setting in OpenCode, not
+  per-agent, which is why they only install alongside `--default`. Removing
+  the skill from the profile later removes only an unchanged skill file
+  profile-mango created; other skills in that folder can still be found, so
+  this is not an allowlist.
+- **Explicit agents:** `--agent opencode=primary:<name>` or
   `subagent:<name>`, with `--config opencode=<path>` ending in
-  `agents/<name>.md`, writes a named agent definition with the route's model
-  and the profile's instructions in order. The instructions replace that
-  agent's built-in prompt. A primary agent becomes selectable, not active, and
-  a subagent becomes available for delegation. Neither enforces permissions.
-  Named agents have no default path.
-- **Caveats:** effort and provider options are not set. Edited or unowned skill
-  and agent files are never overwritten, even with `--override`.
+  `agents/<name>.md`, writes the same kind of definition at that path
+  instead of the default one. A primary agent becomes selectable, not
+  active, and a subagent becomes available for delegation. Neither enforces
+  permissions.
+- **Caveats:** effort and provider options are not set. Edited or unowned
+  skill and agent files are never overwritten, even with `--override`.
 - [Reference](../dev/agents/opencode.md)
 
 ## Pi

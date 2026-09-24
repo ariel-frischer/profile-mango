@@ -42,8 +42,9 @@ To change the model, edit `~/.profile-mango/bindings/local.yaml`. See the
 
 ## What installs today
 
-Today mainly the model and route settings install. OpenCode can also take one
-skill and named agents. Anything else an agent can't take, such as instructions,
+Today mainly the model and route settings install. OpenCode installs as a named
+agent by default, with `--default` also patching the main config and one skill.
+Anything else an agent can't take, such as instructions,
 permissions, tools, or skills, is listed in the plan as
 `not installed for this agent: ...` and skipped. Pass `--strict` to block
 instead. Real delivery of those is on the [roadmap](ROADMAP.md).
@@ -52,7 +53,7 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 | --- | --- | --- |
 | Claude Code | Model | [agents](docs/public/agents.md#claude-code) |
 | Codex | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#codex) |
-| OpenCode | Model, one skill, named agents | [agents](docs/public/agents.md#opencode) |
+| OpenCode | Model and instructions, as a named agent | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
 | Oh My Pi | Model, thinking level | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level | [agents](docs/public/agents.md#openclaw) |

@@ -577,7 +577,7 @@ func cliOpenCodeInstallFixture(t *testing.T) (installOptions, string, string) {
 	return installOptions{
 		profiles: profiles, resourceRoot: root, bindings: bindings,
 		targets: []string{"opencode@1.18.31"}, configs: []string{"opencode=" + config},
-		override: true, jsonOutput: true,
+		override: true, jsonOutput: true, makeDefault: true,
 	}, config, before
 }
 
@@ -617,7 +617,7 @@ func TestInstallOpenCodeModelAtExplicitDisposablePath(t *testing.T) {
 	options := installOptions{
 		profiles: profiles, resourceRoot: root, bindings: bindings,
 		targets: []string{"opencode@1.18.31"}, configs: []string{"opencode=" + config},
-		override: true, jsonOutput: true,
+		override: true, jsonOutput: true, makeDefault: true,
 	}
 	var planOutput bytes.Buffer
 	planCommand := &cobra.Command{}

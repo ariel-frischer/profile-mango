@@ -180,6 +180,7 @@ func TestPlanJSONOmitsSyntheticAbsolutePaths(t *testing.T) {
 
 func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	config := request.Targets[0].ConfigPath
 	before := "{\n  // keep target-owned state\n  \"model\" : \"sentinel/old\",\n  \"provider\": {\"sentinel\": {\"options\": {\"apiKey\": \"SYNTHETIC\"}}},\n  \"unknown\": true,\n}\n"
 	writeInstallTestFile(t, config, before)
@@ -191,10 +192,10 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionOverride {
+	if plan.Status != StatusReady || piFilePlan(plan.Targets[0], filepath.Base(config)).Action != ActionOverride {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if plan.Targets[0].DestinationSHA256 == "" || len(plan.Targets[0].Fields) != 1 || plan.Targets[0].Fields[0].Path != "config.model" {
+	if plan.Targets[0].DestinationSHA256 == "" || !hasFieldChange(plan.Targets[0].Fields, "config.model") {
 		t.Fatalf("target plan = %#v", plan.Targets[0])
 	}
 	data, err := plan.JSON()
@@ -224,7 +225,7 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 		t.Fatal(err)
 	}
 	manifest, err := decodeManifest(manifestData, Target{Name: "opencode", Version: "1.18.31"})
-	if err != nil || len(manifest.Files) != 1 || strings.Join(manifest.Files[0].Fields, ",") != "config.model" {
+	if err != nil || len(manifest.Files) != 2 || !manifestFileHasField(manifest, config, "config.model") {
 		t.Fatalf("manifest = %#v, err = %v", manifest, err)
 	}
 
@@ -232,7 +233,7 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reapply.Status != StatusNoop || reapply.Targets[0].Files[0].Action != ActionNoop {
+	if reapply.Status != StatusNoop || piFilePlan(reapply.Targets[0], filepath.Base(config)).Action != ActionNoop {
 		t.Fatalf("reapply = %#v", reapply)
 	}
 }
@@ -285,7 +286,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "permission requirements") {
+	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "permissions") {
 		t.Fatalf("plan = %#v", plan)
 	}
 }
@@ -371,6 +372,29 @@ func assertInstallTestFile(t *testing.T, path, want string) {
 	if string(data) != want {
 		t.Fatalf("%s = %q, want %q", path, data, want)
 	}
+}
+
+func hasFieldChange(fields []FieldChange, path string) bool {
+	for _, field := range fields {
+		if field.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
+func manifestFileHasField(manifest Manifest, path, field string) bool {
+	for _, candidate := range manifest.Files {
+		if candidate.Path != path {
+			continue
+		}
+		for _, name := range candidate.Fields {
+			if name == field {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func writeOwnedManifest(t *testing.T, config string, target Target, hash string) {

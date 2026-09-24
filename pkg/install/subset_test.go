@@ -100,18 +100,24 @@ func TestPlanIDCoversStrictAndSkips(t *testing.T) {
 
 func TestOpenCodeKeepsSupportedRequirements(t *testing.T) {
 	named := AgentDestination{Mode: "primary", Name: "coder"}
-	if _, _, skipped := supportedSubset(openCodeAdapter{}, AgentDestination{}, loadedInput{}); len(skipped) != 0 {
+	if _, _, skipped := supportedSubset(openCodeAdapter{}, AgentDestination{}, false, loadedInput{}); len(skipped) != 0 {
 		t.Fatalf("empty profile skipped = %#v", skipped)
 	}
-	if !supportsRequirement(openCodeAdapter{}, AgentDestination{}, RequirementSkills) || supportsRequirement(codexAdapter{}, AgentDestination{}, RequirementSkills) {
-		t.Fatal("opencode must keep skills and codex must skip them")
+	if supportsRequirement(openCodeAdapter{}, AgentDestination{}, false, RequirementSkills) || supportsRequirement(codexAdapter{}, AgentDestination{}, false, RequirementSkills) {
+		t.Fatal("opencode must skip skills without --default and codex must always skip them")
 	}
-	if !supportsRequirement(openCodeAdapter{}, named, RequirementInstructions) || supportsRequirement(openCodeAdapter{}, named, RequirementSkills) {
-		t.Fatal("a named opencode agent must keep instructions and skip skills")
+	if !supportsRequirement(openCodeAdapter{}, AgentDestination{}, true, RequirementSkills) {
+		t.Fatal("opencode must keep skills alongside --default")
+	}
+	if !supportsRequirement(openCodeAdapter{}, named, false, RequirementInstructions) || supportsRequirement(openCodeAdapter{}, named, false, RequirementSkills) || supportsRequirement(openCodeAdapter{}, named, true, RequirementSkills) {
+		t.Fatal("a named opencode agent must keep instructions and always skip skills")
 	}
 }
 
-func TestOpenCodeSubsetSkipsInstructionsAndPlansModel(t *testing.T) {
+// TestOpenCodeSubsetSkipsSkillsAndPlansNamedAgent covers an agent-empty install without
+// --default: instructions are supported (rendered into the named agent), but the profile's
+// skill is skipped, since OpenCode skills are global and only install alongside --default.
+func TestOpenCodeSubsetSkipsSkillsAndPlansNamedAgent(t *testing.T) {
 	request, root := openCodeTestRequest(t)
 	writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -121,17 +127,26 @@ spec:
   routeRef: primary
   instructions:
     append: [instructions/system.md]
+  skills:
+    - skills/research/SKILL.md
 `)
 	if err := os.MkdirAll(filepath.Join(root, "instructions"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	writeInstallTestFile(t, filepath.Join(root, "instructions", "system.md"), "synthetic instruction\n")
+	if err := os.MkdirAll(filepath.Join(root, "skills", "research"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeInstallTestFile(t, filepath.Join(root, "skills", "research", "SKILL.md"), openCodeTestSkill)
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []SkippedRequirement{{Requirement: RequirementInstructions, Count: 1}}
+	want := []SkippedRequirement{{Requirement: RequirementSkills, Count: 1}}
 	if plan.Status != StatusReady || !reflect.DeepEqual(plan.Targets[0].SkippedRequirements, want) {
 		t.Fatalf("opencode subset plan = %s %#v", plan.Status, plan.Targets[0].SkippedRequirements)
+	}
+	if !hasFileAction(plan.Targets[0], ActionCreate) {
+		t.Fatalf("named agent file was not planned: %#v", plan.Targets[0].Files)
 	}
 }
