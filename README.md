@@ -21,6 +21,10 @@ from GitHub releases:
 curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/install.sh | sh
 ```
 
+From a source checkout, run `make link-skill` to use the tracked
+`.agents/skills/profile-mango/SKILL.md` as your global agent skill. It preserves
+an existing global skill in a backup and can be run again after updates.
+
 ## Quickstart
 
 ```bash

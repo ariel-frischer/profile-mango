@@ -30,6 +30,10 @@ git clone git@gitlab.com:ariel-frischer/profile-mango.git
 cd profile-mango && make deps && make install && mango version
 ```
 
+From a source checkout, `make link-skill` links the global
+`~/.agents/skills/profile-mango/SKILL.md` to this tracked skill in the primary
+checkout. It backs up any existing global entry and is safe to run again.
+
 ## Scaffold a package
 
 ```bash
