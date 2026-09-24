@@ -87,6 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - init now scaffolds a usable bindings/local.yaml with a current model, and missing-bindings errors name the fix
 - Command tests no longer leak flag state between tests
 - undo works for every target of a multi-target install
+- Show live stderr progress while checking agent sources and probing installed agent versions without changing JSON reports
 
 ## [0.0.1] - 2026-01-01
 

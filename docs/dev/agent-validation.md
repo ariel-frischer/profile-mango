@@ -215,6 +215,10 @@ HTTP(S) sources, bounds request time, response size, and redirects, and never
 writes the manifest, references, evidence ledger, adapter mappings, installed
 agents, configurations, credentials, or support records. Use `--manifest` to
 check an explicitly selected copy and `--target` for one manifest target.
+It prints each pending and completed source to stderr so a slow request does
+not look idle. The final text or `--json` report remains on stdout. Sources
+are checked sequentially, with a 10-second timeout per request by default;
+use `--timeout` and `--target` to bound a focused run.
 
 Each source is reported as one of these states:
 

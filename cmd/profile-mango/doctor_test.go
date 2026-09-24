@@ -24,7 +24,7 @@ func runDoctorForTest(t *testing.T, args ...string) (string, error) {
 	var output bytes.Buffer
 	cmd := newDoctorCmd()
 	cmd.SetOut(&output)
-	cmd.SetErr(&output)
+	cmd.SetErr(new(bytes.Buffer))
 	cmd.SetArgs(args)
 	err := cmd.Execute()
 	return output.String(), err
@@ -160,6 +160,24 @@ func TestDoctorWritesNothing(t *testing.T) {
 	if _, statErr := os.Stat(home); !os.IsNotExist(statErr) {
 		t.Fatalf("doctor created %s: %v", home, statErr)
 	}
+}
+
+func TestDoctorShowsProbeProgressOnStderrAndKeepsJSONClean(t *testing.T) {
+	doctorFakeBinaries(t, map[string]string{"codex": "while :; do :; done"})
+	withShortDoctorProbeTimeout(t, 100*time.Millisecond)
+	withDoctorHome(t, t.TempDir())
+	cmd := newDoctorCmd()
+	cmd.SetArgs([]string{"--json"})
+	var stdout, stderr bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("doctor: %v", err)
+	}
+	if !strings.Contains(stderr.String(), "checking") || !strings.Contains(stderr.String(), "codex") || !strings.Contains(stderr.String(), "checked") {
+		t.Fatalf("missing version probe progress: %q", stderr.String())
+	}
+	decodeDoctorReport(t, stdout.String())
 }
 
 // TestDoctorRegisteredOnRootCommand exercises doctor through the real

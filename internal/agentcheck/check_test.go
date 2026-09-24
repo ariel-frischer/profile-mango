@@ -151,6 +151,61 @@ func TestFailedFetchIsUnavailable(t *testing.T) {
 	}
 }
 
+func TestCheckReportsProgressBeforeAndAfterEachSource(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(started)
+		select {
+		case <-release:
+			_, _ = w.Write([]byte("fixture"))
+		case <-r.Context().Done():
+		}
+	}))
+	defer server.Close()
+	manifest := Manifest{SchemaVersion: 1, Targets: []Target{{ID: "fixture", Sources: []Source{
+		{URL: server.URL, Kind: "documentation"},
+		{Locator: "local", Kind: "local_snapshot_documentation"},
+	}}}}
+	events := make(chan Progress, 4)
+	done := make(chan error, 1)
+	go func() {
+		_, err := Check(context.Background(), manifest, Options{OnProgress: func(p Progress) { events <- p }})
+		done <- err
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("request did not start")
+	}
+	select {
+	case event := <-events:
+		if event.Completed != 0 || event.Total != 2 || event.TargetID != "fixture" || event.State != "" {
+			t.Fatalf("progress while request is blocked = %+v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("no progress before request completed")
+	}
+	close(release)
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Check() error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("check did not complete")
+	}
+	for _, want := range []Progress{
+		{Completed: 1, Total: 2, TargetID: "fixture", State: StatusUnversioned},
+		{Completed: 1, Total: 2, TargetID: "fixture"},
+		{Completed: 2, Total: 2, TargetID: "fixture", State: StatusNotChecked},
+	} {
+		if got := <-events; got != want {
+			t.Fatalf("progress = %+v, want %+v", got, want)
+		}
+	}
+}
+
 func TestFormatJSONIsStructured(t *testing.T) {
 	report := Report{SchemaVersion: 1, ManifestPath: "sources.json", Summary: Summary{Changed: 1}}
 	var output strings.Builder
