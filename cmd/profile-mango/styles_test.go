@@ -65,7 +65,7 @@ func TestCompactInstallWarningAndPathStyles(t *testing.T) {
 			if strings.Contains(got, "\x1b[") != test.wantANSI {
 				t.Fatalf("ANSI mismatch: %q", got)
 			}
-			for _, want := range []string{"destination: /sandbox/config.toml", "profile.toml: create", "warning: installed version", "not installed for this agent: tools"} {
+			for _, want := range []string{"destination: /sandbox/config.toml", "files: profile.toml create", "warning: installed version", "not installed for this agent: tools"} {
 				if !strings.Contains(stripANSI(got), want) {
 					t.Fatalf("missing %q in %q", want, got)
 				}

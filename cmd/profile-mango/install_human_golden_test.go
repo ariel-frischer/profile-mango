@@ -19,7 +19,7 @@ func TestCompactInstallGolden(t *testing.T) {
 	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
 		t.Fatal(err)
 	}
-	const golden = "plan example-id (ready)\n  codex@0.154.0: ready\n    destination: /sandbox/demo.config.toml\n    route: model gpt-test, effort high\n    use it: codex --profile demo\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n    /sandbox/demo.toml: create\n    changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 conflict, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	const golden = "plan example-id (ready)\n  codex@0.154.0: ready | destination: /sandbox/demo.config.toml | use it: codex --profile demo\n    route: model gpt-test, effort high | changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n    files: /sandbox/demo.toml create\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 conflict, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
 	if output.String() != golden {
 		t.Fatalf("compact golden mismatch:\n%s", output.String())
 	}
@@ -157,6 +157,51 @@ func TestCompactConflictGolden(t *testing.T) {
 	t.Setenv("TERM", "xterm")
 	if !strings.Contains(styledPlanStatus(install.StatusConflict, newOutputStyles(true)), "\x1b[") {
 		t.Fatal("conflict status is not failure-colored")
+	}
+}
+
+func TestCompactReadyTargetUsesThreeLines(t *testing.T) {
+	target := install.TargetPlan{
+		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+		Config: &install.ConfigDestination{Path: "/sandbox/config.toml"},
+		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"},
+		Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}},
+		Files: []install.FilePlan{{Path: "demo.config.toml", Action: install.ActionCreate}},
+	}
+	var output bytes.Buffer
+	if err := writeCompactTarget(&output, target, stylesFor(&output, true)); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(output.String(), "\n"); got != 3 {
+		t.Fatalf("ready target uses %d lines, want 3:\n%s", got, output.String())
+	}
+	for _, want := range []string{"destination: /sandbox/demo.config.toml", "use it: codex --profile demo", "route: model gpt-test", "changes: model", "files: demo.config.toml create"} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("missing %q in compact plan:\n%s", want, output.String())
+		}
+	}
+}
+
+func TestTypicalReadyTargetFitsThreeLines(t *testing.T) {
+	plan := install.Plan{PlanID: "ready-id", Status: install.StatusReady, Targets: []install.TargetPlan{{
+		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+		Config:  &install.ConfigDestination{Path: "/sandbox/config.toml"},
+		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"},
+		Fields:  []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}},
+		Files:   []install.FilePlan{{Path: "demo.config.toml", Action: install.ActionCreate}, {Path: "config.toml.profile-mango.manifest.json", Action: install.ActionCreate}},
+	}}}
+	var output bytes.Buffer
+	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 5 {
+		t.Fatalf("want plan header, three target lines and summary, got %d:\n%s", len(lines), output.String())
+	}
+	for _, want := range []string{"ready | destination: /sandbox/demo.config.toml | use it: codex --profile demo", "route: model gpt-test, effort high | changes:", "files: config.toml.profile-mango.manifest.json create, demo.config.toml create"} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("missing %q:\n%s", want, output.String())
+		}
 	}
 }
 

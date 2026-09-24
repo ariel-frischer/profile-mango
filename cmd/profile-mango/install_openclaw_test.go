@@ -22,7 +22,7 @@ func TestInstallOpenClawNamedProfileAtDefaultHome(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"openclaw"}}
 	output := runInstallForTest(t, options)
-	for _, want := range []string{"    destination: " + filepath.Join(home, ".openclaw-route-only", "openclaw.json") + "\n", "    use it: openclaw --profile route-only\n", "    openclaw.json: create\n"} {
+	for _, want := range []string{"destination: " + filepath.Join(home, ".openclaw-route-only", "openclaw.json"), "use it: openclaw --profile route-only", "openclaw.json create"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("plan omitted %q:\n%s", want, output)
 		}
@@ -55,7 +55,7 @@ func TestInstallOpenClawExplicitConfigMustBeDerivable(t *testing.T) {
 	canonical := filepath.Join(root, "alt", ".openclaw", "openclaw.json")
 	options.configs = []string{"openclaw=" + canonical}
 	output = runInstallForTest(t, options)
-	if !strings.Contains(output, "    destination: "+filepath.Join(root, "alt", ".openclaw-route-only", "openclaw.json")+"\n") || !strings.Contains(output, "use it: openclaw --profile route-only") {
+	if !strings.Contains(output, "destination: "+filepath.Join(root, "alt", ".openclaw-route-only", "openclaw.json")) || !strings.Contains(output, "use it: openclaw --profile route-only") {
 		t.Fatalf("canonical explicit config not planned:\n%s", output)
 	}
 }

@@ -455,32 +455,39 @@ func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outp
 			return err
 		}
 	}
-	if _, err := fmt.Fprintln(output); err != nil {
-		return err
-	}
-	if target.Config != nil {
-		if _, err := fmt.Fprintf(output, "    destination: %s\n", styles.path(humanPath(primaryInstallPath(target)))); err != nil {
+	if target.Config != nil && target.Status != install.StatusSkipped {
+		if _, err := fmt.Fprintf(output, " | destination: %s", styles.path(humanPath(primaryInstallPath(target)))); err != nil {
 			return err
 		}
 		if target.Install != nil && target.Install.SetsDefault {
-			if _, err := fmt.Fprintf(output, "    also default: %s\n", styles.path(humanPath(target.Config.Path))); err != nil {
+			if _, err := fmt.Fprintf(output, " | also the default: %s", styles.path(humanPath(target.Config.Path))); err != nil {
 				return err
 			}
 		}
 	}
-	if err := writeCompactRoute(output, target); err != nil {
-		return err
+	if command := compactUseCommand(target); command != "" && (target.Status == install.StatusReady || target.Status == install.StatusNoop) {
+		if _, err := fmt.Fprintf(output, " | use it: %s", humanPath(command)); err != nil {
+			return err
+		}
+	} else if target.Install != nil && target.Install.Mode == install.InstallModeDefaultConfig && (target.Status == install.StatusReady || target.Status == install.StatusNoop) {
+		if _, err := fmt.Fprint(output, " | default settings"); err != nil {
+			return err
+		}
 	}
-	mode := target.Install
-	if mode != nil && target.Config != nil && target.Target.Name == "claude-code" && mode.Mode == install.InstallModeNamedProfile {
-		copy := *mode
-		copy.UseCommand = "claude --settings " + shellQuote(primaryInstallPath(target))
-		mode = &copy
-	}
-	if err := writeInstallMode(output, mode); err != nil {
+	if _, err := fmt.Fprintln(output); err != nil {
 		return err
 	}
 	return writeCompactEffects(output, target, styles)
+}
+
+func compactUseCommand(target install.TargetPlan) string {
+	if target.Install == nil || target.Install.Mode != install.InstallModeNamedProfile {
+		return ""
+	}
+	if target.Config != nil && target.Target.Name == "claude-code" {
+		return "claude --settings " + shellQuote(primaryInstallPath(target))
+	}
+	return target.Install.UseCommand
 }
 
 // primaryInstallPath asks the qualified adapter where its named profile lives.
@@ -544,25 +551,38 @@ func orUnknown(value string) string {
 }
 
 func writeCompactEffects(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	seen := make(map[string]struct{})
+	effects := compactFieldEffects(target.Fields, seen, target.Status != install.StatusNoop)
+	var files []string
+	for _, file := range orderedFilePlans(target.Files) {
+		files = append(files, styles.path(humanPath(file.Path))+" "+humanPath(file.Action))
+		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
+	}
+	var route strings.Builder
+	if err := writeCompactRoute(&route, target); err != nil {
+		return err
+	}
+	parts := make([]string, 0, 2)
+	if route.Len() > 0 {
+		parts = append(parts, strings.TrimSpace(route.String()))
+	}
+	if len(effects) > 0 {
+		parts = append(parts, "changes: "+strings.Join(effects, ", "))
+	}
+	if len(parts) > 0 {
+		if _, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | ")); err != nil {
+			return err
+		}
+	}
+	if len(files) > 0 {
+		if _, err := fmt.Fprintf(output, "    files: %s\n", strings.Join(files, ", ")); err != nil {
+			return err
+		}
+	}
 	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
 		return err
 	}
-	if err := writeCompactWarnings(output, target, styles); err != nil {
-		return err
-	}
-	seen := make(map[string]struct{})
-	effects := compactFieldEffects(target.Fields, seen, target.Status != install.StatusNoop)
-	for _, file := range orderedFilePlans(target.Files) {
-		if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.path(humanPath(file.Path)), humanPath(file.Action)); err != nil {
-			return err
-		}
-		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
-	}
-	if len(effects) > 0 {
-		_, err := fmt.Fprintf(output, "    changes: %s\n", strings.Join(effects, ", "))
-		return err
-	}
-	return nil
+	return writeCompactWarnings(output, target, styles)
 }
 
 func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement, styles outputStyles) error {

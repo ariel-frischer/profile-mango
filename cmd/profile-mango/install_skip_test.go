@@ -39,7 +39,7 @@ func runInstallResult(t *testing.T, options installOptions) (string, error) {
 func TestInstallAllSkipsAgentsThatAreNotInstalled(t *testing.T) {
 	options, home := allSkipSandbox(t)
 	output := runInstallForTest(t, options)
-	if !strings.Contains(output, " (ready)\n") || !strings.Contains(output, "  codex@0.154.0: ready\n") {
+	if !strings.Contains(output, " (ready)\n") || !strings.Contains(output, "  codex@0.154.0: ready | destination:") {
 		t.Fatalf("installed codex must plan ready:\n%s", output)
 	}
 	for _, name := range []string{"hermes", "oh-my-pi", "openclaw", "opencode", "pi"} {
