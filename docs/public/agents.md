@@ -91,10 +91,23 @@ The evidence behind every row is in the developer
 
 ## OpenClaw
 
-- **Installs:** `agents.defaults.model.primary` (as `provider/model`) and
-  `agents.defaults.thinkingDefault` in `openclaw.json`.
-- **Caveats:** fallbacks, per-agent overrides, and provider options are left
-  alone. A per-agent model setting can still win over the default.
+- **Installs:** a native OpenClaw profile: `agents.defaults.model.primary`
+  (as `provider/model`) and `agents.defaults.thinkingDefault` in
+  `~/.openclaw-<profile>/openclaw.json`. Start it with
+  `openclaw --profile <profile>`. `~/.openclaw/openclaw.json` is not changed
+  unless you pass `--default`, which also writes the same two settings there.
+  A profile named `default` is OpenClaw's default config, so it is written in
+  place.
+- **Blocks:** named installs when the main config isn't at
+  `<home>/.openclaw/openclaw.json` (a relocated `--config` or
+  `OPENCLAW_CONFIG_PATH`). The profile location follows OpenClaw's home, not
+  the config file. If you set `OPENCLAW_HOME`, pass
+  `--config $OPENCLAW_HOME/.openclaw/openclaw.json`.
+- **Caveats:** a new profile has its own state folder, with no sign-in,
+  sessions, or plugins from your default profile. profile-mango doesn't copy
+  them. An exported `OPENCLAW_CONFIG_PATH` or `OPENCLAW_STATE_DIR` still wins
+  over `--profile`. Fallbacks, per-agent overrides, and provider options are
+  left alone. A per-agent model setting can still win over the default.
 - [Reference](../dev/agents/openclaw.md)
 
 ## Hermes

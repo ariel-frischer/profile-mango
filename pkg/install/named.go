@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
@@ -24,13 +25,27 @@ type InstallMode struct {
 	SetsDefault bool `json:"setsDefault,omitempty"`
 }
 
-// namedProfileInstaller is implemented by adapters whose agent has native named profiles.
+// namedProfileUser is implemented by adapters whose agent has native named profiles.
+type namedProfileUser interface {
+	// NamedProfileUse is the command that starts the agent with the named profile.
+	NamedProfileUse(name string) string
+}
+
+// namedProfileInstaller locates a named profile's file from its name alone.
 type namedProfileInstaller interface {
+	namedProfileUser
 	// NamedProfileFile names the profile's file: absolute, or relative to the main config
 	// directory without escaping it.
 	NamedProfileFile(name string) (string, error)
-	// NamedProfileUse is the command that starts the agent with the named profile.
-	NamedProfileUse(name string) string
+}
+
+// namedProfilePathResolver locates a named profile's file from the resolved main config
+// path, for agents whose profiles live beside rather than below that config.
+type namedProfilePathResolver interface {
+	namedProfileUser
+	// NamedProfilePath returns the profile file's absolute path, or configPath itself when
+	// the agent selects its default config for that name.
+	NamedProfilePath(configPath, name string) (string, error)
 }
 
 // installModeFor picks named-profile mode when the adapter supports it; named agent
@@ -39,7 +54,7 @@ func installModeFor(adapter Adapter, request Request, target TargetRequest) *Ins
 	if !target.Agent.Empty() {
 		return nil
 	}
-	named, found := adapter.(namedProfileInstaller)
+	named, found := adapter.(namedProfileUser)
 	if !found {
 		return &InstallMode{Mode: InstallModeDefaultConfig}
 	}
@@ -51,9 +66,12 @@ func snapshotNamedFile(adapter Adapter, mode *InstallMode, config installfs.Snap
 	if mode == nil || mode.Mode != InstallModeNamedProfile {
 		return installfs.Snapshot{}, nil
 	}
-	name, err := adapter.(namedProfileInstaller).NamedProfileFile(mode.ProfileName)
+	name, err := namedProfileFile(adapter, mode.ProfileName, config.Path)
 	if err != nil {
 		return installfs.Snapshot{}, err
+	}
+	if _, resolved := adapter.(namedProfilePathResolver); resolved && name == config.Path {
+		return installfs.Snapshot{}, nil
 	}
 	path, err := patchPath(config.Path, name)
 	if err != nil || path == config.Path {
@@ -64,6 +82,17 @@ func snapshotNamedFile(adapter Adapter, mode *InstallMode, config installfs.Snap
 		return snapshot, fmt.Errorf("inspect named profile file: %w", err)
 	}
 	return snapshot, nil
+}
+
+func namedProfileFile(adapter Adapter, profile, configPath string) (string, error) {
+	if resolver, found := adapter.(namedProfilePathResolver); found {
+		path, err := resolver.NamedProfilePath(configPath, profile)
+		if err == nil && !filepath.IsAbs(path) {
+			return "", fmt.Errorf("named profile path must be absolute")
+		}
+		return path, err
+	}
+	return adapter.(namedProfileInstaller).NamedProfileFile(profile)
 }
 
 // guardUnchangedConfig makes apply refuse a plan whose main config changed after it was

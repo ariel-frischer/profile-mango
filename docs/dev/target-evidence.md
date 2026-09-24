@@ -65,7 +65,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; exact-source profile-v2 loader plus isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml`; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `high` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project and runtime overrides can shadow them. OAuth identity, model availability, positive effective effort value, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
-| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
+| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks | Three model/reasoning config fields installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
@@ -1190,6 +1190,24 @@ differs from retained archive SHA-256
 Neither replaces the other. Exact peeled Git identity and actual imported hashes,
 recorded in the target's native evidence fixture, underpin this qualification.
 
+### OpenClaw 2026.9.5 named-profile installation, 2026-09-23
+
+Source-only evidence from the pinned commit
+`ec9c1a13db8938e5a3eaa51fca2e981cde2395a9`, fetched read-only. `src/entry.ts`
+applies root `--profile` before any command runs. `src/cli/profile.ts`
+`applyCliProfileEnv` sets `OPENCLAW_CONFIG_PATH=<stateDir>/openclaw.json`.
+`src/cli/profile-utils.ts` `resolveProfileStateDir` returns
+`<home>/.openclaw-<name>`, or `<home>/.openclaw` for `default`. `<home>` is
+`OPENCLAW_HOME` or the OS home. The installer writes the qualified fields to that
+file and changes the main config only with `--default`. A main config path not
+shaped `<home>/.openclaw/openclaw.json` blocks named install
+(`install.named_profile_path_unsafe`). The profile named `default` patches the
+main config in place. No native `--profile` probe was run: the only local binary
+is `2026.9.4`. Unit, command, and compiled-binary tests plus a scratch-`HOME`
+sandbox run cover create, default-config byte identity, `--default`, and undo.
+File and line references are in
+[openclaw.md](agents/openclaw.md#named-profile-installation-2026-09-23).
+
 ## Default config destinations, 2026-09-22
 
 When `install` receives a target without `--config`, it plans against that
@@ -1209,7 +1227,7 @@ providers. Relative relocation values block with a reason.
 | OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
 | Pi `0.86.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
 | Oh My Pi `18.2.6` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |
-| OpenClaw `2026.9.5` | `~/.openclaw/openclaw.json` | `OPENCLAW_CONFIG_PATH` | [openclaw.md](agents/openclaw.md#configuration-and-precedence) |
+| OpenClaw `2026.9.5` | `~/.openclaw/openclaw.json`; named profiles go to `~/.openclaw-<name>/openclaw.json`, and a relocated main config blocks named install | `OPENCLAW_CONFIG_PATH` | [openclaw.md](agents/openclaw.md#configuration-and-precedence) |
 | Hermes `0.21.3` | `~/.hermes/config.yaml` | `HERMES_HOME` | [hermes.md](agents/hermes.md#configuration-and-precedence) |
 
 These paths are documentation-derived destinations, not new native evidence.

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -109,6 +110,13 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 		filepath.Join(root, "outside-sentinel"): "untouched",
 	}
 	w.config = filepath.Join(root, "target.json")
+	if strings.HasPrefix(target, "openclaw@") {
+		// OpenClaw profiles live beside <home>/.openclaw; --default also patches this config.
+		w.config = filepath.Join(root, ".openclaw", "openclaw.json")
+		if err := os.MkdirAll(filepath.Dir(w.config), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	files[w.config] = w.original
 	for path, content := range files {
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
@@ -117,6 +125,9 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 	}
 	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
 		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config", target + "=" + w.config, "--override", "--json"}
+	if strings.HasPrefix(target, "openclaw@") {
+		w.args = append(w.args, "--default")
+	}
 	return w
 }
 

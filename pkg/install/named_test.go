@@ -207,3 +207,38 @@ func TestSnapshotNamedFilePaths(t *testing.T) {
 }
 
 func installfsSnapshot(path string) installfs.Snapshot { return installfs.Snapshot{Path: path} }
+
+type resolverNamedAdapter struct {
+	codexAdapter
+	path string
+}
+
+func (adapter resolverNamedAdapter) NamedProfilePath(string, string) (string, error) {
+	return adapter.path, nil
+}
+
+func TestSnapshotNamedFileResolverPaths(t *testing.T) {
+	config := filepath.Join(t.TempDir(), "settings.json")
+	outside := filepath.Join(t.TempDir(), "profile", "config.json")
+	cases := map[string]struct {
+		path string
+		ok   bool
+	}{
+		"absolute": {path: outside, ok: true},
+		"relative": {path: "profile/config.json"},
+		"main":     {path: config, ok: true},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			mode := &InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding"}
+			snapshot, err := snapshotNamedFile(resolverNamedAdapter{path: tc.path}, mode, installfsSnapshot(config))
+			want := outside
+			if tc.path == config {
+				want = "" // the named profile is the main config, which is already snapshotted
+			}
+			if (err == nil) != tc.ok || (tc.ok && snapshot.Path != want) {
+				t.Fatalf("snapshot = %+v, %v", snapshot, err)
+			}
+		})
+	}
+}

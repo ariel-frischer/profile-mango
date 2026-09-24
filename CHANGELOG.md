@@ -64,6 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The curl installer one-liner and install.sh release defaults now point at GitHub
 - Codex install now writes a native named profile ($CODEX_HOME/<name>.config.toml, used with codex --profile <name>) and leaves config.toml unchanged; --default also writes the root settings; plans and JSON report the install mode and use command, and agents without profiles get a note
 - Install creates missing private parent directories for a new file (undo removes the file and leaves the directory), and named profiles may live in a nested or absolute path
+- OpenClaw install now writes a native named profile (<home>/.openclaw-<name>/openclaw.json, used with openclaw --profile <name>) and leaves the default config unchanged; --default also writes it; a main config outside <home>/.openclaw/openclaw.json blocks named install; the profile named default patches the default config
 
 ### Removed
 
