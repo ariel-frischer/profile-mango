@@ -40,6 +40,10 @@
 - [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 model/one-skill and named primary/subagent installation evidence, isolated generated-definition consumption, and runtime limits.
 - [`dev/agents/jcode.md`](dev/agents/jcode.md) - Ariel custom Jcode fork experimental-only provenance, executed profile probe boundary, and inert preview projection.
 
+### Research
+
+- [`research/2026-09-23-pi-omp-named-profiles.md`](research/2026-09-23-pi-omp-named-profiles.md) - Pinned-source evidence on named-profile options for Pi and Oh My Pi: OMP `--config` overlay is viable, Pi has none short of relocating its agent dir.
+
 ### Plans
 
 - [`dev/ap-i2v-agent-skill-plan.md`](dev/ap-i2v-agent-skill-plan.md) - Implementation and validation plan for the bundled npx-installable profile-mango agent skill.
