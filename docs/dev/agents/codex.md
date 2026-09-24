@@ -1,6 +1,6 @@
 # Codex configuration reference
 
-**Reference date:** 2026-09-22. **Status:** exact-version inert preview plus a separate three-root-setting installer for Codex CLI `0.154.0`. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and still reports `applicable: false` for the full profile because authentication, delivery, precedence, and enforcement remain unverified.
+**Reference date:** 2026-09-23. **Status:** exact-version inert preview plus a separate three-setting installer for Codex CLI `0.154.0` that writes a named profile file by default. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and still reports `applicable: false` for the full profile because authentication, delivery, precedence, and enforcement remain unverified.
 
 ## Configuration and precedence
 
@@ -57,11 +57,31 @@ origins. A trusted synthetic project and session overrides shadowed root model
 and effort; an untrusted project did not. App-server startup initializes other
 subsystems, so this is not a safe personal-home inspector or OAuth proof.
 
+## Named profiles in 0.154.0
+
+Codex `0.154.0` profiles are files: `codex --profile <name>` layers
+`$CODEX_HOME/<name>.config.toml` over `config.toml`. Names use ASCII letters,
+digits, `_` and `-`. The older `[profiles.<name>]` tables and root
+`profile = "<name>"` selector are legacy: the pinned binary refuses
+`--profile <name>` while `config.toml` holds either one for that name, and
+refuses to start at all with a root `profile` key. A `--profile` name with no
+file is treated as an empty layer, so a typo silently runs the base config.
+`--profile` applies only to runtime commands, `codex mcp`, `codex sandbox` and
+`codex debug prompt-input`; app-server `config/read` rejects it. Source lines
+and isolated installed-binary controls are in the
+[evidence ledger](../target-evidence.md#codex-01540-named-profile-installation-2026-09-23).
+
 ## Bounded settings-only installation
 
-`profile-mango install <name> --target codex` plans against `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); `--config codex=<path>` overrides it. Bare `codex` resolves to the single qualified `codex@0.154.0`. The installer plans only the root `model_provider`,
-`model`, and `model_reasoning_effort = "high"` settings for an OpenAI/native/OAuth
-binding. Use all three explicit project input flags together if not using the
+`profile-mango install <name> --target codex` writes a named profile: the three
+settings go to `<name>.config.toml` beside `$CODEX_HOME/config.toml` (default
+`~/.codex/`), and the plan prints `use it: codex --profile <name>`. `config.toml`
+is read, checked, and left byte-for-byte unchanged. `--default` also writes the
+same three settings as root keys in `config.toml`, so plain `codex` uses them.
+`--config codex=<path>` names a different `config.toml`; the profile file goes
+next to it. Bare `codex` resolves to the single qualified `codex@0.154.0`. The
+installer plans only `model_provider`, `model`, and
+`model_reasoning_effort = "high"` for an OpenAI/native/OAuth binding. Use all three explicit project input flags together if not using the
 profile home. An existing unowned config needs `--override`; apply requires
 `--apply --yes --expect-plan <planID>` or interactive terminal consent. Plans are
 read-only, backups are enabled by default, and repeated application is a no-op.
@@ -91,15 +111,19 @@ if its parsed ownership is otherwise valid. Keep its backup for manual review.
 Same-content file replacement after preview also invalidates restore consent.
 
 The adapter rejects required permissions, tools, instructions, skills,
-non-qualified routes, malformed TOML, active profiles and provider shadow
-state. It patches only the selected root document (explicit or [default config destinations](../target-evidence.md#default-config-destinations-2026-09-22)), preserving
-unrelated keys/comments and target-owned authentication. It never runs Codex,
+non-qualified routes, malformed TOML, a root `profile` key, a same-name legacy
+`[profiles.<name>]` table and provider shadow state. It patches only the named
+profile file, plus the selected root document with `--default` (explicit or
+[default config destinations](../target-evidence.md#default-config-destinations-2026-09-22)), preserving
+unrelated keys/comments, other `[profiles.*]` tables and target-owned
+authentication. Undo reverses the latest install: for a named install it removes
+or restores that profile file and the manifest, and leaves earlier profiles. It never runs Codex,
 reads auth stores, or selects OAuth. `codex login status` can tell a user whether
 the stored login is API-key or ChatGPT, but the same ChatGPT message covers
 Codex-managed OAuth and externally supplied tokens. Do not share status output
 containing key fragments. Project/runtime overrides were observed in a
 controlled synthetic home but are not inspected or controlled by installation.
-Active runtime-profile selection, installer-verified authentication identity,
+Installer-verified authentication identity,
 model availability, resource delivery and policy enforcement remain unverified.
 Settings-only success must not be reported as full-profile applicability.
 Settings-only qualification used disposable configuration, not a personal

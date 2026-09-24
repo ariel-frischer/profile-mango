@@ -27,7 +27,7 @@ func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
 	if !plan.Backup || !hasFileAction(plan.Targets[0], ActionOverride) {
 		t.Fatalf("plan backup/action = %v/%#v", plan.Backup, plan.Targets[0].Files)
 	}
-	if len(plan.Targets[0].Fields) != 3 {
+	if len(plan.Targets[0].Fields) != 6 {
 		t.Fatalf("plan fields = %#v", plan.Targets[0].Fields)
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
@@ -140,13 +140,13 @@ func TestCodexInstallRejectsPrecedenceAndProviderShadowState(t *testing.T) {
 		config string
 		want   string
 	}{
-		"active profile": {
+		"legacy profile selector": {
 			config: "profile = \"work\"\n",
-			want:   "profile selection or definitions",
+			want:   "legacy profile = setting",
 		},
-		"profile table": {
-			config: "[profiles.work]\nmodel = \"profile-model\"\n",
-			want:   "profile selection or definitions",
+		"legacy table for the same profile": {
+			config: "[profiles.route-only]\nmodel = \"profile-model\"\n",
+			want:   "legacy [profiles.route-only] table",
 		},
 		"provider shadow": {
 			config: "[model_providers.openai]\nname = \"shadow\"\n",
@@ -272,6 +272,14 @@ func (codexTestAdapter) Plan(input AdapterInput) (Patch, error) {
 	return (codexAdapter{}).Plan(input)
 }
 
+func (codexTestAdapter) NamedProfileFile(name string) (string, error) {
+	return (codexAdapter{}).NamedProfileFile(name)
+}
+
+func (codexTestAdapter) NamedProfileUse(name string) string {
+	return (codexAdapter{}).NamedProfileUse(name)
+}
+
 func codexTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
 	request, root := testRequest(t, NewRegistry(codexTestAdapter{}))
@@ -288,6 +296,8 @@ func codexTestRequest(t *testing.T) (Request, string) {
 		t.Fatal(err)
 	}
 	request.Targets = []TargetRequest{{Target: Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}
+	// Most Codex tests cover the config.toml patch, which only --default writes.
+	request.Default = true
 	return request, root
 }
 

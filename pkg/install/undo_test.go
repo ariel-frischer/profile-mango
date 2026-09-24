@@ -42,6 +42,8 @@ func installAtDefault(t *testing.T, test undoTargetCase, original *string) (stri
 	request, root := testRequest(t, DefaultRegistry())
 	writeInstallTestFile(t, request.BindingsPath, test.bindings)
 	request.Override = true
+	// --default makes Codex also patch config.toml, so every target changes its main config.
+	request.Default = true
 	request.Env = syntheticPathEnv(t, filepath.Join(root, "home"), nil)
 	request.Targets = []TargetRequest{{Target: test.target()}}
 	config, err := DefaultRegistry().DefaultConfigPath(test.target(), request.Env)
@@ -162,7 +164,7 @@ func TestUndoStepsBackThroughSuccessiveInstalls(t *testing.T) {
 	test.bindings = strings.Replace(test.bindings, "gpt-5.6", "gpt-5.6-mini", 1)
 	request, _ := testRequest(t, DefaultRegistry())
 	writeInstallTestFile(t, request.BindingsPath, test.bindings)
-	request.Override = true
+	request.Override, request.Default = true, true
 	request.Targets = []TargetRequest{{Target: test.target(), ConfigPath: config}}
 	plan, err := BuildPlan(request)
 	if err != nil || plan.Status != StatusReady {

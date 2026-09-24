@@ -32,7 +32,10 @@ Codex is the first intended public adapter candidate. Public targets have inert
 exact-version renderers. Installable subsets apply at an explicit `--config` path
 or, when omitted, at the documented default user path listed under
 [default config destinations](#default-config-destinations-2026-09-22).
-Codex permits only three root route settings; the exact installed binary consumed them in an isolated synthetic home,
+Codex permits only three route settings, written by default as a native
+`$CODEX_HOME/<name>.config.toml` profile selected with `codex --profile <name>`
+and, only with `--default`, also as root `config.toml` settings; the exact installed
+binary loaded both forms in an isolated synthetic home,
 but OAuth identity and full-profile applicability remain unverified. Claude
 Code permits only model-field installation; Pi permits three route-default
 settings, Hermes three model/reasoning fields, and
@@ -59,7 +62,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; built profile-mango CLI synthetic plan/apply/reapply/restore | Three root settings installable only at an explicit or documented default path for OpenAI/native/OAuth binding with `high` effort; trusted project and runtime overrides can shadow them. OAuth identity, named runtime profile selection, model availability, delivery and full-profile applicability remain unverified |
+| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; exact-source profile-v2 loader plus isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml`; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `high` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project and runtime overrides can shadow them. OAuth identity, model availability, positive effective effort value, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
@@ -604,6 +607,82 @@ read or OAuth proof by profile-mango. Human and JSON plans warn that successful
 installation applies **only to three settings**, never the OAuth-required full
 profile, delivery, policy enforcement, or effective runtime route.
 
+### Codex 0.154.0 named-profile installation, 2026-09-23
+
+Named profiles in Codex `0.154.0` are separate files, not `[profiles.<name>]`
+tables. Exact release source `rust-v0.154.0` (commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`, archive SHA-256
+`848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`) shows:
+
+- `utils/cli/src/shared_options.rs`: `--profile`/`-p` "Layer
+  `$CODEX_HOME/<name>.config.toml` on top of the base user config"; names are
+  ASCII letters, digits, `_` and `-` (`protocol/src/config_types.rs`
+  `ProfileV2Name`).
+- `config/src/loader/mod.rs`: the profile file is pushed as a second user layer
+  above `config.toml` and merged into the same `ConfigToml`, so `model_provider`,
+  `model` and `model_reasoning_effort` have the same meaning there as at the root.
+  `--profile <name>` is a hard error while `config.toml` holds a legacy
+  `profile = "<name>"` or `[profiles.<name>]`; unrelated legacy tables are allowed.
+- `core/src/config/mod.rs`: any root `profile = "..."` is a hard startup error
+  ("no longer supported; use `--profile`").
+- `cli/src/main.rs`: `--profile` applies only to runtime commands, `codex mcp`,
+  `codex sandbox`, and `codex debug prompt-input`.
+
+The design recorded in the plan for ap-vjc.1 (`[profiles.<name>]` in
+`config.toml`, and `--default` writing root `profile = "<name>"`) would therefore
+have produced a profile Codex refuses to select and a config Codex refuses to
+start with. The installer instead writes `$CODEX_HOME/<name>.config.toml`,
+leaves `config.toml` byte-for-byte unchanged, and with `--default` writes the
+same three root settings into `config.toml`. It blocks a root `profile` key, a
+same-name legacy `[profiles.<name>]` table, and openai provider shadow state in
+`config.toml`; the unchanged `config.toml` is also a stale-plan check at apply.
+
+Installed-binary controls ran the direct `codex-cli 0.154.0` executable
+(SHA-256 `3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`,
+verified before every run) under bubblewrap with unshared network, PID and IPC
+namespaces, a cleared environment, synthetic `HOME`/`XDG_CONFIG_HOME`/
+`CODEX_HOME`, no auth file, and a 20-second timeout. The only command was
+`codex [--profile <name>] debug prompt-input hi`, which builds the model-visible
+prompt offline (ephemeral, no state database, no provider request) and prints it.
+Results:
+
+| Synthetic state | Command | Result |
+| --- | --- | --- |
+| `coding.config.toml` with `model_provider = "no-such-provider"` | `--profile coding` | exit 1, ``Model provider `no-such-provider` not found`` |
+| same | no `--profile` | exit 0 |
+| root `model_provider = "no-such-provider"`, profile `model_provider = "openai"` | `--profile coding` | exit 0 (profile provider wins) |
+| same | no `--profile` | exit 1, provider not found |
+| profile `model = 42` | `--profile coding` | exit 1, ``coding.config.toml:1:9: invalid type: integer `42`, expected a string`` |
+| profile `model_reasoning_effort = 42` | `--profile coding` | exit 1, same typed error at `1:26` |
+| both controls above | no `--profile` | exit 0 |
+| `[profiles.coding]` in `config.toml` | `--profile coding` | exit 1, legacy-table refusal naming `coding.config.toml` |
+| root `profile = "coding"` | no `--profile` | exit 1, legacy `profile` no longer supported |
+| unrelated `[profiles.dev]` plus `coding.config.toml` | `--profile coding` | exit 0 |
+| profile-mango-generated `coding.config.toml`/`review.config.toml` (below) | `--profile coding`, `--profile review`, none | exit 0 each |
+| generated files, `coding` provider edited to `no-such-provider` | `--profile coding` / `--profile review` | exit 1 provider not found / exit 0 |
+| generated files | `--profile missing` | exit 0: a missing profile file is treated as empty |
+
+This proves that the pinned binary selects the generated file with `--profile`
+and consumes its `model_provider` (value-sensitive, overriding the root) and its
+typed `model` and `model_reasoning_effort` keys. `debug prompt-input` does not
+print the effective model or effort, so positive effective values for those two
+come from the loader source plus the earlier root `config/read` observation, not
+from this run. A bogus effort string was accepted, so effort values are not
+validated at load. OAuth, model availability and runtime delivery were not
+exercised.
+
+The built CLI (branch `agent/vjc1-codex-profiles`) ran with a cleared
+environment and synthetic `HOME`, `CODEX_HOME` and `PROFILE_MANGO_HOME`:
+`install coding --target codex` and then `install review --target codex` each
+planned `use it: codex --profile <name>`, created `<name>.config.toml`, and left
+a `config.toml` with a comment, root model/effort, a feature table and an MCP
+table at its original SHA-256. The JSON plan carried
+`install: {mode: named-profile, profileName, useCommand}`. Reinstalling either
+profile planned `noop`. `undo --target codex` removed only `review.config.toml`
+and restored the manifest; a second undo removed `coding.config.toml` and the
+manifest; `config.toml` stayed unchanged throughout. `install coding --default`
+then also adopted `config.toml` with a backup and wrote the three root settings.
+
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 
 The following records the initial preview qualification. The later installer
@@ -1126,7 +1205,7 @@ providers. Relative relocation values block with a reason.
 | Target | Default path | Relocation | Documentation source |
 | --- | --- | --- | --- |
 | Claude Code `2.1.278` | `~/.claude/settings.json` | none | [claude-code.md](agents/claude-code.md#configuration-and-precedence) |
-| Codex `0.154.0` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml` | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
+| Codex `0.154.0` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml`; named profiles go to `<name>.config.toml` in the same folder | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
 | OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
 | Pi `0.86.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
 | Oh My Pi `18.2.6` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |

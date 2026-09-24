@@ -118,6 +118,9 @@ type AdapterInput struct {
 	Ownership    Manifest
 	HasManifest  bool
 	Override     bool
+	// Install says where the profile goes; for a named profile, NamedFile is its current file.
+	Install   InstallMode
+	NamedFile Snapshot
 }
 
 type Adapter interface {
@@ -194,6 +197,8 @@ type Request struct {
 	// Strict blocks a target on any known requirement it cannot install instead
 	// of installing the supported subset and listing the rest as skipped.
 	Strict bool
+	// Default also makes an installed named profile the agent's default.
+	Default bool
 }
 
 type Manifest struct {
@@ -229,6 +234,7 @@ type FilePlan struct {
 type TargetPlan struct {
 	Target            Target                   `json:"target"`
 	Agent             *AgentDestination        `json:"agent,omitempty"`
+	Install           *InstallMode             `json:"install,omitempty"`
 	Config            *ConfigDestination       `json:"config,omitempty"`
 	Metadata          AdapterMetadata          `json:"metadata"`
 	Status            string                   `json:"status"`

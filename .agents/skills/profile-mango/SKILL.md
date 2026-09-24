@@ -102,6 +102,11 @@ profile-mango install <profile-name> --target <name> --apply --yes --expect-plan
 profile-mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
 ```
 
+Agents with native named profiles get the profile under its own name and
+leave the agent's default settings alone; the plan prints `use it: <command>`
+(Codex: `codex --profile <profile-name>`, from `$CODEX_HOME/<profile-name>.config.toml`).
+Add `--default` to also write the agent's default settings. Agents without
+profiles are installed as their default settings, with a plan note saying so.
 Without `--config`, plans use the target's documented default config path.
 Review the resolved path, field diff, skipped requirements, and plan ID
 before applying. An existing config is adopted with a backup; a

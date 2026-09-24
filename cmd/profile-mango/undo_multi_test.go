@@ -40,7 +40,7 @@ func installClaudeAndCodexAtDefault(t *testing.T) []installedConfig {
 	writeFile(t, filepath.Join(profiles, "default", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: default\nspec:\n  routeRef: main\n")
 	bindings := filepath.Join(root, "bindings.yaml")
 	writeFile(t, bindings, baseOpenAIBindings+"    targets:\n      claude-code:\n        provider: anthropic\n        model: claude-fable-5-1\n")
-	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"claude-code", "codex"}, override: true}
+	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"claude-code", "codex"}, override: true, makeDefault: true}
 	planID := regexp.MustCompile(`plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(runInstallDefaultForTest(t, options))
 	if planID == nil {
 		t.Fatal("multi-target install plan not ready")

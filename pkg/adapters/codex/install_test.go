@@ -225,17 +225,9 @@ func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
 		source string
 		want   string
 	}{
-		"active profile": {
+		"legacy profile selector": {
 			source: "profile = \"work\"\n",
-			want:   "profile selection or definitions",
-		},
-		"profile definitions": {
-			source: "[profiles.work]\nmodel = \"profile-model\"\n",
-			want:   "profile selection or definitions",
-		},
-		"dotted profile definition": {
-			source: "profiles.work = { model = \"profile-model\" }\n",
-			want:   "profile selection or definitions",
+			want:   "legacy profile = setting",
 		},
 		"quoted profile definition": {
 			source: "[\"profiles\".foo]\nmodel = \"profile-model\"\n",
@@ -261,6 +253,22 @@ func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
 				t.Fatalf("error = %v, want %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestPatchConfigPreservesLegacyProfileTables(t *testing.T) {
+	sources := []string{
+		"[profiles.work]\nmodel = \"profile-model\"\n",
+		"profiles.work = { model = \"profile-model\" }\n",
+	}
+	for _, source := range sources {
+		patch, err := PatchConfig([]byte(source), installRoute())
+		if err != nil {
+			t.Fatalf("PatchConfig(%q) = %v", source, err)
+		}
+		if !strings.Contains(string(patch.Content), source) {
+			t.Fatalf("legacy profile state was not preserved: %q", patch.Content)
+		}
 	}
 }
 

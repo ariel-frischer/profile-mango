@@ -77,7 +77,7 @@ func latestInstallJournal(config, manifest installfs.Snapshot) (installfs.Snapsh
 		if err != nil {
 			return file, journal, err
 		}
-		if journal.Status != "committed" || entryFor(journal, config.Path) == nil || entryFor(journal, manifest.Path) == nil {
+		if journal.Status != "committed" || entryFor(journal, manifest.Path) == nil {
 			continue
 		}
 		candidate := journalCandidate{file: file, journal: journal}
@@ -160,9 +160,11 @@ func entryFor(journal installfs.Journal, path string) *installfs.JournalEntry {
 	return nil
 }
 
+// journalMatches compares the installed hashes; a named-profile install may leave the main config out of the journal.
 func journalMatches(journal installfs.Journal, config, manifest installfs.Snapshot) bool {
-	return config.Exists && entryFor(journal, config.Path).AfterSHA256 == config.SHA256 &&
-		manifest.Exists && entryFor(journal, manifest.Path).AfterSHA256 == manifest.SHA256
+	configEntry := entryFor(journal, config.Path)
+	configMatches := configEntry == nil || (config.Exists && configEntry.AfterSHA256 == config.SHA256)
+	return configMatches && manifest.Exists && entryFor(journal, manifest.Path).AfterSHA256 == manifest.SHA256
 }
 
 func newestCandidate(candidates []journalCandidate) journalCandidate {

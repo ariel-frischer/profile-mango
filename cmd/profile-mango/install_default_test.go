@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
@@ -26,8 +27,10 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}}
 	output := runInstallForTest(t, options)
-	if !strings.Contains(output, "    config: "+config+" (default)\n") || !strings.Contains(output, "config.toml: adopt\n") || !strings.Contains(output, "backed up") {
-		t.Fatalf("plan omitted default config path or adoption backup:\n%s", output)
+	for _, want := range []string{"    config: " + config + " (default)\n", "    use it: codex --profile route-only\n", "    route-only.config.toml: create\n"} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("plan omitted %q:\n%s", want, output)
+		}
 	}
 	planID := regexp.MustCompile(`(?m)^plan ([0-9a-f]{64}) \(ready\)$`).FindStringSubmatch(output)
 	if planID == nil {
@@ -36,6 +39,38 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	want := "  profile-mango install route-only --profiles " + profiles + " --resource-root " + root + " --bindings " + bindings + " --target codex --apply --yes --expect-plan " + planID[1] + "\n"
 	if !strings.HasSuffix(output, want) {
 		t.Fatalf("plan does not end with the apply command %q:\n%s", want, output)
+	}
+	options.apply, options.yes, options.expectPlan = true, true, planID[1]
+	runInstallForTest(t, options)
+	if data, err := os.ReadFile(config); err != nil || string(data) != before {
+		t.Fatalf("named install changed config.toml = %q, err=%v", data, err)
+	}
+	profile := filepath.Join(filepath.Dir(config), "route-only.config.toml")
+	if data, err := os.ReadFile(profile); err != nil || !strings.Contains(string(data), `model = "gpt-5.6"`) {
+		t.Fatalf("installed profile = %q, err=%v", data, err)
+	}
+}
+
+func TestInstallDefaultFlagAlsoAdoptsConfig(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	t.Setenv("HOME", home)
+	t.Setenv("CODEX_HOME", "")
+	profiles, bindings := writeCodexInstallInputs(t, root)
+	config := filepath.Join(home, ".codex", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(config), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	before := "# keep\nunknown = true\n"
+	writeFile(t, config, before)
+	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, makeDefault: true}
+	output := runInstallForTest(t, options)
+	if !strings.Contains(output, "also the default") || !strings.Contains(output, "    config.toml: adopt\n") || !strings.Contains(output, "backed up") {
+		t.Fatalf("plan omitted the default or adoption backup:\n%s", output)
+	}
+	planID := regexp.MustCompile(`(?m)^plan ([0-9a-f]{64}) \(ready\)$`).FindStringSubmatch(output)
+	if planID == nil || !strings.Contains(output, " --target codex --default --apply --yes --expect-plan "+planID[1]+"\n") {
+		t.Fatalf("apply command lost --default:\n%s", output)
 	}
 	options.apply, options.yes, options.expectPlan = true, true, planID[1]
 	runInstallForTest(t, options)
@@ -76,4 +111,24 @@ func runInstallForTest(t *testing.T, options installOptions) string {
 		t.Fatalf("install: %v\n%s", err, output.String())
 	}
 	return output.String()
+}
+
+func TestWriteInstallModeExplainsUseAndFallback(t *testing.T) {
+	tests := map[string]struct {
+		mode *install.InstallMode
+		want string
+	}{
+		"named":         {&install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "coding", UseCommand: "codex --profile coding"}, "    use it: codex --profile coding\n"},
+		"named default": {&install.InstallMode{Mode: install.InstallModeNamedProfile, UseCommand: "codex --profile coding", SetsDefault: true}, "    use it: codex --profile coding\n    also the default: the agent uses this profile when none is chosen\n"},
+		"no profiles":   {&install.InstallMode{Mode: install.InstallModeDefaultConfig}, "    note: this agent has no profiles; installed as its default settings\n"},
+		"named agent":   {nil, ""},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var output bytes.Buffer
+			if err := writeInstallMode(&output, test.mode); err != nil || output.String() != test.want {
+				t.Fatalf("output = %q, err=%v, want %q", output.String(), err, test.want)
+			}
+		})
+	}
 }

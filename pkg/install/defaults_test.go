@@ -171,7 +171,7 @@ func TestExplicitConfigOverridesDefault(t *testing.T) {
 func TestDefaultPathCodexPreservesAuthSiblings(t *testing.T) {
 	request, root := codexTestRequest(t)
 	request.Registry = DefaultRegistry()
-	request.Override = true
+	request.Override, request.Default = true, false
 	codexHome := filepath.Join(root, "codex-home")
 	if err := os.MkdirAll(codexHome, 0o700); err != nil {
 		t.Fatal(err)
@@ -190,7 +190,7 @@ func TestDefaultPathCodexPreservesAuthSiblings(t *testing.T) {
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	assertInstallTestFile(t, config, "# keep\nunknown = true\nmodel_provider = \"openai\"\nmodel = \"gpt-5.6\"\nmodel_reasoning_effort = \"high\"\n[features]\napps = false\n")
+	assertInstallTestFile(t, config, before)
+	assertInstallTestFile(t, filepath.Join(codexHome, "route-only.config.toml"), "model_provider = \"openai\"\nmodel = \"gpt-5.6\"\nmodel_reasoning_effort = \"high\"\n")
 	assertInstallTestFile(t, auth, "synthetic credential sentinel")
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
 }

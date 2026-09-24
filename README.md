@@ -6,7 +6,7 @@
 
 - **Profile:** portable intent, such as a description, a route name, and later permissions, instructions, and skills. It is a flat YAML file named by its folder.
 - **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides. They stay local and never hold credentials.
-- **Install:** writes the settings each agent supports into that agent's own config file. It shows a plan first, backs up what it changes, and can be undone.
+- **Install:** writes the settings each agent supports into that agent's own config. Where the agent has named profiles (Codex), the profile is installed under its own name and your default settings are left alone unless you pass `--default`. It shows a plan first, backs up what it changes, and can be undone.
 
 ## Install
 
@@ -28,6 +28,7 @@ profile-mango init                      # starter profile and bindings in ~/.pro
 profile-mango doctor                    # which agents are installed, versions, config paths
 profile-mango install default --all     # show the plan; nothing is written yet
 profile-mango install default --all --apply --yes --expect-plan <plan-id>
+codex --profile default                 # Codex gets a named profile; the plan prints this line
 profile-mango undo --target codex       # preview reversing that install
 profile-mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 ```
@@ -50,7 +51,7 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 | Agent | Installs | Details |
 | --- | --- | --- |
 | Claude Code | Model | [agents](docs/public/agents.md#claude-code) |
-| Codex | Provider, model, effort | [agents](docs/public/agents.md#codex) |
+| Codex | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#codex) |
 | OpenCode | Model, one skill, named agents | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
 | Oh My Pi | Model, thinking level | [agents](docs/public/agents.md#oh-my-pi) |

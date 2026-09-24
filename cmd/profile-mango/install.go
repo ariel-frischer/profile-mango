@@ -35,6 +35,7 @@ type installOptions struct {
 	noBackup       bool
 	override       bool
 	strict         bool
+	makeDefault    bool
 	jsonOutput     bool
 	nonInteractive bool
 }
@@ -68,6 +69,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.noBackup, "no-backup", false, "disable create-only pre-apply backups")
 	cmd.Flags().BoolVar(&options.override, "override", false, "allow overwriting settings that were changed outside profile-mango, where the target supports it")
 	cmd.Flags().BoolVar(&options.strict, "strict", false, "stop instead of skipping profile settings an agent cannot install")
+	cmd.Flags().BoolVar(&options.makeDefault, "default", false, "also make this profile the agent's default, used without choosing a profile")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the deterministic plan as JSON")
 	return cmd
 }
@@ -95,7 +97,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	request := install.Request{
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
-		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Registry: registry,
+		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
 		Env: install.OSPathEnv(), DetectVersion: installVersionDetector, SkipNotInstalled: options.all,
 	}
 	plan, err := install.BuildPlan(request)
@@ -449,7 +451,7 @@ func installPlanArgs(options installOptions) []string {
 	for _, flag := range []struct {
 		name string
 		set  bool
-	}{{"--all", options.all}, {"--no-backup", options.noBackup}, {"--override", options.override}, {"--strict", options.strict}} {
+	}{{"--all", options.all}, {"--no-backup", options.noBackup}, {"--override", options.override}, {"--strict", options.strict}, {"--default", options.makeDefault}} {
 		if flag.set {
 			args = append(args, flag.name)
 		}
@@ -497,6 +499,9 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 			return err
 		}
 	}
+	if err := writeInstallMode(output, target.Install); err != nil {
+		return err
+	}
 	if err := writeHumanVersionCheck(output, target.VersionCheck); err != nil {
 		return err
 	}
@@ -516,6 +521,25 @@ func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
 		}
 	}
 	return nil
+}
+
+// writeInstallMode says how to use a named profile, or notes that the agent has no profiles.
+func writeInstallMode(output io.Writer, mode *install.InstallMode) error {
+	if mode == nil {
+		return nil
+	}
+	if mode.Mode != install.InstallModeNamedProfile {
+		_, err := fmt.Fprintln(output, "    note: "+install.NoProfilesNote)
+		return err
+	}
+	if _, err := fmt.Fprintf(output, "    use it: %s\n", humanPath(mode.UseCommand)); err != nil {
+		return err
+	}
+	if !mode.SetsDefault {
+		return nil
+	}
+	_, err := fmt.Fprintln(output, "    also the default: the agent uses this profile when none is chosen")
+	return err
 }
 
 // writeSkippedRequirements lists, on one line, the profile settings this agent does not receive.

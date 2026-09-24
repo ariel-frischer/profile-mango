@@ -21,7 +21,7 @@ func TestCodexRestorePlanAndApply(t *testing.T) {
 	if err := os.WriteFile(config, original, 0o640); err != nil {
 		t.Fatal(err)
 	}
-	request := install.Request{ProfileName: "route-only", ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true, Override: true,
+	request := install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true, Override: true,
 		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}}
 	installed, err := install.BuildPlan(request)
 	if err != nil {
@@ -184,7 +184,7 @@ func TestCodexRestoreDeletesOriginallyAbsentConfigAndManifest(t *testing.T) {
 	root := t.TempDir()
 	profiles, bindings := writeCodexInstallInputs(t, root)
 	config := filepath.Join(root, "config.toml")
-	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
+	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
 		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}})
 	if err != nil {
 		t.Fatal(err)
@@ -331,7 +331,7 @@ func TestCodexRestoreOriginalManifestCanonicalBoundary(t *testing.T) {
 			if err := os.WriteFile(manifestPath, prior, 0o640); err != nil {
 				t.Fatal(err)
 			}
-			plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
+			plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
 				Targets: []install.TargetRequest{{Target: owner.Target, ConfigPath: config}}})
 			if err != nil {
 				t.Fatal(err)
@@ -368,7 +368,7 @@ func installedRestoreFixture(t *testing.T, backup bool) (string, string) {
 	if err := os.WriteFile(config, []byte("# original\n"), 0o640); err != nil {
 		t.Fatal(err)
 	}
-	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: backup, Override: true,
+	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: backup, Override: true,
 		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}})
 	if err != nil {
 		t.Fatal(err)

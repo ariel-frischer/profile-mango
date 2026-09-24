@@ -17,7 +17,7 @@ func (codexAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: codex.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "settings-only: isolated installed Codex 0.154.0 binary consumed root model_provider, model, and model_reasoning_effort; trusted project and runtime overrides can shadow root settings; OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified",
+		Reason:         "settings-only: model_provider, model, and model_reasoning_effort install as a native profile file used with codex --profile <name>, and into config.toml only with --default; the isolated installed Codex 0.154.0 binary loaded these fields from both; trusted project and runtime overrides can shadow them; OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified",
 	}
 }
 
@@ -25,19 +25,50 @@ func (codexAdapter) Plan(input AdapterInput) (Patch, error) {
 	if err := validateCodexProfile(input); err != nil {
 		return Patch{}, err
 	}
-	configPatch, err := codex.PatchConfig(input.Config.Content, input.Route)
-	if err != nil {
+	name := input.Install.ProfileName
+	if err := codex.CheckBaseConfig(input.Config.Content, name); err != nil {
 		return Patch{}, err
 	}
-	patch := Patch{OverrideAllowed: true}
-	patch.Files = []FilePatch{{Content: configPatch.Content, Fields: codexFieldNames(configPatch.Fields)}}
-	for _, field := range configPatch.Fields {
-		patch.Fields = append(patch.Fields, FieldChange{Path: "config." + field.Key, Before: field.Before, After: field.After})
+	profilePatch, err := codex.PatchConfig(input.NamedFile.Content, input.Route)
+	if err != nil {
+		return Patch{}, fmt.Errorf("%s: %w", codex.ProfileFileName(name), err)
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; isolated installed Codex 0.154.0 binary consumed these root fields, but OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.auth_unmanaged", "route.authentication", "authentication remains unmanaged and target-owned: run codex login status locally to distinguish API-key from ChatGPT login, but ChatGPT status also includes externally supplied tokens and does not prove exact OAuth; do not share credentials or status output containing key fragments", 0, 0)
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the supplied root config document after rejecting active profiles and provider shadow state; project-local layers and runtime overrides are not inspected or controlled", 0, 0)
+	patch := Patch{OverrideAllowed: true}
+	addCodexFile(&patch, codex.ProfileFileName(name), name+".config.", profilePatch)
+	if input.Install.SetsDefault {
+		rootPatch, err := codex.PatchConfig(input.Config.Content, input.Route)
+		if err != nil {
+			return Patch{}, err
+		}
+		addCodexFile(&patch, "", "config.", rootPatch)
+	}
+	addCodexDiagnostics(&patch)
 	return patch, nil
+}
+
+// NamedProfileFile is the Codex 0.154.0 profile layer that `codex --profile <name>` reads.
+func (codexAdapter) NamedProfileFile(name string) (string, error) {
+	if !codex.ValidProfileName(name) {
+		return "", fmt.Errorf("codex profile names may use only letters, digits, '_' or '-'")
+	}
+	return codex.ProfileFileName(name), nil
+}
+
+func (codexAdapter) NamedProfileUse(name string) string { return "codex --profile " + name }
+
+func addCodexFile(patch *Patch, path, prefix string, configPatch codex.ConfigPatch) {
+	file := FilePatch{Path: path, Content: configPatch.Content}
+	for _, field := range configPatch.Fields {
+		file.Fields = append(file.Fields, prefix+field.Key)
+		patch.Fields = append(patch.Fields, FieldChange{Path: prefix + field.Key, Before: field.Before, After: field.After})
+	}
+	patch.Files = append(patch.Files, file)
+}
+
+func addCodexDiagnostics(patch *Patch) {
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; the isolated installed Codex 0.154.0 binary loaded these fields from config.toml and from a --profile file, but OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.auth_unmanaged", "route.authentication", "authentication remains unmanaged and target-owned: run codex login status locally to distinguish API-key from ChatGPT login, but ChatGPT status also includes externally supplied tokens and does not prove exact OAuth; do not share credentials or status output containing key fragments", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the named profile file, plus config.toml with --default, after rejecting legacy profile and provider shadow state; project-local layers and runtime overrides are not inspected or controlled", 0, 0)
 }
 
 func validateCodexProfile(input AdapterInput) error {
@@ -54,12 +85,4 @@ func validateCodexProfile(input AdapterInput) error {
 		return fmt.Errorf("codex instruction and skill delivery remains install-blocking")
 	}
 	return nil
-}
-
-func codexFieldNames(fields []codex.ConfigFieldChange) []string {
-	names := make([]string, 0, len(fields))
-	for _, field := range fields {
-		names = append(names, "config."+field.Key)
-	}
-	return names
 }
