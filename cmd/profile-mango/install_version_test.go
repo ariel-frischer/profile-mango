@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
@@ -38,7 +39,7 @@ func runInstallCapture(t *testing.T, options installOptions) string {
 	var output bytes.Buffer
 	cmd := &cobra.Command{}
 	cmd.SetOut(&output)
-	cmd.SetErr(&output)
+	cmd.SetErr(new(bytes.Buffer))
 	if err := runInstall(cmd, "route-only", options); err != nil {
 		t.Fatalf("install: %v\n%s", err, output.String())
 	}
@@ -78,6 +79,50 @@ func TestInstallReportsInstalledAgentVersion(t *testing.T) {
 			}
 			assertPlanVersionStatus(t, runInstallCapture(t, codexVersionInstallOptions(t, true)), test.status)
 		})
+	}
+}
+
+func TestInstallShowsVersionProbeProgressWithoutPollutingJSON(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	defer close(release)
+	original := installVersionDetector
+	installVersionDetector = func(target install.Target) install.VersionDetection {
+		close(started)
+		<-release
+		return install.VersionDetection{Binary: target.Name, Found: true, Output: "codex-cli 0.154.0"}
+	}
+	t.Cleanup(func() { installVersionDetector = original })
+	options := codexVersionInstallOptions(t, true)
+	cmd := &cobra.Command{}
+	var stdout, stderr bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	done := make(chan error, 1)
+	go func() { done <- runInstall(cmd, "route-only", options) }()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("version probe did not start")
+	}
+	if got := stderr.String(); !strings.Contains(got, "checking") || !strings.Contains(got, "codex") {
+		t.Fatalf("no progress while version probe is pending: %q", got)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout before plan = %q", stdout.String())
+	}
+	release <- struct{}{}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("install: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("install did not finish")
+	}
+	assertPlanVersionStatus(t, stdout.String(), install.VersionInRange)
+	if !strings.Contains(stderr.String(), "checked") {
+		t.Fatalf("no completed progress: %q", stderr.String())
 	}
 }
 

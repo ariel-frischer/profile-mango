@@ -38,6 +38,13 @@ func newAgentsCheckCmd() *cobra.Command {
 				Timeout:      timeout,
 				MaxBodyBytes: maxBodyBytes,
 				MaxRedirects: maxRedirects,
+				OnProgress: func(progress agentcheck.Progress) {
+					if progress.State == "" {
+						_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "checking source %d/%d (%s)\n", progress.Completed+1, progress.Total, progress.TargetID)
+						return
+					}
+					_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "checked source %d/%d (%s): %s\n", progress.Completed, progress.Total, progress.TargetID, progress.State)
+				},
 			})
 			if err != nil {
 				return err

@@ -98,7 +98,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
 		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
-		Env: install.OSPathEnv(), DetectVersion: installVersionDetector, SkipNotInstalled: options.all,
+		Env: install.OSPathEnv(), DetectVersion: versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector), SkipNotInstalled: options.all,
 	}
 	plan, err := install.BuildPlan(request)
 	if err != nil {
@@ -139,6 +139,18 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		return applyErr
 	}
 	return writeApplyReport(cmd, report, options.jsonOutput)
+}
+
+func versionDetectorWithProgress(w io.Writer, detector install.VersionDetector) install.VersionDetector {
+	if detector == nil {
+		return nil
+	}
+	return func(target install.Target) install.VersionDetection {
+		_, _ = fmt.Fprintf(w, "checking agent version (%s)\n", target.Name)
+		detection := detector(target)
+		_, _ = fmt.Fprintf(w, "checked agent version (%s)\n", target.Name)
+		return detection
+	}
 }
 
 // noAgentsFound reports an --all plan whose every target was skipped as not installed.

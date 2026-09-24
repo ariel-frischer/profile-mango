@@ -114,8 +114,12 @@ func runDoctor(cmd *cobra.Command, options doctorOptions) error {
 	}
 	report := doctorReport{APIVersion: doctorAPIVersion, Kind: doctorKind, Profile: profileName}
 	planFor := doctorPlanner(registry, profileName)
-	for _, target := range doctorTargets(registry, options.experimental) {
-		report.Targets = append(report.Targets, checkDoctorTarget(registry, target, planFor))
+	targets := doctorTargets(registry, options.experimental)
+	for index, target := range targets {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "checking agent %d/%d (%s)\n", index+1, len(targets), target.Name)
+		result := checkDoctorTarget(registry, target, planFor)
+		report.Targets = append(report.Targets, result)
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "checked agent %d/%d (%s)\n", index+1, len(targets), target.Name)
 	}
 	if options.jsonOutput {
 		return writeDoctorJSON(cmd, report)
