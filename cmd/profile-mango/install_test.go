@@ -83,7 +83,7 @@ func TestInstallTargetSelectionTable(t *testing.T) {
 		"manifest without target":  {options: installOptions{targets: []string{"codex"}, manifests: []string{"pi=/s/m"}}, wantErr: "--manifest target pi does not match"},
 		"agent without target":     {options: installOptions{targets: []string{"opencode"}, agents: []string{"codex=primary:x"}}, wantErr: "--agent target codex does not match"},
 		"all rejects unknown":      {options: installOptions{all: true, configs: []string{"nope=/s/c"}}, wantErr: "--config target nope does not match"},
-		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.154.0"}}, wantErr: "duplicate target: codex@0.154.0"},
+		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.154.0"}}, want: []want{{target: "codex@0.154.0"}}},
 		"duplicate config":         {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/a"}, legacyConfigs: []string{"codex=/b"}}, wantErr: "duplicate --config mapping: codex"},
 		"unknown bare target":      {options: installOptions{targets: []string{"ariel-jcode"}}, wantErr: "ariel-jcode has no qualified version"},
 		"config missing separator": {options: installOptions{configs: []string{"/s/settings.json"}}, wantErr: "--config must use target[@version]=value"},

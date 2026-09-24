@@ -21,7 +21,7 @@ func newAgentsCmd() *cobra.Command {
 
 func newAgentsCheckCmd() *cobra.Command {
 	var manifestPath string
-	var targetID string
+	var targetIDs []string
 	var timeout time.Duration
 	var maxBodyBytes int64
 	var maxRedirects int
@@ -33,8 +33,12 @@ func newAgentsCheckCmd() *cobra.Command {
 		Short:   "Check each documented agent source for changes or outages",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			selected, err := targetList(targetIDs)
+			if err != nil {
+				return err
+			}
 			report, err := agentcheck.CheckFile(cmd.Context(), manifestPath, agentcheck.Options{
-				TargetID:     targetID,
+				TargetIDs:    selected,
 				Timeout:      timeout,
 				MaxBodyBytes: maxBodyBytes,
 				MaxRedirects: maxRedirects,
@@ -67,7 +71,7 @@ func newAgentsCheckCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&manifestPath, "manifest", agentcheck.DefaultManifestPath, "source manifest path")
-	cmd.Flags().StringVar(&targetID, "target", "", "check only this target ID")
+	cmd.Flags().StringArrayVarP(&targetIDs, "target", "t", nil, "check target IDs, comma-separated or repeated")
 	cmd.Flags().DurationVar(&timeout, "timeout", agentcheck.DefaultTimeout, "HTTP request timeout")
 	cmd.Flags().Int64Var(&maxBodyBytes, "max-body-bytes", agentcheck.DefaultMaxBodyBytes, "maximum response body size to hash")
 	cmd.Flags().IntVar(&maxRedirects, "max-redirects", agentcheck.DefaultMaxRedirects, "maximum redirects to follow")

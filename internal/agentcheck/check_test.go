@@ -34,6 +34,17 @@ func TestLoadRepositoryManifest(t *testing.T) {
 	}
 }
 
+func TestSelectTargetIDsBeforeCheckingSources(t *testing.T) {
+	fixtures := []Target{{ID: "pi"}, {ID: "codex"}, {ID: "opencode"}}
+	selected, err := selectTargetIDs(fixtures, []string{"opencode", "codex"})
+	if err != nil || len(selected) != 2 || selected[0].ID != "codex" || selected[1].ID != "opencode" {
+		t.Fatalf("selection=%v err=%v", selected, err)
+	}
+	if _, err := selectTargetIDs(fixtures, []string{"codex", "unknown"}); err == nil {
+		t.Fatal("unknown target must block before any source requests")
+	}
+}
+
 func TestCheckRequiredSourceStates(t *testing.T) {
 	stableBody := []byte("stable source")
 	changedBody := []byte("changed source")
