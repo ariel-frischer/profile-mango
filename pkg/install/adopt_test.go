@@ -23,7 +23,7 @@ func adoptCases() map[string]adoptCase {
 		"codex":           {request: codexTestRequest, existing: "theme = \"dark\"\n", sentinel: "theme"},
 		"pi":              {request: piInstallTestRequest, existing: json, sentinel: "theme"},
 		"oh-my-pi":        {request: ohMyPiTestRequest, existing: "theme: dark\n", sentinel: "theme"},
-		"openclaw":        {request: openClawInstallRequest, existing: json, sentinel: "theme"},
+		"openclaw":        {request: openClawAdoptRequest, existing: json, sentinel: "theme"},
 		"hermes":          {request: hermesInstallRequest, existing: "theme: dark\n", sentinel: "theme"},
 		"opencode":        {request: openCodeTestRequest, existing: json, sentinel: "theme"},
 		"opencode skills": {request: openCodeTestRequest, existing: json, sentinel: "theme", skill: true},
