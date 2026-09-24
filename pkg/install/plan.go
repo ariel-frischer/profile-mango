@@ -139,11 +139,11 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 }
 
 // missingBindingsError names the exact fix for a missing local bindings file:
-// copy the starter example scaffolded by "profile-mango init", or run init
+// copy the starter example scaffolded by "mango init", or run init
 // again in a fresh package.
 func missingBindingsError(path string) error {
 	example := filepath.Join(filepath.Dir(path), "local.example.yaml")
-	return fmt.Errorf("bindings file does not exist; create it with: cp %s %s, or run: profile-mango init", example, path)
+	return fmt.Errorf("bindings file does not exist; create it with: cp %s %s, or run: mango init", example, path)
 }
 
 func loadProfileChain(root, name string, profiles map[string]profilemango.PolicyProfile, diagnostics *profilemango.Diagnostics, sources *[]sourceCheck) error {

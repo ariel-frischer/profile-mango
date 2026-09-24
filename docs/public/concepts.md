@@ -11,7 +11,7 @@ profiles/review/profile.yaml         bindings/local.yaml
             │                                  │
             └──────────────┬───────────────────┘
                            ▼
-          profile-mango install review --all
+          mango install review --all
                            │  plan → consent → backup → write
         ┌──────────────────┼──────────────────────┐
         ▼                  ▼                      ▼
@@ -53,7 +53,7 @@ Sign-in stays with each agent.
 
 ## What install does
 
-`profile-mango install <profile>` works in two steps:
+`mango install <profile>` works in two steps:
 
 1. **Plan.** It resolves the profile and route for each target and prints a plan:
    the config path, a field-by-field diff, warnings, and a plan ID. Nothing is
@@ -100,7 +100,7 @@ or check that the model is available to your account.
 
 ## Undo
 
-`profile-mango undo --target <name>` (alias `restore`) previews reversing the
+`mango undo --target <name>` (alias `restore`) previews reversing the
 latest install for that target, with a diff and a new undo plan ID. Apply it
 with `--apply`, or `--apply --yes --expect-plan <undo-plan-id>`. Each target of
 a multi-target install is undone separately.
@@ -119,7 +119,7 @@ Use `--original-plan <id>` to undo a specific earlier install.
 ## Tested versions
 
 Agents update themselves, so the installed version often differs from the one
-profile-mango was tested with. Each agent has a tested range: from the tested
+mango was tested with. Each agent has a tested range: from the tested
 version up to, but not including, the next minor release. `doctor` shows
 whether each installed agent is in range. `install` prints the installed version
 and warns when it is outside the range, missing, or unreadable. The plan still
@@ -128,10 +128,10 @@ nothing is claimed about the newer binary.
 
 ## Checking and previewing
 
-- `profile-mango validate <profile.yaml> --bindings <file>` checks one profile
+- `mango validate <profile.yaml> --bindings <file>` checks one profile
   and its route offline.
-- `profile-mango doctor` lists agents, versions, config paths, and whether a
+- `mango doctor` lists agents, versions, config paths, and whether a
   profile would install. It writes nothing.
-- `profile-mango preview` (alias of `render`) writes an inert preview of a
+- `mango preview` (alias of `render`) writes an inert preview of a
   profile for one exact agent version into a new `--out` folder, without
   touching the agent's real files.

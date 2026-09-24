@@ -91,7 +91,7 @@ func newDoctorCmd() *cobra.Command {
 		Use:   "doctor",
 		Short: "Check each supported agent's command, version, and default settings path; nothing is written",
 		Long: "doctor reports, for each supported target: whether its command is on PATH, the version it reports, " +
-			"whether that version is inside the range profile-mango was tested with, its default settings path and whether that path " +
+			"whether that version is inside the range mango was tested with, its default settings path and whether that path " +
 			"exists, and whether installing the chosen profile would be ready or blocked. It never writes a file.",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
@@ -389,18 +389,18 @@ func doctorPlanCell(target doctorTarget) string {
 func doctorSuggestion(profileName string, targets []doctorTarget) string {
 	for _, target := range targets {
 		if target.PlanStatus == install.StatusReady || target.PlanStatus == install.StatusNoop {
-			return fmt.Sprintf("next: profile-mango install %s --target %s", profileName, doctorBareTargetName(target.Target))
+			return fmt.Sprintf("next: mango install %s --target %s", profileName, doctorBareTargetName(target.Target))
 		}
 	}
 	for _, target := range targets {
 		if target.PlanStatus == install.StatusUnavailable {
-			return "next: run profile-mango init to set up a profile home, then rerun doctor"
+			return "next: run mango init to set up a profile home, then rerun doctor"
 		}
 	}
 	if len(targets) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("next: profile-mango install %s --target %s to see the full plan", profileName, doctorBareTargetName(targets[0].Target))
+	return fmt.Sprintf("next: mango install %s --target %s to see the full plan", profileName, doctorBareTargetName(targets[0].Target))
 }
 
 func doctorBareTargetName(target string) string {

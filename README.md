@@ -24,18 +24,23 @@ curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/i
 ## Quickstart
 
 ```bash
-profile-mango init                      # starter profile and bindings in ~/.profile-mango
-profile-mango doctor                    # which agents are installed, versions, config paths
-profile-mango install default --all     # show the plan; nothing is written yet
-profile-mango install default --all --apply --yes --expect-plan <plan-id>
-codex --profile default                 # Codex gets a named profile; the plan prints this line
-profile-mango undo --target codex       # preview reversing that install
-profile-mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
+mango init                      # starter profile and bindings in ~/.profile-mango
+mango doctor                    # which agents are installed, versions, config paths
+mango install default --all     # show the plan; nothing is written yet
+mango install default --all --apply --yes --expect-plan <plan-id>
+codex --profile default         # Codex gets a named profile; the plan prints this line
+mango undo --target codex       # preview reversing that install
+mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 ```
 
 The plan ends with the exact apply command, including its plan ID. On a terminal,
 `--apply` alone asks for y/N confirmation instead. `--all` skips agents that are
 not installed, and an existing config is adopted with a backup.
+
+The command is `mango`; `profile-mango` keeps working as a compatibility alias
+installed alongside it. If you already use MangoWC's unrelated `mango`
+compositor CLI, keep invoking `profile-mango` (or adjust `PATH` ordering) to
+avoid the name collision.
 
 To change the model, edit `~/.profile-mango/bindings/local.yaml`. See the
 [profile reference](docs/public/profile-reference.md).

@@ -29,7 +29,7 @@ See [AGENTS.md guidance][agents] and [skill guidance][skills].
 
 ## Preview renderer boundary
 
-`profile-mango render <name> --target codex --target-version 0.154.0` is an
+`mango render <name> --target codex --target-version 0.154.0` is an
 offline compiler boundary, not an installer. Without `--preview`, applicability
 blockers produce diagnostics and no output. With `--preview`, the command may
 atomically create a new explicit `--out` directory containing `render.json`,
@@ -73,7 +73,7 @@ and isolated installed-binary controls are in the
 
 ## Bounded settings-only installation
 
-`profile-mango install <name> --target codex` writes a named profile: the three
+`mango install <name> --target codex` writes a named profile: the three
 settings go to `<name>.config.toml` beside `$CODEX_HOME/config.toml` (default
 `~/.codex/`), and the plan prints `use it: codex --profile <name>`. `config.toml`
 is read, checked, and left byte-for-byte unchanged. `--default` also writes the
@@ -88,7 +88,7 @@ read-only, backups are enabled by default, and repeated application is a no-op.
 See [the version-qualified evidence](../target-evidence.md#codex-01540-settings-only-installation-2026-09-22).
 
 For an installation made with the default adjacent manifest and backups, preview a
-guarded reversal with `profile-mango undo --target codex --config
+guarded reversal with `mango undo --target codex --config
 /explicit/disposable/config.toml --json` (`restore` is an alias; `--config` defaults
 to the documented path and `--original-plan <64-hex-install-plan-ID>` pins a specific
 install instead of the latest committed journal).

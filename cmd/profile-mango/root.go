@@ -7,7 +7,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "profile-mango",
+	Use:     "mango",
 	Short:   "Install one coding-agent profile across Claude Code, Codex, OpenCode, and more",
 	Version: version.Version,
 }

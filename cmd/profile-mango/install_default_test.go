@@ -36,7 +36,7 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	if planID == nil {
 		t.Fatalf("plan not ready:\n%s", output)
 	}
-	want := "  profile-mango install route-only --profiles " + profiles + " --resource-root " + root + " --bindings " + bindings + " --target codex --apply --yes --expect-plan " + planID[1] + "\n"
+	want := "  mango install route-only --profiles " + profiles + " --resource-root " + root + " --bindings " + bindings + " --target codex --apply --yes --expect-plan " + planID[1] + "\n"
 	if !strings.HasSuffix(output, want) {
 		t.Fatalf("plan does not end with the apply command %q:\n%s", want, output)
 	}

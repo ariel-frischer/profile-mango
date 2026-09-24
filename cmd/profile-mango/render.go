@@ -171,7 +171,7 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		message := fmt.Sprintf("read bindings %s: %v", options.bindings, err)
 		if options.usesHome && os.IsNotExist(err) {
 			example := filepath.Join(filepath.Dir(options.bindings), "local.example.yaml")
-			message = fmt.Sprintf("read global bindings %s (copy %s to this path first, or run: profile-mango init): %v", options.bindings, example, err)
+			message = fmt.Sprintf("read global bindings %s (copy %s to this path first, or run: mango init): %v", options.bindings, example, err)
 		}
 		result.Diagnostics.Add(profilemango.SeverityError, "render.bindings.read", "bindings", message, 0, 0)
 		result = result.Report(options.preview)
@@ -218,11 +218,11 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 }
 
 // bindingsCreateHint names the exact fix for a missing local bindings file:
-// copy the starter example scaffolded by "profile-mango init", or run init
+// copy the starter example scaffolded by "mango init", or run init
 // again in a fresh package.
 func bindingsCreateHint(path string) string {
 	example := filepath.Join(filepath.Dir(path), "local.example.yaml")
-	return fmt.Sprintf("create it with: cp %s %s, or run: profile-mango init", example, path)
+	return fmt.Sprintf("create it with: cp %s %s, or run: mango init", example, path)
 }
 
 func resolveRenderInputs(options renderOptions) (renderOptions, error) {

@@ -23,11 +23,11 @@ tested evidence, and supported capabilities.
 ```bash
 make help           # List Make targets
 make deps           # Download Go modules
-make install        # Install profile-mango to GOPATH/bin
-make build          # Build ./bin/profile-mango with version ldflags
+make install        # Install mango (+ profile-mango alias) to GOBIN
+make build          # Build ./bin/mango with version ldflags
 make bin            # Alias for build
 make run            # Run ./cmd/profile-mango
-make go-install     # Compatibility alias for installing profile-mango
+make go-install     # Compatibility alias for installing mango
 make install-global # Alias for go-install
 make test           # Run tests
 make test-v         # Run tests verbosely
@@ -76,7 +76,7 @@ CHANGELOG.md          # generated changelog output
 
 - The default application home is `<user-home>/.profile-mango` on every OS.
 - Path priority: root `--home`, then `$PROFILE_MANGO_HOME`, then the default.
-- `profile-mango home` prints the absolute effective path without creating it.
+- `mango home` prints the absolute effective path without creating it.
 - Root `init` scaffolds the effective home; `init .` or `init <directory>` scaffolds an explicit project package.
 - Render inputs default to `<home>/profiles`, `<home>`, and `<home>/bindings/local.yaml`. Explicit project rendering must provide `--profiles`, `--resource-root`, and `--bindings` together.
 - The binary never creates the home implicitly during installation or read-only commands.

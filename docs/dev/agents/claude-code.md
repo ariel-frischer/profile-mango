@@ -53,7 +53,7 @@ provider, transport, authentication, credentials, or effort values.
 ## Emulated named profiles
 
 Claude Code has no native concept of named profiles: `--settings <file>` loads
-strict JSON from any path the caller supplies. `profile-mango install <name>
+strict JSON from any path the caller supplies. `mango install <name>
 --target claude-code` uses this to emulate one: the top-level `model` is written
 to a Mango-owned `profiles/<name>.json` beside `settings.json`, and the plan
 prints `use it: claude --settings <path>` so you can start Claude Code with it.

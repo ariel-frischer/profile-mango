@@ -123,7 +123,7 @@ inert renderer applicable.
 
 ## Narrow install-capable subset
 
-With `--default`, `profile-mango install` also patches the top-level `model`
+With `--default`, `mango install` also patches the top-level `model`
 field in the resolved OpenCode config file and, independently, installs
 exactly one validated portable skill resource, alongside the named agent
 definition described below. The skill resource is written as a target-owned

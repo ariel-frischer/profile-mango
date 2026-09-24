@@ -103,7 +103,7 @@ func TestSkipNotInstalledBlocksWhenEveryTargetIsSkipped(t *testing.T) {
 		t.Fatalf("all-skipped plan = %s %#v", plan.Status, plan.Diagnostics)
 	}
 	for _, diagnostic := range plan.Diagnostics {
-		if diagnostic.Code == "install.no_agents_found" && !strings.Contains(diagnostic.Message, "profile-mango doctor") {
+		if diagnostic.Code == "install.no_agents_found" && !strings.Contains(diagnostic.Message, "mango doctor") {
 			t.Fatalf("no-agents diagnostic lacks the doctor hint: %s", diagnostic.Message)
 		}
 	}

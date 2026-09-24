@@ -111,7 +111,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		}
 	}
 	if noAgentsFound(plan) {
-		return fmt.Errorf("install plan is blocked: no supported agents found; run profile-mango doctor")
+		return fmt.Errorf("install plan is blocked: no supported agents found; run mango doctor")
 	}
 	if !options.apply {
 		if plan.Status == install.StatusBlocked {
@@ -420,7 +420,7 @@ func writeApplyHint(output io.Writer, profile string, options installOptions, pl
 
 // installApplyCommand rebuilds the planning arguments, then appends non-interactive consent.
 func installApplyCommand(profile string, options installOptions, planID string) string {
-	args := []string{"profile-mango"}
+	args := []string{"mango"}
 	if homePathOverride != "" {
 		args = append(args, "--home", homePathOverride)
 	}

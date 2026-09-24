@@ -10,7 +10,7 @@ func newHomeCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "home",
 		Aliases: []string{"h"},
-		Short:   "Print the folder profile-mango is using for profiles and settings",
+		Short:   "Print the folder mango is using for profiles and settings",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path, err := selectedHome()

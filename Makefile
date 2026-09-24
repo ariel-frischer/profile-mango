@@ -14,6 +14,10 @@ LDFLAGS=-ldflags="-X ${MODULE_PATH}/internal/version.Version=${BUILD_VERSION} \
                    -s -w"
 WORKTREE_SCRIPT ?= scripts/worktree-setup.sh
 BASE ?= $(shell git branch --show-current 2>/dev/null || echo HEAD)
+GOBIN_DIR := $(shell go env GOBIN)
+ifeq ($(GOBIN_DIR),)
+  GOBIN_DIR := $(shell go env GOPATH)/bin
+endif
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -26,8 +30,10 @@ deps: ## Download dependencies
 
 d: deps ## Alias for deps
 
-install: ## Install profile-mango to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/profile-mango/
+install: ## Install mango (and profile-mango compatibility alias) to GOBIN
+	@mkdir -p "$(GOBIN_DIR)"
+	go build ${LDFLAGS} -o "$(GOBIN_DIR)/mango" ./cmd/profile-mango/
+	cp "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
 
 i: install ## Alias for install
 
@@ -85,7 +91,7 @@ clean: ## Clean build artifacts
 c: clean ## Alias for clean
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/profile-mango ./cmd/profile-mango/
+	go build ${LDFLAGS} -o bin/mango ./cmd/profile-mango/
 
 b: build ## Alias for build
 
@@ -109,7 +115,8 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall profile-mango
+uninstall: ## Uninstall mango (removes the mango and profile-mango GOBIN binaries)
+	@rm -f "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
 	@./uninstall.sh
 
 u: uninstall ## Alias for uninstall
