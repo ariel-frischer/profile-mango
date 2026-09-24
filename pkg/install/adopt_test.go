@@ -14,6 +14,9 @@ type adoptCase struct {
 	existing string
 	sentinel string
 	skill    bool
+	// openCodeDefault requests --default so an opencode case's main config is adopted;
+	// without it, an agent-empty opencode install no longer touches the main config.
+	openCodeDefault bool
 }
 
 func adoptCases() map[string]adoptCase {
@@ -25,8 +28,8 @@ func adoptCases() map[string]adoptCase {
 		"oh-my-pi":        {request: ohMyPiTestRequest, existing: "theme: dark\n", sentinel: "theme"},
 		"openclaw":        {request: openClawAdoptRequest, existing: json, sentinel: "theme"},
 		"hermes":          {request: hermesInstallRequest, existing: "theme: dark\n", sentinel: "theme"},
-		"opencode":        {request: openCodeTestRequest, existing: json, sentinel: "theme"},
-		"opencode skills": {request: openCodeTestRequest, existing: json, sentinel: "theme", skill: true},
+		"opencode":        {request: openCodeTestRequest, existing: json, sentinel: "theme", openCodeDefault: true},
+		"opencode skills": {request: openCodeTestRequest, existing: json, sentinel: "theme", skill: true, openCodeDefault: true},
 	}
 }
 
@@ -37,6 +40,9 @@ func adoptRequest(t *testing.T, test adoptCase) (Request, string) {
 		addOpenCodeTestSkill(t, rootOrConfig)
 	}
 	request.Backup, request.Override = true, false
+	if test.openCodeDefault {
+		request.Default = true
+	}
 	config := request.Targets[0].ConfigPath
 	writeInstallTestFile(t, config, test.existing)
 	return request, config
@@ -98,6 +104,7 @@ func TestInstallAdoptionKeepsWholeFileAndEditedConflicts(t *testing.T) {
 		"unowned opencode skill": func(t *testing.T) Request {
 			request, root := openCodeTestRequest(t)
 			addOpenCodeTestSkill(t, root)
+			request.Default = true
 			writeInstallTestFile(t, filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md"), "user-owned skill")
 			return request
 		},

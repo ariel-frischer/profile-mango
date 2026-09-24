@@ -17,6 +17,7 @@ Synthetic skill body.
 
 func TestOpenCodeSkillInstallAppliesAndReapplies(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -37,7 +38,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusReady || len(plan.Targets[0].Files) != 3 {
+	if plan.Status != StatusReady || len(plan.Targets[0].Files) != 4 {
 		t.Fatalf("plan = %#v", plan)
 	}
 	data, err := plan.JSON()
@@ -66,13 +67,14 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reapply.Status != StatusNoop || len(reapply.Targets[0].Files) != 2 {
+	if reapply.Status != StatusNoop || len(reapply.Targets[0].Files) != 3 {
 		t.Fatalf("reapply = %#v", reapply)
 	}
 }
 
 func TestOpenCodeSkillInstallRejectsStaleConfigBeforeResourceWrite(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -102,8 +104,11 @@ spec:
 }
 
 func TestOpenCodeSkillInstallKeepsUnsupportedRequirementsBlocked(t *testing.T) {
-	tests := map[string]string{
-		"multiple skills": `apiVersion: profilemango.dev/v1alpha1
+	tests := map[string]struct {
+		profile string
+		want    string
+	}{
+		"multiple skills": {want: "exactly one skill", profile: `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: route-only
@@ -112,23 +117,22 @@ spec:
   skills:
     - skills/one/SKILL.md
     - skills/two/SKILL.md
-`,
-		"instructions": `apiVersion: profilemango.dev/v1alpha1
+`},
+		"permissions": {want: "unqualified", profile: `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
   name: route-only
 spec:
   routeRef: primary
-  instructions:
-    append:
-      - instructions/system.md
-`,
+  permissions:
+    mode: read-only
+`},
 	}
-	for name, profileData := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			request, root := openCodeTestRequest(t)
-			request.Strict = true
-			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), profileData)
+			request.Strict, request.Default = true, true
+			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), test.profile)
 			if name == "multiple skills" {
 				for _, resourcePath := range []string{"skills/one/SKILL.md", "skills/two/SKILL.md"} {
 					path := filepath.Join(root, resourcePath)
@@ -137,18 +141,12 @@ spec:
 					}
 					writeInstallTestFile(t, path, openCodeTestSkill)
 				}
-			} else {
-				path := filepath.Join(root, "instructions", "system.md")
-				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				writeInstallTestFile(t, path, "synthetic instruction\n")
 			}
 			plan, err := BuildPlan(request)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "install") {
+			if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, test.want) {
 				t.Fatalf("plan = %#v", plan)
 			}
 		})

@@ -12,6 +12,7 @@ import (
 
 func TestOpenCodeSwitchRemovesCleanOwnedLegacySkill(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
@@ -27,6 +28,7 @@ func TestOpenCodeSwitchRemovesCleanOwnedLegacySkill(t *testing.T) {
 
 func TestOpenCodeSwitchDoesNotAdoptIdenticalUnownedSkill(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
@@ -45,6 +47,7 @@ func TestOpenCodeSwitchDoesNotAdoptIdenticalUnownedSkill(t *testing.T) {
 
 func TestOpenCodeSwitchDoesNotReclaimEditedSkillOnNoop(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	resource := filepath.Join(root, "SKILL.md")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
@@ -90,6 +93,7 @@ func applySwitchTestPlan(t *testing.T, request Request) {
 
 func TestOpenCodeSwitchRemovesManagedSkillPathAndManifestOwnership(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
@@ -131,6 +135,7 @@ func TestOpenCodeSwitchRemovesManagedSkillPathAndManifestOwnership(t *testing.T)
 
 func TestOpenCodeSwitchPreservesLegacyUnmarkedSkillsPath(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
@@ -169,6 +174,7 @@ func TestOpenCodeSwitchPreservesLegacyUnmarkedSkillsPath(t *testing.T) {
 
 func TestOpenCodeSwitchRejectsEditedOwnedSkill(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
@@ -191,6 +197,7 @@ func TestOpenCodeSwitchRejectsEditedOwnedSkill(t *testing.T) {
 
 func TestOpenCodeSwitchRejectsMismatchedOwnedSkillHash(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(false))
 	config := request.Targets[0].ConfigPath
@@ -209,6 +216,7 @@ func TestOpenCodeSwitchRejectsMismatchedOwnedSkillHash(t *testing.T) {
 
 func TestOpenCodeSwitchCleansMissingOwnedSkillManifest(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(true))
 	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)

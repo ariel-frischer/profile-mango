@@ -58,6 +58,7 @@ versions:
             - Install creates missing private parent directories for a new file (undo removes the file and leaves the directory), and named profiles may live in a nested or absolute path
             - OpenClaw install now writes a native named profile (<home>/.openclaw-<name>/openclaw.json, used with openclaw --profile <name>) and leaves the default config unchanged; --default also writes it; a main config outside <home>/.openclaw/openclaw.json blocks named install; the profile named default patches the default config
             - Claude Code install now writes an emulated named profile (~/.claude/profiles/<name>.json with the model, used with claude --settings <file>) and leaves settings.json unchanged; --default also writes settings.json
+            - OpenCode install without --agent now writes a named primary agent (agents/<name>.md beside opencode.json, with model and instructions, used with opencode --agent <name>) and leaves opencode.json unchanged; skills are skipped with a reason unless --default, which also keeps the main-config model and skill write
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:

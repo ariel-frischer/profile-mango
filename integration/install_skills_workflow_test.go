@@ -16,7 +16,7 @@ const workflowSkill = "---\nname: synthetic-profile\ndescription: Use only for d
 func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 	w, source := newSkillWorkflow(t)
 	plan := w.plan(t)
-	if plan.Status != install.StatusReady || len(plan.Targets[0].Files) != 3 {
+	if plan.Status != install.StatusReady || len(plan.Targets[0].Files) != 4 {
 		t.Fatalf("unexpected skill plan: %#v", plan)
 	}
 	result := w.run(t, "--apply", "--yes", "--expect-plan", plan.PlanID)
@@ -114,6 +114,7 @@ func TestInstalledBinarySkillDoesNotOverrideUnownedResource(t *testing.T) {
 func newSkillWorkflow(t *testing.T) (installWorkflow, string) {
 	t.Helper()
 	w := newInstallWorkflow(t, "opencode@1.18.31", "openai", "gpt-5.6", "{\"model\":\"openai/old\",\"theme\":\"system\"}\n", "")
+	w.args = append(w.args, "--default")
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
 	content := append(readWorkflowFile(t, profile), []byte("skills:\n  - skills/research/SKILL.md\n")...)
 	if err := os.WriteFile(profile, content, 0o600); err != nil {
