@@ -1,5 +1,5 @@
 
-.PHONY: help deps d install i test t test-go test-installer test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
+.PHONY: help deps d install i link-skill test t test-go test-installer test-skill test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -13,6 +13,7 @@ LDFLAGS=-ldflags="-X ${MODULE_PATH}/internal/version.Version=${BUILD_VERSION} \
                    -X ${MODULE_PATH}/internal/version.BuildDate=${BUILD_DATE} \
                    -s -w"
 WORKTREE_SCRIPT ?= scripts/worktree-setup.sh
+SKILL_DEST ?= $(HOME)/.agents/skills/profile-mango/SKILL.md
 BASE ?= $(shell git branch --show-current 2>/dev/null || echo HEAD)
 GOBIN_DIR := $(shell go env GOBIN)
 ifeq ($(GOBIN_DIR),)
@@ -37,11 +38,30 @@ install: ## Install mango (and profile-mango compatibility alias) to GOBIN
 
 i: install ## Alias for install
 
+link-skill: ## Link the global profile-mango skill to this repository's primary checkout
+	@set -eu; \
+	primary="$$(git worktree list --porcelain | sed -n '1s/^worktree //p')"; \
+	source="$$primary/.agents/skills/profile-mango/SKILL.md"; dest="$(SKILL_DEST)"; \
+	test -f "$$source" || { echo "Canonical skill not found: $$source" >&2; exit 1; }; \
+	if [ -L "$$dest" ] && [ "$$(readlink "$$dest")" = "$$source" ]; then \
+		echo "Already linked: $$dest"; exit 0; \
+	fi; \
+	if [ -d "$$dest" ] && [ ! -L "$$dest" ]; then \
+		echo "Refusing to replace directory: $$dest" >&2; exit 1; \
+	fi; \
+	mkdir -p "$$(dirname "$$dest")"; \
+	if [ -e "$$dest" ] || [ -L "$$dest" ]; then \
+		backup="$$(mktemp -d "$${dest}.backup.XXXXXXXX")"; \
+		mv "$$dest" "$$backup/SKILL.md"; \
+		echo "Previous skill saved: $$backup/SKILL.md"; \
+	fi; \
+	ln -s "$$source" "$$dest"; echo "Linked $$dest -> $$source"
+
 go-install: install ## Compatibility alias for install
 
 install-global: install ## Compatibility alias for install
 
-test: test-go test-installer ## Run Go and installer tests
+test: test-go test-installer test-skill ## Run Go, installer, and skill-link tests
 
 t: test ## Alias for test
 
@@ -50,6 +70,9 @@ test-go: ## Run Go tests
 
 test-installer: ## Run offline installer fixture tests
 	sh tests/install_test.sh
+
+test-skill: ## Check skill-link safety using disposable paths
+	sh tests/skill_link_test.sh
 
 test-v: ## Run tests (verbose)
 	go test -v ./...
@@ -73,9 +96,9 @@ lint-go: ## Run Go linters
 
 lint-shell: ## Check POSIX shell scripts
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck --shell=sh install.sh tests/install_test.sh; \
+		shellcheck --shell=sh install.sh tests/install_test.sh tests/skill_link_test.sh; \
 	else \
-		sh -n install.sh && sh -n tests/install_test.sh; \
+		sh -n install.sh && sh -n tests/install_test.sh && sh -n tests/skill_link_test.sh; \
 		echo "shellcheck not installed, ran sh -n"; \
 	fi
 
