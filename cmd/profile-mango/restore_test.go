@@ -260,7 +260,7 @@ func TestRestoreInteractiveConsentAndHumanPath(t *testing.T) {
 	cmd.SetOut(&output)
 	path := "/synthetic/unsafe\n\x1b[31m.toml"
 	plan := install.RestorePlan{PlanID: strings.Repeat("a", 64), Status: "ready", Files: []install.RestoreFile{{Path: path, Action: "update"}}}
-	if err := writeRestorePlan(cmd, plan, false); err != nil {
+	if err := writeRestorePlan(cmd, plan, false, false); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(output.String(), path) || !strings.Contains(output.String(), `\n\x1b`) {

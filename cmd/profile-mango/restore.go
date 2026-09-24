@@ -13,7 +13,7 @@ import (
 type restoreOptions struct {
 	target, config, legacyConfig, originalPlan, expectPlan string
 	targets                                                []string
-	apply, yes, override, jsonOutput                       bool
+	apply, yes, override, jsonOutput, verbose              bool
 }
 
 // newRestoreCmd builds "undo"; "restore" remains an alias for the earlier Codex-only command.
@@ -31,6 +31,7 @@ func newRestoreCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.yes, "yes", false, "confirm apply without a terminal; requires --expect-plan")
 	cmd.Flags().StringVar(&options.expectPlan, "expect-plan", "", "expected undo plan ID, not the original install ID")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the undo plan as JSON")
+	cmd.Flags().BoolVarP(&options.verbose, "verbose", "v", false, "show full undo hashes and redacted diff")
 	return cmd
 }
 
@@ -63,11 +64,14 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 		return fmt.Errorf("plan undo: %w", err)
 	}
 	if !options.apply || !options.jsonOutput {
-		if err := writeRestorePlan(cmd, plan, options.jsonOutput); err != nil {
+		if err := writeRestorePlan(cmd, plan, options.jsonOutput, options.verbose); err != nil {
 			return err
 		}
 	}
 	if !options.apply {
+		if !options.jsonOutput {
+			return writeUndoHint(cmd.OutOrStdout(), plan, options)
+		}
 		return nil
 	}
 	if err := authorizeRestore(cmd, options, plan.PlanID, terminalInput(cmd.InOrStdin())); err != nil {
@@ -79,7 +83,7 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 	if options.jsonOutput {
 		return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]string{"status": "committed", "planID": plan.PlanID})
 	}
-	_, err = fmt.Fprintf(cmd.OutOrStdout(), "undo %s: committed\n", plan.PlanID)
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "undo %s: %s\n", plan.PlanID, styledPlanStatus("committed", stylesFor(cmd.OutOrStdout(), true)))
 	return err
 }
 
@@ -123,7 +127,10 @@ func previewMultipleUndo(cmd *cobra.Command, options restoreOptions, selected []
 		return json.NewEncoder(cmd.OutOrStdout()).Encode(plans)
 	}
 	for _, plan := range plans {
-		if err := writeRestorePlan(cmd, plan, false); err != nil {
+		if err := writeRestorePlan(cmd, plan, false, options.verbose); err != nil {
+			return err
+		}
+		if err := writeUndoHint(cmd.OutOrStdout(), plan, options); err != nil {
 			return err
 		}
 	}
@@ -192,11 +199,14 @@ func authorizeRestore(cmd *cobra.Command, options restoreOptions, planID string,
 	return confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), planID)
 }
 
-func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON bool) error {
+func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON, verbose bool) error {
 	if asJSON {
 		return json.NewEncoder(cmd.OutOrStdout()).Encode(plan)
 	}
 	output := cmd.OutOrStdout()
+	if !verbose {
+		return writeCompactUndo(output, plan)
+	}
 	if _, err := fmt.Fprintf(output, "undo plan %s (%s), original install %s\n  target: %s\n", plan.PlanID, plan.Status, plan.OriginalPlanID, humanPath(plan.Target)); err != nil {
 		return err
 	}
@@ -210,6 +220,42 @@ func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON bool)
 		}
 	}
 	return nil
+}
+
+func writeCompactUndo(output io.Writer, plan install.RestorePlan) error {
+	styles := stylesFor(output, true)
+	if _, err := fmt.Fprintf(output, "%s %s (%s), original install %s\n  target: %s\n", styles.heading("undo plan"), humanPath(plan.PlanID), styledPlanStatus(plan.Status, styles), humanPath(plan.OriginalPlanID), styles.label(humanPath(plan.Target))); err != nil {
+		return err
+	}
+	for _, file := range plan.Files {
+		if _, err := fmt.Fprintf(output, "  %s %s\n", humanPath(file.Action), styles.path(humanPath(file.Path))); err != nil {
+			return err
+		}
+		if err := writeRestoreDiff(output, file.Diff); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeUndoHint(output io.Writer, plan install.RestorePlan, options restoreOptions) error {
+	args := []string{"mango"}
+	if homePathOverride != "" {
+		args = append(args, "--home", homePathOverride)
+	}
+	args = append(args, "undo", "--target", plan.Target)
+	if options.configPath() != "" {
+		args = append(args, "--config", options.configPath())
+	}
+	if options.originalPlan != "" {
+		args = append(args, "--original-plan", options.originalPlan)
+	}
+	args = append(args, "--apply", "--yes", "--expect-plan", plan.PlanID)
+	for index := range args {
+		args[index] = shellQuote(args[index])
+	}
+	_, err := fmt.Fprintf(output, "Nothing was written. Apply this undo plan with:\n  %s\n", strings.Join(args, " "))
+	return err
 }
 
 func orAbsent(hash string) string {

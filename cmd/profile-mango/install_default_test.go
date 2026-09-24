@@ -27,7 +27,7 @@ func TestInstallPlansAndAppliesAgainstDefaultConfigPath(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}}
 	output := runInstallForTest(t, options)
-	for _, want := range []string{"    config: " + config + " (default)\n", "    use it: codex --profile route-only\n", "    route-only.config.toml: create\n"} {
+	for _, want := range []string{"destination: " + filepath.Join(filepath.Dir(config), "route-only.config.toml"), "use it: codex --profile route-only", "route-only.config.toml create"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("plan omitted %q:\n%s", want, output)
 		}
@@ -65,7 +65,7 @@ func TestInstallDefaultFlagAlsoAdoptsConfig(t *testing.T) {
 	writeFile(t, config, before)
 	options := installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"codex"}, makeDefault: true}
 	output := runInstallForTest(t, options)
-	if !strings.Contains(output, "also the default") || !strings.Contains(output, "    config.toml: adopt\n") || !strings.Contains(output, "backed up") {
+	if !strings.Contains(output, "also the default") || !strings.Contains(output, "config.toml adopt") || !strings.Contains(output, "backed up") {
 		t.Fatalf("plan omitted the default or adoption backup:\n%s", output)
 	}
 	planID := regexp.MustCompile(`(?m)^plan ([0-9a-f]{64}) \(ready\)$`).FindStringSubmatch(output)
@@ -93,7 +93,7 @@ func TestInstallExplicitConfigOverridesDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := runInstallForTest(t, installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, configs: []string{"codex=" + explicit}})
-	if !strings.Contains(output, "    config: "+explicit+" (explicit)\n") || strings.Contains(output, home) {
+	if !strings.Contains(output, "destination: "+filepath.Join(filepath.Dir(explicit), "route-only.config.toml")) || strings.Contains(output, home) {
 		t.Fatalf("explicit config not used:\n%s", output)
 	}
 	if _, err := os.Stat(home); !os.IsNotExist(err) {

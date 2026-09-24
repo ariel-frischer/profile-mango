@@ -25,7 +25,7 @@ func subsetSandbox(t *testing.T) installOptions {
 func TestInstallListsSkippedRequirementsAndPlansReady(t *testing.T) {
 	options := subsetSandbox(t)
 	output := runInstallForTest(t, options)
-	want := "  codex@0.154.0: ready\n"
+	want := "  codex@0.154.0: ready | destination:"
 	skipped := "    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n"
 	if !strings.Contains(output, want) || !strings.Contains(output, skipped) {
 		t.Fatalf("subset plan must be ready and list skips:\n%s", output)

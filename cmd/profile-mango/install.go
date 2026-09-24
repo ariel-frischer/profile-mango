@@ -37,6 +37,7 @@ type installOptions struct {
 	strict         bool
 	makeDefault    bool
 	jsonOutput     bool
+	verbose        bool
 	nonInteractive bool
 }
 
@@ -71,6 +72,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.strict, "strict", false, "stop instead of skipping profile settings an agent cannot install")
 	cmd.Flags().BoolVar(&options.makeDefault, "default", false, "also make this profile the agent's default, used without choosing a profile")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit the deterministic plan as JSON")
+	cmd.Flags().BoolVarP(&options.verbose, "verbose", "v", false, "show full plan details, field paths, and diagnostics")
 	return cmd
 }
 
@@ -106,7 +108,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	}
 	writePlan := !options.apply || !options.jsonOutput || plan.Status == install.StatusBlocked
 	if writePlan {
-		if err := writeInstallPlan(cmd, plan, options.jsonOutput); err != nil {
+		if err := writeInstallPlan(cmd, plan, options.jsonOutput, options.verbose); err != nil {
 			return err
 		}
 	}
@@ -396,7 +398,7 @@ func bindingKey(target install.Target) string {
 	return target.String()
 }
 
-func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) error {
+func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput, verbose bool) error {
 	if jsonOutput {
 		data, err := plan.JSON()
 		if err != nil {
@@ -405,7 +407,265 @@ func writeInstallPlan(cmd *cobra.Command, plan install.Plan, jsonOutput bool) er
 		_, err = cmd.OutOrStdout().Write(data)
 		return err
 	}
-	return writeHumanInstallPlan(cmd.OutOrStdout(), plan)
+	if verbose {
+		return writeHumanInstallPlan(cmd.OutOrStdout(), plan)
+	}
+	return writeCompactInstallPlan(cmd.OutOrStdout(), plan)
+}
+
+func writeCompactInstallPlan(output io.Writer, plan install.Plan) error {
+	styles := stylesFor(output, true)
+	if _, err := fmt.Fprintf(output, "%s %s (%s)\n", styles.heading("plan"), humanPath(plan.PlanID), styledPlanStatus(plan.Status, styles)); err != nil {
+		return err
+	}
+	counts := map[string]int{}
+	files := map[string]int{}
+	for _, target := range orderedTargetPlans(plan.Targets) {
+		counts[target.Status]++
+		for _, file := range target.Files {
+			files[file.Action]++
+		}
+		if err := writeCompactTarget(output, target, styles); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d conflict, %d skipped; files: %d create, %d update, %d unchanged. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusConflict], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop])
+	return err
+}
+
+func styledPlanStatus(status string, styles outputStyles) string {
+	switch status {
+	case install.StatusReady, "committed":
+		return styles.success(status)
+	case install.StatusBlocked, install.StatusConflict, "failed":
+		return styles.failure(status)
+	case install.StatusSkipped:
+		return styles.warning(status)
+	default:
+		return styles.dim(status)
+	}
+}
+
+func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(target.Target.String())), styledPlanStatus(target.Status, styles)); err != nil {
+		return err
+	}
+	if target.Reason != "" && (target.Status == install.StatusBlocked || target.Status == install.StatusConflict || target.Status == install.StatusSkipped) {
+		if _, err := fmt.Fprintf(output, " (%s)", humanPath(target.Reason)); err != nil {
+			return err
+		}
+	}
+	if target.Config != nil && target.Status != install.StatusSkipped {
+		if _, err := fmt.Fprintf(output, " | destination: %s", styles.path(humanPath(primaryInstallPath(target)))); err != nil {
+			return err
+		}
+		if target.Install != nil && target.Install.SetsDefault {
+			if _, err := fmt.Fprintf(output, " | also the default: %s", styles.path(humanPath(target.Config.Path))); err != nil {
+				return err
+			}
+		}
+	}
+	if command := compactUseCommand(target); command != "" && (target.Status == install.StatusReady || target.Status == install.StatusNoop) {
+		if _, err := fmt.Fprintf(output, " | use it: %s", humanPath(command)); err != nil {
+			return err
+		}
+	} else if target.Install != nil && target.Install.Mode == install.InstallModeDefaultConfig && (target.Status == install.StatusReady || target.Status == install.StatusNoop) {
+		if _, err := fmt.Fprint(output, " | default settings"); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(output); err != nil {
+		return err
+	}
+	return writeCompactEffects(output, target, styles)
+}
+
+func compactUseCommand(target install.TargetPlan) string {
+	if target.Install == nil || target.Install.Mode != install.InstallModeNamedProfile {
+		return ""
+	}
+	if target.Config != nil && target.Target.Name == "claude-code" {
+		return "claude --settings " + shellQuote(primaryInstallPath(target))
+	}
+	return target.Install.UseCommand
+}
+
+// primaryInstallPath asks the qualified adapter where its named profile lives.
+// This only calls the path resolver, never target inspection or I/O.
+func primaryInstallPath(target install.TargetPlan) string {
+	config := target.Config.Path
+	if target.Install == nil || target.Install.Mode != install.InstallModeNamedProfile {
+		return config
+	}
+	adapter, ok := install.DefaultRegistry().Lookup(target.Target)
+	if !ok {
+		return config
+	}
+	if resolver, ok := adapter.(interface {
+		NamedProfilePath(string, string) (string, error)
+	}); ok {
+		if path, err := resolver.NamedProfilePath(config, target.Install.ProfileName); err == nil {
+			return path
+		}
+	}
+	if resolver, ok := adapter.(interface{ NamedProfileFile(string) (string, error) }); ok {
+		if path, err := resolver.NamedProfileFile(target.Install.ProfileName); err == nil {
+			if filepath.IsAbs(path) {
+				return path
+			}
+			return filepath.Join(filepath.Dir(config), path)
+		}
+	}
+	return config
+}
+
+func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
+	var model, effort string
+	for _, field := range target.Fields {
+		if field.Sensitive {
+			continue
+		}
+		path := field.Path
+		if target.Install != nil && target.Install.ProfileName != "" {
+			path = strings.TrimPrefix(path, target.Install.ProfileName+".")
+		}
+		switch path {
+		case "profile.model", "agent.model", "config.model", "config.model.default", "config.modelRoles.default", "config.defaultModel", "config.agents.defaults.model.primary":
+			model = field.After
+		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault":
+			effort = field.After
+		}
+	}
+	if model == "" && effort == "" {
+		return nil
+	}
+	_, err := fmt.Fprintf(output, "    route: model %s, effort %s\n", humanPath(orUnknown(model)), humanPath(orUnknown(effort)))
+	return err
+}
+
+func orUnknown(value string) string {
+	if value == "" {
+		return "not installed"
+	}
+	return value
+}
+
+func writeCompactEffects(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	seen := make(map[string]struct{})
+	effects := compactFieldEffects(target.Fields, seen, target.Status != install.StatusNoop)
+	var files []string
+	for _, file := range orderedFilePlans(target.Files) {
+		files = append(files, styles.path(humanPath(file.Path))+" "+humanPath(file.Action))
+		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
+	}
+	var route strings.Builder
+	if err := writeCompactRoute(&route, target); err != nil {
+		return err
+	}
+	parts := make([]string, 0, 2)
+	if route.Len() > 0 {
+		parts = append(parts, strings.TrimSpace(route.String()))
+	}
+	if len(effects) > 0 {
+		parts = append(parts, "changes: "+strings.Join(effects, ", "))
+	}
+	if len(parts) > 0 {
+		if _, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | ")); err != nil {
+			return err
+		}
+	}
+	if len(files) > 0 {
+		if _, err := fmt.Fprintf(output, "    files: %s\n", strings.Join(files, ", ")); err != nil {
+			return err
+		}
+	}
+	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
+		return err
+	}
+	return writeCompactWarnings(output, target, styles)
+}
+
+func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement, styles outputStyles) error {
+	if len(skipped) == 0 {
+		return nil
+	}
+	var line strings.Builder
+	if err := writeSkippedRequirements(&line, skipped); err != nil {
+		return err
+	}
+	_, err := fmt.Fprint(output, strings.Replace(line.String(), "not installed for this agent", styles.warning("not installed for this agent"), 1))
+	return err
+}
+
+func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{}, showEmpty bool) []string {
+	var effects []string
+	for _, field := range orderedFieldChanges(fields) {
+		if field.Path == "" {
+			continue
+		}
+		if _, exists := seen[field.Path]; exists {
+			continue
+		}
+		if field.Before == field.After && !field.Sensitive {
+			continue
+		}
+		if field.Before == field.After && !showEmpty {
+			continue
+		}
+		seen[field.Path] = struct{}{}
+		label := humanPath(semanticFieldLabel(field.Path))
+		if field.Sensitive {
+			field.Before, field.After = "<redacted>", "<redacted>"
+		}
+		effects = append(effects, fmt.Sprintf("%s %s -> %s", label, strconv.Quote(field.Before), strconv.Quote(field.After)))
+	}
+	return effects
+}
+
+func semanticFieldLabel(path string) string {
+	name := path[strings.LastIndex(path, ".")+1:]
+	switch name {
+	case "default", "primary":
+		return "model"
+	case "model_reasoning_effort", "reasoning_effort":
+		return "effort"
+	case "defaultThinkingLevel", "thinkingDefault":
+		return "thinking level"
+	case "model_provider", "defaultProvider", "provider":
+		return "provider"
+	case "defaultModel", "modelRoles":
+		return "model"
+	}
+	return name
+}
+
+func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles outputStyles) error {
+	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {
+		if _, err := fmt.Fprintf(output, "    %s: installed version %s is outside tested range %s; check agent compatibility before applying\n", styles.warning("warning"), humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
+			return err
+		}
+	}
+	for _, diagnostic := range target.Diagnostics {
+		if diagnostic.Message == target.Reason {
+			continue
+		}
+		if strings.HasSuffix(diagnostic.Code, ".install.profile_state_separate") {
+			note := "named profile has separate target-owned state; sign in there if needed (authentication was not inspected)"
+			if target.Target.Name == "openclaw" {
+				note += "; OPENCLAW_CONFIG_PATH or OPENCLAW_STATE_DIR may override its location"
+			}
+			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), note); err != nil {
+				return err
+			}
+			continue
+		}
+		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && (diagnostic.Code == "install.version_not_found" || diagnostic.Code == "install.version_unknown" || diagnostic.Code == "install.adopt_backup") {
+			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), humanPath(diagnostic.Message)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func writeHumanInstallPlan(output io.Writer, plan install.Plan) error {
@@ -726,8 +986,9 @@ func writeApplyReport(cmd *cobra.Command, report install.ApplyReport, jsonOutput
 	}
 	statuses := append([]install.ApplyTargetResult(nil), report.Targets...)
 	sort.Slice(statuses, func(i, j int) bool { return statuses[i].Target < statuses[j].Target })
+	styles := stylesFor(cmd.OutOrStdout(), true)
 	for _, target := range statuses {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "applied %s: %s\n", target.Target, target.Status); err != nil {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "applied %s: %s\n", humanPath(target.Target), styledPlanStatus(target.Status, styles)); err != nil {
 			return err
 		}
 	}

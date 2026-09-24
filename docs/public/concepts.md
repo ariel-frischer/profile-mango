@@ -58,6 +58,10 @@ Sign-in stays with each agent.
 1. **Plan.** It resolves the profile and route for each target and prints a plan:
    the config path, a field-by-field diff, warnings, and a plan ID. Nothing is
    written. The plan ends with the exact command to apply it.
+   The compact human view keeps every skipped requirement and the concrete
+   destinations and field effects visible. Use `--verbose` for full version and
+   diagnostic detail, or `--json` for the deterministic machine-readable plan.
+   Undo previews retain the redacted file diff in the default view.
 2. **Apply.** `--apply` asks y/N on a terminal. In scripts, use
    `--apply --yes --expect-plan <plan-id>`. If a file changed since the plan was
    made, the apply fails and writes nothing.

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 // allSkipSandbox gives the sandbox HOME only a codex config folder, with no agent commands on PATH.
@@ -40,7 +39,7 @@ func runInstallResult(t *testing.T, options installOptions) (string, error) {
 func TestInstallAllSkipsAgentsThatAreNotInstalled(t *testing.T) {
 	options, home := allSkipSandbox(t)
 	output := runInstallForTest(t, options)
-	if !strings.Contains(output, " (ready)\n") || !strings.Contains(output, "  codex@0.154.0: ready\n") {
+	if !strings.Contains(output, " (ready)\n") || !strings.Contains(output, "  codex@0.154.0: ready | destination:") {
 		t.Fatalf("installed codex must plan ready:\n%s", output)
 	}
 	for _, name := range []string{"hermes", "oh-my-pi", "openclaw", "opencode", "pi"} {
@@ -83,7 +82,7 @@ func TestInstallTargetMissingFolderNamesFix(t *testing.T) {
 	if err == nil || !strings.Contains(output, want) || strings.Contains(output, "lstat") {
 		t.Fatalf("explicit missing folder: err=%v\n%s", err, output)
 	}
-	if strings.Contains(output, install.StatusSkipped) {
+	if strings.Contains(output, "hermes@0.21.3: skipped") {
 		t.Fatalf("an explicit target is never skipped:\n%s", output)
 	}
 }

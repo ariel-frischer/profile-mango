@@ -36,6 +36,13 @@ mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 The plan ends with the exact apply command, including its plan ID. On a terminal,
 `--apply` alone asks for y/N confirmation instead. `--all` skips agents that are
 not installed, and an existing config is adopted with a backup.
+Human plans show each agent's status, resolved destination, installed model and
+effort when known, use command, file and field effects, every skipped requirement,
+and actionable warnings. They end with target and file counts. Add `--verbose`
+for full version and diagnostic detail (plus undo hashes). `undo` also shows its
+redacted file diff by default and prints a per-target apply command. `--json`
+remains the unchanged machine-readable contract. Colors appear only on terminals
+and can be disabled with `--no-color`, `NO_COLOR`, or `TERM=dumb`.
 
 Use `-t` as shorthand for `--target`. Install, undo, doctor, and `agents check`
 accept comma-separated or repeated target flags, for example
@@ -79,6 +86,8 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 
 Each agent has a tested version range. Outside it, install still works but warns.
 Credentials, sessions, plugins, and MCP are never read or written.
+Named OpenClaw and Hermes profiles use separate target-owned state that may
+require signing in there. The plan cannot determine whether either is signed in.
 
 ## Documentation
 
