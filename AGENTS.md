@@ -45,6 +45,8 @@ go run ./cmd/profile-mango --help
 go run ./cmd/profile-mango version
 go run ./cmd/profile-mango home
 go run ./cmd/profile-mango validate <profile.yaml> [--bindings <local.yaml>] [--json]
+go run ./cmd/profile-mango status [--json]          # read-only: managed profile per agent, drift
+go run ./cmd/profile-mango use <profile>             # plan only; sandbox HOME before --apply
 ```
 
 ## File Layout
