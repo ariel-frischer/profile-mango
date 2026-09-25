@@ -161,3 +161,7 @@ failure-boundary evidence.
 [approval]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md
 [context]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/context-files.md
 [skills]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/skills.md
+
+## Global instruction files (ap-nym, 2026-09-25)
+
+`globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.2.6` `78b7531`, `packages/coding-agent/src/discovery/builtin.ts:393,913`). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).

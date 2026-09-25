@@ -142,3 +142,7 @@ no personal configuration was installed or changed. See the
 [schema]: https://developers.openai.com/codex/config-schema.json
 [agents]: https://learn.chatgpt.com/docs/agent-configuration/agents-md
 [skills]: https://learn.chatgpt.com/docs/build-skills
+
+## Global instruction files (ap-nym, 2026-09-25)
+
+`globalInstructions` may own `AGENTS.md` in `$CODEX_HOME` (source `rust-v0.154.0` `6b9826e`, `codex-rs/codex-home/src/instructions/mod.rs:9-10,26-27`); an existing `AGENTS.override.md` wins over it. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).

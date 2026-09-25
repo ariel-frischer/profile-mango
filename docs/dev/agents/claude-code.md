@@ -144,3 +144,7 @@ Primary sources: [settings][settings], [model configuration][model],
 [skills]: https://code.claude.com/docs/en/skills
 [schema]: https://json.schemastore.org/claude-code-settings.json
 [release]: https://github.com/anthropics/claude-code/releases/tag/v2.1.278
+
+## Global instruction files (ap-nym, 2026-09-25)
+
+`globalInstructions` may own `CLAUDE.md` in `~/.claude` (documentation context only: code.claude.com/docs/en/memory retrieved 2026-09-25, SHA-256 `cf73d3a5…192a8f`; not observed in the binary). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).

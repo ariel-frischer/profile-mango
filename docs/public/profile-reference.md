@@ -40,11 +40,43 @@ skills: [skills/review/SKILL.md]
 | `tools.allow`, `tools.deny` | Tool name lists. A denied name is removed from `allow`. | Each list replaces the parent's if set |
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
 | `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
+| `globalInstructions` | Whole global instruction files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 
 Unknown fields are rejected. A field with the wrong YAML shape fails with its
 path and the expected shape, e.g. `labels: expected a map of string keys to
 string values (e.g. labels: {team: core}), got a list`. Most agents can't install permissions, tools,
 instructions, or skills yet. See [agents](agents.md) for what each one takes.
+
+### `globalInstructions`
+
+`globalInstructions` maps an agent name to the global instruction files that
+profile owns, each a file name and a Markdown resource relative to the package
+root. The installer writes the whole file beside the agent's config.
+
+```yaml
+globalInstructions:
+  codex: {AGENTS.md: instructions/work/AGENTS.md}
+  oh-my-pi:
+    AGENTS.md: instructions/work/AGENTS.md
+    RULES.md: instructions/work/RULES.md
+  claude-code: {CLAUDE.md: instructions/work/CLAUDE.md}
+  opencode: {AGENTS.md: instructions/work/AGENTS.md}
+```
+
+Only files an agent is documented to read are accepted: Claude Code
+`CLAUDE.md` (`~/.claude`), Codex `AGENTS.md` (`$CODEX_HOME`), Oh My Pi
+`AGENTS.md` and `RULES.md` (`~/.omp/agent`), and OpenCode `AGENTS.md`
+(`~/.config/opencode`). Another file name for one of those agents blocks the
+install. Other agents list `globalInstructions` under "not installed for this
+agent"; `install --strict` blocks them instead. A global file changes every
+profile of that agent, so it is written only by `mango use`, by `install
+--default`, or by agents without named profiles.
+
+An existing file is adopted with a create-only backup. A file edited after the
+install shows as `edited` in `mango status` and needs `--override`. When
+`mango use` switches to a profile without that file, a file profile-mango
+created is deleted and an adopted file gets its original bytes back from the
+backup. `mango undo` reverses each step.
 
 ### Older wrapped format
 
