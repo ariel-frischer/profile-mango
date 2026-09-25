@@ -81,6 +81,23 @@ routes:
       claude-code: {provider: anthropic, model: claude-sonnet-5}
 ```
 
+Effort is applied per agent: Codex `model_reasoning_effort` (none..xhigh;
+other values block), Claude Code `effortLevel` (low/medium/high/xhigh), OpenCode agent `variant`, Oh My Pi
+`:effort` selector suffix. A value an agent cannot take shows as
+`effort <v>: NOT APPLIED (<reason>)` in the plan and a JSON
+`skippedRequirements` entry; it is never dropped silently.
+
+Optional `roles` under a route bind extra model roles (Oh My Pi built-ins:
+`task`, `plan`, `slow`, `smol`, `tiny`, `commit`, `advisor`, `vision`); each
+installs as `modelRoles.<role>: provider/model:effort`. Other agents list
+roles as skipped:
+
+```yaml
+    roles:
+      plan: {provider: anthropic, model: claude-opus-5-5, effort: high}
+      smol: {provider: opencode-go, model: gpt-6-luna, effort: high}
+```
+
 ## Validate, preview, check readiness
 
 ```bash
@@ -151,7 +168,7 @@ restores the latest committed install, or an explicit `--original-plan <id>`.
   sessions, plugins, MCP, providers, or the network. Unqualified targets and
   unknown required properties block installation rather than being dropped.
 - Known requirements a target cannot install (permissions, tools,
-  instructions, skills) are skipped, not applied: the plan lists them under
+  instructions, skills, roles, unsupported effort) are skipped, not applied: the plan lists them under
   each target (`not installed for this agent: ...`, JSON
   `skippedRequirements`). Pass `--strict` to block instead.
 - `mango agents check` is a separate network drift check; skip it
