@@ -54,7 +54,9 @@ still fail closed for missing or mismatched exact versions, evidence hashes,
 authentication identity, delivery, precedence, permissions, tools, or enforcement.
 
 A preview artifact is an inert candidate only. `applicable` remains false whenever a
-required property is unverified, and the command returns nonzero. Candidate config
+required property is unverified. Without `--preview` the command then returns nonzero;
+with `--preview`, once staging succeeds, it prints each blocker as a `warning`, keeps
+the report's error diagnostics and `applicable: false`, and exits 0. Candidate config
 files use `preview/` paths and report metadata excludes artifact bytes. Resource
 copies preserve their original relative paths and are validated against the
 canonical digest before they are staged.
