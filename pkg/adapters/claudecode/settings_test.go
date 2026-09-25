@@ -25,9 +25,24 @@ func TestPatchModelJSONTable(t *testing.T) {
 			want:   "{\r\n\t\"model\" : \"claude-sonnet-4-5\",\r\n\t\"unknown\": true,\r\n\t\"credentials\": \"SYNTHETIC-CREDENTIAL\"\r\n}\r\n",
 			before: "old/model",
 		},
-		"insert before unknown state": {
+		"insert on own line with detected indentation": {
 			source:   "{\n  \"unknown\": {\"nested\": true},\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\n}\n",
-			want:     "{\"model\":\"claude-sonnet-4-5\",\n  \"unknown\": {\"nested\": true},\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\n}\n",
+			want:     "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": {\"nested\": true},\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\n}\n",
+			inserted: true,
+		},
+		"insert keeps tab indentation and CRLF": {
+			source:   "{\r\n\t\"unknown\": true\r\n}\r\n",
+			want:     "{\r\n\t\"model\": \"claude-sonnet-4-5\",\r\n\t\"unknown\": true\r\n}\r\n",
+			inserted: true,
+		},
+		"insert into empty object": {
+			source:   "{}\n",
+			want:     "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n",
+			inserted: true,
+		},
+		"insert keeps one-line object on one line": {
+			source:   "{\"unknown\":true}",
+			want:     "{\"model\":\"claude-sonnet-4-5\",\"unknown\":true}",
 			inserted: true,
 		},
 		"replace escaped value": {

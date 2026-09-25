@@ -34,7 +34,7 @@ func TestClaudeCodeInstallPlanPreservesTargetState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(patch.Files) != 1 || string(patch.Files[0].Content) != "{\"model\":\"claude-sonnet-4-5\",\r\n  \"unknown\": true,\r\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\r\n}\r\n" {
+	if len(patch.Files) != 1 || string(patch.Files[0].Content) != "{\r\n  \"model\": \"claude-sonnet-4-5\",\r\n  \"unknown\": true,\r\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\r\n}\r\n" {
 		t.Fatalf("patch files = %#v", patch.Files)
 	}
 	if len(patch.Fields) != 1 || patch.Fields[0].Path != "config.model" || patch.Fields[0].After != "claude-sonnet-4-5" {
@@ -303,18 +303,19 @@ func TestClaudeCodeNamedPlanJSONReportsModeAndUseCommand(t *testing.T) {
 	}
 }
 
-func TestClaudeCodeDefaultFlagAlsoPatchesSettings(t *testing.T) {
+func TestClaudeCodeDefaultFlagInsertsModelOnOwnLineAndUndoRestoresBytes(t *testing.T) {
 	request, config := claudeCodeNamedRequest(t, "coding")
 	request.Default = true
+	const pretty = "{\n    \"permissions\": {\n        \"allow\": [\"Read\"]\n    },\n    \"unknown\": true\n}\n"
+	writeInstallTestFile(t, config, pretty)
 	plan := applyNamed(t, request, "coding")
 	if !plan.Targets[0].Install.SetsDefault {
 		t.Fatalf("install mode = %#v", plan.Targets[0].Install)
 	}
-	data, err := os.ReadFile(config)
-	if err != nil || !strings.Contains(string(data), "\"model\":\"claude-sonnet-4-5\"") || !strings.Contains(string(data), "\"unknown\": true") {
-		t.Fatalf("config = %q err=%v", data, err)
-	}
+	assertInstallTestFile(t, config, "{\n    \"model\": \"claude-sonnet-4-5\",\n    \"permissions\": {\n        \"allow\": [\"Read\"]\n    },\n    \"unknown\": true\n}\n")
 	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n")
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	assertInstallTestFile(t, config, pretty)
 }
 
 func TestClaudeCodeNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {

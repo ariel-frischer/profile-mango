@@ -50,7 +50,7 @@ func PatchModelJSON(source []byte, model string) (ModelPatch, error) {
 		content := replaceJSONSpan(source, scan.model.start, scan.model.end, strconv.Quote(model))
 		return ModelPatch{Content: content, Before: scan.model.value, After: model, Found: true}, nil
 	}
-	content := insertModel(source, scan, strconv.Quote(model))
+	content := insertTopLevelKey(source, scan, "model", strconv.Quote(model))
 	return ModelPatch{Content: content, After: model, Inserted: true}, nil
 }
 
@@ -273,10 +273,26 @@ func replaceJSONSpan(data []byte, start, end int, replacement string) []byte {
 	return content
 }
 
-func insertModel(data []byte, scan settingsScan, literal string) []byte {
-	field := `"model":` + literal
-	if scan.hasKeys {
-		field += ","
+// insertTopLevelKey adds key as the first root member without reformatting
+// the rest of the file. In a multi-line object the member goes on its own line
+// with the first existing member's indentation and line ending; an empty
+// object gains one indented line; a one-line object stays on one line.
+func insertTopLevelKey(data []byte, scan settingsScan, key, literal string) []byte {
+	open := scan.rootOpen + 1
+	first := skipJSONSpace(data, open)
+	gap := data[open:first]
+	newline := "\n"
+	if bytes.Contains(gap, []byte("\r\n")) {
+		newline = "\r\n"
 	}
-	return replaceJSONSpan(data, scan.rootOpen+1, scan.rootOpen+1, field)
+	member := strconv.Quote(key) + ": " + literal
+	if !scan.hasKeys {
+		return replaceJSONSpan(data, open, first, newline+"  "+member+newline)
+	}
+	lineBreak := bytes.LastIndexByte(gap, '\n')
+	if lineBreak < 0 {
+		return replaceJSONSpan(data, open, open, strconv.Quote(key)+":"+literal+",")
+	}
+	indent := string(gap[lineBreak+1:])
+	return replaceJSONSpan(data, first, first, member+","+newline+indent)
 }
