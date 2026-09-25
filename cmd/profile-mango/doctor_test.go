@@ -10,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
@@ -386,5 +388,41 @@ func TestDoctorProfileFlagSelectsNamedProfile(t *testing.T) {
 	codexResult := doctorTargetNamed(t, report, "codex")
 	if codexResult.PlanStatus != install.StatusReady {
 		t.Fatalf("codex plan status = %q, reason = %q, want ready", codexResult.PlanStatus, codexResult.PlanReason)
+	}
+}
+
+// TestDoctorPlanMatchesInstallForUnownedConfig guards the shared readiness
+// verdict: with an existing agent config profile-mango does not own, a plain
+// install plans a backed-up adoption, so doctor must report the same status
+// instead of the "requires a backup" conflict a no-backup plan would give.
+func TestDoctorPlanMatchesInstallForUnownedConfig(t *testing.T) {
+	doctorFakeBinaries(t, map[string]string{"omp": "echo 'omp/" + ohmypi.TargetVersion + "'"})
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", "")
+	writeFile(t, filepath.Join(home, ".omp", "agent", "config.yml"), "theme: dark\n")
+	packageHome := t.TempDir()
+	writeDoctorProfileHome(t, packageHome, "default")
+	withDoctorHome(t, packageHome)
+	withAgentDetection(t)
+
+	output, err := runDoctorForTest(t, "--target", "oh-my-pi", "--json")
+	if err != nil {
+		t.Fatalf("doctor --json: %v\n%s", err, output)
+	}
+	doctorResult := doctorTargetNamed(t, decodeDoctorReport(t, output), "oh-my-pi")
+	var data bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetOut(&data)
+	cmd.SetErr(new(bytes.Buffer))
+	if err := runInstall(cmd, "default", installOptions{targets: []string{"oh-my-pi"}, jsonOutput: true}); err != nil {
+		t.Fatalf("install plan: %v\n%s", err, data.String())
+	}
+	var plan install.Plan
+	if err := json.Unmarshal(data.Bytes(), &plan); err != nil || len(plan.Targets) != 1 {
+		t.Fatalf("decode install plan: %v\n%s", err, data.String())
+	}
+	if doctorResult.PlanStatus != install.StatusReady || doctorResult.PlanStatus != plan.Targets[0].Status {
+		t.Fatalf("doctor plan %q (%s), install plan %q; want both ready", doctorResult.PlanStatus, doctorResult.PlanReason, plan.Targets[0].Status)
 	}
 }
