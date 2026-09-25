@@ -20,7 +20,7 @@ For target configuration work, consult the version-qualified [`docs/dev/agents/`
 ```bash
 make help           # List Make targets
 make deps           # Download Go modules
-make install        # Install mango (+ profile-mango alias) to GOBIN
+make install        # Install mango (+ profile-mango alias) to ~/.local/bin (PROFILE_MANGO_INSTALL_DIR overrides)
 make build          # Build ./bin/mango with version ldflags
 make bin            # Alias for build
 make run            # Run ./cmd/profile-mango
