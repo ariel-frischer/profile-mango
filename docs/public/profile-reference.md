@@ -78,6 +78,13 @@ install shows as `edited` in `mango status` and needs `--override`. When
 created is deleted and an adopted file gets its original bytes back from the
 backup. `mango undo` reverses each step.
 
+`~/AGENTS.md`, which the Jcode fork reads, is not covered: no install target
+qualifies it.
+
+For Oh My Pi, `mango use` also gives back model roles: a role the new route
+no longer binds returns to the value it had before profile-mango first wrote
+it, or is removed if it did not exist.
+
 ### Older wrapped format
 
 Profiles written as `apiVersion` / `kind` / `metadata` / `spec` (with
