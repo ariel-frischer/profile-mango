@@ -34,6 +34,46 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 	}
 }
 
+func TestParseProfileNamesFieldPathAndExpectedShape(t *testing.T) {
+	t.Parallel()
+	cases := map[string]struct {
+		yaml    string
+		path    string
+		message string
+	}{
+		"labels list": {
+			yaml:    "labels: [a, b]\n",
+			path:    "labels",
+			message: "expected a map of string keys to string values (e.g. labels: {team: core}), got a list",
+		},
+		"label value list": {
+			yaml:    "labels:\n  team: [core]\n",
+			path:    "labels.team",
+			message: "expected a string value (e.g. labels: {team: core}), got a list",
+		},
+		"skills scalar": {
+			yaml:    "skills: skills/review/SKILL.md\n",
+			path:    "skills",
+			message: "expected a list of skill paths (e.g. skills: [skills/review/SKILL.md]), got a scalar value",
+		},
+		"tools allow map": {
+			yaml:    "tools:\n  allow: {read: true}\n",
+			path:    "tools.allow",
+			message: "expected a list of tool names (e.g. allow: [read, edit]), got a map",
+		},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, diagnostics := ParseProfile([]byte(test.yaml))
+			errors := diagnostics.Errors()
+			if len(errors) != 1 || errors[0].Code != "yaml.shape" || errors[0].Path != test.path || errors[0].Message != test.message {
+				t.Fatalf("want one yaml.shape at %s %q, got %#v", test.path, test.message, errors)
+			}
+		})
+	}
+}
+
 func TestResolveInheritanceAndDenyWins(t *testing.T) {
 	t.Parallel()
 	base := mustParse(t, `name: base

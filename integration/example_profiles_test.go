@@ -29,8 +29,8 @@ func assertExampleRenders(t *testing.T, binary, repoRoot string, env []string, r
 	for target, version := range publicTargetVersions() {
 		out := filepath.Join(t.TempDir(), target)
 		result := runCommand(binary, repoRoot, env, "render", profile, "--profiles", profiles, "--resource-root", root, "--bindings", bindings, "--target", target, "--target-version", version, "--out", out, "--preview", "--json")
-		if result.err == nil {
-			t.Fatalf("%s preview unexpectedly applicable", target)
+		if result.err != nil {
+			t.Fatalf("%s staged preview must exit 0: %v\n%s", target, result.err, result.stderr)
 		}
 		var report struct {
 			Profile    string `json:"profile"`

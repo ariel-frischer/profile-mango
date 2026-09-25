@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - doctor command: read-only report of installed agents, detected vs qualified versions, default config paths, and what a profile would install
 - undo command (restore kept as alias) reverses the latest install for any installable target
 - install and doctor check the installed agent version against a tested range and warn outside it
+- Bindings routes accept an optional roles map (role -> provider/model/effort); Oh My Pi installs one modelRoles selector per role with its effort suffix and no longer rewrites the global defaultThinkingLevel; other agents list roles as skipped (--strict blocks)
 
 ### Changed
 
@@ -91,6 +92,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - undo works for every target of a multi-target install
 - Show live stderr progress while checking agent sources and probing installed agent versions without changing JSON reports
 - Renamed the experimental ariel-jcode target and adapter package to jcode-fork and removed maintainer-specific references from standalone main
+- make install now installs mango to ~/.local/bin (override with PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR) instead of the mise/asdf Go toolchain dir, and warns when pointed at a toolchain dir; make uninstall removes the same paths
+- Profile type errors name the field and expected shape (for example labels must be a map), doctor plans readiness with the same request as install, render --preview reports blockers as warnings and exits 0 once staged, and Claude Code settings.json keys are inserted on their own line with the file's indentation
 
 ## [0.0.1] - 2026-01-01
 

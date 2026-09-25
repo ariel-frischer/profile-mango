@@ -18,7 +18,7 @@ tested evidence, and supported capabilities.
 ```bash
 make build          # Build binary
 make deps           # Download dependencies
-make install        # Install mango (+ profile-mango alias)
+make install        # Install mango (+ profile-mango alias) to ~/.local/bin
 make test           # Run tests
 make lint           # Run linters
 make format         # Format code

@@ -60,8 +60,9 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
 - An Oh My Pi `18.2.6` preview renderer that emits deterministic candidate YAML,
   resource copies, and a versioned report only into an explicit staging directory.
   Its preview retains historical build and unsafe config-inspector limitations.
-  A separate two-field installer is qualified by exact source-native read-only
-  settings getters with a pinned addon, not full startup or precedence.
+  A separate `modelRoles` installer is qualified for the default role by exact
+  source-native read-only settings getters with a pinned addon, and for per-role
+  `:effort` selectors by source review only; not full startup or precedence.
 - An OpenClaw `2026.9.5` preview renderer that emits deterministic source-grounded
   JSON5 candidate syntax, resource copies, and a versioned report only into an
   explicit staging directory. Its source/archive provenance, missing runtime
@@ -110,7 +111,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Codex | First intended public adapter | Exact `0.154.0` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` model and `effortLevel` strict-JSON installer; explicit settings-file model and effort consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
-| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` model-role/thinking-default YAML installer; native read-only getters qualified, full startup, precedence, authentication, delivery, and enforcement blocked |
+| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` `modelRoles` selector YAML installer (default natively qualified; per-role `:effort` selectors source-reviewed), full startup, precedence, authentication, delivery, and enforcement blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` model-primary/thinking-default JSON5 installer; source-native getters, agent overrides and fallback limits verified, full startup/auth/delivery/enforcement blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
 | OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/effort variant/instructions; native generated-definition resolution verified, auth, main-config effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |

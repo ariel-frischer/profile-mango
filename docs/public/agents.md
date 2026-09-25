@@ -125,9 +125,11 @@ The evidence behind every row is in the developer
 
 ## Oh My Pi
 
-- **Installs:** `modelRoles.default` (as `provider/model`) and
-  `defaultThinkingLevel` in `config.yml`.
-- **Caveats:** other model roles and provider options are left alone.
+- **Installs:** `modelRoles.default` as `provider/model:effort`, plus one
+  `modelRoles.<role>` selector per bound route role (built-in roles only), in
+  `config.yml`. Effort stays on each selector; `defaultThinkingLevel`, which
+  applies to models you pick by hand, is left alone.
+- **Caveats:** unbound model roles and provider options are left alone.
 - [Reference](../dev/agents/oh-my-pi.md)
 
 ## OpenClaw

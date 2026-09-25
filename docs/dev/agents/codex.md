@@ -33,8 +33,9 @@ See [AGENTS.md guidance][agents] and [skill guidance][skills].
 offline compiler boundary, not an installer. Without `--preview`, applicability
 blockers produce diagnostics and no output. With `--preview`, the command may
 atomically create a new explicit `--out` directory containing `render.json`,
-a `preview/<name>.config.toml.preview` candidate, and inert resource copies. It
-still exits nonzero while blockers remain.
+a `preview/<name>.config.toml.preview` candidate, and inert resource copies. Once
+staged it exits 0, prints remaining blockers as warnings, and the report stays
+`applicable: false`.
 
 The report pins the tested Codex build hash, lists field-level capabilities and
 blocking diagnostics, and records deterministic artifact digests. No target home,

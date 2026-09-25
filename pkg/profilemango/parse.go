@@ -28,7 +28,7 @@ func ParseProfile(data []byte) (PolicyProfile, Diagnostics) {
 	if isLegacyProfile(&node) {
 		profile, ok = decodeLegacyProfile(data, &diagnostics)
 	} else {
-		ok = decodeStrictDocument(data, &profile, &diagnostics)
+		ok = validateProfileShape(&node, &diagnostics) && decodeStrictDocument(data, &profile, &diagnostics)
 	}
 	if !ok {
 		return PolicyProfile{}, diagnostics.Sorted()
@@ -98,6 +98,7 @@ func ParseBindings(data []byte) (Bindings, Diagnostics) {
 			diagnostics.Add(SeverityError, "binding.route_incomplete", path, "provider, model, and effort are required", 0, 0)
 		}
 		validateRouteTargets(path, route, &diagnostics)
+		validateRouteRoles(path, route, &diagnostics)
 	}
 	return bindings, diagnostics.Sorted()
 }

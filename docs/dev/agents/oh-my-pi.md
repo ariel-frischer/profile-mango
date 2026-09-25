@@ -2,9 +2,11 @@
 
 **Reference date:** 2026-09-21. **Documentation pin:** release `v18.2.6`,
 commit `78b753124d11f8dd3ae73e2524125890ff7c977e`. **Status:** profile-mango
-ships an inert preview renderer and, since 2026-09-22, a two-field installer
-qualified through exact source-native read-only getters. Broader applicability
-remains blocked. Oh My Pi is qualified independently from
+ships an inert preview renderer and, since 2026-09-22, a model-role installer
+whose `modelRoles.default` storage is qualified through exact source-native
+read-only getters; since 2026-09-25 it writes suffixed per-role selectors on
+source-review evidence only (see [per-role selectors](#per-role-selectors-2026-09-25)).
+Broader applicability remains blocked. Oh My Pi is qualified independently from
 [Pi](pi.md).
 
 ## Configuration and precedence
@@ -14,11 +16,11 @@ Pinned documentation describes YAML at `~/.omp/agent/config.yml` and
 global configuration, project configuration, repeated CLI overlays, then runtime
 or environment overrides. Objects deep-merge and arrays replace.
 
-The pinned source defines `modelRoles` values such as `provider/modelId` and
-`defaultThinkingLevel` values such as `minimal`, `low`, `medium`, `high`,
-`xhigh`, `max`, and `auto`. The inert adapter emits only these documented route
-and effort fields. It never emits authentication values, provider URLs, API keys,
-credential references, or active target paths.
+The pinned source defines `modelRoles` values such as `provider/modelId`, with
+an optional `:<level>` thinking suffix, and `defaultThinkingLevel` values such
+as `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, and `auto`. The inert
+adapter emits only `modelRoles` selectors. It never emits authentication values,
+provider URLs, API keys, credential references, or active target paths.
 
 ## Permissions, tools, instructions, and skills
 
@@ -106,6 +108,33 @@ Lossless patch tests cover comments, unknown fields, CRLF, Unicode columns,
 document-end markers and rejection of duplicate keys, multiline managed scalars,
 anchors, aliases and merge keys. Shared transaction tests cover backups, stale
 plans, ownership, fault rollback and guarded recovery.
+
+## Per-role selectors, 2026-09-25
+
+Source review of the same pinned tag and commit (a fresh read-only checkout,
+`git rev-parse HEAD` = `78b753124d11f8dd3ae73e2524125890ff7c977e`) extends the
+installer to one `modelRoles.<role>` selector per bound route role and moves
+effort onto each selector:
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| `modelRoles` is a string record; any role key is stored as written | `packages/coding-agent/src/config/settings-schema.ts` (`080e5c2b040afebdcc629a9692d0eac21aa78e75b0fd1f247abe1b59a0023153`): `modelRoles: { type: "record" }`, `Record<string, string>` |
+| Built-in roles are `default`, `smol`, `slow`, `vision`, `plan`, `commit`, `tiny`, `task`, `advisor` | `packages/coding-agent/src/config/model-roles.ts` (`5cd9142582adfc6a773fa83858806914f9314506f1f504a59f484e65e0cbf54c`): `MODEL_ROLES` |
+| A role value may end in `:<level>`; `minimal`..`xhigh`, `max`, and `auto` are recognized | `packages/tui/src/overlays/model-selector.ts` (`32cf3259183137dd7eca36cc2e3e9c1394df229e787b26f3bd9518eab5578d8f`): `splitThinkingSuffix`; `packages/coding-agent/src/config/model-resolver.ts` (`68b229552ea292ddf11a3c7076110dd530de425f93d113224e03028ab0574225`): `parseModelPatternWithContext` passes `MAX_THINKING_SUFFIX_OPTIONS`, `resolveModelRoleValue` returns `explicitThinkingLevel` |
+| The default role's explicit suffix wins over the model default and `defaultThinkingLevel`; an explicit `--model` or a persisted session level skips it | `packages/coding-agent/src/sdk.ts` (`566103f262f8e5dd80df2d0ea3e46b57ffe024eac7444d00be230654d2df9c64`): `pickInitialThinkingLevel` |
+| Documentation shows suffixed role values | `docs/settings.md` (`0b750e8d48928bec4751deebfa393c3960327646e00ba23699bfcedf64419f31`): `slow: anthropic/claude-opus-4-5:high`, "Role values may carry a thinking suffix"; `docs/models.md` (`e997ad228ceddb2686a06344b553e9e0d212834caeefec21ea5b5fe395a887ab`) |
+
+The installer therefore writes `modelRoles.default: provider/model:effort` and
+no longer writes `defaultThinkingLevel`, so hand-picked models keep their own
+thinking default. Roles outside the built-in list fail closed: custom keys are
+stored, but only built-in roles have a known consumer. A role without effort is
+written bare, and a bare model whose last `:` segment the parser would read as
+a level (including unambiguous prefixes such as `:hi`) is rejected until effort
+is set.
+
+Evidence level: source review only. The 2026-09-22 native getter probe covered
+`modelRoles.default` storage, not suffix interpretation or non-default roles,
+and was not re-run. The plan warning says so.
 
 ## Preview adapter boundary
 

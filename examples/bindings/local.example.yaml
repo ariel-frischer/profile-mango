@@ -15,3 +15,15 @@ routes:
         model: claude-sonnet-5
       opencode:
         model: gpt-6-luna
+    # `roles` is optional: extra named roles with their own model. Only Oh My Pi
+    # installs them (as modelRoles.<role>: provider/model:effort); other agents
+    # list them as not installed.
+    # roles:
+    #   smol:
+    #     provider: opencode-go
+    #     model: gpt-6-luna
+    #     effort: high
+    #   tiny:
+    #     provider: opencode-go
+    #     model: glm-5.3-flash
+    #     effort: low

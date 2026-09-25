@@ -128,7 +128,7 @@ func TestInstallUnsupportedEffortIsExplicitlyNotApplied(t *testing.T) {
 				t.Fatalf("JSON skippedRequirements = %#v, want %#v", skipped, want)
 			}
 			options.jsonOutput, options.strict = false, true
-			if output, err := runInstallResult(t, options); err == nil || !strings.Contains(output, "effort "+test.effort+" is not applied") {
+			if output, err := runInstallResult(t, options); err == nil || !strings.Contains(output, "--strict: effort "+test.effort+" cannot be applied: "+test.reason) {
 				t.Fatalf("strict plan must block on the unapplied effort: err=%v\n%s", err, output)
 			}
 		})

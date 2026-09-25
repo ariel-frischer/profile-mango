@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -285,29 +284,18 @@ func (w *doctorCapBuffer) Write(data []byte) (int, error) {
 }
 
 // doctorPlanner builds a target's install readiness check once, reusing the
-// resolved profile home for every target. It only ever calls the read-only
-// install.BuildPlan; it never applies a plan or writes a file.
+// resolved profile home for every target. It plans with the same request a
+// default "mango install --target <agent>" builds, so doctor and install share
+// one readiness verdict. It only ever calls the read-only install.BuildPlan.
 func doctorPlanner(registry *install.Registry, profileName string) func(install.Target) (string, string) {
-	home, err := selectedHome()
+	paths, err := resolveInstallPaths(installOptions{})
 	if err != nil {
 		reason := fmt.Sprintf("resolve profile home: %v", err)
 		return func(install.Target) (string, string) { return install.StatusUnavailable, reason }
 	}
-	paths := installPaths{
-		profiles:     filepath.Join(home, "profiles"),
-		resourceRoot: home,
-		bindings:     filepath.Join(home, "bindings", "local.yaml"),
-	}
 	return func(target install.Target) (string, string) {
-		plan, err := install.BuildPlan(install.Request{
-			ProfileName:  profileName,
-			ProfilesRoot: paths.profiles,
-			ResourceRoot: paths.resourceRoot,
-			BindingsPath: paths.bindings,
-			Targets:      []install.TargetRequest{{Target: target}},
-			Registry:     registry,
-			Env:          install.OSPathEnv(),
-		})
+		request := installPlanRequest(profileName, paths, []install.TargetRequest{{Target: target}}, installOptions{}, registry)
+		plan, err := install.BuildPlan(request)
 		if err != nil {
 			return install.StatusUnavailable, err.Error()
 		}

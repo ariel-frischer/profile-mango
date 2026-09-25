@@ -55,6 +55,71 @@ func TestParseBindingsTargets(t *testing.T) {
 	}
 }
 
+const rolesBindingsYAML = flatBindingsYAML + `    roles:
+      smol:
+        provider: opencode-go
+        model: gpt-6-luna
+        effort: high
+      tiny:
+        provider: opencode-go
+        model: glm-5.3-flash
+`
+
+func TestParseBindingsRoles(t *testing.T) {
+	t.Parallel()
+	cases := map[string]struct {
+		yaml string
+		code string
+		path string
+	}{
+		"valid roles":       {yaml: rolesBindingsYAML},
+		"empty roles":       {yaml: flatBindingsYAML + "    roles: {}\n", code: "binding.roles_empty", path: "routes.main.roles"},
+		"null roles":        {yaml: flatBindingsYAML + "    roles:\n", code: "yaml.null", path: "routes.main.roles"},
+		"null role":         {yaml: flatBindingsYAML + "    roles:\n      smol:\n", code: "yaml.null", path: "routes.main.roles.smol"},
+		"empty role":        {yaml: flatBindingsYAML + "    roles:\n      smol: {}\n", code: "binding.role_incomplete", path: "routes.main.roles.smol"},
+		"missing model":     {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: openai\n", code: "binding.role_incomplete", path: "routes.main.roles.smol"},
+		"unknown role key":  {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: openai\n        model: m\n        transport: native\n", code: "yaml.strict", path: "document"},
+		"invalid role name": {yaml: flatBindingsYAML + "    roles:\n      Fast_Helper:\n        provider: openai\n        model: m\n", code: "binding.role_name_invalid", path: "routes.main.roles.Fast_Helper"},
+		"reserved default":  {yaml: flatBindingsYAML + "    roles:\n      default:\n        provider: openai\n        model: m\n", code: "binding.role_name_reserved", path: "routes.main.roles.default"},
+		"duplicate role":    {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: a\n        model: m\n      smol:\n        provider: b\n        model: m\n", code: "yaml.duplicate_key", path: "routes.main.roles.smol"},
+		"null role effort":  {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: a\n        model: m\n        effort:\n", code: "yaml.null", path: "routes.main.roles.smol.effort"},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, diagnostics := ParseBindings([]byte(test.yaml))
+			if test.code == "" {
+				if diagnostics.HasErrors() {
+					t.Fatalf("unexpected diagnostics: %v", diagnostics)
+				}
+				return
+			}
+			for _, diagnostic := range diagnostics {
+				if diagnostic.Code == test.code && diagnostic.Path == test.path && diagnostic.Severity == SeverityError {
+					return
+				}
+			}
+			t.Fatalf("missing %s at %s in %v", test.code, test.path, diagnostics)
+		})
+	}
+}
+
+func TestRouteForKeepsRolesAcrossTargetOverrides(t *testing.T) {
+	t.Parallel()
+	bindings, diagnostics := ParseBindings([]byte(rolesBindingsYAML + "    targets:\n      oh-my-pi:\n        model: gpt-5.7\n"))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	route, _ := bindings.RouteFor("main", "oh-my-pi")
+	want := map[string]RoleRoute{
+		"smol": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "high"},
+		"tiny": {Provider: "opencode-go", Model: "glm-5.3-flash"},
+	}
+	if route.Model != "gpt-5.7" || !reflect.DeepEqual(route.Roles, want) {
+		t.Fatalf("route = %#v", route)
+	}
+}
+
 func TestRouteForMergesTargetOverride(t *testing.T) {
 	t.Parallel()
 	bindings, diagnostics := ParseBindings([]byte(targetedBindingsYAML))

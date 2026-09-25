@@ -32,7 +32,7 @@ skills: [skills/review/SKILL.md]
 | --- | --- | --- |
 | `name` | Defaults to the folder name. If set, it must match. Lowercase letters, digits, and `-`. | Not inherited |
 | `description` | Free text. | Child wins if set |
-| `labels` | String-to-string map. | Merged, child keys win |
+| `labels` | Map of string keys to string values, e.g. `labels: {team: core}`. A list such as `labels: [a, b]` is rejected. | Merged, child keys win |
 | `extends` | Parent profile name. | — |
 | `route` | Route key in the bindings file. | Child wins if set |
 | `permissions.mode` | `read-only`, `workspace-write`, or `unrestricted` | Per field, child wins |
@@ -41,7 +41,9 @@ skills: [skills/review/SKILL.md]
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
 | `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
 
-Unknown fields are rejected. Most agents can't install permissions, tools,
+Unknown fields are rejected. A field with the wrong YAML shape fails with its
+path and the expected shape, e.g. `labels: expected a map of string keys to
+string values (e.g. labels: {team: core}), got a list`. Most agents can't install permissions, tools,
 instructions, or skills yet. See [agents](agents.md) for what each one takes.
 
 ### Older wrapped format
@@ -75,6 +77,7 @@ routes:
 | `transport` | no | `native` | How the agent reaches the provider |
 | `authentication` | no | `oauth` | How the agent signs in; credentials stay with the agent |
 | `targets` | no | | Per-agent overrides, see below |
+| `roles` | no | | Extra named roles with their own model, see below |
 
 ### `targets` overrides
 
@@ -87,6 +90,37 @@ profile drives several agents with different providers.
 Some agents need specific route values. For example, Claude Code installs only
 with an `anthropic` provider, and Codex only with `openai`, native transport,
 OAuth, and an effort from `none` to `xhigh`. The plan says why when a route doesn't fit. See [agents](agents.md).
+
+### `roles`
+
+`roles` gives named roles, such as a planner or a fast helper, their own
+`provider`, `model`, and optional `effort`. The route's own fields are the
+default role, so `default` is not allowed as a role name. Role names are
+lowercase kebab-case, and `targets` overrides never change roles.
+
+```yaml
+routes:
+  local:
+    provider: anthropic
+    model: claude-opus-5-5
+    effort: medium
+    roles:
+      plan:
+        provider: anthropic
+        model: claude-opus-5-5
+        effort: high
+      smol:
+        provider: opencode-go
+        model: gpt-6-luna
+        effort: high
+```
+
+Only Oh My Pi installs roles today. It writes each role as
+`modelRoles.<role>: provider/model:effort` and accepts only its built-in roles
+(`advisor`, `commit`, `plan`, `slow`, `smol`, `task`, `tiny`, `vision`); any
+other role name blocks the Oh My Pi install. Other agents install only the
+default route and list `roles` under "not installed for this agent";
+`install --strict` blocks them instead.
 
 ## Checking a profile
 

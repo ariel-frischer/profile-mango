@@ -59,8 +59,8 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 		t.Run(name, func(t *testing.T) {
 			out := filepath.Join(t.TempDir(), "preview")
 			result := runCommand(binary, repoRoot, env, "render", "route-only", "--profiles", fixtures, "--resource-root", resourceRoot, "--bindings", bindings, "--target", name, "--target-version", target.version, "--out", out, "--preview", "--json")
-			if result.err == nil {
-				t.Fatal("blocked preview unexpectedly succeeded")
+			if result.err != nil {
+				t.Fatalf("staged non-applicable preview must exit 0: %v\n%s", result.err, result.stderr)
 			}
 			var report struct {
 				Target        string `json:"target"`
@@ -77,7 +77,7 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 			if report.Target != name || report.TargetVersion != target.version || report.Applicable || !report.Preview || report.Evidence.SHA256 != target.evidenceHash {
 				t.Fatalf("unexpected report: %#v", report)
 			}
-			if !strings.Contains(result.stderr, target.blocker) {
+			if !strings.Contains(result.stderr, "warning ") || !strings.Contains(result.stderr, target.blocker) {
 				t.Fatalf("missing target blocker %q:\n%s", target.blocker, result.stderr)
 			}
 			assertInstalledFile(t, out, "render.json")

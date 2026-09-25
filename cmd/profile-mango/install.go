@@ -15,6 +15,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
@@ -96,12 +97,8 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	if err != nil {
 		return err
 	}
-	request := install.Request{
-		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
-		BindingsPath: paths.bindings, Targets: targets, All: false,
-		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
-		Env: install.OSPathEnv(), DetectVersion: versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector), SkipNotInstalled: options.all,
-	}
+	request := installPlanRequest(profile, paths, targets, options, registry)
+	request.DetectVersion = versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector)
 	plan, err := install.BuildPlan(request)
 	if err != nil {
 		return err
@@ -141,6 +138,18 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		return applyErr
 	}
 	return writeApplyReport(cmd, report, options.jsonOutput)
+}
+
+// installPlanRequest builds the plan request for one set of install flags.
+// Doctor calls it with zero-value options so its readiness column is exactly
+// what a plain "mango install --target <agent>" would plan.
+func installPlanRequest(profile string, paths installPaths, targets []install.TargetRequest, options installOptions, registry *install.Registry) install.Request {
+	return install.Request{
+		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
+		BindingsPath: paths.bindings, Targets: targets, All: false,
+		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
+		Env: install.OSPathEnv(), SkipNotInstalled: options.all,
+	}
 }
 
 func versionDetectorWithProgress(w io.Writer, detector install.VersionDetector) install.VersionDetector {
@@ -530,7 +539,9 @@ func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
 			path = strings.TrimPrefix(path, target.Install.ProfileName+".")
 		}
 		switch path {
-		case "profile.model", "agent.model", "config.model", "config.model.default", "config.modelRoles.default", "config.defaultModel", "config.agents.defaults.model.primary":
+		case "config.modelRoles.default":
+			model, effort = ohmypi.SplitRoleSelector(field.After)
+		case "profile.model", "agent.model", "config.model", "config.model.default", "config.defaultModel", "config.agents.defaults.model.primary":
 			model = field.After
 		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault", "profile.effortLevel", "config.effortLevel", "agent.variant":
 			effort = field.After
@@ -637,6 +648,9 @@ func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{},
 
 func semanticFieldLabel(path string) string {
 	name := path[strings.LastIndex(path, ".")+1:]
+	if strings.HasPrefix(path, "config.modelRoles.") && name != "default" {
+		return "role " + name
+	}
 	switch name {
 	case "default", "primary":
 		return "model"

@@ -242,9 +242,19 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		return finishRender(cmd, result, options, false)
 	}
 	result = adapter.render(render.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
+	addUnrenderedRolesDiagnostic(&result, options.target, route)
 	result.Diagnostics = append(result.Diagnostics, diagnostics...)
 	result.Diagnostics = result.Diagnostics.Sorted()
 	return finishRender(cmd, result, options, true)
+}
+
+// addUnrenderedRolesDiagnostic reports route roles a target preview omits;
+// only Oh My Pi renders roles (as modelRoles selectors).
+func addUnrenderedRolesDiagnostic(result *render.Result, target string, route profilemango.RouteBinding) {
+	if len(route.Roles) == 0 || target == ohmypi.TargetName {
+		return
+	}
+	result.Diagnostics.Add(profilemango.SeverityWarning, "render.route.roles_unsupported", "route.roles", fmt.Sprintf("%d route roles are not rendered for %s; only Oh My Pi renders per-role routes", len(route.Roles), target), 0, 0)
 }
 
 func resolvedRenderTargets(values []string, version string) ([]string, error) {
@@ -375,6 +385,10 @@ func readResourceContents(root string, digests []profilemango.ResourceDigest, di
 	return resources, diagnostics
 }
 
+// finishRender writes the report and picks the exit status. A staged
+// --preview succeeds even when the output is not applicable to the target:
+// the preview files are inert, so each blocking finding is shown as a warning
+// and the report keeps applicable:false with its original diagnostics.
 func finishRender(cmd *cobra.Command, result render.Result, options renderOptions, canStage bool) error {
 	result = result.Report(options.preview)
 	if canStage && options.preview {
@@ -386,6 +400,7 @@ func finishRender(cmd *cobra.Command, result render.Result, options renderOption
 			}
 			return fmt.Errorf("render staging failed")
 		}
+		return writeStagedPreview(cmd, result, options)
 	}
 	if err := writeRenderOutput(cmd, result, options.jsonOutput); err != nil {
 		return err
@@ -395,6 +410,39 @@ func finishRender(cmd *cobra.Command, result render.Result, options renderOption
 	}
 	if !options.preview {
 		return fmt.Errorf("render requires --preview for inert output")
+	}
+	return nil
+}
+
+// writeStagedPreview reports a successfully staged preview: blocking
+// findings print as warnings, and human output ends with where the preview
+// went and whether it is applicable.
+func writeStagedPreview(cmd *cobra.Command, result render.Result, options renderOptions) error {
+	if options.jsonOutput {
+		data, err := result.ReportJSON(result.Preview)
+		if err != nil {
+			return err
+		}
+		if _, err := cmd.OutOrStdout().Write(data); err != nil {
+			return fmt.Errorf("write render report: %w", err)
+		}
+	}
+	styles := stylesFor(cmd.ErrOrStderr(), !options.jsonOutput)
+	for _, diagnostic := range result.Diagnostics {
+		diagnostic.Severity = profilemango.SeverityWarning
+		if _, err := fmt.Fprintln(cmd.ErrOrStderr(), styledDiagnosticLine(diagnostic, styles)); err != nil {
+			return fmt.Errorf("write diagnostic: %w", err)
+		}
+	}
+	if options.jsonOutput {
+		return nil
+	}
+	summary := fmt.Sprintf("preview staged in %s; applicable to %s@%s: yes\n", options.out, result.Target, result.TargetVersion)
+	if !result.Applicable {
+		summary = fmt.Sprintf("preview staged in %s; applicable to %s@%s: no (%d blocking finding(s) above; details in render.json)\n", options.out, result.Target, result.TargetVersion, len(result.Diagnostics.Errors()))
+	}
+	if _, err := fmt.Fprint(cmd.OutOrStdout(), summary); err != nil {
+		return fmt.Errorf("write render summary: %w", err)
 	}
 	return nil
 }

@@ -8,7 +8,7 @@ Thanks for your interest in contributing!
 git clone https://gitlab.com/ariel-frischer/profile-mango.git
 cd profile-mango
 make deps      # Download dependencies
-make install   # Install mango (+ profile-mango alias)
+make install   # Install mango (+ profile-mango alias) to ~/.local/bin
 make build     # Build bin/mango
 make test      # Run tests
 ```

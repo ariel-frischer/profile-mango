@@ -3,6 +3,7 @@ package ohmypi
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
@@ -148,6 +149,9 @@ func addRouteCapabilities(result *Result, route profilemango.RouteBinding) {
 	for _, field := range []string{"provider", "model", "effort"} {
 		result.AddCapability("route."+field, StatusPartial, "documented candidate syntax only")
 	}
+	if len(route.Roles) > 0 {
+		result.AddCapability("route.roles", StatusPartial, "documented modelRoles selector syntax only")
+	}
 	result.AddCapability("route.transport", StatusBlocking, "Oh My Pi transport mapping is not qualified")
 }
 
@@ -163,7 +167,13 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 	if !render.ValidName(profile.Metadata.Name) || route.Provider == "" || route.Model == "" || route.Effort == "" {
 		return Artifact{}
 	}
-	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n  default: %s\ndefaultThinkingLevel: %s\n", TargetVersion, yamlString(route.Provider+"/"+route.Model), yamlString(route.Effort)))
+	var roles strings.Builder
+	fmt.Fprintf(&roles, "  default: %s\n", yamlString(RoleSelector(route.Provider, route.Model, route.Effort)))
+	for _, name := range route.SortedRoleNames() {
+		role := route.Roles[name]
+		fmt.Fprintf(&roles, "  %s: %s\n", name, yamlString(RoleSelector(role.Provider, role.Model, role.Effort)))
+	}
+	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n%s", TargetVersion, roles.String()))
 	return render.NewArtifact("preview/"+profile.Metadata.Name+".config.yml.preview", "candidate-config", content)
 }
 
