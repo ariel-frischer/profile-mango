@@ -32,6 +32,8 @@ func init() {
 	rootCmd.AddCommand(newAgentsCmd())
 	rootCmd.AddCommand(newRenderCmd())
 	rootCmd.AddCommand(newInstallCmd())
+	rootCmd.AddCommand(newUseCmd())
+	rootCmd.AddCommand(newStatusCmd())
 	rootCmd.AddCommand(newRestoreCmd())
 	rootCmd.AddCommand(newDoctorCmd())
 }

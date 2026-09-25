@@ -89,17 +89,13 @@ func loadGlobalFile(root, name, resource string) (globalFile, sourceCheck, error
 
 // globalPatches returns whole-file patches for the target's globalInstructions, or the
 // requirement it skips. A non-empty reason blocks the target with code.
-func globalPatches(request Request, target TargetRequest, loaded loadedInput) ([]FilePatch, *SkippedRequirement, string, string) {
+func globalPatches(request Request, target TargetRequest, loaded loadedInput, mode *InstallMode) ([]FilePatch, *SkippedRequirement, string, string) {
 	files := loaded.Globals[target.Target.Name]
 	if len(files) == 0 {
 		return nil, nil, "", ""
 	}
 	qualified := globalInstructionFiles[target.Target]
-	if len(qualified) == 0 || !target.Agent.Empty() {
-		reason := "no pinned evidence qualifies a global instruction file for " + target.Target.String()
-		if !target.Agent.Empty() {
-			reason = "named agent destinations do not install global instruction files"
-		}
+	if reason := globalSkipReason(target, qualified, mode); reason != "" {
 		if request.Strict {
 			return nil, nil, fmt.Sprintf("--strict: %d global instruction files cannot be installed: %s", len(files), reason), "install.strict_requirement_unsupported"
 		}
@@ -115,10 +111,25 @@ func globalPatches(request Request, target TargetRequest, loaded loadedInput) ([
 	return patches, nil, "", ""
 }
 
+// globalSkipReason explains why a target receives no global instruction files: no
+// pinned evidence, a named agent destination, or a named profile that is not made
+// the default, since a global file would change every profile of that agent.
+func globalSkipReason(target TargetRequest, qualified []string, mode *InstallMode) string {
+	switch {
+	case !target.Agent.Empty():
+		return "named agent destinations do not install global instruction files"
+	case len(qualified) == 0:
+		return "no pinned evidence qualifies a global instruction file for " + target.Target.String()
+	case mode != nil && mode.Mode == InstallModeNamedProfile && !mode.SetsDefault:
+		return "global instruction files apply to every profile; pass --default or run mango use"
+	}
+	return ""
+}
+
 // extendPatch adds the target's global instruction files and, for mango use, releases
 // of owned files the new plan no longer writes. A non-empty reason blocks the target.
 func extendPatch(request Request, target TargetRequest, loaded loadedInput, ownership Manifest, configPath string, patch *Patch, targetPlan *TargetPlan) (string, string) {
-	globals, skipped, reason, code := globalPatches(request, target, loaded)
+	globals, skipped, reason, code := globalPatches(request, target, loaded, targetPlan.Install)
 	if reason != "" {
 		return reason, code
 	}

@@ -40,6 +40,8 @@ type installOptions struct {
 	jsonOutput     bool
 	verbose        bool
 	nonInteractive bool
+	// use (mango use) makes the profile each target's default and releases files it no longer writes.
+	use bool
 }
 
 func newInstallCmd() *cobra.Command {
@@ -93,7 +95,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	if len(registries) > 0 && registries[0] != nil {
 		registry = registries[0]
 	}
-	targets, err := installTargets(options, registry)
+	targets, err := commandTargets(options, registry)
 	if err != nil {
 		return err
 	}
@@ -147,8 +149,8 @@ func installPlanRequest(profile string, paths installPaths, targets []install.Ta
 	return install.Request{
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
-		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
-		Env: install.OSPathEnv(), SkipNotInstalled: options.all,
+		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault || options.use, Registry: registry,
+		Env: install.OSPathEnv(), SkipNotInstalled: options.all, Release: options.use,
 	}
 }
 
@@ -175,7 +177,7 @@ func noAgentsFound(plan install.Plan) bool {
 }
 
 func validateInstallOptions(options installOptions) error {
-	if !options.all && len(options.targets) == 0 && len(options.configValues()) == 0 {
+	if !options.all && !options.use && len(options.targets) == 0 && len(options.configValues()) == 0 {
 		return fmt.Errorf("at least one --target, --config target=path, or --all is required")
 	}
 	if options.all && len(options.targets) > 0 {
@@ -725,7 +727,7 @@ func installApplyCommand(profile string, options installOptions, planID string) 
 	if homePathOverride != "" {
 		args = append(args, "--home", homePathOverride)
 	}
-	args = append(args, "install", profile)
+	args = append(args, options.command(), profile)
 	args = append(args, installPlanArgs(options)...)
 	args = append(args, "--apply", "--yes", "--expect-plan", planID)
 	for index, arg := range args {

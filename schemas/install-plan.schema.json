@@ -56,7 +56,7 @@
       "required": ["path", "action", "owned"],
       "properties": {
         "path": {"type": "string"},
-        "action": {"enum": ["create", "update", "override", "noop", "delete"]},
+        "action": {"enum": ["create", "update", "override", "adopt", "restore", "noop", "delete"]},
         "beforeSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "afterSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "owned": {"type": "boolean"},
@@ -67,7 +67,7 @@
         {
           "required": ["afterSHA256"],
           "properties": {
-            "action": {"enum": ["create", "update", "override", "noop"]},
+            "action": {"enum": ["create", "update", "override", "adopt", "restore", "noop"]},
             "delete": {"const": false}
           }
         },
@@ -118,7 +118,7 @@
       "additionalProperties": false,
       "required": ["requirement"],
       "properties": {
-        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "effort"]},
+        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "effort", "globalInstructions"]},
         "count": {"type": "integer", "minimum": 1},
         "value": {"type": "string", "minLength": 1},
         "reason": {"type": "string", "minLength": 1}

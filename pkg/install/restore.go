@@ -80,7 +80,9 @@ func BuildRestorePlan(target, configPath, originalID string) (RestorePlan, error
 type undoState struct {
 	config, manifest, journalFile installfs.Snapshot
 	ownership                     Manifest
-	journal                       installfs.Journal
+	// before is the ownership manifest the install replaced, from its journal backup.
+	before  Manifest
+	journal installfs.Journal
 }
 
 // BuildUndoPlan previews reversing one committed install of a registered, installable target.
@@ -140,29 +142,39 @@ func loadUndoState(request UndoRequest) (undoState, error) {
 	if err != nil {
 		return state, err
 	}
-	state.journal.Entries, err = targetJournalEntries(state.journal, state.manifest.Path, state.ownership)
+	if state.before, err = journalOriginalOwnership(state.journal, state.manifest.Path, request.Target); err != nil {
+		return state, err
+	}
+	state.journal.Entries, err = targetJournalEntries(state.journal, state.manifest.Path, state.ownership, state.before)
 	if err != nil {
 		return state, err
 	}
 	return state, requireChangedFilesJournaled(state)
 }
 
+// journalOriginalOwnership decodes the ownership manifest an install replaced, or an
+// empty manifest when the install created it.
+func journalOriginalOwnership(journal installfs.Journal, manifestPath string, target Target) (Manifest, error) {
+	manifestEntry := entryFor(journal, manifestPath)
+	if manifestEntry == nil || !manifestEntry.BeforeExists {
+		return Manifest{}, nil
+	}
+	backup, err := installfs.SnapshotFile(manifestEntry.BackupPath)
+	if err != nil || !backup.Exists {
+		return Manifest{}, fmt.Errorf("original ownership manifest backup is missing or unreadable")
+	}
+	before, err := decodeManifest(backup.Content, target)
+	if err != nil {
+		return Manifest{}, fmt.Errorf("decode original ownership manifest: %w", err)
+	}
+	return before, nil
+}
+
 // requireChangedFilesJournaled checks that the journal covers every file whose owned hash the
 // install changed, so a journal that dropped or renamed an entry cannot undo only part of an install.
 func requireChangedFilesJournaled(state undoState) error {
-	manifestEntry := entryFor(state.journal, state.manifest.Path)
-	var before Manifest
-	if manifestEntry.BeforeExists {
-		backup, err := installfs.SnapshotFile(manifestEntry.BackupPath)
-		if err != nil || !backup.Exists {
-			return fmt.Errorf("original ownership manifest backup is missing or unreadable")
-		}
-		if before, err = decodeManifest(backup.Content, state.ownership.Target); err != nil {
-			return fmt.Errorf("decode original ownership manifest: %w", err)
-		}
-	}
 	for _, file := range state.ownership.Files {
-		priorHash, _ := ownershipHash(before, file.Path)
+		priorHash, _ := ownershipHash(state.before, file.Path)
 		if priorHash != file.SHA256 && entryFor(state.journal, file.Path) == nil {
 			return fmt.Errorf("install journal %s does not describe every file the install changed", state.journal.PlanID)
 		}
@@ -187,14 +199,16 @@ func validateRestoreManifest(snapshot installfs.Snapshot, target Target) (Manife
 	return manifest, nil
 }
 
-// targetJournalEntries keeps the entries this target owns: its manifest and manifest-listed files,
-// which include the config unless a named-profile install left it unchanged.
+// targetJournalEntries keeps the entries this target owns: its manifest, manifest-listed files
+// (which include the config unless a named-profile install left it unchanged), and files the
+// install released, which the replaced manifest owned and the current one no longer lists.
 // A multi-target transaction may also journal other targets' files, which this undo leaves alone.
-func targetJournalEntries(journal installfs.Journal, manifestPath string, ownership Manifest) ([]installfs.JournalEntry, error) {
+func targetJournalEntries(journal installfs.Journal, manifestPath string, ownership, before Manifest) ([]installfs.JournalEntry, error) {
 	var result []installfs.JournalEntry
 	hasOwned, hasManifest := false, false
 	for _, entry := range journal.Entries {
 		ownedHash, owned := ownershipHash(ownership, entry.Path)
+		_, released := ownershipHash(before, entry.Path)
 		switch {
 		case entry.Path == manifestPath:
 			hasManifest = true
@@ -203,6 +217,8 @@ func targetJournalEntries(journal installfs.Journal, manifestPath string, owners
 			if ownedHash != entry.AfterSHA256 {
 				return nil, fmt.Errorf("ownership manifest does not record the installed content of %s", entry.Path)
 			}
+		case released:
+			hasOwned = true
 		default:
 			continue
 		}
@@ -275,10 +291,14 @@ func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current i
 	return nil
 }
 
-// installedDrift reports whether a file differs from what the install wrote; the manifest must never drift.
+// installedDrift reports whether a file differs from what the install wrote (or, for a
+// file the install deleted, whether it came back); the manifest must never drift.
 func installedDrift(entry installfs.JournalEntry, current installfs.Snapshot, isManifest bool) (bool, error) {
-	if !entry.Applied || entry.Delete || !restoreID.MatchString(entry.AfterSHA256) {
+	if !entry.Applied || (entry.Delete && isManifest) || !restoreID.MatchString(entry.AfterSHA256) {
 		return false, fmt.Errorf("install journal entry for %q is invalid or cannot be undone", entry.Path)
+	}
+	if entry.Delete {
+		return current.Exists, nil
 	}
 	expectedMode := uint32(0o600)
 	if entry.BeforeExists {
