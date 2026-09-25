@@ -15,10 +15,10 @@ LDFLAGS=-ldflags="-X ${MODULE_PATH}/internal/version.Version=${BUILD_VERSION} \
 WORKTREE_SCRIPT ?= scripts/worktree-setup.sh
 SKILL_DEST ?= $(HOME)/.agents/skills/profile-mango/SKILL.md
 BASE ?= $(shell git branch --show-current 2>/dev/null || echo HEAD)
-GOBIN_DIR := $(shell go env GOBIN)
-ifeq ($(GOBIN_DIR),)
-  GOBIN_DIR := $(shell go env GOPATH)/bin
-endif
+# Match install.sh: ~/.local/bin unless PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR is set.
+# `go env GOBIN` is avoided because mise/asdf point it at a versioned toolchain dir.
+PROFILE_MANGO_INSTALL_DIR ?= $(HOME)/.local/bin
+GOBIN_DIR ?= $(PROFILE_MANGO_INSTALL_DIR)
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -31,7 +31,9 @@ deps: ## Download dependencies
 
 d: deps ## Alias for deps
 
-install: ## Install mango (and profile-mango compatibility alias) to GOBIN
+install: ## Install mango (and profile-mango alias) to ~/.local/bin (override: PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR)
+	@case "$(GOBIN_DIR)" in */mise/installs/*|*/.asdf/installs/*) \
+		echo "warning: $(GOBIN_DIR) is inside a mise/asdf toolchain; mango may be unreachable outside this repo" >&2;; esac
 	@mkdir -p "$(GOBIN_DIR)"
 	go build ${LDFLAGS} -o "$(GOBIN_DIR)/mango" ./cmd/profile-mango/
 	cp "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
@@ -138,9 +140,8 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall mango (removes the mango and profile-mango GOBIN binaries)
-	@rm -f "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
-	@./uninstall.sh
+uninstall: ## Uninstall mango and the profile-mango alias from the make install directory
+	@PROFILE_MANGO_INSTALL_DIR="$(GOBIN_DIR)" ./uninstall.sh
 
 u: uninstall ## Alias for uninstall
 
