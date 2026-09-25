@@ -543,15 +543,27 @@ func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
 			model, effort = ohmypi.SplitRoleSelector(field.After)
 		case "profile.model", "agent.model", "config.model", "config.model.default", "config.defaultModel", "config.agents.defaults.model.primary":
 			model = field.After
-		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault":
+		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault", "profile.effortLevel", "config.effortLevel", "agent.variant":
 			effort = field.After
 		}
 	}
 	if model == "" && effort == "" {
 		return nil
 	}
+	if skipped, found := skippedEffort(target.SkippedRequirements); found && effort == "" {
+		effort = skipped.Value + " NOT APPLIED"
+	}
 	_, err := fmt.Fprintf(output, "    route: model %s, effort %s\n", humanPath(orUnknown(model)), humanPath(orUnknown(effort)))
 	return err
+}
+
+func skippedEffort(skipped []install.SkippedRequirement) (install.SkippedRequirement, bool) {
+	for _, requirement := range skipped {
+		if requirement.Requirement == install.RequirementEffort {
+			return requirement, true
+		}
+	}
+	return install.SkippedRequirement{}, false
 }
 
 func orUnknown(value string) string {
@@ -604,7 +616,8 @@ func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement,
 	if err := writeSkippedRequirements(&line, skipped); err != nil {
 		return err
 	}
-	_, err := fmt.Fprint(output, strings.Replace(line.String(), "not installed for this agent", styles.warning("not installed for this agent"), 1))
+	text := strings.Replace(line.String(), "not installed for this agent", styles.warning("not installed for this agent"), 1)
+	_, err := fmt.Fprint(output, strings.Replace(text, "NOT APPLIED", styles.warning("NOT APPLIED"), 1))
 	return err
 }
 
@@ -641,7 +654,7 @@ func semanticFieldLabel(path string) string {
 	switch name {
 	case "default", "primary":
 		return "model"
-	case "model_reasoning_effort", "reasoning_effort":
+	case "model_reasoning_effort", "reasoning_effort", "effortLevel", "variant":
 		return "effort"
 	case "defaultThinkingLevel", "thinkingDefault":
 		return "thinking level"
@@ -830,14 +843,16 @@ func writeInstallMode(output io.Writer, mode *install.InstallMode) error {
 	return err
 }
 
-// writeSkippedRequirements lists, on one line, the profile settings this agent does not receive.
+// writeSkippedRequirements lists, on one line, the profile settings this agent does
+// not receive, after one explicit line per route effort it does not apply.
 func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequirement) error {
-	if len(skipped) == 0 {
-		return nil
-	}
 	names := make([]string, 0, len(skipped))
 	for _, requirement := range skipped {
 		switch {
+		case requirement.Requirement == install.RequirementEffort:
+			if _, err := fmt.Fprintf(output, "    effort %s: NOT APPLIED (%s)\n", humanPath(requirement.Value), humanPath(requirement.Reason)); err != nil {
+				return err
+			}
 		case requirement.Requirement == install.RequirementInstructions && requirement.Count == 1:
 			names = append(names, requirement.Requirement+" (1 file)")
 		case requirement.Requirement == install.RequirementInstructions:
@@ -847,6 +862,9 @@ func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequire
 		default:
 			names = append(names, requirement.Requirement)
 		}
+	}
+	if len(names) == 0 {
+		return nil
 	}
 	_, err := fmt.Fprintf(output, "    not installed for this agent: %s\n", strings.Join(names, ", "))
 	return err

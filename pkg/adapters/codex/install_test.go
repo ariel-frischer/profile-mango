@@ -110,8 +110,8 @@ func TestPatchConfigRejectsAmbiguousOrUnsupportedInput(t *testing.T) {
 		},
 		"unqualified effort": {
 			source: "",
-			route:  profilemango.RouteBinding{Provider: "openai", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "medium"},
-			want:   "only source-qualified high",
+			route:  profilemango.RouteBinding{Provider: "openai", Transport: "native", Authentication: "oauth", Model: "gpt-5.6", Effort: "max"},
+			want:   `source-qualified reasoning efforts none, minimal, low, medium, high, xhigh, not "max"`,
 		},
 	}
 	for name, test := range tests {

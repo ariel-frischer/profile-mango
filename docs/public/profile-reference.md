@@ -88,8 +88,8 @@ those fields replaced, and other agents use the base route. This is how one
 profile drives several agents with different providers.
 
 Some agents need specific route values. For example, Claude Code installs only
-with an `anthropic` provider, and Codex only with `openai`, `high` effort,
-native transport, and OAuth. The plan says why when a route doesn't fit. See [agents](agents.md).
+with an `anthropic` provider, and Codex only with `openai`, native transport,
+OAuth, and an effort from `none` to `xhigh`. The plan says why when a route doesn't fit. See [agents](agents.md).
 
 ### `roles`
 

@@ -25,10 +25,10 @@ another agent is billed. A successful reply still does not prove its billing rou
 | Agent | Check before sending a prompt |
 | --- | --- |
 | [Codex](#codex) | Inspect `<profile>.config.toml` and use `codex --profile <profile>`. Check `codex login status` yourself, but its ChatGPT result cannot prove exact OAuth or rule out external tokens; project config and `-c` can override the model. Do not share status output. |
-| [OpenCode](#opencode) | Inspect `agents/<profile>.md` and select it with `--agent`. Check the actual provider account and billing separately; project, explicit, inline, and managed config may override the route. Mango does not install effort or authenticate OpenCode. |
+| [OpenCode](#opencode) | Inspect `agents/<profile>.md` and select it with `--agent`. Check the actual provider account and billing separately; project, explicit, inline, and managed config may override the route. Effort is set as the agent's model `variant` and applies only if that model has a variant of that name; Mango does not authenticate OpenCode. |
 | [OpenClaw](#openclaw) | Inspect `~/.openclaw-<profile>/openclaw.json`. Verify profile-specific sign-in, `OPENCLAW_CONFIG_PATH`/`OPENCLAW_STATE_DIR`, per-agent model overrides and fallbacks, then the account's billing. The default profile's credentials are not copied. |
 | [Hermes](#hermes) | Inspect `~/.hermes/profiles/<profile>/config.yaml`. Verify sign-in for that profile, CLI/environment overrides and provider fallbacks, then the account's billing. The default profile's credentials are not copied. |
-| [Claude Code](#claude-code) | Check the plan's `--settings` path, other active settings layers, the agent's login method and account billing. Mango installs only the model. |
+| [Claude Code](#claude-code) | Check the plan's `--settings` path, other active settings layers, the agent's login method and account billing. Mango installs only the model and effort. |
 | [Pi](#pi) | Check global and project settings for the effective provider/model, then the agent's active credentials and provider billing. Project settings can win. |
 | [Oh My Pi](#oh-my-pi) | Check the default model role and any other role selected for the test, then active credentials and provider billing. |
 
@@ -47,17 +47,20 @@ The evidence behind every row is in the developer
 
 ## Claude Code
 
-- **Installs:** the top-level `model` in an emulated named profile:
+- **Installs:** the top-level `model` and, for `low`, `medium`, `high`, or
+  `xhigh` effort, `effortLevel` in an emulated named profile:
   `profiles/<profile>.json` next to `settings.json`. Start it with
   `claude --settings <path>`, printed by the plan as `use it:`. `settings.json`
-  is not changed unless you pass `--default`, which also writes `model` there
-  so plain `claude` uses it. Claude Code has no native named profiles; this is
+  is not changed unless you pass `--default`, which also writes these there
+  so plain `claude` uses them. Claude Code has no native named profiles; this is
   a profile-mango file-placement convention over the qualified `--settings`
   consumption.
 - **Route:** needs provider `anthropic` and native transport. The `init`
   starter bindings already include a `claude-code` override for this.
-- **Caveats:** effort, provider, and sign-in are not set. Project, managed, or
-  command-line settings can override the user file. An existing `settings.json`
+- **Caveats:** provider and sign-in are not set. Other efforts (such as `max`)
+  are shown in the plan as `effort <value>: NOT APPLIED`. Project, managed, or
+  command-line settings, `--effort`, and `CLAUDE_CODE_EFFORT_LEVEL` can override
+  the user file. An existing `settings.json`
   must not be empty.
 - [Reference](../dev/agents/claude-code.md)
 
@@ -71,8 +74,8 @@ The evidence behind every row is in the developer
 - **Blocks:** a legacy `profile = ...` line, or a `[profiles.<profile>]` table
   with the same name, in `config.toml`. Codex 0.154.0 refuses to start with
   either one, so remove or move it first. Other `[profiles.*]` tables are kept.
-- **Route:** needs provider `openai`, `high` effort, native transport, and
-  OAuth. Any other route blocks.
+- **Route:** needs provider `openai`, native transport, OAuth, and effort
+  `none`, `minimal`, `low`, `medium`, `high`, or `xhigh`. Any other route blocks.
 - **Caveats:** profile-mango never writes or reads login data, and installing
   doesn't prove you're signed in with OAuth. Run `codex login status` yourself.
   It tells an API key apart from a ChatGPT login, but not Codex-managed OAuth
@@ -87,7 +90,8 @@ The evidence behind every row is in the developer
 
 - **Installs:** a named primary agent definition, `agents/<profile>.md` next
   to `opencode.json` (or `opencode.jsonc`), with the route's model and the
-  profile's instructions in order. The instructions replace that agent's
+  profile's instructions in order, and the effort as the agent's model
+  `variant`. The instructions replace that agent's
   built-in prompt. Start it with `opencode --agent <profile>`. `opencode.json`
   is not changed unless you pass `--default`.
 - **`--default` also writes:** the top-level `model` (as `provider/model`)
@@ -104,7 +108,11 @@ The evidence behind every row is in the developer
   instead of the default one. A primary agent becomes selectable, not
   active, and a subagent becomes available for delegation. Neither enforces
   permissions.
-- **Caveats:** effort and provider options are not set. Edited or unowned
+- **Caveats:** OpenCode applies the effort `variant` only when the agent's
+  model defines a variant of that name, and otherwise silently uses the model
+  default; the `--default` top-level model carries no effort. Efforts with no
+  built-in variant (such as `ultra`) are shown as `effort <value>: NOT APPLIED`.
+  Provider options are not set. Edited or unowned
   skill and agent files are never overwritten, even with `--override`.
 - [Reference](../dev/agents/opencode.md)
 
