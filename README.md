@@ -108,7 +108,7 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 | Codex | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#codex) |
 | OpenCode | Model and instructions, as a named agent | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
-| Oh My Pi | Model, thinking level | [agents](docs/public/agents.md#oh-my-pi) |
+| Oh My Pi | Model roles with per-role effort | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |
 | Hermes | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#hermes) |
 

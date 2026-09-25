@@ -17,8 +17,13 @@ func (ohMyPiAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: ohmypi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles.default and defaultThinkingLevel; authentication, provider options, permissions, tools, instructions, skills, precedence, and runtime enforcement remain unmanaged",
+		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles selectors (default plus built-in roles, each with its own :effort suffix); authentication, provider options, permissions, tools, instructions, skills, precedence, and runtime enforcement remain unmanaged",
 	}
+}
+
+// SupportedRequirements reports that Oh My Pi installs per-role routes as modelRoles selectors.
+func (ohMyPiAdapter) SupportedRequirements(AgentDestination, bool) []string {
+	return []string{RequirementRoles}
 }
 
 func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
@@ -29,18 +34,15 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 	if err != nil {
 		return Patch{}, err
 	}
-	patch := Patch{
-		Files: []FilePatch{{Content: configPatch.Content, Fields: []string{
-			"config.modelRoles.default",
-			"config.defaultThinkingLevel",
-		}}},
-		Fields: []FieldChange{
-			{Path: "config.modelRoles.default", Before: configPatch.BeforeModel, After: configPatch.AfterModel},
-			{Path: "config.defaultThinkingLevel", Before: configPatch.BeforeThinkingLevel, After: configPatch.AfterThinkingLevel},
-		},
-		OverrideAllowed: true,
+	names := make([]string, 0, len(configPatch.Roles))
+	fields := make([]FieldChange, 0, len(configPatch.Roles))
+	for _, role := range configPatch.Roles {
+		path := "config.modelRoles." + role.Role
+		names = append(names, path)
+		fields = append(fields, FieldChange{Path: path, Before: role.Before, After: role.After})
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.route_fields_only", "target.config", "only modelRoles.default and defaultThinkingLevel are applied; authentication, provider options, permissions, tools, instructions, skills, precedence, and runtime enforcement remain unmanaged", 0, 0)
+	patch := Patch{Files: []FilePatch{{Content: configPatch.Content, Fields: names}}, Fields: fields, OverrideAllowed: true}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.route_fields_only", "target.config", "only modelRoles selectors are applied; their :effort suffixes and non-default roles are source-reviewed, not natively observed; defaultThinkingLevel, authentication, provider options, permissions, tools, instructions, skills, precedence, and runtime enforcement remain unmanaged", 0, 0)
 	return patch, nil
 }
 

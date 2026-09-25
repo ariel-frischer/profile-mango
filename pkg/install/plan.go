@@ -286,7 +286,14 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if !request.Strict {
 		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, request.Default, loaded)
 	}
-	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: loaded.Route.For(targetRequest.Target.Name), Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
+	route, skippedRoles, strictReason := routeSubset(adapter, targetRequest.Agent, request.Default, request.Strict, loaded.Route.For(targetRequest.Target.Name))
+	if strictReason != "" {
+		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")
+	}
+	if skippedRoles != nil {
+		targetPlan.SkippedRequirements = append(targetPlan.SkippedRequirements, *skippedRoles)
+	}
+	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
 	if targetPlan.Install != nil {
 		input.Install = *targetPlan.Install
 	}

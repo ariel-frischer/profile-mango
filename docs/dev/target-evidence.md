@@ -67,7 +67,7 @@ reproducible fixtures, and evidence independent of the developer's machine.
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; exact-source profile-v2 loader plus isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml`; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `high` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project and runtime overrides can shadow them. OAuth identity, model availability, positive effective effort value, delivery and full-profile applicability remain unverified |
-| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
+| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; per-role `:effort` selectors source-reviewed only | `modelRoles` selectors installable (default natively qualified; built-in roles and effort suffixes source-reviewed); standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `profiles/<name>/config.yaml` profile below the resolved `config.yaml`'s directory that `hermes -p <name>` reads, and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
@@ -811,6 +811,32 @@ Only `modelRoles.default` and `defaultThinkingLevel` are installable at an expli
 documented default path. Full-profile previews remain non-applicable. This evidence does not prove
 model/provider resolution, authentication, precedence, delivery or enforcement.
 See the [target reference](agents/oh-my-pi.md) for the bounded patch contract.
+
+### Oh My Pi per-role selectors, 2026-09-25
+
+Source review only, at the same tag and commit (fresh read-only checkout,
+`git rev-parse HEAD` = `78b753124d11f8dd3ae73e2524125890ff7c977e`). The
+installer now writes `modelRoles.default` and one `modelRoles.<role>` per bound
+route role as `provider/model[:effort]`, and no longer writes
+`defaultThinkingLevel`:
+
+- `settings-schema.ts` types `modelRoles` as a string record;
+  `model-roles.ts` `MODEL_ROLES` lists the built-in roles `default`, `smol`,
+  `slow`, `vision`, `plan`, `commit`, `tiny`, `task`, and `advisor`.
+- `tui/src/overlays/model-selector.ts` `splitThinkingSuffix` and
+  `model-resolver.ts` `resolveModelRoleValue` split a trailing `:<level>`
+  (including `max`/`auto`) and report it as an explicit thinking level.
+- `sdk.ts` `pickInitialThinkingLevel` applies the default role's explicit
+  suffix before the model default and `defaultThinkingLevel`; an explicit
+  `--model` or persisted session level bypasses it.
+- `docs/settings.md` shows `slow: anthropic/claude-opus-4-5:high` and states
+  that role values may carry a thinking suffix.
+
+File hashes are recorded in the [target reference](agents/oh-my-pi.md#per-role-selectors-2026-09-25).
+Non-built-in role names fail closed. Other targets list bound roles as a
+skipped `roles` requirement and `install --strict` blocks them. The 2026-09-22
+native getter probe was not re-run, so suffix interpretation and non-default
+role storage remain source-reviewed rather than natively observed.
 
 ## Hermes Agent v0.21.3 evidence
 

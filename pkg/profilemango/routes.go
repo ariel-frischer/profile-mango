@@ -68,3 +68,32 @@ func knownRouteTarget(name string) bool {
 	}
 	return false
 }
+
+// SortedRoleNames returns the route's role names in a stable order.
+func (route RouteBinding) SortedRoleNames() []string {
+	names := make([]string, 0, len(route.Roles))
+	for name := range route.Roles {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func validateRouteRoles(path string, route RouteBinding, diagnostics *Diagnostics) {
+	if route.Roles != nil && len(route.Roles) == 0 {
+		diagnostics.Add(SeverityError, "binding.roles_empty", path+".roles", "roles must define at least one role", 0, 0)
+	}
+	for _, name := range route.SortedRoleNames() {
+		rolePath := path + ".roles." + name
+		if !profileNamePattern.MatchString(name) {
+			diagnostics.Add(SeverityError, "binding.role_name_invalid", rolePath, "role name must be lowercase kebab-case", 0, 0)
+		}
+		if name == ReservedRoleDefault {
+			diagnostics.Add(SeverityError, "binding.role_name_reserved", rolePath, "the route's own provider, model, and effort are the default role; remove roles.default", 0, 0)
+		}
+		role := route.Roles[name]
+		if role.Provider == "" || role.Model == "" {
+			diagnostics.Add(SeverityError, "binding.role_incomplete", rolePath, "provider and model are required", 0, 0)
+		}
+	}
+}
