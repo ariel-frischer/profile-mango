@@ -59,7 +59,9 @@ type Bindings struct {
 // RouteBinding is a base route plus optional explicit per-target overrides.
 // Targets is empty in every effective route returned by RouteFor. ParseBindings
 // fills an omitted Transport with DefaultTransport and Authentication with
-// DefaultAuthentication.
+// DefaultAuthentication. Roles maps additional named roles (for example a
+// planner or a fast helper) to their own route; the base route is the default
+// role. Target overrides never change Roles.
 type RouteBinding struct {
 	Provider       string                   `yaml:"provider" json:"provider"`
 	Transport      string                   `yaml:"transport" json:"transport"`
@@ -67,6 +69,7 @@ type RouteBinding struct {
 	Model          string                   `yaml:"model" json:"model"`
 	Effort         string                   `yaml:"effort" json:"effort"`
 	Targets        map[string]RouteOverride `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Roles          map[string]RoleRoute     `yaml:"roles,omitempty" json:"roles,omitempty"`
 }
 
 // RouteOverride replaces any non-empty base route field for one target.
@@ -77,6 +80,16 @@ type RouteOverride struct {
 	Model          string `yaml:"model,omitempty" json:"model,omitempty"`
 	Effort         string `yaml:"effort,omitempty" json:"effort,omitempty"`
 }
+
+// RoleRoute is the provider, model, and optional effort for one named role.
+type RoleRoute struct {
+	Provider string `yaml:"provider" json:"provider"`
+	Model    string `yaml:"model" json:"model"`
+	Effort   string `yaml:"effort,omitempty" json:"effort,omitempty"`
+}
+
+// ReservedRoleDefault names the role the base route already defines.
+const ReservedRoleDefault = "default"
 
 // ResolvedProfile is the deterministic canonical model after inheritance.
 type ResolvedProfile struct {

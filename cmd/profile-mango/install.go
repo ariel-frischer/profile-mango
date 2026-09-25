@@ -15,6 +15,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
@@ -538,7 +539,9 @@ func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
 			path = strings.TrimPrefix(path, target.Install.ProfileName+".")
 		}
 		switch path {
-		case "profile.model", "agent.model", "config.model", "config.model.default", "config.modelRoles.default", "config.defaultModel", "config.agents.defaults.model.primary":
+		case "config.modelRoles.default":
+			model, effort = ohmypi.SplitRoleSelector(field.After)
+		case "profile.model", "agent.model", "config.model", "config.model.default", "config.defaultModel", "config.agents.defaults.model.primary":
 			model = field.After
 		case "config.model_reasoning_effort", "config.agent.reasoning_effort", "config.defaultThinkingLevel", "config.agents.defaults.thinkingDefault":
 			effort = field.After
@@ -632,6 +635,9 @@ func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{},
 
 func semanticFieldLabel(path string) string {
 	name := path[strings.LastIndex(path, ".")+1:]
+	if strings.HasPrefix(path, "config.modelRoles.") && name != "default" {
+		return "role " + name
+	}
 	switch name {
 	case "default", "primary":
 		return "model"

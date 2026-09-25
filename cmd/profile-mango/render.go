@@ -242,9 +242,19 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		return finishRender(cmd, result, options, false)
 	}
 	result = adapter.render(render.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
+	addUnrenderedRolesDiagnostic(&result, options.target, route)
 	result.Diagnostics = append(result.Diagnostics, diagnostics...)
 	result.Diagnostics = result.Diagnostics.Sorted()
 	return finishRender(cmd, result, options, true)
+}
+
+// addUnrenderedRolesDiagnostic reports route roles a target preview omits;
+// only Oh My Pi renders roles (as modelRoles selectors).
+func addUnrenderedRolesDiagnostic(result *render.Result, target string, route profilemango.RouteBinding) {
+	if len(route.Roles) == 0 || target == ohmypi.TargetName {
+		return
+	}
+	result.Diagnostics.Add(profilemango.SeverityWarning, "render.route.roles_unsupported", "route.roles", fmt.Sprintf("%d route roles are not rendered for %s; only Oh My Pi renders per-role routes", len(route.Roles), target), 0, 0)
 }
 
 func resolvedRenderTargets(values []string, version string) ([]string, error) {

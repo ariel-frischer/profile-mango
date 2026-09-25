@@ -22,7 +22,8 @@
             "type": "object", "minProperties": 1,
             "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
             "additionalProperties": {"$ref": "#/$defs/targetOverride"}
-          }
+          },
+          "roles": {"$ref": "#/$defs/roles"}
         }
       }
     }
@@ -36,6 +37,21 @@
         "provider": {"$ref": "#/$defs/field"},
         "transport": {"$ref": "#/$defs/field"},
         "authentication": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"},
+        "roles": {"$ref": "#/$defs/roles"}
+      }
+    },
+    "roles": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$", "not": {"const": "default"}},
+      "additionalProperties": {"$ref": "#/$defs/roleRoute"}
+    },
+    "roleRoute": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
         "model": {"$ref": "#/$defs/field"},
         "effort": {"$ref": "#/$defs/field"}
       }

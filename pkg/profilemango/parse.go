@@ -98,6 +98,7 @@ func ParseBindings(data []byte) (Bindings, Diagnostics) {
 			diagnostics.Add(SeverityError, "binding.route_incomplete", path, "provider, model, and effort are required", 0, 0)
 		}
 		validateRouteTargets(path, route, &diagnostics)
+		validateRouteRoles(path, route, &diagnostics)
 	}
 	return bindings, diagnostics.Sorted()
 }

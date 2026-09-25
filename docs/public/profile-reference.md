@@ -77,6 +77,7 @@ routes:
 | `transport` | no | `native` | How the agent reaches the provider |
 | `authentication` | no | `oauth` | How the agent signs in; credentials stay with the agent |
 | `targets` | no | | Per-agent overrides, see below |
+| `roles` | no | | Extra named roles with their own model, see below |
 
 ### `targets` overrides
 
@@ -89,6 +90,37 @@ profile drives several agents with different providers.
 Some agents need specific route values. For example, Claude Code installs only
 with an `anthropic` provider, and Codex only with `openai`, `high` effort,
 native transport, and OAuth. The plan says why when a route doesn't fit. See [agents](agents.md).
+
+### `roles`
+
+`roles` gives named roles, such as a planner or a fast helper, their own
+`provider`, `model`, and optional `effort`. The route's own fields are the
+default role, so `default` is not allowed as a role name. Role names are
+lowercase kebab-case, and `targets` overrides never change roles.
+
+```yaml
+routes:
+  local:
+    provider: anthropic
+    model: claude-opus-5-5
+    effort: medium
+    roles:
+      plan:
+        provider: anthropic
+        model: claude-opus-5-5
+        effort: high
+      smol:
+        provider: opencode-go
+        model: gpt-6-luna
+        effort: high
+```
+
+Only Oh My Pi installs roles today. It writes each role as
+`modelRoles.<role>: provider/model:effort` and accepts only its built-in roles
+(`advisor`, `commit`, `plan`, `slow`, `smol`, `task`, `tiny`, `vision`); any
+other role name blocks the Oh My Pi install. Other agents install only the
+default route and list `roles` under "not installed for this agent";
+`install --strict` blocks them instead.
 
 ## Checking a profile
 

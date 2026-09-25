@@ -70,8 +70,8 @@ also has a deterministic inert TOML renderer under the explicit target identity
 `jcode-fork`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
 candidate. Codex uses TOML candidate syntax. Pi uses exact source-grounded JSON
 settings keys `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`.
-Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
-and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
+Oh My Pi uses the pinned source's YAML `modelRoles` selectors, `provider/model:effort`
+for the default role and each bound route role. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `agents.defaults.thinkingDefault`. Hermes uses source-grounded YAML fields for
 `model.provider`, `model.default`, and `agent.reasoning_effort`. OpenCode emits only
@@ -116,7 +116,8 @@ and enforcement remain blocked, rather than treating parsing as runtime evidence
 
 Oh My Pi's initial build stopped at its missing native addon. A later exact-source
 addon build with pinned nightly Rust qualifies the separate installer for only
-`modelRoles.default` and `defaultThinkingLevel` through `Settings.loadReadOnly`.
+`modelRoles.default` through `Settings.loadReadOnly`; per-role `:effort` selectors
+since 2026-09-25 rest on source review only.
 The reviewed `config` commands still initialize discovery and migration paths and
 were not run. Full startup, authentication, precedence, and enforcement stay blocked.
 See [target evidence](target-evidence.md) and the [Oh My Pi reference](agents/oh-my-pi.md)

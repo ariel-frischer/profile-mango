@@ -118,8 +118,9 @@
       "additionalProperties": false,
       "required": ["requirement"],
       "properties": {
-        "requirement": {"enum": ["permissions", "tools", "instructions", "skills"]},
-        "count": {"type": "integer", "minimum": 1}
+        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles"]},
+        "count": {"type": "integer", "minimum": 1},
+        "reason": {"type": "string", "minLength": 1}
       }
     },
     "versionCheck": {

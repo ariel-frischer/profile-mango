@@ -1,6 +1,7 @@
 package install
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -148,5 +149,45 @@ spec:
 	}
 	if !hasFileAction(plan.Targets[0], ActionCreate) {
 		t.Fatalf("named agent file was not planned: %#v", plan.Targets[0].Files)
+	}
+}
+
+func TestTargetsWithoutRoleSupportSkipRolesOrBlockUnderStrict(t *testing.T) {
+	tests := map[string]struct {
+		strict bool
+		status string
+	}{
+		"subset": {status: StatusReady},
+		"strict": {strict: true, status: StatusBlocked},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, _ := codexTestRequest(t)
+			request.Registry = DefaultRegistry()
+			request.Strict = test.strict
+			writeInstallTestFile(t, request.BindingsPath, "routes:\n  primary:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n    roles:\n      smol:\n        provider: openai\n        model: gpt-5.6-mini\n      plan:\n        provider: openai\n        model: gpt-5.6\n        effort: xhigh\n")
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			target := plan.Targets[0]
+			if target.Status != test.status {
+				t.Fatalf("target = %s (%s)", target.Status, target.Reason)
+			}
+			if test.strict {
+				if !strings.Contains(target.Reason, "2 route roles cannot be installed") || len(target.SkippedRequirements) != 0 {
+					t.Fatalf("strict target = %#v", target)
+				}
+				return
+			}
+			want := []SkippedRequirement{{Requirement: RequirementRoles, Count: 2, Reason: rolesUnsupportedReason}}
+			if !reflect.DeepEqual(target.SkippedRequirements, want) {
+				t.Fatalf("skipped = %#v", target.SkippedRequirements)
+			}
+			data, err := json.Marshal(plan)
+			if err != nil || !strings.Contains(string(data), `{"requirement":"roles","count":2,"reason":"per-role routes are only installed for Oh My Pi`) {
+				t.Fatalf("plan JSON lacks roles skip (%v): %s", err, data)
+			}
+		})
 	}
 }
