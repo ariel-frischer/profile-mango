@@ -4,8 +4,10 @@
 mutable, unversioned pages. **Release context:** `v2.1.278`, commit
 `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`. The release pin does not version
 the documentation. **Status:** profile-mango ships an exact-version inert preview
-renderer plus a model-only installer that writes an emulated named profile file by
-default. Exact explicit-file model consumption was qualified on 2026-09-22; full effective-state support remains blocked.
+renderer plus a model and effort installer that writes an emulated named profile
+file by default. Exact explicit-file model consumption was qualified on
+2026-09-22 and top-level `effortLevel` consumption on 2026-09-25; full
+effective-state support remains blocked.
 
 ## Immutable artifact and release context
 
@@ -54,8 +56,9 @@ provider, transport, authentication, credentials, or effort values.
 
 Claude Code has no native concept of named profiles: `--settings <file>` loads
 strict JSON from any path the caller supplies. `mango install <name>
---target claude-code` uses this to emulate one: the top-level `model` is written
-to a Mango-owned `profiles/<name>.json` beside `settings.json`, and the plan
+--target claude-code` uses this to emulate one: the top-level `model` (and
+`effortLevel` when the route effort is `low`, `medium`, `high`, or `xhigh`) is
+written to a Mango-owned `profiles/<name>.json` beside `settings.json`, and the plan
 prints `use it: claude --settings <path>` so you can start Claude Code with it.
 `settings.json` itself is read only to check it exists and is not byte-empty,
 and stays byte-for-byte unchanged unless `--default` is also given, which then
@@ -66,6 +69,22 @@ not observed Claude Code behavior. The exact-ELF evidence below establishes
 model consumption from an explicit `--settings` path in general, not a
 `profiles/` directory specifically. See the
 [dated evidence](../target-evidence.md#bounded-model-installation-2026-09-22).
+
+## Effort
+
+The exact `2.1.278` ELF settings schema declares top-level `effortLevel` as one
+of `low`, `medium`, `high`, `xhigh`, silently discarding any other value
+(`max` is session-only). The isolated probe's offline `/model` status line
+reported each of the four levels from an explicit `--settings` file and from
+the default user `settings.json`, reported no effort for `max` or an invalid
+value, and showed project settings overriding user settings. The installer
+therefore writes `effortLevel` beside `model` for those four levels only. Any
+other route effort is listed in the plan as `effort <value>: NOT APPLIED`
+(JSON `skippedRequirements` entry `effort` with value and reason), and
+`--strict` blocks. `--effort`, `CLAUDE_CODE_EFFORT_LEVEL`, per-model
+`modelSettings`, and project/local settings can still override the installed
+level; model support for effort is model-dependent. See the
+[dated evidence](../target-evidence.md#claude-code-effort-installation-2026-09-25).
 
 ## Permissions, instructions, and skills
 
@@ -98,11 +117,11 @@ provider request is qualified. See the [dated evidence](../target-evidence.md#bo
 | Portable property | Evidence level | Applicability consequence |
 | --- | --- | --- |
 | Config fidelity | Partial; only a documentation-context `model` candidate is emitted | Candidate preview only |
-| Native acceptance | Exact ELF consumes explicit-file model sentinel | Model-only installation |
+| Native acceptance | Exact ELF consumes explicit-file model sentinel and `effortLevel` | Model and effort installation |
 | Effective state | Unverified; no merged per-key report | Blocking |
-| Precedence | Documentation-context only; not observed for the release | Blocking |
+| Precedence | Documentation-context only; project over user observed for effort | Blocking |
 | Model | Narrow explicit-file consumption | Model field installable, full route remains unverified |
-| Effort | No release-qualified mapping | Blocking |
+| Effort | Exact ELF `/model` status reports `effortLevel` low/medium/high/xhigh from `--settings` and user settings | `effortLevel` installable for those four levels; others not applied |
 | Provider and transport | No release-qualified route mapping | Blocking |
 | Authentication | No credential-free identity proof | Blocking |
 | Permissions | Documentation describes modes, but equivalence and enforcement are untested | Blocking |

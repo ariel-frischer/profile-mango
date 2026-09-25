@@ -26,7 +26,7 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 		provider, model, original, expected string
 	}{
 		"opencode@1.18.31":    {"openai", "gpt-5.6", "{\n  // keep user comment\n  \"model\": \"openai/old\",\n  \"theme\": \"system\"\n}\n", "{\n  // keep user comment\n  \"model\": \"openai/gpt-5.6\",\n  \"theme\": \"system\"\n}\n"},
-		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
+		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
 		"hermes@0.21.3":       {"openai", "gpt-5.6", "# keep\nmodel:\n  provider: old\n  default: old\nagent:\n  reasoning_effort: low\nunknown: true\n", "# keep\nmodel:\n  provider: \"openai\"\n  default: \"gpt-5.6\"\nagent:\n  reasoning_effort: \"high\"\nunknown: true\n"},
 		"openclaw@2026.9.5":   {"openai", "gpt-5.6", "// keep\n{agents:{defaults:{model:{primary:\"old\"},thinkingDefault:\"low\"}},unknown:true}\n", "// keep\n{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}},unknown:true}\n"},
 		"pi@0.86.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
@@ -77,7 +77,7 @@ func (w installWorkflow) checkInstall(t *testing.T) {
 
 func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	w := newInstallWorkflow(t, "claude-code@2.1.278", "anthropic", "claude-sonnet-4-5",
-		"{\"model\":\"old\",\"keep\":true}\n", "{\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
+		"{\"model\":\"old\",\"keep\":true}\n", "{\"effortLevel\":\"high\",\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
 	// Claude Code writes its model to a Mango-owned profile file by default;
 	// --default exercises the direct settings.json patch this test checks.
 	w.args = append(w.args, "--default")

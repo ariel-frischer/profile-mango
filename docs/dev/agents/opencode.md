@@ -60,7 +60,8 @@ The source and native probe establish that `model` uses `"provider/model"`.
 Provider configuration remains a separate surface. Target-owned credentials remain
 separate and were replaced with synthetic empty auth content during the probe. The
 adapter never reads, writes, copies, or emits a real auth store, credential,
-provider option, authentication identity, effort, or transport setting.
+provider option, authentication identity, or transport setting; effort is written
+only as a named agent's `variant` (see [Effort](#effort-as-agent-variant)).
 
 ## Isolated native validation
 
@@ -168,7 +169,8 @@ config untouched unless `--default` is also passed. Explicitly,
 definition there instead. Either way, a distinct Markdown definition and
 adjacent ownership manifest are written, without touching the main JSONC config.
 Only simple lowercase names are accepted; OpenCode built-ins are reserved.
-The deterministic frontmatter sets `mode` and the exact native route model;
+The deterministic frontmatter sets `mode`, the exact native route model, and the
+route effort as the agent's `variant` (see [Effort](#effort-as-agent-variant));
 ordered portable instruction resources form the custom body. The native loader
 trims the prompt and this body replaces the named agent's stock prompt, rather
 than extending it. An empty instruction list cannot establish delivery. A
@@ -197,13 +199,39 @@ subagent: `9a6fe91855defd1f71a74642bea6b29d97031a39e9f5e47c2b5dca542e0384eb`.
 This is native definition consumption, not a model call, authenticated route,
 session, delegation or permission enforcement.
 
+## Effort as agent variant
+
+OpenCode `1.18.31` has no global effort setting. Its agent schema
+(`packages/core/src/v1/config/agent.ts`, SHA-256
+`4f2d7bc8283ff0c8cd922c614a74f74abb1abe9d5fc2a6dba3dd03d2dca5c624`) has a
+`variant` "Default model variant for this agent (applies only when using the
+agent's configured model)". `session/prompt.ts` (SHA-256
+`f0c5bc64c0f0e966693d4a57f7ede1e9d6e188b396152f04b55303dc75b9b768`) applies it
+only when the agent's model defines a variant of that name, and
+`provider/transform.ts` (SHA-256
+`c07d49e48dd2478ad2813a10805781a72551db2fd847b7df994cc854bf654c16`) names
+built-in reasoning variants only `none`, `minimal`, `low`, `medium`, `high`,
+`xhigh`, and `max`, per provider and model. The installer writes the route effort
+as `variant: "<effort>"` for those names; any other effort (such as `ultra`) is
+listed as `effort <value>: NOT APPLIED` (JSON `skippedRequirements`) and blocks
+with `--strict`. If the model has no variant of that name, OpenCode silently uses
+the model default; the plan warns about this. The main-config `model` written
+with `--default` carries no effort, so plain `opencode` without `--agent` does not
+use it.
+
+The opt-in `TestOpenCodeGeneratedAgentNativeProbe` (2026-09-25, same exact
+binary and isolation) resolved the generated primary and subagent definitions
+with `variant: "high"`; changing it to `low` or removing it changed or removed the
+resolved `variant`. This is loader consumption, not proof that a provider request
+used that reasoning level.
+
 ## Remaining blockers
 
 The following remain blocking or partial for this exact release:
 
 - complete global/project/custom/managed precedence and per-field provenance
 - authentication identity and credential selection
-- effort and transport mapping
+- transport mapping, and effort for models without a matching variant or for the main-config model
 - global/project instruction-file discovery and precedence outside named definitions
 - active primary selection and runtime subagent delegation
 - more than one portable skill resource or target skill-directory layout

@@ -91,7 +91,8 @@ The last three make a model call and may create a session. A Codex prompt does t
 A reply alone does not prove which model or authentication route served it; check the
 agent's own model/session details. Do not override model or thinking while testing.
 OpenClaw and Hermes named profiles may need separate sign-in. Version warnings
-mean native behavior is unqualified, and OpenCode does not install effort.
+mean native behavior is unqualified. An effort an agent cannot apply is shown as
+`effort <value>: NOT APPLIED`.
 
 ## What installs today
 
@@ -104,9 +105,9 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 
 | Agent | Installs | Details |
 | --- | --- | --- |
-| Claude Code | Model, as an emulated named profile | [agents](docs/public/agents.md#claude-code) |
+| Claude Code | Model, effort, as an emulated named profile | [agents](docs/public/agents.md#claude-code) |
 | Codex | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#codex) |
-| OpenCode | Model and instructions, as a named agent | [agents](docs/public/agents.md#opencode) |
+| OpenCode | Model, effort variant, and instructions, as a named agent | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
 | Oh My Pi | Model roles with per-role effort | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |

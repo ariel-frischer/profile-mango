@@ -94,6 +94,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Renamed the experimental ariel-jcode target and adapter package to jcode-fork and removed maintainer-specific references from standalone main
 - make install now installs mango to ~/.local/bin (override with PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR) instead of the mise/asdf Go toolchain dir, and warns when pointed at a toolchain dir; make uninstall removes the same paths
 - Profile type errors name the field and expected shape (for example labels must be a map), doctor plans readiness with the same request as install, render --preview reports blockers as warnings and exits 0 once staged, and Claude Code settings.json keys are inserted on their own line with the file's indentation
+- Route effort now installs on Codex (model_reasoning_effort none through xhigh, including medium), Claude Code (settings effortLevel low/medium/high/xhigh), and OpenCode (named agent variant); an effort an agent cannot take is shown as 'effort <v>: NOT APPLIED (<reason>)' in the plan and in JSON skippedRequirements, and --strict blocks on it
 
 ## [0.0.1] - 2026-01-01
 

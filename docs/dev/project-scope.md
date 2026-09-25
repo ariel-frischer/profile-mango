@@ -44,7 +44,7 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
 - A separate Codex `0.154.0` settings-only installer for root `model_provider`,
-  `model`, and `model_reasoning_effort = "high"`, consumed by the exact installed
+  `model`, and `model_reasoning_effort` (`none` through `xhigh`), consumed by the exact installed
   binary in an isolated synthetic home. It patches an
   explicit or documented default path with consent and backup, preserving unrelated TOML and target-owned
   auth. Trusted project and runtime overrides can shadow root settings; the
@@ -109,12 +109,12 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
 | Codex | First intended public adapter | Exact `0.154.0` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
-| Claude Code | Intended MVP target | Exact `2.1.278` model-only strict-JSON installer; explicit settings-file consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
+| Claude Code | Intended MVP target | Exact `2.1.278` model and `effortLevel` strict-JSON installer; explicit settings-file model and effort consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` `modelRoles` selector YAML installer (default natively qualified; per-role `:effort` selectors source-reviewed), full startup, precedence, authentication, delivery, and enforcement blocked |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` model-primary/thinking-default JSON5 installer; source-native getters, agent overrides and fallback limits verified, full startup/auth/delivery/enforcement blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
-| OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/instructions; native generated-definition resolution verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
+| OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/effort variant/instructions; native generated-definition resolution verified, auth, main-config effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
 
 The **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer

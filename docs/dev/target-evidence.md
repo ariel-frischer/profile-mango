@@ -37,9 +37,9 @@ Codex permits only three route settings, written by default as a native
 and, only with `--default`, also as root `config.toml` settings; the exact installed
 binary loaded both forms in an isolated synthetic home,
 but OAuth identity and full-profile applicability remain unverified. Claude
-Code permits only model-field installation; Pi permits three route-default
+Code permits model plus `low`/`medium`/`high`/`xhigh` `effortLevel` installation; Pi permits three route-default
 settings, Hermes three model/reasoning fields, and OpenCode a named primary
-agent definition (model and instructions) written by default as
+agent definition (model, effort variant, and instructions) written by default as
 `agents/<profile>.md` next to `opencode.json` and selected with
 `opencode --agent <profile>`, or explicitly as `primary:<name>`/
 `subagent:<name>`; only with `--default` does it also patch the top-level
@@ -49,7 +49,9 @@ OpenClaw permits model-primary plus thinking-default settings. Other target gate
 remain blocked unless explicitly qualified below. By default `install` applies
 only a target's qualified subset and lists every known profile requirement it
 cannot install (permissions, tools, instructions, skills) as skipped for that
-target, in the human plan and as JSON `skippedRequirements`; a skipped
+target, in the human plan and as JSON `skippedRequirements`; a route effort a
+target cannot write is listed the same way (`effort <value>: NOT APPLIED
+(<reason>)`, JSON `requirement: effort` with `value` and `reason`). A skipped
 requirement is never claimed as honored. `install --strict` blocks on them
 instead. Unknown required properties and unqualified targets always block. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
@@ -65,10 +67,10 @@ reproducible fixtures, and evidence independent of the developer's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields; exact-source profile-v2 loader plus isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml`; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `high` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project and runtime overrides can shadow them. OAuth identity, model availability, positive effective effort value, delivery and full-profile applicability remain unverified |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
+| Codex CLI | `codex-cli 0.154.0` | Exact-source resolver and isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields (and project/session `medium`/`minimal` effort overrides); exact-source `ReasoningEffort` parser; exact-source profile-v2 loader plus isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml`; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `none`/`minimal`/`low`/`medium`/`high`/`xhigh` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project and runtime overrides can shadow them. OAuth identity, model availability and per-model effort support, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; per-role `:effort` selectors source-reviewed only | `modelRoles` selectors installable (default natively qualified; built-in roles and effort suffixes source-reviewed); standalone startup, authentication, precedence, delivery and enforcement remain blocked |
-| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
+| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `profiles/<name>/config.yaml` profile below the resolved `config.yaml`'s directory that `hermes -p <name>` reads, and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
@@ -273,16 +275,48 @@ it reverses; earlier named-profile installs are untouched. This is a
 profile-mango file-placement and CLI-flag convention layered on the qualified
 explicit-file consumption; it is not additional native evidence.
 
+### Claude Code effort installation, 2026-09-25
+
+The exact Linux x64 package above was re-downloaded and matched both recorded
+SHA-256 values (tarball
+`d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7`, ELF
+`5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab`). Its embedded
+bundle declares settings `effortLevel` as `low`/`medium`/`high`/`xhigh` with an
+invalid value discarded, and resolves the session default as `--effort`, then
+`ultracode`, then merged settings `effortLevel`, with `CLAUDE_CODE_EFFORT_LEVEL`
+and per-model `modelSettings.<model>.effortLevel` as further override surfaces.
+
+`scripts/claudecode-config-probe.sh` now also runs the exact ELF's local
+`/model` command with `--print` in the same isolation (cleared environment,
+synthetic HOME/config/project, unshared network/PID/IPC, timeout). It prints the
+effective effort offline, before any authentication or provider request:
+
+| Synthetic settings | Mode | `/model` output |
+| --- | --- | --- |
+| `effortLevel` low, medium, high, xhigh | `--bare --settings <file>` | ``Current model: `Sonnet 4.5` (effort: <level>)`` |
+| `effortLevel` max, bogus | `--bare --settings <file>` | no effort reported |
+| user `settings.json` medium | default path, no `--settings` | `(effort: medium)` |
+| user medium, project `.claude/settings.json` high | default path | `(effort: high)` |
+
+A profile file produced by the built installer (`{"model": …, "effortLevel":
+"medium"}`) passed through `--settings` also reported `(effort: medium)`. The
+installed `2.1.281` binary (inside the tested range) gave the same results for
+Sonnet 4.5, Opus 4.5, Opus 4.8 and Fable 5 models. This establishes effective
+session effort selection, not provider-side reasoning use. The installer writes
+`effortLevel` beside `model` only for the four accepted levels; other route
+efforts are reported as not applied (`skippedRequirements`) and block with
+`--strict`.
+
 ### Capability classification
 
 | Portable property | Evidence | Applicability consequence |
 | --- | --- | --- |
 | Fidelity | Model-only field mapping | Partial preview fidelity |
-| Native acceptance | Exact ELF consumes explicit settings-file model sentinel | Narrow model-field installation only |
-| Effective state | No merged per-key report | Blocking |
-| Precedence | Explicit `--settings` path only; default and override hierarchy unverified | Blocking outside explicit-file consumption |
+| Native acceptance | Exact ELF consumes explicit settings-file model sentinel and `effortLevel` | Narrow model and effort installation only |
+| Effective state | No merged per-key report; `/model` reports effective model and effort | Blocking beyond model and effort |
+| Precedence | Explicit `--settings` path; project over user observed for effort only | Blocking outside explicit-file consumption |
 | Model | Exact native sentinel consumption and disposable CLI apply | Top-level model field installable; required exact route remains unverified |
-| Effort | No release-qualified mapping | Blocking |
+| Effort | Exact ELF offline `/model` status for low/medium/high/xhigh | `effortLevel` installable for those four levels; others not applied |
 | Provider and transport | No release-qualified mapping | Blocking |
 | Authentication | No credential-free identity proof | Blocking |
 | Permissions | No equivalence or runtime enforcement evidence | Blocking |
@@ -554,7 +588,9 @@ paths.
 
 This is a separate, bounded installer, not a promotion of the inert preview.
 Only root `model_provider = "openai"`, a non-empty safe `model`, and
-`model_reasoning_effort = "high"` are patched at one explicit config path.
+`model_reasoning_effort = "high"` are patched at one explicit config path (the
+effort gate was widened on 2026-09-25, see
+[below](#codex-01540-reasoning-effort-values-2026-09-25)).
 Permissions, tools, instructions, skills, non-native transport, non-OpenAI
 providers, non-OAuth bindings, other efforts, malformed/duplicate TOML, and
 ambiguous profile/provider shadow state block. The installer does not write
@@ -703,6 +739,28 @@ profile planned `noop`. `undo --target codex` removed only `review.config.toml`
 and restored the manifest; a second undo removed `coding.config.toml` and the
 manifest; `config.toml` stayed unchanged throughout. `install coding --default`
 then also adopted `config.toml` with a backup and wrote the three root settings.
+
+### Codex 0.154.0 reasoning-effort values, 2026-09-25
+
+Exact release source `rust-v0.154.0` (tag object
+`36eab01061df3cde5f95ec20a526777b430091ba`, commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`) file
+`codex-rs/protocol/src/openai_models.rs` (SHA-256
+`2e9923d405a497441a0b264efc07de6ce21cdb108442e660a8b9fb63ca415aed`) defines
+`ReasoningEffort::from_str`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`,
+`max`, `ultra` and `persistent` parse as named variants, an empty string is an
+error, and any other string becomes `Custom`. The same enum types
+`model_reasoning_effort`, so every value loads; the isolated installed-binary
+`config/read` observation above already reported root `high`, trusted-project
+`medium`, and session `minimal` as effective values.
+
+The installer gate now accepts `none`, `minimal`, `low`, `medium`, `high` and
+`xhigh`; `max`, `ultra` and other efforts still block with an explicit error
+listing the accepted values, instead of being written or dropped. The built-CLI
+sandbox test `TestInstallCodexAppliesMediumEffortInSandbox` plans and applies
+`medium` with `--default` and observes `model_reasoning_effort = "medium"` in
+both `config.toml` and `<name>.config.toml`. Whether a given model accepts a
+level remains model-dependent and was not exercised; no provider call was made.
 
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 
@@ -1208,6 +1266,31 @@ Compiled-CLI checks cover: default install creates the agent file only,
 `--default` also patches the model and skill fields, undo removes only the
 agent file and manifest it created, and an edited or unowned agent file at the
 default path is protected exactly as an explicit `--agent` destination.
+
+## OpenCode agent effort variant, 2026-09-25
+
+OpenCode `1.18.31` exposes effort per agent only as `variant`. Exact source at
+commit `a97622c801f4ca571530ddc51076af659a9c32cd`:
+`packages/core/src/v1/config/agent.ts` (SHA-256
+`4f2d7bc8283ff0c8cd922c614a74f74abb1abe9d5fc2a6dba3dd03d2dca5c624`) declares the
+agent `variant`; `packages/opencode/src/session/prompt.ts` (SHA-256
+`f0c5bc64c0f0e966693d4a57f7ede1e9d6e188b396152f04b55303dc75b9b768`) uses it only
+when the prompt uses the agent's own model and that model has a variant of that
+name; `packages/opencode/src/provider/transform.ts` (SHA-256
+`c07d49e48dd2478ad2813a10805781a72551db2fd847b7df994cc854bf654c16`) names
+built-in reasoning variants only from `none`, `minimal`, `low`, `medium`, `high`,
+`xhigh`, `max` (model- and provider-dependent), mapped to provider options such
+as `reasoningEffort`. The named agent renderer now emits
+`variant: "<effort>"` for those names; other efforts are listed as not applied.
+
+The opt-in `TestOpenCodeGeneratedAgentNativeProbe`, rerun against the exact
+binary (`f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`, verified before running) in the same isolation,
+resolved `variant: "high"` from both generated primary and subagent definitions;
+`changed variant` (`low`) and `missing variant` controls changed or removed the
+resolved value, and state restored to its baseline inventory. A missing variant
+on the model silently falls back to the model default at runtime, and the
+`--default` main-config model carries no effort; plans warn about both. No
+provider request was made.
 
 ## Hermes bounded installation qualification, 2026-09-22
 

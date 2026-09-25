@@ -162,6 +162,29 @@ malformed_output="$(cat "$malformed/negative.stdout" "$malformed/negative.stderr
 assert_contains "$malformed_output" 'Settings file not found'
 printf 'claude-malformed-settings-argument=rejected\n'
 
+# effort_probe <name> <user-settings-json> <flag|user> [project-settings-json]
+# prints the local /model status line, which reports the effective effort offline.
+effort_probe() {
+	local root="$probe_root/effort-$1"
+	make_layout "$root"
+	printf '%s\n' "$2" >"$root/home/.claude/settings.json"
+	[[ -z "${4:-}" ]] || printf '%s\n' "$4" >"$root/project/.claude/settings.json"
+	local args=(--print --no-session-persistence --permission-prompts none --output-format text /model)
+	[[ "$3" != flag ]] || args=(--bare --settings /state/home/.claude/settings.json "${args[@]}")
+	sandbox "$root" "${args[@]}" 2>&1 | head -n 1
+}
+
+for level in low medium high xhigh; do
+	assert_equal "$(effort_probe "flag-$level" "{\"model\":\"claude-sonnet-4-5\",\"effortLevel\":\"$level\"}" flag)" "Current model: \`Sonnet 4.5\` (effort: $level)"
+done
+for level in max bogus; do
+	assert_equal "$(effort_probe "flag-$level" "{\"model\":\"claude-sonnet-4-5\",\"effortLevel\":\"$level\"}" flag)" 'Current model: `Sonnet 4.5`'
+done
+assert_equal "$(effort_probe user-medium '{"model":"claude-sonnet-4-5","effortLevel":"medium"}' user)" 'Current model: `Sonnet 4.5` (effort: medium)'
+assert_equal "$(effort_probe project-override '{"model":"claude-sonnet-4-5","effortLevel":"medium"}' user '{"effortLevel":"high"}')" 'Current model: `Sonnet 4.5` (effort: high)'
+printf 'claude-effort-level=low-medium-high-xhigh-consumed-max-and-invalid-dropped\n'
+printf 'claude-effort-precedence=project-settings-over-user-observed\n'
+
 if find "$positive" -type s -print -quit | grep -q .; then
 	die 'native probe created an unexpected socket in synthetic state'
 fi

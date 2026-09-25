@@ -28,7 +28,8 @@ type nativeAgent struct {
 		Provider string `json:"providerID"`
 		ID       string `json:"modelID"`
 	} `json:"model"`
-	Prompt string `json:"prompt"`
+	Prompt  string `json:"prompt"`
+	Variant string `json:"variant"`
 }
 
 func TestOpenCodeGeneratedAgentNativeProbe(t *testing.T) {
@@ -171,8 +172,10 @@ func runGeneratedAgentControls(t *testing.T, root, binary, name, mode string, ge
 		data  []byte
 		check func(nativeAgent) bool
 	}{
-		"changed mode":  {replaceAgentBytes(t, generated, "mode: "+mode, "mode: "+otherAgentMode(mode)), func(a nativeAgent) bool { return a.Mode == otherAgentMode(mode) }},
-		"changed model": {replaceAgentBytes(t, generated, `model: "openai/gpt-5.6"`, `model: "openai/mango-negative-control"`), func(a nativeAgent) bool { return a.Model.ID == "mango-negative-control" }},
+		"changed mode":    {replaceAgentBytes(t, generated, "mode: "+mode, "mode: "+otherAgentMode(mode)), func(a nativeAgent) bool { return a.Mode == otherAgentMode(mode) }},
+		"changed model":   {replaceAgentBytes(t, generated, `model: "openai/gpt-5.6"`, `model: "openai/mango-negative-control"`), func(a nativeAgent) bool { return a.Model.ID == "mango-negative-control" }},
+		"changed variant": {replaceAgentBytes(t, generated, `variant: "high"`, `variant: "low"`), func(a nativeAgent) bool { return a.Variant == "low" }},
+		"missing variant": {replaceAgentBytes(t, generated, "variant: \"high\"\n", ""), func(a nativeAgent) bool { return a.Variant == "" }},
 		"changed prompt": {replaceAgentBytes(t, generated, agentFirst, "MANGO_NEGATIVE_PROMPT_CONTROL"), func(a nativeAgent) bool {
 			return !strings.Contains(a.Prompt, agentFirst) && strings.Contains(a.Prompt, "MANGO_NEGATIVE_PROMPT_CONTROL")
 		}},
@@ -219,8 +222,8 @@ func otherAgentMode(mode string) string {
 func assertResolvedAgent(t *testing.T, got nativeAgent, name, mode string) {
 	t.Helper()
 	first, second := strings.Index(got.Prompt, agentFirst), strings.Index(got.Prompt, agentSecond)
-	if got.Name != name || got.Mode != mode || got.Model.Provider != "openai" || got.Model.ID != "gpt-5.6" || first < 0 || second <= first {
-		t.Fatalf("generated agent not consumed in order: name=%q mode=%q model=%+v prompt=%q", got.Name, got.Mode, got.Model, got.Prompt)
+	if got.Name != name || got.Mode != mode || got.Model.Provider != "openai" || got.Model.ID != "gpt-5.6" || got.Variant != "high" || first < 0 || second <= first {
+		t.Fatalf("generated agent not consumed in order: name=%q mode=%q model=%+v variant=%q prompt=%q", got.Name, got.Mode, got.Model, got.Variant, got.Prompt)
 	}
 }
 
