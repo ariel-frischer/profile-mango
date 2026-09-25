@@ -40,6 +40,8 @@ const (
 	ActionAdopt  = "adopt"
 	ActionNoop   = "noop"
 	ActionDelete = "delete"
+	// ActionRestore gives a released file back its pre-install bytes from a backup.
+	ActionRestore = "restore"
 )
 
 type Target struct {
@@ -132,9 +134,14 @@ type FilePatch struct {
 	// NoOverride preserves an edited or unowned file even when the patch permits overrides.
 	NoOverride bool
 	Delete     bool
-	Path       string
-	Content    []byte
-	Fields     []string
+	// Adoptable lets this whole file adopt or override an unowned or edited file even
+	// when the adapter's other files do not allow it.
+	Adoptable bool
+	// Release gives back a file the previous install owned and this plan no longer writes.
+	Release bool
+	Path    string
+	Content []byte
+	Fields  []string
 	// Ownership records target-specific provenance needed for safe future cleanup.
 	Ownership []string `json:"-"`
 }
@@ -199,6 +206,8 @@ type Request struct {
 	Strict bool
 	// Default also makes an installed named profile the agent's default.
 	Default bool
+	// Release (mango use) gives back owned files the new profile does not write.
+	Release bool
 }
 
 type Manifest struct {
@@ -229,6 +238,7 @@ type FilePlan struct {
 	Delete       bool          `json:"delete,omitempty"`
 	targetPath   string        `json:"-"`
 	ownership    []string      `json:"-"`
+	release      bool          `json:"-"`
 }
 
 type TargetPlan struct {

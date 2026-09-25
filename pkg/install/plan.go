@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -24,6 +25,8 @@ type loadedInput struct {
 	Resources   []render.Resource
 	InputSHA256 string
 	Sources     []sourceCheck
+	// Globals holds each target's loaded globalInstructions files.
+	Globals map[string][]globalFile
 }
 
 func BuildPlan(request Request) (Plan, error) {
@@ -120,6 +123,9 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	resources, resourceDiagnostics, resourceSources := loadResources(request.ResourceRoot, resolved)
 	diagnostics = append(diagnostics, resourceDiagnostics...)
 	sources = append(sources, resourceSources...)
+	globals, globalDigests, globalDiagnostics, globalSources := loadGlobalInstructions(request.ResourceRoot, resolved)
+	diagnostics = append(diagnostics, globalDiagnostics...)
+	sources = append(sources, globalSources...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
 	}
@@ -131,11 +137,12 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		Profile   profilemango.ResolvedProfile
 		Route     profilemango.RouteBinding
 		Resources []profilemango.ResourceDigest
-	}{Profile: resolved, Route: route, Resources: digest})
+		Globals   []profilemango.ResourceDigest `json:",omitempty"`
+	}{Profile: resolved, Route: route, Resources: digest, Globals: globalDigests})
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
-	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources}, diagnostics.Sorted(), nil
+	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals}, diagnostics.Sorted(), nil
 }
 
 // missingBindingsError names the exact fix for a missing local bindings file:
@@ -309,6 +316,9 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)
 	targetPlan.Fields = publicFields(patch.Fields)
+	if reason, code := extendPatch(request, targetRequest, loaded, ownership, config.Path, &patch, &targetPlan); reason != "" {
+		return blockedTargetPlan(targetPlan, reason, code)
+	}
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
 	if blocked {
 		targetPlan.Status = StatusConflict
@@ -378,9 +388,12 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 			afterHash = installfs.Hash(file.Content)
 		}
 		ownedHash, owned := ownershipHash(ownership, path)
-		action, conflict := fileAction(request, patch.OverrideAllowed && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
+		action, conflict := fileAction(request, (patch.OverrideAllowed || file.Adoptable) && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
+		if file.Release && action == ActionUpdate && !conflict {
+			action = ActionRestore
+		}
 		fields := fieldsForNames(file.Fields)
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: append([]string(nil), file.Ownership...)})
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: fileOwnership(file, ownership, path, config.Path, before), release: file.Release})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
 		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
@@ -484,13 +497,14 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 		if actualPath == "" || actualPath == snapshot.Path {
 			continue
 		}
-		if file.Delete {
+		if file.Delete || file.release {
 			manifest.Files = removeManifestFile(manifest.Files, actualPath)
 			continue
 		}
 		if file.Action == ActionNoop {
 			priorHash, owned := ownershipHash(ownership, actualPath)
-			if !owned || priorHash != file.BeforeSHA256 {
+			// A whole global file already holding the profile's bytes is claimed as is.
+			if (!owned || priorHash != file.BeforeSHA256) && !slices.Contains(file.ownership, ownershipGlobalInstruction) {
 				continue
 			}
 		}

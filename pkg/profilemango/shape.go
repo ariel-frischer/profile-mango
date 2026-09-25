@@ -34,6 +34,10 @@ var profileShapes = map[string]fieldShape{
 	"instructions.append[]": {yaml.ScalarNode, "a file path string"},
 	"skills":                {yaml.SequenceNode, "a list of skill paths (e.g. skills: [skills/review/SKILL.md])"},
 	"skills[]":              {yaml.ScalarNode, "a skill path string"},
+	"globalInstructions":    {yaml.MappingNode, "a map of target names to file maps (e.g. globalInstructions: {codex: {AGENTS.md: instructions/codex.md}})"},
+	"globalInstructions.*":  {yaml.MappingNode, "a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md})"},
+	// globalInstructions.<target>.<file> is looked up through genericWildcard.
+	"globalInstructions.*.*": {yaml.ScalarNode, "a resource path string"},
 }
 
 // validateProfileShape reports every known flat-profile field whose YAML node
@@ -75,6 +79,9 @@ func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics
 	if !known {
 		shape, known = profileShapes[wildcard]
 	}
+	if !known {
+		shape, known = profileShapes[genericWildcard(wildcard)]
+	}
 	if !known || node.Tag == "!!null" {
 		return
 	}
@@ -84,6 +91,16 @@ func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics
 		return
 	}
 	checkShapeChildren(node, path, diagnostics)
+}
+
+// genericWildcard turns a per-target wildcard such as globalInstructions.codex.*
+// into its shape key globalInstructions.*.*.
+func genericWildcard(wildcard string) string {
+	parts := strings.Split(wildcard, ".")
+	if len(parts) == 3 && parts[0] == "globalInstructions" && parts[2] == "*" {
+		return "globalInstructions.*.*"
+	}
+	return ""
 }
 
 func describeNodeKind(kind yaml.Kind) string {
