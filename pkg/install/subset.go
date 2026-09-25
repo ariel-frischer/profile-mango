@@ -13,13 +13,37 @@ const (
 	RequirementTools        = "tools"
 	RequirementInstructions = "instructions"
 	RequirementSkills       = "skills"
+	RequirementEffort       = "effort"
 )
 
 // SkippedRequirement is a known profile requirement a target cannot honor. A
-// non-strict plan lists it and installs the rest instead of blocking.
+// non-strict plan lists it and installs the rest instead of blocking. Value and
+// Reason explain a route requirement (effort) the target cannot apply.
 type SkippedRequirement struct {
 	Requirement string `json:"requirement"`
 	Count       int    `json:"count,omitempty"`
+	Value       string `json:"value,omitempty"`
+	Reason      string `json:"reason,omitempty"`
+}
+
+// effortSupporter lets an adapter report which route efforts it writes. An adapter
+// without it installs every effort it accepts or rejects the route itself.
+type effortSupporter interface {
+	EffortSupport(effort string) (supported bool, reason string)
+}
+
+// unsupportedEffort reports the route effort an adapter will not write, so the
+// plan lists it as not applied (or blocks with --strict) instead of dropping it.
+func unsupportedEffort(adapter Adapter, effort string) (SkippedRequirement, bool) {
+	supporter, ok := adapter.(effortSupporter)
+	if !ok || effort == "" {
+		return SkippedRequirement{}, false
+	}
+	supported, reason := supporter.EffortSupport(effort)
+	if supported {
+		return SkippedRequirement{}, false
+	}
+	return SkippedRequirement{Requirement: RequirementEffort, Value: effort, Reason: reason}, true
 }
 
 // requirementSupporter lets an adapter declare the profile requirements it installs.

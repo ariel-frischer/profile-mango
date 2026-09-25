@@ -17,7 +17,7 @@ func (claudeCodeAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: claudecode.NativeBinarySHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Claude Code 2.1.278 consumes one top-level model setting from an explicit --settings file; install writes it to a Mango-owned emulated profile file by default, and to settings.json only with --default; all other profile effects remain blocked",
+		Reason:         "exact Claude Code 2.1.278 consumes top-level model and effortLevel settings from an explicit --settings file and settings.json; install writes them to a Mango-owned emulated profile file by default, and to settings.json only with --default; all other profile effects remain blocked",
 	}
 }
 
@@ -32,16 +32,18 @@ func (claudeCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	if input.Install.Mode != InstallModeNamedProfile {
 		return planClaudeCodeConfig(input.Config.Content, input.Route)
 	}
-	profilePatch, err := claudecode.PatchModel(nil, input.Route)
+	profilePatch, err := claudecode.PatchSettings(nil, input.Route)
 	if err != nil {
 		return Patch{}, err
 	}
-	patch := Patch{
-		Files:           []FilePatch{{Path: claudecode.ProfileFileName(input.Install.ProfileName), Content: profilePatch.Content, Fields: []string{"profile.model"}}},
-		Fields:          []FieldChange{{Path: "profile.model", After: profilePatch.After}},
-		OverrideAllowed: true,
+	file := FilePatch{Path: claudecode.ProfileFileName(input.Install.ProfileName), Content: profilePatch.Content, Fields: []string{"profile.model"}}
+	patch := Patch{Fields: []FieldChange{{Path: "profile.model", After: profilePatch.ModelAfter}}, OverrideAllowed: true}
+	if profilePatch.EffortAfter != "" {
+		file.Fields = append(file.Fields, "profile.effortLevel")
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.effortLevel", After: profilePatch.EffortAfter})
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "claudecode.install.named_profile_model_only", "target.profile.model", "only the model setting is written to the emulated profile file, used with claude --settings <path>; provider, transport, authentication, effort, permissions, tools, instructions, skills, plugins, hooks, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
+	patch.Files = []FilePatch{file}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "claudecode.install.named_profile_settings_only", "target.profile", "only model and a supported effortLevel are written to the emulated profile file, used with claude --settings <path>; provider, transport, authentication, permissions, tools, instructions, skills, plugins, hooks, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
 	if !input.Install.SetsDefault {
 		return patch, nil
 	}
@@ -55,19 +57,27 @@ func (claudeCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	return patch, nil
 }
 
-// planClaudeCodeConfig patches only the top-level model in the main settings file.
+// planClaudeCodeConfig patches only the top-level model and a supported effortLevel
+// in the main settings file.
 func planClaudeCodeConfig(source []byte, route profilemango.RouteBinding) (Patch, error) {
-	modelPatch, err := claudecode.PatchModel(source, route)
+	settings, err := claudecode.PatchSettings(source, route)
 	if err != nil {
 		return Patch{}, err
 	}
-	patch := Patch{
-		Files:           []FilePatch{{Content: modelPatch.Content, Fields: []string{"config.model"}}},
-		Fields:          []FieldChange{{Path: "config.model", Before: modelPatch.Before, After: modelPatch.After}},
-		OverrideAllowed: true,
+	file := FilePatch{Content: settings.Content, Fields: []string{"config.model"}}
+	patch := Patch{Fields: []FieldChange{{Path: "config.model", Before: settings.ModelBefore, After: settings.ModelAfter}}, OverrideAllowed: true}
+	if settings.EffortAfter != "" {
+		file.Fields = append(file.Fields, "config.effortLevel")
+		patch.Fields = append(patch.Fields, FieldChange{Path: "config.effortLevel", Before: settings.EffortBefore, After: settings.EffortAfter})
 	}
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "claudecode.install.model_only", "target.config.model", "only the top-level model setting is applied; provider, transport, authentication, effort, permissions, tools, instructions, skills, plugins, hooks, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
+	patch.Files = []FilePatch{file}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "claudecode.install.settings_only", "target.config", "only top-level model and a supported effortLevel are applied; project/local settings, --effort, CLAUDE_CODE_EFFORT_LEVEL and per-model modelSettings can override effort; provider, transport, authentication, permissions, tools, instructions, skills, plugins, hooks, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)
 	return patch, nil
+}
+
+// EffortSupport lets planning list an unsupported effort as not applied.
+func (claudeCodeAdapter) EffortSupport(effort string) (bool, string) {
+	return claudecode.EffortSupport(effort)
 }
 
 // NamedProfileFile is the Mango-owned emulated profile file Claude Code has no

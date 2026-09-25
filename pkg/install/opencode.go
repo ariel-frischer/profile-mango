@@ -97,10 +97,21 @@ func planOpenCodeAgent(input AdapterInput, mode, filePath string) (Patch, error)
 	if err != nil {
 		return Patch{}, err
 	}
-	patch := Patch{Files: []FilePatch{{Path: filePath, Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}}}
-	patch.Fields = []FieldChange{{Path: "agent.mode", After: mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}
+	file := FilePatch{Path: filePath, Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}
+	patch := Patch{Fields: []FieldChange{{Path: "agent.mode", After: mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}}
+	if supported, _ := opencode.EffortSupport(input.Route.Effort); supported {
+		file.Fields = append(file.Fields, "agent.variant")
+		patch.Fields = append(patch.Fields, FieldChange{Path: "agent.variant", After: input.Route.Effort})
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.effort_variant", "agent.variant", "effort is installed as the agent's default model variant; OpenCode applies it only while the agent uses its configured model and that model defines a variant of this name, otherwise the model default is used; the main-config model written with --default carries no effort", 0, 0)
+	}
+	patch.Files = []FilePatch{file}
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "opencode.install.agent_limits", "agent", "custom prompt replaces the stock agent prompt and native trimming applies; a primary is selectable but not made default, a subagent is eligible but delegation is unverified; higher-precedence config and runtime enforcement remain unverified", 0, 0)
 	return patch, nil
+}
+
+// EffortSupport lets planning list an effort no built-in model variant carries as not applied.
+func (openCodeAdapter) EffortSupport(effort string) (bool, string) {
+	return opencode.EffortSupport(effort)
 }
 
 // planOpenCodeMainConfig patches the top-level model field and, independently, installs

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -34,10 +35,10 @@ func TestClaudeCodeInstallPlanPreservesTargetState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(patch.Files) != 1 || string(patch.Files[0].Content) != "{\r\n  \"model\": \"claude-sonnet-4-5\",\r\n  \"unknown\": true,\r\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\r\n}\r\n" {
+	if len(patch.Files) != 1 || string(patch.Files[0].Content) != "{\r\n  \"model\": \"claude-sonnet-4-5\",\r\n  \"effortLevel\": \"high\",\r\n  \"unknown\": true,\r\n  \"apiKey\": \"SYNTHETIC-CREDENTIAL\"\r\n}\r\n" {
 		t.Fatalf("patch files = %#v", patch.Files)
 	}
-	if len(patch.Fields) != 1 || patch.Fields[0].Path != "config.model" || patch.Fields[0].After != "claude-sonnet-4-5" {
+	if len(patch.Fields) != 2 || patch.Fields[0].Path != "config.model" || patch.Fields[0].After != "claude-sonnet-4-5" || patch.Fields[1].Path != "config.effortLevel" || patch.Fields[1].After != "high" {
 		t.Fatalf("patch fields = %#v", patch.Fields)
 	}
 	if !patch.OverrideAllowed || len(patch.Diagnostics) != 1 || patch.Diagnostics[0].Severity != profilemango.SeverityWarning {
@@ -96,28 +97,28 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 	if plan.Status != StatusReady || plan.Targets[0].Status != StatusReady {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if !plan.Backup || len(plan.Targets[0].Fields) != 2 {
+	want := []FieldChange{
+		{Path: "config.effortLevel", After: "high"},
+		{Path: "config.model", Before: "old/model", After: "claude-sonnet-4-5"},
+		{Path: "profile.effortLevel", After: "high"},
+		{Path: "profile.model", After: "claude-sonnet-4-5"},
+	}
+	if !plan.Backup || !reflect.DeepEqual(plan.Targets[0].Fields, want) {
 		t.Fatalf("plan diff = %#v", plan.Targets[0].Fields)
 	}
-	if got := plan.Targets[0].Fields[0]; got.Path != "config.model" || got.Before != "old/model" || got.After != "claude-sonnet-4-5" {
-		t.Fatalf("config field = %#v", got)
-	}
-	if got := plan.Targets[0].Fields[1]; got.Path != "profile.model" || got.After != "claude-sonnet-4-5" {
-		t.Fatalf("profile field = %#v", got)
-	}
 	settingsFile := claudeCodeFile(plan.Targets[0], "settings.json")
-	if len(settingsFile.Fields) != 1 || settingsFile.Fields[0].Path != "config.model" {
+	if len(settingsFile.Fields) != 2 || settingsFile.Fields[0].Path != "config.model" || settingsFile.Fields[1].Path != "config.effortLevel" {
 		t.Fatalf("settings.json file diff = %#v", settingsFile)
 	}
 	profileFile := claudeCodeFile(plan.Targets[0], "route-only.json")
-	if len(profileFile.Fields) != 1 || profileFile.Fields[0].Path != "profile.model" || profileFile.Action != ActionCreate {
+	if len(profileFile.Fields) != 2 || profileFile.Fields[0].Path != "profile.model" || profileFile.Action != ActionCreate {
 		t.Fatalf("profile file diff = %#v", profileFile)
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	assertInstallTestFile(t, config, "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n")
-	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "route-only.json"), "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n")
+	assertInstallTestFile(t, config, "{\n  \"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n")
+	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "route-only.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
 	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); err != nil {
 		t.Fatalf("backup missing: %v", err)
 	}
@@ -267,7 +268,7 @@ func TestClaudeCodeNamedProfilesInstallSideBySideAndKeepSettings(t *testing.T) {
 	assertInstallTestFile(t, config, claudeCodeNamedBase)
 	dir := filepath.Dir(config)
 	for _, name := range []string{"coding", "review"} {
-		assertInstallTestFile(t, filepath.Join(dir, "profiles", name+".json"), "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n")
+		assertInstallTestFile(t, filepath.Join(dir, "profiles", name+".json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
 	}
 	for _, name := range []string{"review", "coding"} {
 		request.ProfileName = name
@@ -312,8 +313,8 @@ func TestClaudeCodeDefaultFlagInsertsModelOnOwnLineAndUndoRestoresBytes(t *testi
 	if !plan.Targets[0].Install.SetsDefault {
 		t.Fatalf("install mode = %#v", plan.Targets[0].Install)
 	}
-	assertInstallTestFile(t, config, "{\n    \"model\": \"claude-sonnet-4-5\",\n    \"permissions\": {\n        \"allow\": [\"Read\"]\n    },\n    \"unknown\": true\n}\n")
-	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n")
+	assertInstallTestFile(t, config, "{\n    \"model\": \"claude-sonnet-4-5\",\n    \"effortLevel\": \"high\",\n    \"permissions\": {\n        \"allow\": [\"Read\"]\n    },\n    \"unknown\": true\n}\n")
+	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
 	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
 	assertInstallTestFile(t, config, pretty)
 }
@@ -335,7 +336,7 @@ func TestClaudeCodeNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {
 	if _, err := os.Lstat(filepath.Join(dir, "profiles", "review.json")); !os.IsNotExist(err) {
 		t.Fatalf("review profile survived undo: %v", err)
 	}
-	assertInstallTestFile(t, filepath.Join(dir, "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\"\n}\n")
+	assertInstallTestFile(t, filepath.Join(dir, "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
 	assertInstallTestFile(t, manifest, string(afterCoding))
 	assertInstallTestFile(t, config, claudeCodeNamedBase)
 	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})

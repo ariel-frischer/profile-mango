@@ -88,7 +88,9 @@ the config. Other settings in the file are kept as they are.
 **What it skips:** profile requirements an agent can't install, such as
 permissions, tools, instructions, or skills on most agents. They are listed per
 agent as `not installed for this agent: ...` (JSON `skippedRequirements`) and
-are never claimed as applied. `--strict` blocks the plan instead. Unknown
+are never claimed as applied. A route effort an agent cannot write is shown as
+`effort <value>: NOT APPLIED (<reason>)` (JSON `skippedRequirements` entry
+`effort`). `--strict` blocks the plan instead. Unknown
 profile fields and unsupported targets always block.
 
 **What it backs up:** before changing an existing file, install makes a

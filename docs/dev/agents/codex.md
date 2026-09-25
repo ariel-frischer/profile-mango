@@ -80,8 +80,11 @@ is read, checked, and left byte-for-byte unchanged. `--default` also writes the
 same three settings as root keys in `config.toml`, so plain `codex` uses them.
 `--config codex=<path>` names a different `config.toml`; the profile file goes
 next to it. Bare `codex` resolves to the single qualified `codex@0.154.0`. The
-installer plans only `model_provider`, `model`, and
-`model_reasoning_effort = "high"` for an OpenAI/native/OAuth binding. Use all three explicit project input flags together if not using the
+installer plans only `model_provider`, `model`, and `model_reasoning_effort`
+(`none`, `minimal`, `low`, `medium`, `high`, or `xhigh`, which the pinned source
+parses as named `ReasoningEffort` variants; `max`, `ultra`, and others block) for an
+OpenAI/native/OAuth binding. Whether a model accepts a level is model-dependent
+and unverified. Use all three explicit project input flags together if not using the
 profile home. An existing unowned config needs `--override`; apply requires
 `--apply --yes --expect-plan <planID>` or interactive terminal consent. Plans are
 read-only, backups are enabled by default, and repeated application is a no-op.

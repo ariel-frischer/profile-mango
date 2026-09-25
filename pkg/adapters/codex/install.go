@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -80,8 +81,8 @@ func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, e
 	if !validCodexValue(route.Model) {
 		return nil, fmt.Errorf("codex model must be a non-empty safe string")
 	}
-	if route.Effort != "high" {
-		return nil, fmt.Errorf("codex install supports only source-qualified high reasoning effort")
+	if !slices.Contains(installEfforts, route.Effort) {
+		return nil, fmt.Errorf("codex install supports only source-qualified reasoning efforts %s, not %q", strings.Join(installEfforts, ", "), route.Effort)
 	}
 	return map[string]string{
 		"model_provider":         route.Provider,
@@ -89,6 +90,12 @@ func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, e
 		"model_reasoning_effort": route.Effort,
 	}, nil
 }
+
+// installEfforts are the model_reasoning_effort values rust-v0.154.0
+// (codex-rs/protocol/src/openai_models.rs ReasoningEffort::from_str) parses as named
+// variants and that the install qualifies. Whether a given model accepts a level
+// remains model-dependent and unverified.
+var installEfforts = []string{"none", "minimal", "low", "medium", "high", "xhigh"}
 
 func validCodexValue(value string) bool {
 	if value == "" || strings.TrimSpace(value) != value || !utf8.ValidString(value) {
