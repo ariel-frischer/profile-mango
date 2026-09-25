@@ -142,6 +142,62 @@ func TestGlobalInstructionsTargetGates(t *testing.T) {
 	}
 }
 
+// TestHomeInstructionGates plans globalInstructions.home: only Pi installs ~/AGENTS.md,
+// another target skips it (or blocks with --strict), and unqualified names block.
+func TestHomeInstructionGates(t *testing.T) {
+	tests := map[string]homeGateCase{
+		"pi default installs ~/AGENTS.md": {file: "AGENTS.md", writes: true},
+		"unresolvable home skips":         {file: "AGENTS.md", noHome: true, skipped: true},
+		"unqualified home file blocks":    {file: "RULES.md", code: "install.global_instruction_unqualified"},
+		"non-owner target skips":          {opencode: true, file: "AGENTS.md", skipped: true},
+		"non-owner target strict blocks":  {opencode: true, file: "AGENTS.md", strict: true, code: "install.strict_requirement_unsupported"},
+		"unresolvable home strict blocks": {file: "AGENTS.md", noHome: true, strict: true, code: "install.strict_requirement_unsupported"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, root := piInstallTestRequest(t)
+			if test.opencode {
+				request, root = openCodeTestRequest(t)
+			}
+			home := filepath.Join(root, "home")
+			request.Default, request.Override, request.Strict = true, false, test.strict
+			if !test.noHome {
+				request.Env = syntheticPathEnv(t, home, nil)
+			}
+			writeInstallTestFile(t, filepath.Join(root, "home.md"), globalTestWork)
+			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), "route: primary\nglobalInstructions:\n  home:\n    "+test.file+": home.md\n")
+			test.check(t, request, filepath.Join(home, "AGENTS.md"))
+		})
+	}
+}
+
+type homeGateCase struct {
+	opencode, noHome, strict, skipped, writes bool
+	file, code                                string
+}
+
+// check plans request, asserts the skip and block outcome, applies a writing case,
+// and asserts whether ~/AGENTS.md exists afterwards.
+func (test homeGateCase) check(t *testing.T, request Request, agents string) {
+	t.Helper()
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if test.skipped != hasSkipped(plan.Targets, RequirementGlobalInstructions) {
+		t.Fatalf("skipped globalInstructions = %v, want %v", !test.skipped, test.skipped)
+	}
+	if test.code != "" && (plan.Status != StatusBlocked || !planHasCode(plan, test.code)) {
+		t.Fatalf("status = %s, want blocked with %s", plan.Status, test.code)
+	}
+	if test.writes {
+		applySwitchTestPlan(t, request)
+	}
+	if _, err := os.Stat(agents); test.writes != (err == nil) {
+		t.Fatalf("~/AGENTS.md written = %v, want %v", err == nil, test.writes)
+	}
+}
+
 func hasSkipped(targets []TargetPlan, requirement string) bool {
 	for _, target := range targets {
 		for _, skipped := range target.SkippedRequirements {

@@ -393,7 +393,7 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 			action = ActionRestore
 		}
 		fields := fieldsForNames(file.Fields)
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: fileOwnership(file, ownership, path, config.Path, before), release: file.Release})
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: fileOwnership(file, ownership, path, config.Path, before), release: file.Release})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
 		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
@@ -405,6 +405,14 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 	}
 	sort.Slice(targetPlan.Files, func(i, j int) bool { return targetPlan.Files[i].Path < targetPlan.Files[j].Path })
 	return changes, targetPlan.Diagnostics.HasErrors()
+}
+
+// filePlanName is the plan's name for a patched file: its label, else its base name.
+func filePlanName(file FilePatch, path string) string {
+	if file.Label != "" {
+		return file.Label
+	}
+	return filepath.Base(path)
 }
 
 func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot, ownedHash string, owned bool, afterHash string, deleteFile bool) (string, bool) {

@@ -78,8 +78,19 @@ install shows as `edited` in `mango status` and needs `--override`. When
 created is deleted and an adopted file gets its original bytes back from the
 backup. `mango undo` reverses each step.
 
-`~/AGENTS.md`, which the Jcode fork reads, is not covered: no install target
-qualifies it.
+The `home` key owns files in your home directory rather than an agent's
+config folder. Only `AGENTS.md` is accepted:
+
+```yaml
+globalInstructions:
+  home: {AGENTS.md: instructions/work/home-AGENTS.md}
+```
+
+Pi owns `~/AGENTS.md`, because it is the one supported agent that reads it in
+every folder under your home directory; the plan shows it as `~/AGENTS.md`
+under Pi with a warning that other agents share it. An install without Pi lists
+it under "not installed for this agent"; `--strict` blocks. `mango use`,
+`mango status`, and `mango undo` treat it like any other global file.
 
 For Oh My Pi, `mango use` also gives back model roles: a role the new route
 no longer binds returns to the value it had before profile-mango first wrote

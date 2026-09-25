@@ -129,6 +129,12 @@ The evidence behind every row is in the developer
 - **Installs:** `defaultProvider`, `defaultModel`, and `defaultThinkingLevel` in
   the global `settings.json`.
 - **Caveats:** a project `.pi/settings.json` overrides the global file.
+- **Global instructions:** `globalInstructions.home` can own `~/AGENTS.md`,
+  written by every Pi install (Pi has no named profiles). Pi reads it in every
+  folder under your home directory; an existing `~/AGENTS.override.md` is read
+  instead. The file is shared: Codex, OpenCode, Oh My Pi, and Claude Code read
+  it only in some folders (for example outside a Git repository), so
+  profile-mango writes it only when Pi is part of the install.
 - [Reference](../dev/agents/pi.md)
 
 ## Oh My Pi
@@ -185,5 +191,5 @@ The evidence behind every row is in the developer
 
 Other agents are not supported yet; see the [roadmap](../../ROADMAP.md).
 
-`~/AGENTS.md` (read by the Jcode fork) is not covered: no install target
-qualifies it, so `globalInstructions` cannot write it.
+`~/AGENTS.md` is written only through Pi, see [Pi](#pi). Without Pi in the
+install, other agents list it under "not installed for this agent".

@@ -78,3 +78,7 @@ probe must use synthetic configuration, a private socket, no real credentials,
 blocked provider access, and no session, hook, extension, or child-agent launch.
 Results remain experimental developer evidence and cannot establish upstream or
 public Jcode support.
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+Experimental developer evidence only: the fork snapshot loads the project `AGENTS.md` and the user-home `AGENTS.md` every session, and a profile `agents_md_path` replaces the global file (`crates/jcode-base/src/prompt.rs`, `crates/jcode-storage/src/lib.rs`, `docs/SYSTEM_PROMPT_CONFIG.md` at `ed9b93b`). Jcode is not an install target; `~/AGENTS.md` is delivered only through Pi's `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
