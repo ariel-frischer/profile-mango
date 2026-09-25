@@ -244,8 +244,8 @@ func TestAgentsCommandIsHiddenButStillWorks(t *testing.T) {
 
 func TestRenderHelpHidesArielJcodeTarget(t *testing.T) {
 	output := executeCommand(t, "render", "--help")
-	if strings.Contains(output, "ariel-jcode") {
-		t.Fatalf("render --help still mentions ariel-jcode:\n%s", output)
+	if strings.Contains(output, "jcode-fork") {
+		t.Fatalf("render --help still mentions jcode-fork:\n%s", output)
 	}
 }
 

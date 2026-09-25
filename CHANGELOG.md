@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact Pi 0.86.1 inert JSON settings preview rendering with immutable source/package provenance, deterministic candidates, and explicit native inspection and applicability blockers
 - Exact OpenCode 1.18.31 inert JSONC preview rendering with immutable release/source provenance, source-grounded model syntax, and explicit native and install applicability blockers
 - Mock-only install planning and application mechanics with deterministic plan IDs, hash-bound consent, synthetic backups, stale checks, atomic replacement, ownership evidence, and production target gates
-- Experimental-only Ariel custom Jcode fork inert TOML preview rendering pinned to the exact tested 0.83.909-dev (ca8017a3a) build and SHA-256, with strict projection and non-applicability diagnostics
+- Experimental-only Jcode fork inert TOML preview rendering pinned to the exact tested 0.83.909-dev (ca8017a3a) build and SHA-256, with strict projection and non-applicability diagnostics
 - Target-neutral render report and resource boundary shared by inert target adapters
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - install uses each agent's documented default config path when --config is omitted, still behind the plan, backups, drift checks, and confirmation
 - Profiles use a flat YAML format (name, description, extends, route, permissions, tools, instructions, skills); the old apiVersion/kind/metadata/spec form still loads with a deprecation warning
 - Routes default transport to native and authentication to oauth
-- Plain-language help text; the agents maintenance command and the experimental ariel-jcode target are hidden from help
+- Plain-language help text; the agents maintenance command and the experimental jcode-fork target are hidden from help
 - A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
 - Examples consolidated into examples/ (coding, review, docs-research) with a per-agent bindings example; the bundled agent skill is shorter and its compatibility list is corrected
 - install --all skips agents that are not installed (listed as skipped); a named target with a missing config folder gets a clear message
@@ -90,6 +90,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Command tests no longer leak flag state between tests
 - undo works for every target of a multi-target install
 - Show live stderr progress while checking agent sources and probing installed agent versions without changing JSON reports
+- Renamed the experimental ariel-jcode target and adapter package to jcode-fork and removed maintainer-specific references from standalone main
 
 ## [0.0.1] - 2026-01-01
 

@@ -17,7 +17,7 @@ flowchart LR
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
     DISPATCH --> OPENCODE[OpenCode adapter]
-    DISPATCH --> ARIEL[Ariel custom Jcode adapter]
+    DISPATCH --> FORK[Jcode fork adapter]
     CLAUDE --> CONTRACT
     CODEX --> CONTRACT[target-neutral render contract]
     PI --> CONTRACT
@@ -37,8 +37,8 @@ flowchart LR
 - `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/pi`,
   `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, `pkg/adapters/hermes`,
   `pkg/adapters/opencode`, and
-  `pkg/adapters/arieljcode` own exact evidence pins, target syntax, capability
-  mapping, target-specific diagnostics, and applicability. The Ariel package is
+  `pkg/adapters/jcodefork` own exact evidence pins, target syntax, capability
+  mapping, target-specific diagnostics, and applicability. The adapter package is
   experimental-only and is not an upstream Jcode adapter.
 - `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
@@ -63,9 +63,9 @@ canonical digest before they are staged.
 
 Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
 OpenClaw `2026.9.5`, Hermes Agent `0.21.3`, and OpenCode `1.18.31` each have deterministic inert
-preview renderers. Ariel's custom Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
+preview renderers. the Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
 also has a deterministic inert TOML renderer under the explicit target identity
-`ariel-jcode`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
+`jcode-fork`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
 candidate. Codex uses TOML candidate syntax. Pi uses exact source-grounded JSON
 settings keys `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`.
 Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
@@ -98,7 +98,7 @@ agent override/fallback checks. None of these narrow
 installers establishes authenticated full-route or policy enforcement.
 See [shared architecture](../architecture.md) for install/CLI ownership.
 
-The Ariel renderer uses only the exact retained synthetic profile-resolution
+The Jcode fork renderer uses only the exact retained synthetic profile-resolution
 evidence for provider/model/effort, closed tool selectors, empty-skill mode,
 canonical skill selectors, and instruction metadata. It rejects unsupported
 canonical policy shapes and does not accept arbitrary target-owned keys. The

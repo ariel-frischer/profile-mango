@@ -43,7 +43,7 @@ a separate evidence level and must never be implied by these no-inference checks
 ## Repository probe harness
 
 [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh) retains the
-smallest repeatable native probe used for the Codex `0.154.0` build and Ariel's
+smallest repeatable native probe used for the Codex `0.154.0` build , and the Jcode fork
 custom Jcode fork build. It requires explicit direct executable paths through
 `PROFILE_MANGO_CODEX_BIN` and `PROFILE_MANGO_JCODE_BIN`; it never resolves a
 launcher or reads a personal target home. Each invocation creates synthetic
@@ -57,7 +57,7 @@ Run it only with exact direct binaries and a task-owned probe root:
 
 ```bash
 PROFILE_MANGO_CODEX_BIN=/path/to/codex \
-PROFILE_MANGO_JCODE_BIN=/path/to/ariel-custom-jcode \
+PROFILE_MANGO_JCODE_BIN=/path/to/jcode-fork-custom \
 PROFILE_MANGO_PROBE_ROOT="$PWD/.probe" \
 ./scripts/agent-config-probe.sh
 ```
@@ -70,7 +70,7 @@ runtime-override cases are asserted. Route, authentication, project/profile
 precedence, permission/tool enforcement, and instruction/skill delivery remain
 explicit gaps unless a version-qualified safe inspector is established.
 
-For the Ariel custom-fork path, the probe likewise hashes the direct executable
+For the experimental Jcode fork path, the probe likewise hashes the direct executable
 and rejects any build other than `jcode v0.83.909-dev (ca8017a3a)` with SHA-256
 `392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992` before
 running the retained synthetic profile commands. This gate qualifies the
@@ -81,7 +81,7 @@ or upstream Jcode compatibility.
 The custom-fork profile fixtures and commands are not evidence for upstream
 Jcode, and successful parsing does not establish authentication, permissions,
 network policy, tool enforcement, or runtime behavior. The experimental
-`ariel-jcode` adapter reuses this retained exact-build evidence and adds only
+`jcode-fork` adapter reuses this retained exact-build evidence and adds only
 offline deterministic renderer, strict projection-boundary, resource, and
 secret-exclusion tests. It remains non-applicable and does not justify a new
 native probe, a target-home read, or a support claim. The current session Jcode
@@ -181,7 +181,7 @@ runtime/build requirement and unsafe candidate inspector paths.
 
 The planned location is `docs/dev/agents/`, maintained by **ap-8vz**. It is tracked
 contributor documentation, not private material. Cover Codex, Claude Code, Pi and
-Oh My Pi as separately qualified variants, OpenClaw, Hermes, and Ariel's
+Oh My Pi as separately qualified variants, OpenClaw, Hermes, , and the Jcode fork
 experimental-only custom Jcode fork. Keep experimental details out of public
 support promises.
 

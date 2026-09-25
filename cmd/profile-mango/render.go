@@ -8,10 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/ariel-frischer/profile-mango/internal/staging"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
@@ -112,14 +112,14 @@ func renderAdapterFor(name string) (renderAdapter, bool) {
 				return pi.Render(input)
 			},
 		}, true
-	case arieljcode.TargetName:
+	case jcodefork.TargetName:
 		return renderAdapter{
-			evidenceSHA256: arieljcode.EvidenceSHA256,
+			evidenceSHA256: jcodefork.EvidenceSHA256,
 			newResult: func(profileName string, target render.TargetBuild) render.Result {
-				return arieljcode.NewResult(profileName, target)
+				return jcodefork.NewResult(profileName, target)
 			},
 			render: func(input render.Input) render.Result {
-				return arieljcode.Render(input)
+				return jcodefork.Render(input)
 			},
 		}, true
 	default:
@@ -257,8 +257,8 @@ func resolvedRenderTargets(values []string, version string) ([]string, error) {
 		}
 		if selector.Version == "" {
 			selector.Version = version
-			if selector.Version == "" && selector.Name == arieljcode.TargetName {
-				selector.Version = arieljcode.TargetVersion
+			if selector.Version == "" && selector.Name == jcodefork.TargetName {
+				selector.Version = jcodefork.TargetVersion
 			}
 			if selector.Version == "" {
 				if qualified, err := install.DefaultRegistry().ResolveTarget(selector.Name); err == nil {

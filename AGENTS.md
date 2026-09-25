@@ -13,10 +13,7 @@ profile-mango: Define portable coding-agent behavior once and compile it into de
 
 Consult and follow [`.autospec/constitution.yaml`](.autospec/constitution.yaml) for relevant planning, implementation, review, and documentation. Use [`docs/dev/project-scope.md`](docs/dev/project-scope.md) to distinguish shipped capabilities, intended targets, and proposed defaults. Check affected principles proportionally: documentation normally needs factual/link/scope checks, while code, contracts, and compatibility claims need relevant tests and evidence. Surface conflicts explicitly rather than silently bypassing the constitution.
 
-For target configuration work, consult the version-qualified
-[`docs/dev/agents/`](docs/dev/agents/README.md) references before fresh research.
-Treat their documentation provenance separately from installed observations,
-tested evidence, and supported capabilities.
+For target configuration work, consult the version-qualified [`docs/dev/agents/`](docs/dev/agents/README.md) references before fresh research. Treat their documentation provenance separately from installed observations, tested evidence, and supported capabilities.
 
 ## Command Map
 
@@ -35,9 +32,12 @@ make test-coverage  # Run tests with race detector and coverage
 make lint           # Run linters (golangci-lint, fallback go vet)
 make format         # Run go fmt ./...
 make clean          # Remove build artifacts
+make worktree BRANCH=agent/name   # Create an isolated agent worktree
+make worktree-clean              # Clean merged agent worktrees
 make prep-release VERSION=v0.1.0  # Run release preflight
 make release VERSION=v0.1.0       # Alias for prep-release
 ```
+
 CLI smoke checks:
 
 ```bash
@@ -63,10 +63,13 @@ internal/
 pkg/profilemango/      # pure canonical domain, parsing, resolution, resource hashing
   testdata/fixtures/  # route-only, constrained, and unsupported fixtures
   testdata/golden/    # deterministic resolved output
+pkg/adapters/          # per-agent renderers and native installers
+pkg/install/           # plan, apply, undo, and manifest state machine
 schemas/               # versioned profile, binding, plan, and manifest contracts
 docs/dev/              # target evidence and support boundaries
-assets/               # demo content (GIFs, screenshots)
-.gitlab-ci.yml        # GitLab CI + release
+docs/public/           # user-facing documentation
+assets/                # demo content (GIFs, screenshots)
+.gitlab-ci.yml         # GitLab CI + release
 CHANGELOG.yaml        # changelog source
 CHANGELOG.md          # generated changelog output
 .chlog.yaml           # changelog config
@@ -88,7 +91,7 @@ CHANGELOG.md          # generated changelog output
 - Tests and native probes use synthetic or disposable state and must never resolve to the real user home.
 - Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unknown required properties and unqualified targets remain blocked. Known requirements a target cannot install (permissions, tools, instructions, skills) are skipped and listed per target in the plan (JSON `skippedRequirements`); `install --strict` blocks on them instead.
 - Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated and timeout-bounded. Hide personal homes and sockets; writes may occur only inside the disposable sandbox.
-- Codex remains the first intended public target. Jcode is experimental developer evidence, not a supported product target or README promise.
+- The experimental Jcode fork (`jcode-fork`) is experimental developer evidence, not a supported product target or README promise.
 - Unknown keys in canonical input, duplicate keys, nulls, unsupported versions, missing parents, cycles, and escaping resource paths fail closed. Target-owned unrelated configuration remains preserved.
 
 ## Testing Guidance
@@ -107,19 +110,15 @@ CHANGELOG.md          # generated changelog output
 - Changelog source is `CHANGELOG.yaml`; regenerate `CHANGELOG.md` with `chlog sync`.
 - Use `chlog add <category> "message"` for unreleased entries when possible.
 
-
-## Multi-Agent Git Rules
+## Git Rules
 
 - Check `git status --short` before editing and before committing.
 - Keep writes scoped to files relevant to the task; do not clean up unrelated work.
 - Do not use `git stash`, `git reset --hard`, or broad checkout/revert commands in a shared worktree.
 - Stage explicit files only, not `git add .` or `git add -A`.
 - Run focused tests for the files you touched, then the relevant Make targets before handoff.
-- For accepted in-scope work being landed, including task-owned Markdown commits on `main`, Ariel authorizes safe Git push/sync as part of landing without a second prompt. This does not authorize unrelated outgoing commits, Dolt sync, high-risk effects, or pushing against an explicit do-not-push instruction.
-- Before pushing, inspect outgoing commits, fetch the remote base, require it to be an ancestor of `HEAD`, and never rewrite history. Verify the remote contains the landed commit and synchronize the primary checkout when safe. If the checkout is dirty, the remote diverged, or an outgoing commit is unrelated or uncertain, preserve state and report the blocker instead of claiming sync.
-- After a task is merged, pushed, and validated, automatically clean up its owned worktree: confirm its current HEAD is reachable from the fetched remote base, no agent still uses it, and staged, unstaged, untracked, and ignored contents contain no valuable data. Preserve reports outside the worktree. Use ordinary `git worktree remove` without force; delete its local branch only if `git branch -d` permits it. Leave active, dirty, unmerged, or uncertain worktrees intact and report why.
-- After landing through an integration worktree, fetch the remote base and fast-forward the primary checkout if it is clean, on its expected branch, and its HEAD is an ancestor of the fetched base (`git merge --ff-only origin/main`). Verify the primary checkout HEAD matches the fetched base and contains the landed commit before reporting local availability. If dirty or diverged, leave it untouched and explicitly report that it is behind. Never use rebase or reset to synchronize it.
-- When the task includes installing a newly landed CLI locally, synchronize that checkout first, run `make install`, and verify `mango version` reports the landed commit. A successful install from a stale checkout is not evidence that the new CLI is installed.
+- Before pushing, inspect outgoing commits, fetch the remote base, require it to be an ancestor of `HEAD`, and never rewrite history.
+- After a merged task's worktree is validated, clean it up only if its HEAD is reachable from the fetched remote base and no valuable untracked data remains; use ordinary `git worktree remove`.
 
 ## Coding Standards
 
@@ -165,17 +164,7 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 1. **File issues for remaining work** - Create beads for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
-4. **Handle git/sync by active profile**:
-   ```bash
-   # Conservative/minimal/default: report status and proposed commands; wait for approval.
-   git status
-
-   # Team-maintainer opt-in only, unless current instructions forbid it:
-   git pull --rebase
-   bd dolt push
-   git push
-   git status
-   ```
+4. **Handle git/sync by active profile**: report status and proposed commands at handoff; commit and push only when authorized by the active profile or the current user request.
 5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
 
 **Critical rules:**
@@ -184,26 +173,5 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 - If a required sync or push is blocked, stop and report the exact command and error.
 <!-- END BEADS INTEGRATION -->
 
-<!-- BEGIN BEADS CODEX SETUP: generated by bd setup codex -->
-## Beads Issue Tracker
-
-Use Beads (`bd`) for durable task tracking in repositories that include it. Use the `beads` skill at `.agents/skills/beads/SKILL.md` (project install) or `~/.agents/skills/beads/SKILL.md` (global install) for Beads workflow guidance, then use the `bd` CLI for issue operations.
-
-### Quick Reference
-
-```bash
-bd ready                # Find available work
-bd show <id>            # View issue details
-bd update <id> --claim  # Claim work
-bd close <id>           # Complete work
-bd prime                # Refresh Beads context
-```
-
-### Rules
-
-- Use `bd` for all task tracking; do not create markdown TODO lists.
-- Run `bd prime` when Beads context is missing or stale. Codex 0.129.0+ can load Beads context automatically through native hooks; use `/hooks` to inspect or toggle them.
-- Keep persistent project memory in Beads via `bd remember`; do not create ad hoc memory files.
-
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
-<!-- END BEADS CODEX SETUP -->
+Maintainer-private workflow rules that extend this file live in `AGENTS.dev.md`
+and are stripped from public publication.

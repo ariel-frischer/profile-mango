@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
@@ -123,7 +123,7 @@ func TestRenderArielJcodePreviewUsesExperimentalDispatch(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "candidate")
 	stdout, stderr, err := executeRenderForTest(t, []string{
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
-		"--target", arieljcode.TargetName, "--target-version", arieljcode.TargetVersion, "--out", out, "--preview", "--json",
+		"--target", jcodefork.TargetName, "--target-version", jcodefork.TargetVersion, "--out", out, "--preview", "--json",
 	})
 	if err == nil {
 		t.Fatal("blocked Ariel custom Jcode preview unexpectedly succeeded")
@@ -132,10 +132,10 @@ func TestRenderArielJcodePreviewUsesExperimentalDispatch(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
 		t.Fatalf("stdout is not render JSON: %v\n%s", err, stdout)
 	}
-	if report.Target != arieljcode.TargetName || report.AdapterVersion != arieljcode.AdapterVersion || !report.Preview || report.Applicable {
+	if report.Target != jcodefork.TargetName || report.AdapterVersion != jcodefork.AdapterVersion || !report.Preview || report.Applicable {
 		t.Fatalf("unexpected Ariel custom Jcode report: %#v", report)
 	}
-	if !strings.Contains(stderr, "arieljcode.experimental_only") || !strings.Contains(stderr, "arieljcode.route.authentication_unverified") {
+	if !strings.Contains(stderr, "jcodefork.experimental_only") || !strings.Contains(stderr, "jcodefork.route.authentication_unverified") {
 		t.Fatalf("experimental blockers missing: %s", stderr)
 	}
 	assertRenderFile(t, out, "render.json")
@@ -314,18 +314,18 @@ func TestRenderHelpListsKnownTargets(t *testing.T) {
 	}
 }
 
-// TestRenderHelpHidesArielJcode ensures the experimental ariel-jcode target is
+// TestRenderHelpHidesArielJcode ensures the experimental jcode-fork target is
 // absent from the public --target help text and command Long description
 // while remaining an accepted --target value (see
 // TestRenderArielJcodePreviewUsesExperimentalDispatch).
 func TestRenderHelpHidesArielJcode(t *testing.T) {
 	cmd := newRenderCmd()
 	flag := cmd.Flag("target")
-	if flag == nil || strings.Contains(flag.Usage, "ariel-jcode") {
-		t.Fatalf("target help still mentions ariel-jcode: %#v", flag)
+	if flag == nil || strings.Contains(flag.Usage, "jcode-fork") {
+		t.Fatalf("target help still mentions jcode-fork: %#v", flag)
 	}
-	if strings.Contains(cmd.Long, "ariel-jcode") || strings.Contains(cmd.Short, "ariel-jcode") {
-		t.Fatalf("render help text still mentions ariel-jcode: short=%q long=%q", cmd.Short, cmd.Long)
+	if strings.Contains(cmd.Long, "jcode-fork") || strings.Contains(cmd.Short, "jcode-fork") {
+		t.Fatalf("render help text still mentions jcode-fork: short=%q long=%q", cmd.Short, cmd.Long)
 	}
 }
 

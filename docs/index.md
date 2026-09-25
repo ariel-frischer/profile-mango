@@ -30,7 +30,7 @@
 
 ### Agent configuration references
 
-- [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and Ariel's experimental-only custom Jcode fork.
+- [`dev/agents/README.md`](dev/agents/README.md) - Version-qualified configuration references and provenance for intended targets and the experimental-only Jcode fork.
 - [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert preview syntax, and bounded model-only native installation evidence.
 - [`dev/agents/codex.md`](dev/agents/codex.md) - Codex 0.154.0 configuration and precedence, inert preview boundary, and bounded three-setting installation.
 - [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.86.1 source/package provenance, inert preview syntax, static effect review, and bounded settings-module installation evidence.
@@ -38,7 +38,7 @@
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
 - [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and bounded native config-merge installation qualification.
 - [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 model/one-skill and named primary/subagent installation evidence, isolated generated-definition consumption, and runtime limits.
-- [`dev/agents/jcode.md`](dev/agents/jcode.md) - Ariel custom Jcode fork experimental-only provenance, executed profile probe boundary, and inert preview projection.
+- [`dev/agents/jcode.md`](dev/agents/jcode.md) - Jcode fork experimental-only provenance, executed profile probe boundary, and inert preview projection.
 
 ### Research
 

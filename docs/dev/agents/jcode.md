@@ -1,21 +1,21 @@
-# Ariel custom Jcode fork experimental configuration reference
+# Jcode fork experimental configuration reference
 
 **Reference date:** 2026-09-20. **Local source snapshot:** version `0.83.0`,
 branch `dev`, commit `ed9b93b894454619f73ccddd24c2ff7a3c98ddc3`. No canonical
 public release was established. **Status:** experimental-only local comparison
 target; not an intended supported MVP target, public compatibility promise, or
-supported capability. An exact-build inert `ariel-jcode` preview adapter exists,
+supported capability. An exact-build inert `jcode-fork` preview adapter exists,
 but it is not public support.
 
-This reference covers only Ariel's custom Jcode fork. The named profile commands
+This reference covers only the Jcode fork. The named profile commands
 and `[profiles.<name>]` configuration described below are fork-specific
 observations and must not be generalized to upstream or otherwise independently
-distributed Jcode. An inert `ariel-jcode` renderer exists for this exact tested
+distributed Jcode. An inert `jcode-fork` renderer exists for this exact tested
 build, but it is experimental-only and not a supported public target.
 
 ## Configuration and precedence
 
-The Ariel custom-fork snapshot defines runtime TOML at `~/.jcode/config.toml`,
+The Jcode fork snapshot defines runtime TOML at `~/.jcode/config.toml`,
 base provider fields, and named `[profiles.<name>]` entries. Provider, model,
 reasoning effort, tool, skill, and additive-instruction settings are candidate
 comparison concepts for this fork only.
@@ -37,8 +37,8 @@ The retained isolated synthetic probe tested only `jcode v0.83.909-dev
 source documentation snapshot `ed9b93b894454619f73ccddd24c2ff7a3c98ddc3` is
 separate provenance and is not proven equivalent to that build.
 
-The `pkg/adapters/arieljcode` renderer uses the explicit target identity
-`ariel-jcode` and produces only a deterministic inert TOML preview. It projects
+The `pkg/adapters/jcodefork` renderer uses the explicit target identity
+`jcode-fork` and produces only a deterministic inert TOML preview. It projects
 the exact-build-observed provider, model, reasoning effort, closed tool
 selectors, an observed `none` tool profile for canonical closed allowlists,
 empty-skill mode, canonical skill selectors, and instruction presence/character

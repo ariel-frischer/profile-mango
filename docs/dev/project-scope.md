@@ -88,7 +88,7 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
   documented default user config path shown in the plan; other targets remain
   blocked. Validation uses fake adapters and synthetic disposable target state and
   never resolves to the real user home.
-- An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
+- An Jcode fork `jcode-fork` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
@@ -98,7 +98,7 @@ profiles. The ordinary core, validation, and render paths stay offline and pure.
 Installers touch only the selected configuration (explicit or documented default)
 and adjacent transaction paths. Separate opt-in native probes use disposable network-blocked state and do
 not establish authentication, full-profile delivery, or runtime enforcement.
-Ariel's Jcode fork remains experimental-only.
+The Jcode fork remains experimental-only.
 
 ## Confirmed intended MVP targets
 
@@ -115,7 +115,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
 | OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/instructions; native generated-definition resolution verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
 
-Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
+The **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer
 comparison evidence, not a public support commitment.
 

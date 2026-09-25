@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
@@ -68,10 +68,10 @@ func acceptanceTargets() map[string]acceptanceTarget {
 			candidatePath: "preview/route-only.config.yaml.preview", codePrefix: "hermes",
 			previewBlocker: "hermes.config.inspector_unsafe", render: hermes.Render,
 		},
-		arieljcode.TargetName: {
-			name: arieljcode.TargetName, version: arieljcode.TargetVersion, evidence: arieljcode.EvidenceSHA256,
-			candidatePath: "preview/route-only.config.toml.preview", codePrefix: "arieljcode",
-			previewBlocker: "arieljcode.experimental_only", render: arieljcode.Render, experimentalOnly: true,
+		jcodefork.TargetName: {
+			name: jcodefork.TargetName, version: jcodefork.TargetVersion, evidence: jcodefork.EvidenceSHA256,
+			candidatePath: "preview/route-only.config.toml.preview", codePrefix: "jcodefork",
+			previewBlocker: "jcodefork.experimental_only", render: jcodefork.Render, experimentalOnly: true,
 		},
 	}
 }
@@ -87,7 +87,7 @@ func TestRenderTargetAcceptanceMatrix(t *testing.T) {
 }
 
 func TestRenderArielIdentityOnEarlyFailures(t *testing.T) {
-	target := acceptanceTargets()[arieljcode.TargetName]
+	target := acceptanceTargets()[jcodefork.TargetName]
 	profiles := t.TempDir()
 	resources := t.TempDir()
 	bindings := writeBindingsFixture(t)
@@ -107,14 +107,14 @@ func TestRenderArielIdentityOnEarlyFailures(t *testing.T) {
 	if err == nil {
 		t.Fatal("malformed Ariel bindings unexpectedly succeeded")
 	}
-	if !strings.Contains(stderr, arieljcode.ExperimentalLabel) || !strings.Contains(stderr, "yaml.invalid") {
+	if !strings.Contains(stderr, jcodefork.ExperimentalLabel) || !strings.Contains(stderr, "yaml.invalid") {
 		t.Fatalf("malformed binding text lost Ariel identity: %s", stderr)
 	}
 
 	missingBindings := filepath.Join(t.TempDir(), "missing.yaml")
 	missingOut := filepath.Join(t.TempDir(), "missing-bindings")
 	stdout, _, err = executeRenderForTest(t, acceptanceCLIArgs("route-only", validProfiles, validResources, missingBindings, missingOut, true, true, target))
-	if err == nil || !strings.Contains(stdout, arieljcode.ExperimentalLabel) || !strings.Contains(stdout, "render.bindings.read") {
+	if err == nil || !strings.Contains(stdout, jcodefork.ExperimentalLabel) || !strings.Contains(stdout, "render.bindings.read") {
 		t.Fatalf("missing binding JSON lost Ariel identity: %v\n%s", err, stdout)
 	}
 }
@@ -125,7 +125,7 @@ func assertArielEarlyIdentity(t *testing.T, stdout, stderr, caseName string) {
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
 		t.Fatalf("%s did not return JSON: %v\n%s", caseName, err, stdout)
 	}
-	if report.Target != arieljcode.TargetName || !hasAcceptanceCode(report.Diagnostics, "arieljcode.experimental_only") || !strings.Contains(stdout, arieljcode.ExperimentalLabel) {
+	if report.Target != jcodefork.TargetName || !hasAcceptanceCode(report.Diagnostics, "jcodefork.experimental_only") || !strings.Contains(stdout, jcodefork.ExperimentalLabel) {
 		t.Fatalf("%s lost explicit Ariel identity: %#v\n%s", caseName, report, stderr)
 	}
 }
@@ -162,7 +162,7 @@ func assertStableAcceptanceReports(t *testing.T, target acceptanceTarget) {
 	if result.Applicable || !hasAcceptanceCode(result.Diagnostics, target.previewBlocker) {
 		t.Fatalf("%s was not blocked by its expected limitation: %#v", target.name, result)
 	}
-	if target.experimentalOnly != strings.Contains(string(report), arieljcode.ExperimentalLabel) {
+	if target.experimentalOnly != strings.Contains(string(report), jcodefork.ExperimentalLabel) {
 		t.Fatalf("%s experimental identity mismatch: %s", target.name, report)
 	}
 }

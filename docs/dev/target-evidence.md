@@ -53,13 +53,13 @@ target, in the human plan and as JSON `skippedRequirements`; a skipped
 requirement is never claimed as honored. `install --strict` blocks on them
 instead. Unknown required properties and unqualified targets always block. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
-Native probes require approved disposable scope and exact evidence. Ariel's custom
+Native probes require approved disposable scope and exact evidence. The Jcode fork custom
 Jcode fork is experimental developer evidence, not a supported public target.
 
-Ariel's custom Jcode fork must not appear in the README support list, release
+the Jcode fork must not appear in the README support list, release
 promise, or public compatibility matrix. Public support for any Jcode variant
 would require a stable external distribution, versioned public documentation,
-reproducible fixtures, and evidence independent of Ariel's machine.
+reproducible fixtures, and evidence independent of the developer's machine.
 
 ## Pinned local observations
 
@@ -72,7 +72,7 @@ reproducible fixtures, and evidence independent of Ariel's machine.
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `profiles/<name>/config.yaml` profile below the resolved `config.yaml`'s directory that `hermes -p <name>` reads, and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
-| Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
+| Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
 The observations are version-qualified snapshots, not compatibility ranges.
 Dated initial M0 source reviews below are historical; later installation
@@ -422,7 +422,7 @@ Reproduction command, with direct binary paths supplied by the operator:
 
 ```bash
 PROFILE_MANGO_CODEX_BIN=/absolute/path/to/codex-0.154.0 \
-PROFILE_MANGO_JCODE_BIN=/absolute/path/to/ariel-custom-jcode-ca8017a3a \
+PROFILE_MANGO_JCODE_BIN=/absolute/path/to/jcode-fork-ca8017a3a \
 PROFILE_MANGO_PROBE_ROOT=/task-owned-scratch/ap-3kw \
 PROFILE_MANGO_PROBE_TIMEOUT_SECONDS=10 \
 ./scripts/agent-config-probe.sh
@@ -894,15 +894,15 @@ memory, session, profile, or active target-home path. Reports remain
 `applicable: false`, include target-owned diagnostics, and return nonzero.
 
 
-## Experimental Ariel custom Jcode fork evidence
+## Experimental Jcode fork evidence
 
 All profile commands, profile fixtures, and profile observations in this section
-refer only to Ariel's custom Jcode fork. They do not describe upstream Jcode or
+refer only to the Jcode fork. They do not describe upstream Jcode or
 establish compatibility with any independently distributed Jcode build.
 
 ### Destination and precedence
 
-The Ariel custom Jcode fork defines named profiles as entries under
+The Jcode fork defines named profiles as entries under
 `[profiles.<name>]` in `~/.jcode/config.toml`, selected with the custom-fork
 `jcode --profile <name>` flag or its TUI profile picker. The bundled wrapper
 guide states that these custom-fork profiles supply provider, model, reasoning,
@@ -939,15 +939,15 @@ Because explicit child overrides are possible, a root profile is not an organiza
 
 ### Route and authentication
 
-The Ariel custom-fork CLI distinguishes provider routes such as `openai` and
+The Jcode fork CLI distinguishes provider routes such as `openai` and
 `openai-api`, and supports explicit provider, model, and reasoning-effort
 selection. That distinction is promising for exact route mapping, but it is
 custom-fork behavior and no local profile values or credential state were read
 during M0.
 
-The Ariel custom-fork `jcode profile show`, `current`, and `resolve` commands
+The Jcode fork `jcode profile show`, `current`, and `resolve` commands
 are documented to avoid credential exposure and provider initialization. M0 did
-not run them against Ariel's live profiles because doing so would read personal
+not run them against the developer's live profiles because doing so would read personal
 target configuration. The isolated probe below uses only synthetic custom-fork
 configuration before making a route observation.
 
@@ -955,22 +955,22 @@ configuration before making a route observation.
 
 | Command | Documented effect | M0 use |
 | --- | --- | --- |
-| Ariel custom fork: `jcode --version` | Prints build version | Run |
-| Ariel custom fork: `jcode profile --help` | Prints profile inspection and override surface | Run |
-| Ariel custom fork: `jcode --quiet profile list --json` | Lists configured names without provider initialization | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile show NAME --json` | Shows safe configured fields and instruction presence/length | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile current --json` | Shows current effective policy and explicit no-profile state | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile resolve NAME --json` | Resolves effective tools, skills, and field sources without mutating a session | Run only in synthetic config |
+| Jcode fork: `jcode --version` | Prints build version | Run |
+| Jcode fork: `jcode profile --help` | Prints profile inspection and override surface | Run |
+| Jcode fork: `jcode --quiet profile list --json` | Lists configured names without provider initialization | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile show NAME --json` | Shows safe configured fields and instruction presence/length | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile current --json` | Shows current effective policy and explicit no-profile state | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile resolve NAME --json` | Resolves effective tools, skills, and field sources without mutating a session | Run only in synthetic config |
 
 The first adapter experiment must use an isolated synthetic config and a private/new
-server socket where required. It must not reuse Ariel's live custom-fork config or
+server socket where required. It must not reuse the developer's live custom-fork config or
 shared daemon as a fixture. These profile commands remain custom-fork-only
 evidence and are not upstream Jcode evidence.
 
 ### Isolated 2026-09-21 UTC custom-fork profile probe
 
 The retained [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
-ran only Ariel's direct custom-fork `jcode` executable with synthetic
+ran only the developer's direct custom-fork `jcode` executable with synthetic
 `HOME/.jcode/config.toml`, `XDG_CONFIG_HOME`, an empty project, a private socket,
 `--no-update`, `--no-selfdev`, `JCODE_NO_TELEMETRY=1`, a cleared environment,
 an unshared network namespace, and a bounded ten-second timeout. These flags and
@@ -1004,20 +1004,20 @@ Negative custom-fork profile fixtures produced these version-qualified results:
 - invalid `reasoning_effort` was rejected with the allowed-value diagnostic;
 - an unknown `unknown_key` was accepted but omitted from the resolved output.
 
-The last result is an explicit compatibility and safety gap: this current Ariel
+The last result is an explicit compatibility and safety gap: this current Jcode fork
 custom-fork profile parser is not demonstrated to reject unknown profile keys.
 Do not treat it as upstream Jcode behavior or as evidence of fail-closed
 validation for a future adapter.
 
 ### Experimental inert adapter boundary
 
-The `pkg/adapters/arieljcode` package is pinned to target identity
-`ariel-jcode`, tested build `jcode v0.83.909-dev (ca8017a3a)`, commit
+The `pkg/adapters/jcodefork` package is pinned to target identity
+`jcode-fork`, tested build `jcode v0.83.909-dev (ca8017a3a)`, commit
 `ca8017a3a`, and SHA-256
 `392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992`. It emits
 only a deterministic inert TOML preview under `preview/` and keeps
 `applicable: false` unconditionally. The report, diagnostic, and candidate
-comments identify it as the **Ariel custom Jcode fork, experimental-only**.
+comments identify it as the **Jcode fork, experimental-only**.
 
 Candidate syntax is limited to the exact-build-observed provider, model,
 reasoning effort, a `none` tool profile paired with canonical closed allow and
@@ -1045,7 +1045,7 @@ overrides, hooks, extensions, MCP, and runtime enforcement remain blocking.
 
 `fidelity` describes whether the target has a corresponding concept. `delivery` describes whether M0 has an approved deterministic destination. `enforcement` describes what has actually been demonstrated. `unknown` and `unsupported` block applicability when the field is required.
 
-| Portable field | Codex 0.154.0 | Ariel custom Jcode fork 0.83.909-dev (ca8017a3a) | M0 applicability consequence |
+| Portable field | Codex 0.154.0 | Jcode fork 0.83.909-dev (ca8017a3a) | M0 applicability consequence |
 | --- | --- | --- | --- |
 | `spec.routeRef` provider/model/effort | **Partial fidelity.** Profile keys exist for provider, model, and effort; runtime overrides are higher precedence. Exact auth mode is unverified. | **Observed profile fields, not auth proof.** Synthetic custom-fork `profile resolve` reported provider `openai-api`, model, effort, and `Profile` sources. No credential or provider state was read. | Any binding requiring verified authentication mode is non-applicable. No silent route fallback. |
 | `permissions.mode` | **Partial concept.** Sandbox and approval fields exist, but read-only target behavior and all escape surfaces were not verified. | **Profile tool policy observed only.** Custom-fork tool-profile values resolve, but a general read-only filesystem/process guarantee was not verified. | Required read-only policy is non-applicable. |
@@ -1064,7 +1064,7 @@ The minimum contract can proceed without public Jcode support and without preten
 
 - Codex is the first public M1 adapter candidate, and Claude Code, Pi, Oh My Pi,
   OpenClaw, and Hermes now have exact source-qualified inert preview renderers.
-- Ariel's custom Jcode fork is a private experimental comparison target only.
+- the Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
 - no target artifact is applied, no launch recipe is emitted, and no live-state mutation is part of M0
@@ -1074,7 +1074,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 ## Evidence references
 
 - Local binaries: direct `codex --version`, `codex --help`, `codex features list`,
-  and Ariel custom-fork `jcode --version`, `jcode profile --help`, and custom-
+  and Jcode fork `jcode --version`, `jcode profile --help`, and custom-
   fork `jcode profile list/show/resolve` on 2026-09-20 local / 2026-09-21 UTC.
 - Reproducible harness: [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
   and its opt-in integration test `TestAgentConfigProbe`.
@@ -1082,18 +1082,18 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Pi v0.86.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
 - Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
 - OpenClaw v2026.9.5 source and documentation: [`openclaw.mjs`](https://github.com/openclaw/openclaw/blob/v2026.9.5/openclaw.mjs), [`config-cli.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/cli/config-cli.ts), [`io.snapshot.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/io.snapshot.ts), [`configuration.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md), and [`config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md). The exact source review did not execute config inspection because plugin/state/include and migration effects were not bounded.
-- Bundled Ariel custom Jcode fork documentation for source snapshot `ed9b93b89`:
+- Bundled Jcode fork documentation for source snapshot `ed9b93b89`:
   `README.md` named-session-profile section and `docs/WRAPPERS.md` profile
   inspection section. This source snapshot is separate from the tested build
   `ca8017a3a`; neither is evidence for upstream Jcode.
-- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in Ariel's OpenClaw workspace at `/home/ari/.openclaw/docs/research/general/2026-09-20-unified-coding-profile-mangos.md`. The Bead ID is the durable cross-repository reference.
+- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in the developer.s OpenClaw research workspace (2026-09-20 design gate document). The Bead ID is the durable cross-repository reference.
 
 ## Deferred checks
 
 - Codex feature parsing is now observed in an isolated synthetic `CODEX_HOME`,
   but route/effective-config inspection remains unavailable without a safe
   inspector.
-- Ariel custom-fork `profile show/current/resolve` was run only against an
+- Jcode fork `profile show/current/resolve` was run only against an
   isolated synthetic config and private socket. Do not port these profile
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.

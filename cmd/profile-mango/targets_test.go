@@ -57,7 +57,7 @@ func TestDoctorTargetListBeforeProbes(t *testing.T) {
 	if err != nil || len(selected) != 2 || selected[0].Name != "codex" || selected[1].Name != "opencode" {
 		t.Fatalf("selected=%v error=%v", selected, err)
 	}
-	for _, value := range []string{"unknown", "ariel-jcode", "codex@invalid", "codex,"} {
+	for _, value := range []string{"unknown", "jcode-fork", "codex@invalid", "codex,"} {
 		if _, err := selectedDoctorTargets(registry, doctorOptions{targets: []string{value}}); err == nil {
 			t.Fatalf("accepted %q", value)
 		}

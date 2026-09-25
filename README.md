@@ -4,7 +4,7 @@
 
 ## What is a profile?
 
-- **Profile:** portable intent, such as a description, a route name, and later permissions, instructions, and skills. It is a flat YAML file named by its folder.
+- **Profile:** bundled agentic configuration. A profile describes portable intent: a description, a route name, and later permissions, instructions, and skills. Each profile is a flat YAML file inside its own folder.
 - **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides. They stay local and never hold credentials.
 - **Install:** writes the settings each agent supports into that agent's own config. Where the agent has named profiles, native (Codex, OpenClaw, Hermes, OpenCode agents) or emulated (Claude Code), the profile is installed under its own name and your default settings are left alone unless you pass `--default`. It shows a plan first, backs up what it changes, and can be undone.
 

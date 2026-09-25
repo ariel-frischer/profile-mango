@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/arieljcode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
@@ -43,7 +43,7 @@ var doctorProbeTimeout = 3 * time.Second
 // doctorBinaryNames maps each registered target to the documented CLI
 // executable name observed in its adapter evidence (docs/dev/agents/ and
 // docs/dev/target-evidence.md), since it is not always the target name
-// (Oh My Pi ships "omp"; Ariel's Jcode fork ships "jcode").
+// (Oh My Pi ships "omp"; the experimental Jcode fork ships "jcode").
 var doctorBinaryNames = map[string]string{
 	claudecode.TargetName: "claude",
 	codex.TargetName:      "codex",
@@ -52,7 +52,7 @@ var doctorBinaryNames = map[string]string{
 	openclaw.TargetName:   "openclaw",
 	opencode.TargetName:   "opencode",
 	pi.TargetName:         "pi",
-	arieljcode.TargetName: "jcode",
+	jcodefork.TargetName:  "jcode",
 }
 
 type doctorOptions struct {
@@ -104,7 +104,7 @@ func newDoctorCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.profile, "profile", "", "profile to check install readiness for (defaults to \"default\")")
 	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; omit for all public agents")
 	cmd.Flags().BoolVar(&options.jsonOutput, "json", false, "emit a stable JSON report")
-	cmd.Flags().BoolVar(&options.experimental, "experimental", false, "also check Ariel's experimental Jcode fork")
+	cmd.Flags().BoolVar(&options.experimental, "experimental", false, "also check the experimental Jcode fork")
 	_ = cmd.Flags().MarkHidden("experimental")
 	return cmd
 }
@@ -162,14 +162,14 @@ func selectedDoctorTargets(registry *install.Registry, options doctorOptions) ([
 }
 
 // doctorTargets lists every public registered target, sorted by name@version.
-// Ariel's experimental Jcode fork has no install adapter at all (it is
+// Jcode fork has no install adapter at all (it is
 // render-only), so it is added only when the hidden --experimental flag was
 // given; its config-path and plan columns then report the resulting "no
 // static adapter is registered" reason instead of crashing.
 func doctorTargets(registry *install.Registry, experimental bool) []install.Target {
 	result := append([]install.Target(nil), registry.Targets()...)
 	if experimental {
-		result = append(result, install.Target{Name: arieljcode.TargetName, Version: arieljcode.TargetVersion})
+		result = append(result, install.Target{Name: jcodefork.TargetName, Version: jcodefork.TargetVersion})
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].String() < result[j].String() })
 	return result

@@ -1,4 +1,4 @@
-package arieljcode
+package jcodefork
 
 import (
 	"os"
@@ -24,15 +24,15 @@ func TestRenderTable(t *testing.T) {
 			},
 			resources: []Resource{ResourceFromContent("instructions/system.md", "instruction", []byte("system\n"))},
 			codes: []string{
-				"arieljcode.config.acceptance_unverified",
-				"arieljcode.config.discovery_unverified",
-				"arieljcode.config.precedence_unverified",
-				"arieljcode.child.overrides_unverified",
-				"arieljcode.hooks.extensions.mcp_unverified",
-				"arieljcode.experimental_only",
-				"arieljcode.instructions.delivery_unverified",
-				"arieljcode.route.authentication_unverified",
-				"arieljcode.runtime.enforcement_unverified",
+				"jcodefork.config.acceptance_unverified",
+				"jcodefork.config.discovery_unverified",
+				"jcodefork.config.precedence_unverified",
+				"jcodefork.child.overrides_unverified",
+				"jcodefork.hooks.extensions.mcp_unverified",
+				"jcodefork.experimental_only",
+				"jcodefork.instructions.delivery_unverified",
+				"jcodefork.route.authentication_unverified",
+				"jcodefork.runtime.enforcement_unverified",
 			},
 			paths: []string{
 				"preview/route-only.config.toml.preview",
@@ -52,11 +52,11 @@ func TestRenderTable(t *testing.T) {
 				ResourceFromContent("skills/research/SKILL.md", "skill", []byte("skill\n")),
 			},
 			codes: []string{
-				"arieljcode.permissions.mode_unverified",
-				"arieljcode.permissions.network_unverified",
-				"arieljcode.permissions.shell_unverified",
-				"arieljcode.skills.delivery_unverified",
-				"arieljcode.tools.delivery_unverified",
+				"jcodefork.permissions.mode_unverified",
+				"jcodefork.permissions.network_unverified",
+				"jcodefork.permissions.shell_unverified",
+				"jcodefork.skills.delivery_unverified",
+				"jcodefork.tools.delivery_unverified",
 			},
 			paths: []string{
 				"preview/read-only.config.toml.preview",
@@ -66,7 +66,7 @@ func TestRenderTable(t *testing.T) {
 		},
 		"unsupported-version": {
 			profile: profilemango.ResolvedProfile{Metadata: profilemango.Metadata{Name: "unsupported"}},
-			codes:   []string{"arieljcode.version.unsupported", "arieljcode.version.evidence_mismatch"},
+			codes:   []string{"jcodefork.version.unsupported", "jcodefork.version.evidence_mismatch"},
 			paths:   []string{"preview/unsupported.config.toml.preview"},
 		},
 	}
@@ -128,7 +128,7 @@ func TestRenderRejectsWrongEvidence(t *testing.T) {
 	target := DefaultTarget()
 	target.EvidenceSHA256 = "bad"
 	result := Render(Input{Profile: testProfile(), Route: testRoute(), Target: target})
-	if result.Applicable || !hasCode(result.Diagnostics, "arieljcode.version.evidence_mismatch") {
+	if result.Applicable || !hasCode(result.Diagnostics, "jcodefork.version.evidence_mismatch") {
 		t.Fatalf("evidence mismatch was not blocking: %#v", result)
 	}
 }
@@ -137,7 +137,7 @@ func TestRenderStrictlyRejectsUnsupportedCanonicalPolicy(t *testing.T) {
 	profile := testProfile()
 	profile.Tools = &profilemango.ResolvedRules{Managed: true, Closed: false, Allow: []string{"read"}}
 	result := Render(Input{Profile: profile, Route: testRoute(), Target: DefaultTarget()})
-	if result.Applicable || !hasCode(result.Diagnostics, "arieljcode.tools.policy_unsupported") {
+	if result.Applicable || !hasCode(result.Diagnostics, "jcodefork.tools.policy_unsupported") {
 		t.Fatalf("unsupported tool policy was not rejected: %#v", result)
 	}
 	if artifactByPath(result.Artifacts, "preview/route-only.config.toml.preview").Path != "" {
@@ -151,9 +151,9 @@ func TestRenderRejectsMalformedSelectors(t *testing.T) {
 		deny  []string
 		code  string
 	}{
-		"duplicate": {allow: []string{"read", "read"}, code: "arieljcode.selector.duplicate"},
-		"newline":   {deny: []string{"write\nclose"}, code: "arieljcode.selector.invalid"},
-		"empty":     {allow: []string{""}, code: "arieljcode.selector.invalid"},
+		"duplicate": {allow: []string{"read", "read"}, code: "jcodefork.selector.duplicate"},
+		"newline":   {deny: []string{"write\nclose"}, code: "jcodefork.selector.invalid"},
+		"empty":     {allow: []string{""}, code: "jcodefork.selector.invalid"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestRenderRejectsInvalidResources(t *testing.T) {
 	resource := ResourceFromContent("instructions/system.md", "instruction", []byte("system\n"))
 	resource.Content = []byte("changed\n")
 	result := Render(Input{Profile: profile, Route: testRoute(), Target: DefaultTarget(), Resources: []Resource{resource}})
-	if result.Applicable || !hasCode(result.Diagnostics, "arieljcode.resource.digest_mismatch") {
+	if result.Applicable || !hasCode(result.Diagnostics, "jcodefork.resource.digest_mismatch") {
 		t.Fatalf("digest mismatch was not rejected: %#v", result)
 	}
 	if artifactByPath(result.Artifacts, "preview/route-only.config.toml.preview").Path != "" {
@@ -185,7 +185,7 @@ func TestRenderRejectsInvalidResources(t *testing.T) {
 
 	profile.Instructions = []string{"../outside.md"}
 	pathResult := Render(Input{Profile: profile, Route: testRoute(), Target: DefaultTarget()})
-	if !hasCode(pathResult.Diagnostics, "arieljcode.resource.path_unsupported") {
+	if !hasCode(pathResult.Diagnostics, "jcodefork.resource.path_unsupported") {
 		t.Fatalf("escaping profile resource was not rejected: %#v", pathResult.Diagnostics)
 	}
 }

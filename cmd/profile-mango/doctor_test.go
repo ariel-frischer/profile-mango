@@ -108,7 +108,7 @@ func TestDoctorHidesArielJcodeUnlessExperimental(t *testing.T) {
 	if err != nil {
 		t.Fatalf("doctor --help: %v\n%s", err, output)
 	}
-	for _, term := range []string{"ariel-jcode", "jcode"} {
+	for _, term := range []string{"jcode-fork", "jcode"} {
 		if strings.Contains(output, term) {
 			t.Fatalf("doctor --help mentions hidden target %q:\n%s", term, output)
 		}
@@ -118,11 +118,11 @@ func TestDoctorHidesArielJcodeUnlessExperimental(t *testing.T) {
 	}
 
 	registry := install.DefaultRegistry()
-	if names := doctorTargetNames(doctorTargets(registry, false)); contains(names, "ariel-jcode") {
-		t.Fatalf("default doctor targets include ariel-jcode: %v", names)
+	if names := doctorTargetNames(doctorTargets(registry, false)); contains(names, "jcode-fork") {
+		t.Fatalf("default doctor targets include jcode-fork: %v", names)
 	}
-	if names := doctorTargetNames(doctorTargets(registry, true)); !contains(names, "ariel-jcode") {
-		t.Fatalf("--experimental doctor targets omit ariel-jcode: %v", names)
+	if names := doctorTargetNames(doctorTargets(registry, true)); !contains(names, "jcode-fork") {
+		t.Fatalf("--experimental doctor targets omit jcode-fork: %v", names)
 	}
 }
 

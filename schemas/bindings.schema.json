@@ -20,7 +20,7 @@
           "effort": {"$ref": "#/$defs/field"},
           "targets": {
             "type": "object", "minProperties": 1,
-            "propertyNames": {"enum": ["ariel-jcode", "claude-code", "codex", "hermes", "oh-my-pi", "openclaw", "opencode", "pi"]},
+            "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
             "additionalProperties": {"$ref": "#/$defs/targetOverride"}
           }
         }

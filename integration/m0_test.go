@@ -53,7 +53,7 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 		"openclaw":    {version: "2026.9.5", candidate: "preview/route-only.config.json5.preview", blocker: "openclaw.config.inspector_unsafe", evidenceHash: "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4"},
 		"opencode":    {version: "1.18.31", candidate: "preview/route-only.opencode.jsonc.preview", blocker: "opencode.runtime.enforcement_unverified", evidenceHash: "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896"},
 		"hermes":      {version: "0.21.3", candidate: "preview/route-only.config.yaml.preview", blocker: "hermes.config.inspector_unsafe", evidenceHash: "71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47"},
-		"ariel-jcode": {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "arieljcode.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
+		"jcode-fork":  {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "jcodefork.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
 	}
 	for name, target := range targets {
 		t.Run(name, func(t *testing.T) {

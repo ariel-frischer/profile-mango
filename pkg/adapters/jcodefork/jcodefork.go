@@ -1,4 +1,4 @@
-package arieljcode
+package jcodefork
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TargetName            = "ariel-jcode"
+	TargetName            = "jcode-fork"
 	TargetVersion         = "0.83.909-dev (ca8017a3a)"
 	BuildIdentity         = "jcode v0.83.909-dev (ca8017a3a)"
 	BuildCommit           = "ca8017a3a"
@@ -19,8 +19,8 @@ const (
 	EvidenceSHA256        = "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"
 	EvidenceSource        = "docs/dev/target-evidence.md"
 	EvidenceLevel         = "isolated-synthetic-profile-resolution"
-	AdapterVersion        = "profilemango.dev/ariel-jcode/v1alpha1"
-	ExperimentalLabel     = "Ariel custom Jcode fork, experimental-only"
+	AdapterVersion        = "profilemango.dev/jcode-fork/v1alpha1"
+	ExperimentalLabel     = "Jcode fork, experimental-only"
 	RenderAPIVersion      = render.APIVersion
 	RenderKind            = render.Kind
 )
@@ -57,7 +57,7 @@ func NewResult(profileName string, target TargetBuild) Result {
 		Target: TargetName, Version: TargetVersion, SHA256: EvidenceSHA256,
 		Source: EvidenceSource, Level: EvidenceLevel,
 	})
-	result.Diagnostics.Add(profilemango.SeverityWarning, "arieljcode.experimental_only", "target", experimentalMessage(), 0, 0)
+	result.Diagnostics.Add(profilemango.SeverityWarning, "jcodefork.experimental_only", "target", experimentalMessage(), 0, 0)
 	result.AddCapability("target.status", StatusBlocking, experimentalMessage())
 	return result
 }
@@ -73,12 +73,12 @@ func Render(input Input) Result {
 	profileDiagnostics(&result, input.Profile)
 
 	resourceArtifacts, resourceDiagnostics := render.ResourceArtifacts(input.Profile, input.Resources, render.ResourceArtifactOptions{
-		CodePrefix:         "arieljcode",
+		CodePrefix:         "jcodefork",
 		InstructionMessage: "Ariel custom Jcode fork instruction delivery and precedence are unverified",
 		SkillMessage:       "Ariel custom Jcode fork skill discovery and delivery precedence are unverified",
 	})
 	result.Diagnostics = append(result.Diagnostics, resourceDiagnostics...)
-	if !render.HasCodePrefix(resourceDiagnostics, "arieljcode.resource.") {
+	if !render.HasCodePrefix(resourceDiagnostics, "jcodefork.resource.") {
 		candidate, candidateDiagnostics := candidateArtifact(input.Profile, input.Route, input.Resources)
 		result.Diagnostics = append(result.Diagnostics, candidateDiagnostics...)
 		if !candidateDiagnostics.HasErrors() {
@@ -116,12 +116,12 @@ func addEvidenceBlockers(result *Result) {
 	blockers := []struct {
 		code, field, message string
 	}{
-		{"arieljcode.config.acceptance_unverified", "config.acceptance", "the retained exact-build probe observed synthetic profile fields, not this renderer's generated profile combination"},
-		{"arieljcode.config.discovery_unverified", "config.discovery", "target discovery and repository context resolution are unverified"},
-		{"arieljcode.config.precedence_unverified", "config.precedence", "full profile, project, environment, flag, and session precedence is unverified"},
-		{"arieljcode.child.overrides_unverified", "child.overrides", "child and swarm override boundaries are unverified"},
-		{"arieljcode.hooks.extensions.mcp_unverified", "hooks.extensions.mcp", "hooks, extensions, and MCP effects are unverified"},
-		{"arieljcode.runtime.enforcement_unverified", "runtime.enforcement", "runtime route, tool, skill, instruction, and policy enforcement is unverified"},
+		{"jcodefork.config.acceptance_unverified", "config.acceptance", "the retained exact-build probe observed synthetic profile fields, not this renderer's generated profile combination"},
+		{"jcodefork.config.discovery_unverified", "config.discovery", "target discovery and repository context resolution are unverified"},
+		{"jcodefork.config.precedence_unverified", "config.precedence", "full profile, project, environment, flag, and session precedence is unverified"},
+		{"jcodefork.child.overrides_unverified", "child.overrides", "child and swarm override boundaries are unverified"},
+		{"jcodefork.hooks.extensions.mcp_unverified", "hooks.extensions.mcp", "hooks, extensions, and MCP effects are unverified"},
+		{"jcodefork.runtime.enforcement_unverified", "runtime.enforcement", "runtime route, tool, skill, instruction, and policy enforcement is unverified"},
 	}
 	for _, blocker := range blockers {
 		result.Diagnostics.Add(profilemango.SeverityError, blocker.code, blocker.field, ExperimentalLabel+": "+blocker.message, 0, 0)
@@ -131,18 +131,18 @@ func addEvidenceBlockers(result *Result) {
 
 func profileDiagnostics(result *Result, profile profilemango.ResolvedProfile) {
 	if !render.ValidName(profile.Metadata.Name) {
-		result.Diagnostics.Add(profilemango.SeverityError, "arieljcode.profile.name_invalid", "metadata.name", "profile name must be a simple canonical name", 0, 0)
+		result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.profile.name_invalid", "metadata.name", "profile name must be a simple canonical name", 0, 0)
 	}
 	if profile.Permissions != nil {
 		permissionDiagnostics(result, profile.Permissions)
 	}
 	if profile.Tools != nil {
 		if !profile.Tools.Managed || !profile.Tools.Closed {
-			result.Diagnostics.Add(profilemango.SeverityError, "arieljcode.tools.policy_unsupported", "spec.tools", "only a canonical closed tool allowlist can be projected to observed custom-fork selectors", 0, 0)
+			result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.tools.policy_unsupported", "spec.tools", "only a canonical closed tool allowlist can be projected to observed custom-fork selectors", 0, 0)
 		}
 		validateSelectors(result, "spec.tools.allow", profile.Tools.Allow)
 		validateSelectors(result, "spec.tools.deny", profile.Tools.Deny)
-		result.Diagnostics.Add(profilemango.SeverityError, "arieljcode.tools.delivery_unverified", "tools", "custom-fork tool selectors are candidate syntax only; discovery, enforcement, and child overrides are unverified", 0, 0)
+		result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.tools.delivery_unverified", "tools", "custom-fork tool selectors are candidate syntax only; discovery, enforcement, and child overrides are unverified", 0, 0)
 		result.AddCapability("tools", StatusPartial, "observed allow and disabled selectors are candidate syntax only; enforcement and child overrides are unverified")
 	}
 	if len(profile.Skills) > 0 {
@@ -150,7 +150,7 @@ func profileDiagnostics(result *Result, profile profilemango.ResolvedProfile) {
 	}
 	for _, item := range append(append([]string{}, profile.Instructions...), profile.Skills...) {
 		if !render.SafePath(item) {
-			result.Diagnostics.Add(profilemango.SeverityError, "arieljcode.resource.path_unsupported", item, "canonical resource references must be relative and cannot escape the resource root", 0, 0)
+			result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.resource.path_unsupported", item, "canonical resource references must be relative and cannot escape the resource root", 0, 0)
 		}
 	}
 	if len(profile.Instructions) > 0 {
@@ -170,7 +170,7 @@ func permissionDiagnostics(result *Result, permissions *profilemango.PermissionP
 		if field.value == nil || *field.value == "unmanaged" {
 			continue
 		}
-		result.Diagnostics.Add(profilemango.SeverityError, "arieljcode.permissions."+field.name+"_unverified", "spec.permissions."+field.name, "custom-fork permission enforcement is unverified", 0, 0)
+		result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.permissions."+field.name+"_unverified", "spec.permissions."+field.name, "custom-fork permission enforcement is unverified", 0, 0)
 		result.AddCapability("permissions."+field.name, StatusBlocking, "custom-fork permission enforcement is not verified")
 	}
 }
@@ -184,11 +184,11 @@ func selectorDiagnostics(field string, selectors []string) profilemango.Diagnost
 	seen := make(map[string]struct{}, len(selectors))
 	for _, selector := range selectors {
 		if selector == "" || !utf8.ValidString(selector) || strings.ContainsAny(selector, "\r\n\x00") {
-			diagnostics.Add(profilemango.SeverityError, "arieljcode.selector.invalid", field, "target selector must be non-empty, valid UTF-8, and single-line", 0, 0)
+			diagnostics.Add(profilemango.SeverityError, "jcodefork.selector.invalid", field, "target selector must be non-empty, valid UTF-8, and single-line", 0, 0)
 			continue
 		}
 		if _, duplicate := seen[selector]; duplicate {
-			diagnostics.Add(profilemango.SeverityError, "arieljcode.selector.duplicate", field, "target selector is duplicated", 0, 0)
+			diagnostics.Add(profilemango.SeverityError, "jcodefork.selector.duplicate", field, "target selector is duplicated", 0, 0)
 			continue
 		}
 		seen[selector] = struct{}{}
@@ -199,18 +199,18 @@ func selectorDiagnostics(field string, selectors []string) profilemango.Diagnost
 func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
 	var diagnostics profilemango.Diagnostics
 	if target.Name != TargetName {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.target.unsupported", "target", fmt.Sprintf("renderer only accepts the %q target for the %s", TargetName, ExperimentalLabel), 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.unsupported", "target", fmt.Sprintf("renderer only accepts the %q target for the %s", TargetName, ExperimentalLabel), 0, 0)
 	}
 	if target.Version == "" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.target.version_required", "targetVersion", "an exact tested Ariel custom-fork version and commit are required", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.version_required", "targetVersion", "an exact tested Ariel custom-fork version and commit are required", 0, 0)
 	} else if target.Version != TargetVersion {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.target.version_unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.version.unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.version_unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
 	}
 	if target.EvidenceSHA256 == "" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.version.evidence_required", "targetVersion", "the exact tested custom-fork SHA-256 is required", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.evidence_required", "targetVersion", "the exact tested custom-fork SHA-256 is required", 0, 0)
 	} else if target.EvidenceSHA256 != EvidenceSHA256 {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.version.evidence_mismatch", "targetVersion", "target evidence hash does not match the pinned Ariel custom-fork build", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.evidence_mismatch", "targetVersion", "target evidence hash does not match the pinned Ariel custom-fork build", 0, 0)
 	}
 	return diagnostics
 }
@@ -218,13 +218,13 @@ func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
 func routeDiagnostics(route profilemango.RouteBinding) profilemango.Diagnostics {
 	var diagnostics profilemango.Diagnostics
 	if route.Provider == "" || route.Transport == "" || route.Authentication == "" || route.Model == "" || route.Effort == "" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.incomplete", "route", "provider, transport, authentication, model, and effort are required", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.route.incomplete", "route", "provider, transport, authentication, model, and effort are required", 0, 0)
 	}
 	if route.Transport != "" && route.Transport != "native" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.transport_unsupported", "route.transport", "only the native transport has a candidate route mapping", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.route.transport_unsupported", "route.transport", "only the native transport has a candidate route mapping", 0, 0)
 	}
 	if route.Authentication != "" {
-		diagnostics.Add(profilemango.SeverityError, "arieljcode.route.authentication_unverified", "route.authentication", "authentication identity is not verified; no safe automated remedy is known. Establish exact-build, credential-free route-identity evidence before applying output; route authentication is never emitted", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.route.authentication_unverified", "route.authentication", "authentication identity is not verified; no safe automated remedy is known. Establish exact-build, credential-free route-identity evidence before applying output; route authentication is never emitted", 0, 0)
 	}
 	return diagnostics
 }
@@ -285,7 +285,7 @@ func candidateFieldsFor(profile profilemango.ResolvedProfile) (candidateFields, 
 	fields := candidateFields{}
 	if profile.Tools != nil {
 		if !profile.Tools.Managed || !profile.Tools.Closed {
-			diagnostics.Add(profilemango.SeverityError, "arieljcode.tools.policy_unsupported", "spec.tools", "only a canonical closed tool allowlist can be projected to observed custom-fork selectors", 0, 0)
+			diagnostics.Add(profilemango.SeverityError, "jcodefork.tools.policy_unsupported", "spec.tools", "only a canonical closed tool allowlist can be projected to observed custom-fork selectors", 0, 0)
 		} else {
 			fields.toolProfile = "none"
 			fields.tools = sortedCopy(profile.Tools.Allow)

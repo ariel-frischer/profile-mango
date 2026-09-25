@@ -249,14 +249,14 @@ assert_contains "$jcode_current" '"provider": "openai-api"'
 assert_contains "$jcode_tool_override" '"profile": "minimal"'
 
 if jcode_malformed_output="$(run_jcode_profile "$jcode_malformed" list --json 2>&1)"; then
-	die 'malformed Ariel custom Jcode fork config unexpectedly succeeded'
+	die 'malformed Jcode fork config unexpectedly succeeded'
 fi
 assert_contains "$jcode_malformed_output" 'TOML parse error'
 jcode_unknown_output="$(run_jcode_profile "$jcode_unknown" resolve sentinel --json)"
 assert_contains "$jcode_unknown_output" '"model": "sentinel-model-unknown-key"'
 assert_not_contains "$jcode_unknown_output" 'SENTINEL-UNKNOWN-KEY'
 if jcode_invalid_output="$(run_jcode_profile "$jcode_invalid_effort" resolve sentinel --json 2>&1)"; then
-	die 'invalid Ariel custom Jcode fork reasoning effort unexpectedly succeeded'
+	die 'invalid Jcode fork reasoning effort unexpectedly succeeded'
 fi
 assert_contains "$jcode_invalid_output" 'invalid reasoning_effort'
 

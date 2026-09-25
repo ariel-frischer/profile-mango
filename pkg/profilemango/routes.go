@@ -8,7 +8,7 @@ import (
 
 // RouteTargets lists the target names a route's targets map may override.
 // It mirrors the adapter TargetName constants; pkg/install tests keep them aligned.
-var RouteTargets = []string{"ariel-jcode", "claude-code", "codex", "hermes", "oh-my-pi", "openclaw", "opencode", "pi"}
+var RouteTargets = []string{"claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"}
 
 // RouteFor returns the effective route for one target: the named base route
 // with any non-empty fields from routes.<name>.targets.<target> applied.

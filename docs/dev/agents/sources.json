@@ -270,7 +270,7 @@
     },
     {
       "id": "jcode",
-      "name": "Ariel custom Jcode fork",
+      "name": "Jcode fork",
       "reference": "jcode.md",
       "product_status": "experimental_only_not_publicly_supported",
       "documentation_basis": "local_source_snapshot",
@@ -285,9 +285,9 @@
         "note": "No canonical public release or public support claim."
       },
       "sources": [
-        { "locator": "/home/ari/repos/jcode/crates/jcode-config-types/src/lib.rs", "kind": "local_snapshot_source" },
-        { "locator": "/home/ari/repos/jcode/src/cli/profile.rs", "kind": "local_snapshot_source" },
-        { "locator": "/home/ari/repos/jcode/docs/SYSTEM_PROMPT_CONFIG.md", "kind": "local_snapshot_documentation" }
+        { "locator": "~/repos/jcode/crates/jcode-config-types/src/lib.rs", "kind": "local_snapshot_source" },
+        { "locator": "~/repos/jcode/src/cli/profile.rs", "kind": "local_snapshot_source" },
+        { "locator": "~/repos/jcode/docs/SYSTEM_PROMPT_CONFIG.md", "kind": "local_snapshot_documentation" }
       ]
     }
   ]

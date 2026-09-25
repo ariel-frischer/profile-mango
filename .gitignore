@@ -56,6 +56,9 @@ skills-lock.json
 .beads/
 .codegraph/
 
+# Maintainer-private workflow rules (stripped from publication)
+AGENTS.dev.md
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
