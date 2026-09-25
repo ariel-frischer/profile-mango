@@ -201,7 +201,7 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 }
 
 func isOwnershipMarker(field string) bool {
-	return field == ownershipGlobalInstruction || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix)
+	return field == ownershipGlobalInstruction || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix)
 }
 
 // sourceState plans the recorded profile again without writing: a no-op plan means the
