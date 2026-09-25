@@ -28,7 +28,7 @@ func ParseProfile(data []byte) (PolicyProfile, Diagnostics) {
 	if isLegacyProfile(&node) {
 		profile, ok = decodeLegacyProfile(data, &diagnostics)
 	} else {
-		ok = decodeStrictDocument(data, &profile, &diagnostics)
+		ok = validateProfileShape(&node, &diagnostics) && decodeStrictDocument(data, &profile, &diagnostics)
 	}
 	if !ok {
 		return PolicyProfile{}, diagnostics.Sorted()
