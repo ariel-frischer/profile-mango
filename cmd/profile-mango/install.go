@@ -440,7 +440,13 @@ func writeCompactInstallPlan(output io.Writer, plan install.Plan) error {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d conflict, %d skipped; files: %d create, %d update, %d unchanged. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusConflict], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop])
+	extra := ""
+	for _, action := range []string{install.ActionDelete, install.ActionRestore} {
+		if files[action] > 0 {
+			extra += fmt.Sprintf(", %d %s", files[action], action)
+		}
+	}
+	_, err := fmt.Fprintf(output, "Summary: %d ready, %d unchanged, %d blocked, %d conflict, %d skipped; files: %d create, %d update, %d unchanged%s. Unrelated target settings are preserved.\n", counts[install.StatusReady], counts[install.StatusNoop], counts[install.StatusBlocked], counts[install.StatusConflict], counts[install.StatusSkipped], files[install.ActionCreate], files[install.ActionUpdate], files[install.ActionNoop], extra)
 	return err
 }
 

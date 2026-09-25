@@ -19,8 +19,8 @@ import (
 const RequirementGlobalInstructions = "globalInstructions"
 
 // Manifest ownership markers. A whole global instruction file carries
-// ownershipGlobalInstruction; every separately owned file records the state it
-// had before profile-mango first wrote it, so "mango use" can release it.
+// ownershipGlobalInstruction plus the state it had before profile-mango first
+// wrote it, so "mango use" can release it.
 const (
 	ownershipGlobalInstruction = "global-instruction"
 	priorAbsent                = "prior:absent"
@@ -154,10 +154,10 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, owne
 }
 
 // fileOwnership is the manifest provenance for one planned file: the adapter's tags plus,
-// for a written file other than the main config, its recorded pre-install state.
+// for a global instruction file, the state it had before profile-mango first wrote it.
 func fileOwnership(file FilePatch, ownership Manifest, path, configPath string, before installfs.Snapshot) []string {
 	tags := append([]string(nil), file.Ownership...)
-	if path == configPath || file.Delete || file.Release {
+	if path == configPath || file.Delete || file.Release || !slices.Contains(tags, ownershipGlobalInstruction) {
 		return tags
 	}
 	if marker := priorMarker(ownership, path, before); marker != "" {
@@ -196,13 +196,13 @@ func manifestEntry(manifest Manifest, path string) (ManifestFile, bool) {
 	return ManifestFile{}, false
 }
 
-// releasePatches returns patches that give back every owned file the new plan no longer
-// writes: deleting it when profile-mango created it, or restoring its pre-install bytes
-// from a create-only backup. The main config is never released as a whole file.
+// releasePatches returns patches that give back every global instruction file the new plan
+// no longer writes: deleting it when profile-mango created it, or restoring its pre-install
+// bytes from a create-only backup. Other owned files, such as a named profile, are kept.
 func releasePatches(ownership Manifest, configPath string, planned map[string]struct{}) ([]FilePatch, string, string) {
 	var patches []FilePatch
 	for _, entry := range ownership.Files {
-		if _, kept := planned[entry.Path]; kept || entry.Path == configPath {
+		if _, kept := planned[entry.Path]; kept || entry.Path == configPath || !slices.Contains(entry.Fields, ownershipGlobalInstruction) {
 			continue
 		}
 		prior := entryPrior(entry)
