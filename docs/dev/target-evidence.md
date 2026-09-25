@@ -543,9 +543,10 @@ copies, report metadata, no-write behavior without `--preview`, atomic writes to
 a new explicit staging directory with `--preview`, and rejection of unsupported
 versions, invalid resources, permissions, and closed tool requirements.
 
-This is preview-rendering support only. Every report remains `applicable: false`,
-and the command returns nonzero while authentication, delivery, precedence, or
-enforcement is unverified. The preview never contains active `config.toml`,
+This is preview-rendering support only. Every report remains `applicable: false`
+while authentication, delivery, precedence, or enforcement is unverified; a staged
+`--preview` prints those blockers as warnings and exits 0, and a render without
+`--preview` returns nonzero. The preview never contains active `config.toml`,
 `AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
 paths.
 
@@ -777,7 +778,8 @@ child, personal home, or target-home operation was invoked.
 The adapter consequently emits only deterministic inert YAML candidates and
 digest-verified, path-addressed resource copies that preserve original relative paths.
 Reports remain `applicable: false`, include
-the source, build, and config blockers above, and return nonzero. It never writes
+the source, build, and config blockers above (warnings with exit 0 once a `--preview`
+is staged; nonzero without `--preview`). It never writes
 `~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
 

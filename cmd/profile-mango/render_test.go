@@ -51,8 +51,8 @@ func TestRenderPreviewWritesOnlyInertArtifacts(t *testing.T) {
 		"read-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", codex.TargetName, "--target-version", codex.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report codex.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -93,8 +93,8 @@ func TestRenderClaudeCodePreviewUsesTargetDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", claudecode.TargetName, "--target-version", claudecode.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked Claude Code preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -125,8 +125,8 @@ func TestRenderArielJcodePreviewUsesExperimentalDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", jcodefork.TargetName, "--target-version", jcodefork.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked Ariel custom Jcode preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -159,8 +159,8 @@ func TestRenderOhMyPiPreviewUsesTargetDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", ohmypi.TargetName, "--target-version", ohmypi.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked Oh My Pi preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -191,8 +191,8 @@ func TestRenderOpenClawPreviewUsesTargetDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", openclaw.TargetName, "--target-version", openclaw.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked OpenClaw preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -223,8 +223,8 @@ func TestRenderHermesPreviewUsesTargetDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", hermes.TargetName, "--target-version", hermes.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked Hermes preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -255,8 +255,8 @@ func TestRenderPiPreviewUsesTargetDispatch(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", pi.TargetName, "--target-version", pi.TargetVersion, "--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked Pi preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
@@ -355,8 +355,8 @@ func TestRenderPreviewAliasMatchesRenderCommand(t *testing.T) {
 		"--out", out, "--preview", "--json",
 	})
 	err = rootCmd.Execute()
-	if err == nil {
-		t.Fatal("blocked Claude Code preview via alias unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	var report render.Result
 	if jsonErr := json.Unmarshal(stdout.Bytes(), &report); jsonErr != nil {
@@ -414,8 +414,8 @@ func TestRenderUsesHomeRepositoryDefaults(t *testing.T) {
 		"route-only", "--target", codex.TargetName, "--target-version", codex.TargetVersion,
 		"--out", out, "--preview", "--json",
 	})
-	if err == nil {
-		t.Fatal("blocked home preview unexpectedly succeeded")
+	if err != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", err)
 	}
 	assertRenderFile(t, out, "preview/route-only.config.toml.preview")
 	assertRenderFile(t, out, "resources/instructions/system.md")
@@ -441,8 +441,8 @@ func TestRenderPreservesExistingOutput(t *testing.T) {
 		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
 		"--target", codex.TargetName, "--target-version", codex.TargetVersion, "--out", out, "--preview",
 	})
-	if firstErr == nil {
-		t.Fatal("blocked preview unexpectedly succeeded")
+	if firstErr != nil {
+		t.Fatalf("staged non-applicable preview must exit 0: %v", firstErr)
 	}
 	marker := filepath.Join(out, "marker")
 	writeFile(t, marker, "keep")
@@ -514,4 +514,24 @@ func writeFile(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestRenderStagedPreviewWarnsAndSummarizesInHumanOutput(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	out := filepath.Join(t.TempDir(), "candidate")
+	stdout, stderr, err := executeRenderForTest(t, []string{
+		"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings,
+		"--target", codex.TargetName, "--target-version", codex.TargetVersion, "--out", out, "--preview",
+	})
+	if err != nil {
+		t.Fatalf("staged preview must exit 0: %v\n%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "warning route.authentication:") || strings.Contains(stderr, "error ") {
+		t.Fatalf("blockers must print as warnings, not errors:\n%s", stderr)
+	}
+	want := "preview staged in " + out + "; applicable to codex@" + codex.TargetVersion + ": no ("
+	if !strings.HasPrefix(stdout, want) {
+		t.Fatalf("summary = %q, want prefix %q", stdout, want)
+	}
+	assertRenderFile(t, out, "render.json")
 }

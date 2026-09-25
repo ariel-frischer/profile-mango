@@ -135,7 +135,10 @@ nothing is claimed about the newer binary.
 - `mango validate <profile.yaml> --bindings <file>` checks one profile
   and its route offline.
 - `mango doctor` lists agents, versions, config paths, and whether a
-  profile would install. It writes nothing.
+  profile would install. Its plan column is the status a plain
+  `mango install <profile> --target <agent>` would plan. It writes nothing.
 - `mango preview` (alias of `render`) writes an inert preview of a
   profile for one exact agent version into a new `--out` folder, without
-  touching the agent's real files.
+  touching the agent's real files. Once staged it exits 0 and prints why
+  the preview is not directly applicable as `warning` lines; `render.json`
+  keeps `applicable: false` and the full diagnostics.

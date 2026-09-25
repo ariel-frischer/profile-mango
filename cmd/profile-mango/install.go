@@ -96,12 +96,8 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	if err != nil {
 		return err
 	}
-	request := install.Request{
-		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
-		BindingsPath: paths.bindings, Targets: targets, All: false,
-		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
-		Env: install.OSPathEnv(), DetectVersion: versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector), SkipNotInstalled: options.all,
-	}
+	request := installPlanRequest(profile, paths, targets, options, registry)
+	request.DetectVersion = versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector)
 	plan, err := install.BuildPlan(request)
 	if err != nil {
 		return err
@@ -141,6 +137,18 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 		return applyErr
 	}
 	return writeApplyReport(cmd, report, options.jsonOutput)
+}
+
+// installPlanRequest builds the plan request for one set of install flags.
+// Doctor calls it with zero-value options so its readiness column is exactly
+// what a plain "mango install --target <agent>" would plan.
+func installPlanRequest(profile string, paths installPaths, targets []install.TargetRequest, options installOptions, registry *install.Registry) install.Request {
+	return install.Request{
+		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
+		BindingsPath: paths.bindings, Targets: targets, All: false,
+		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault, Registry: registry,
+		Env: install.OSPathEnv(), SkipNotInstalled: options.all,
+	}
 }
 
 func versionDetectorWithProgress(w io.Writer, detector install.VersionDetector) install.VersionDetector {

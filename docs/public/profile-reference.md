@@ -32,7 +32,7 @@ skills: [skills/review/SKILL.md]
 | --- | --- | --- |
 | `name` | Defaults to the folder name. If set, it must match. Lowercase letters, digits, and `-`. | Not inherited |
 | `description` | Free text. | Child wins if set |
-| `labels` | String-to-string map. | Merged, child keys win |
+| `labels` | Map of string keys to string values, e.g. `labels: {team: core}`. A list such as `labels: [a, b]` is rejected. | Merged, child keys win |
 | `extends` | Parent profile name. | — |
 | `route` | Route key in the bindings file. | Child wins if set |
 | `permissions.mode` | `read-only`, `workspace-write`, or `unrestricted` | Per field, child wins |
@@ -41,7 +41,9 @@ skills: [skills/review/SKILL.md]
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
 | `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
 
-Unknown fields are rejected. Most agents can't install permissions, tools,
+Unknown fields are rejected. A field with the wrong YAML shape fails with its
+path and the expected shape, e.g. `labels: expected a map of string keys to
+string values (e.g. labels: {team: core}), got a list`. Most agents can't install permissions, tools,
 instructions, or skills yet. See [agents](agents.md) for what each one takes.
 
 ### Older wrapped format

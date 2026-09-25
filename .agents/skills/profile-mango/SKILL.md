@@ -53,6 +53,9 @@ all-or-none; else they default from the home.
 Every field sits at the top level of `profiles/<name>/profile.yaml`: `description`,
 `labels`, `extends`, `route`, `permissions`, `tools`, `instructions`, `skills`.
 A child's `instructions` append after the parent's; `skills` replaces unless omitted.
+`labels` is a string map (`labels: {team: core}`), not a list; a wrong shape
+fails with its path, e.g. `labels: expected a map of string keys to string
+values (e.g. labels: {team: core}), got a list`.
 
 ```yaml
 description: Read-only code review
@@ -90,15 +93,30 @@ mango render <profile-name> --profiles ./profiles --resource-root . \
 
 `validate` checks one profile's syntax and route binding offline; parent
 resolution and resources are only checked by `render`/`install` with a
-package root. `doctor` reports each target's command, version, path, and
-readiness, read-only. `render` (alias `preview`) only writes beneath the new
-`--out` directory over `claude-code`, `codex`, `pi`, `oh-my-pi`, `openclaw`,
-`hermes`, `opencode`; every renderer today reports `applicable: false`.
+package root. `doctor` is read-only; its `PLAN` column is exactly what a plain
+`mango install <profile> --target <name>` would plan, and `IN RANGE` compares
+the detected binary to the tested range (tested version up to the next minor):
+
+```text
+TARGET               BINARY  DETECTED               IN RANGE  CONFIG                                   PLAN
+claude-code@2.1.278  claude  2.1.281 (Claude Code)  yes       /home/u/.claude/settings.json (exists)   ready
+oh-my-pi@18.2.6      omp     omp/18.2.11            yes       /home/u/.omp/agent/config.yml (exists)   ready
+next: mango install default --target claude-code
+```
+
+`render` (alias `preview`) writes only beneath a new `--out` directory. Full
+profiles are never directly applicable (`render.json` keeps
+`applicable: false`); a staged `--preview` prints the blockers as `warning`
+lines, ends with `preview staged in <out>; applicable to <target>@<version>:
+no (...)`, and exits 0. Without `--preview` it writes nothing and exits nonzero.
 
 ## Plan, apply, undo
 
-Only exact versions/subsets in `docs/dev/target-evidence.md` are installable
-(e.g. Claude Code `2.1.278` model only). `install` always plans
+A preview's `applicable: false` does not mean the agent can't be installed:
+`install` applies the narrow per-agent subset in `docs/public/agents.md` (e.g.
+the Claude Code and Oh My Pi model settings). A `ready` plan is installable;
+use `install` rather than hand-writing agent config. An installed version
+outside the tested range still plans, with a warning. `install` always plans
 first, then repeats the same inputs to apply:
 
 ```bash

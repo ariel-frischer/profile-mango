@@ -212,8 +212,9 @@ func assertPreviewStage(t *testing.T, target acceptanceTarget) {
 	profiles, resources, bindings := writeRenderFixture(t, false)
 	out := filepath.Join(t.TempDir(), "candidate")
 	stdout, stderr, err := runAcceptanceCLI(t, target, "route-only", profiles, resources, bindings, out, true)
-	if err == nil || !reportHasPreview(stdout) || !strings.Contains(stderr, target.previewBlocker) {
-		t.Fatalf("%s preview behavior was not blocked and staged: %v\n%s\n%s", target.name, err, stdout, stderr)
+	blockerWarned := strings.Contains(stderr, "warning ") && strings.Contains(stderr, target.previewBlocker) && !strings.Contains(stderr, "error ")
+	if err != nil || !reportHasPreview(stdout) || !strings.Contains(stdout, `"applicable": false`) || !blockerWarned {
+		t.Fatalf("%s staged preview must exit 0, stay applicable:false, and warn about its blocker: %v\n%s\n%s", target.name, err, stdout, stderr)
 	}
 	assertRenderFile(t, out, "render.json")
 	assertRenderFile(t, out, target.candidatePath)
