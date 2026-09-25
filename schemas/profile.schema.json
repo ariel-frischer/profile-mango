@@ -21,7 +21,8 @@
         "permissions": {"$ref": "#/$defs/permissions"},
         "tools": {"$ref": "#/$defs/accessRules"},
         "instructions": {"$ref": "#/$defs/instructions"},
-        "skills": {"$ref": "#/$defs/paths"}
+        "skills": {"$ref": "#/$defs/paths"},
+        "globalInstructions": {"$ref": "#/$defs/globalInstructions"}
       }
     },
     "legacyProfile": {
@@ -48,7 +49,8 @@
             "permissions": {"$ref": "#/$defs/permissions"},
             "tools": {"$ref": "#/$defs/accessRules"},
             "instructions": {"$ref": "#/$defs/instructions"},
-            "skills": {"$ref": "#/$defs/paths"}
+            "skills": {"$ref": "#/$defs/paths"},
+            "globalInstructions": {"$ref": "#/$defs/globalInstructions"}
           }
         }
       }
@@ -64,6 +66,16 @@
     "instructions": {
       "type": "object", "additionalProperties": false,
       "properties": {"append": {"$ref": "#/$defs/paths"}}
+    },
+    "globalInstructions": {
+      "description": "Whole global instruction files per target: file name to resource path beneath the package root. Only files with pinned evidence for the target install; others are skipped or blocked.",
+      "type": "object",
+      "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.md$"},
+        "additionalProperties": {"type": "string", "minLength": 1}
+      }
     },
     "paths": {"type": "array", "items": {"type": "string"}},
     "accessRules": {

@@ -62,6 +62,8 @@ The evidence behind every row is in the developer
   command-line settings, `--effort`, and `CLAUDE_CODE_EFFORT_LEVEL` can override
   the user file. An existing `settings.json`
   must not be empty.
+- **Global instructions:** `globalInstructions` can own `~/.claude/CLAUDE.md`
+  (documentation-backed only), written with `mango use` or `--default`.
 - [Reference](../dev/agents/claude-code.md)
 
 ## Codex
@@ -84,6 +86,9 @@ The evidence behind every row is in the developer
   treats a `--profile` name with no file as empty, so a mistyped name silently
   runs your default settings. Model availability and effort enforcement haven't
   been verified.
+- **Global instructions:** `globalInstructions` can own `$CODEX_HOME/AGENTS.md`,
+  written with `mango use` or `--default`. An existing `AGENTS.override.md`
+  is read instead of it.
 - [Reference](../dev/agents/codex.md)
 
 ## OpenCode
@@ -114,6 +119,9 @@ The evidence behind every row is in the developer
   built-in variant (such as `ultra`) are shown as `effort <value>: NOT APPLIED`.
   Provider options are not set. Edited or unowned
   skill and agent files are never overwritten, even with `--override`.
+- **Global instructions:** `globalInstructions` can own
+  `~/.config/opencode/AGENTS.md`, written with `mango use` or `--default`.
+  OpenCode also reads `~/.claude/CLAUDE.md`.
 - [Reference](../dev/agents/opencode.md)
 
 ## Pi
@@ -129,7 +137,12 @@ The evidence behind every row is in the developer
   `modelRoles.<role>` selector per bound route role (built-in roles only), in
   `config.yml`. Effort stays on each selector; `defaultThinkingLevel`, which
   applies to models you pick by hand, is left alone.
-- **Caveats:** unbound model roles and provider options are left alone.
+- **Global instructions:** `globalInstructions` can own `AGENTS.md` and
+  `RULES.md` in `~/.omp/agent`; Oh My Pi has no named profiles, so every
+  install writes them.
+- **Caveats:** unbound model roles and provider options are left alone. A role
+  a later profile no longer binds gets its pre-install value back, or is
+  removed if profile-mango added it.
 - [Reference](../dev/agents/oh-my-pi.md)
 
 ## OpenClaw
@@ -171,3 +184,6 @@ The evidence behind every row is in the developer
 ## Not supported
 
 Other agents are not supported yet; see the [roadmap](../../ROADMAP.md).
+
+`~/AGENTS.md` (read by the Jcode fork) is not covered: no install target
+qualifies it, so `globalInstructions` cannot write it.

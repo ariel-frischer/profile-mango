@@ -15,13 +15,16 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 		yaml string
 		code string
 	}{
-		"unknown key":    {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
-		"duplicate key":  {yaml: validProfileYAML() + "route: other\n", code: "yaml.duplicate_key"},
-		"null":           {yaml: strings.Replace(validProfileYAML(), "route: research-primary", "route: null", 1), code: "yaml.null"},
-		"invalid name":   {yaml: strings.Replace(validProfileYAML(), "name: research", "name: Research", 1), code: "profile.name_invalid"},
-		"old route key":  {yaml: strings.Replace(validProfileYAML(), "route:", "routeRef:", 1), code: "yaml.strict"},
-		"mixed wrapper":  {yaml: validProfileYAML() + "kind: PolicyProfile\n", code: "yaml.strict"},
-		"legacy version": {yaml: "apiVersion: profilemango.dev/v9\nkind: PolicyProfile\nmetadata:\n  name: research\nspec:\n  routeRef: r\n", code: "profile.api_version"},
+		"unknown key":            {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
+		"duplicate key":          {yaml: validProfileYAML() + "route: other\n", code: "yaml.duplicate_key"},
+		"null":                   {yaml: strings.Replace(validProfileYAML(), "route: research-primary", "route: null", 1), code: "yaml.null"},
+		"invalid name":           {yaml: strings.Replace(validProfileYAML(), "name: research", "name: Research", 1), code: "profile.name_invalid"},
+		"old route key":          {yaml: strings.Replace(validProfileYAML(), "route:", "routeRef:", 1), code: "yaml.strict"},
+		"mixed wrapper":          {yaml: validProfileYAML() + "kind: PolicyProfile\n", code: "yaml.strict"},
+		"legacy version":         {yaml: "apiVersion: profilemango.dev/v9\nkind: PolicyProfile\nmetadata:\n  name: research\nspec:\n  routeRef: r\n", code: "profile.api_version"},
+		"global unknown target":  {yaml: validProfileYAML() + "globalInstructions:\n  claude:\n    CLAUDE.md: a.md\n", code: "profile.global_instructions_target_unknown"},
+		"global nested file":     {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    rules/AGENTS.md: a.md\n", code: "profile.global_instructions_file_invalid"},
+		"global escaping source": {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    AGENTS.md: ../secret.md\n", code: "profile.global_instructions_path_invalid"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -60,6 +63,16 @@ func TestParseProfileNamesFieldPathAndExpectedShape(t *testing.T) {
 			yaml:    "tools:\n  allow: {read: true}\n",
 			path:    "tools.allow",
 			message: "expected a list of tool names (e.g. allow: [read, edit]), got a map",
+		},
+		"global file list": {
+			yaml:    "globalInstructions:\n  codex: [AGENTS.md]\n",
+			path:    "globalInstructions.codex",
+			message: "expected a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md}), got a list",
+		},
+		"global resource map": {
+			yaml:    "globalInstructions:\n  codex:\n    AGENTS.md: {path: a.md}\n",
+			path:    "globalInstructions.codex.AGENTS.md",
+			message: "expected a resource path string, got a map",
 		},
 	}
 	for name, test := range cases {

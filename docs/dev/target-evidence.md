@@ -1415,3 +1415,27 @@ OpenCode named `--agent` definitions and adapters without a documented default
 still require an explicit `--config`. Tests isolate `HOME`, `XDG_CONFIG_HOME`, and
 the relocation variables in a temporary sandbox and refuse to run if any default
 resolves outside it.
+
+## Global instruction files, 2026-09-25 (ap-nym)
+
+`globalInstructions` writes whole files beside a target's main config, only for
+the file names below, and only when the profile is the target's default
+(`mango use`, `install --default`, or a target without named profiles). Every
+file gets the same plan diff, create-only backup of an adopted file, hash/drift
+check, ownership manifest entry (with its pre-install state), consent gate and
+undo journal as the config. `mango use` releases a file the new profile no
+longer writes: it deletes a file profile-mango created and restores an adopted
+file's backup bytes. Other targets list `globalInstructions` in
+`skippedRequirements`; `--strict` blocks. This is source/doc evidence of the
+path each target reads, not observed runtime delivery or precedence.
+
+| Target | Files (directory) | Evidence |
+| --- | --- | --- |
+| Oh My Pi `18.2.6` | `AGENTS.md`, `RULES.md` (`~/.omp/agent`, `getAgentDir()`) | source tag `v18.2.6` commit `78b753124d11f8dd3ae73e2524125890ff7c977e`, `packages/coding-agent/src/discovery/builtin.ts:393` (`RULES.md`) and `:913` (`AGENTS.md`) |
+| Codex `0.154.0` | `AGENTS.md` (`$CODEX_HOME`) | source `rust-v0.154.0` commit `6b9826e`, `codex-rs/codex-home/src/instructions/mod.rs:9-10,26-27`; an existing `AGENTS.override.md` is read instead, so the plan's file can be shadowed |
+| OpenCode `1.18.31` | `AGENTS.md` (`${XDG_CONFIG_HOME:-~/.config}/opencode`) | release `v1.18.31` commit `a97622c801f4ca571530ddc51076af659a9c32cd`, `packages/opencode/src/session/instruction.ts:61` (`path.join(Global.Path.config, "AGENTS.md")`; line 62 also reads `~/.claude/CLAUDE.md`), `packages/core/src/global.ts:13` |
+| Claude Code `2.1.278` | `CLAUDE.md` (`~/.claude`) | documentation context only: mutable `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, row "User instructions `~/.claude/CLAUDE.md`"; not observed in the pinned binary |
+
+Tests: `pkg/install/globals_test.go`, `cmd/profile-mango/use_test.go`
+(`TestUse*`, `TestStatus*`, `TestUndoAfterUseRestoresEachGeneration`), all in a
+synthetic sandbox HOME.

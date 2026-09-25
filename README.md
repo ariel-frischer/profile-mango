@@ -35,6 +35,8 @@ mango install default --all --apply --yes --expect-plan <plan-id>
 codex --profile default         # Codex gets a named profile; the plan prints this line
 mango undo --target codex       # preview reversing that install
 mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
+mango use <profile>             # switch managed agents to another profile (same plan/apply)
+mango status                    # which profile each agent runs, and edited or stale files
 ```
 
 The plan ends with the exact apply command, including its plan ID. On a terminal,

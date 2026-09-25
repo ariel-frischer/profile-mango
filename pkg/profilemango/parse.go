@@ -121,6 +121,7 @@ func validateProfile(profile PolicyProfile, diagnostics *Diagnostics) {
 	}
 	validatePermission(profile.Permissions, diagnostics)
 	validateRules(profile.Tools, diagnostics)
+	validateGlobalInstructions(profile.GlobalInstructions, diagnostics)
 }
 
 func validatePermission(policy *PermissionPolicy, diagnostics *Diagnostics) {

@@ -98,6 +98,18 @@ roles as skipped:
       smol: {provider: opencode-go, model: gpt-6-luna, effort: high}
 ```
 
+Optional `globalInstructions` owns whole global instruction files per agent
+(file name to package resource). Qualified files only: Claude Code `CLAUDE.md`,
+Codex `AGENTS.md`, Oh My Pi `AGENTS.md`/`RULES.md`, OpenCode `AGENTS.md`;
+another name blocks, other agents skip (`--strict` blocks). They are written
+beside the config only by `use`, `install --default`, or agents without named
+profiles:
+
+```yaml
+globalInstructions:
+  oh-my-pi: {AGENTS.md: instructions/work/AGENTS.md, RULES.md: instructions/work/RULES.md}
+```
+
 ## Validate, preview, check readiness
 
 ```bash
@@ -158,6 +170,19 @@ before applying. An existing config is adopted with a backup; a
 Mango-installed value the user later edited needs `--override`, and
 `--non-interactive` never grants consent by itself. `undo` (alias `restore`)
 restores the latest committed install, or an explicit `--original-plan <id>`.
+
+`mango use <profile>` switches every managed agent (or `--target`/`--all`) to
+the profile as its default, with the same plan-then-`--apply --yes
+--expect-plan <id>` consent. Global files the new profile does not write are
+released: deleted if profile-mango created them, restored from the backup if
+adopted. `mango status [--json]` is read-only: per agent the recorded profile,
+each owned file `in-sync`/`edited`/`missing`, and `sources:
+current`/`changed`/`unknown` against the current profile files and bindings.
+
+```bash
+mango status --json
+mango use <profile-name>            # add --apply --yes --expect-plan <id>
+```
 
 ## Safety boundary
 

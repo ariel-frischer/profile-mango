@@ -256,3 +256,7 @@ It remains context, not immutable release evidence.
 [core-config-source]: https://github.com/anomalyco/opencode/blob/v1.18.31/packages/core/src/v1/config/config.ts
 [provider-source]: https://github.com/anomalyco/opencode/blob/v1.18.31/packages/core/src/v1/config/provider.ts
 [docs]: https://opencode.ai/docs/config/
+
+## Global instruction files (ap-nym, 2026-09-25)
+
+`globalInstructions` may own `AGENTS.md` in `${XDG_CONFIG_HOME:-~/.config}/opencode` (`v1.18.31` `a97622c`, `packages/opencode/src/session/instruction.ts:61`, `packages/core/src/global.ts:13`); OpenCode also reads `~/.claude/CLAUDE.md`. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
