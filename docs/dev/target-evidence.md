@@ -482,6 +482,12 @@ synthetic config layer:
 - malformed synthetic TOML: `codex features list` rejected it with a TOML parse
   error.
 
+The script now pins `codex-cli 0.157.1` (SHA-256
+`3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`). On
+2026-09-26 the same five feature sentinels gave the same results on that binary
+in an equivalent bubblewrap sandbox. The full script was not rerun, because it
+also requires the Jcode fork binary.
+
 This is native feature-config parsing and feature-runtime-precedence evidence
 only. It does not establish that Codex consumes or enforces profile route,
 model, reasoning-effort, sandbox, approval, tool, skill, instruction, or
@@ -767,6 +773,91 @@ sandbox test `TestInstallCodexAppliesMediumEffortInSandbox` plans and applies
 `medium` with `--default` and observes `model_reasoning_effort = "medium"` in
 both `config.toml` and `<name>.config.toml`. Whether a given model accepts a
 level remains model-dependent and was not exercised; no provider call was made.
+
+### Codex 0.157.1 requalification, 2026-09-26
+
+The adapter pin moved from `0.154.0` to `0.157.1`, the npm `latest` release on
+2026-09-26. The sections above stay as the `0.154.0` record; this section
+re-establishes each fact the installer relies on for `0.157.1`.
+
+**Artifacts.** `npm pack @openai/codex@0.157.1-linux-x64` (tarball SHA-256
+`7f12677740f439fe4884c7031d9d703e571cecf5ea9fa3a05abd1bbccc2162a8`) ships
+`vendor/x86_64-unknown-linux-musl/bin/codex`, SHA-256
+`3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`, which
+prints `codex-cli 0.157.1`. This is the new `EvidenceSHA256`. The same path in
+`@openai/codex@0.154.0-linux-x64` hashes to the earlier pin `3188814c…0022`.
+Source tag `rust-v0.157.1` is tag object `ac0e23e5232692b95268583c8278c50b8c436d2b`
+and commit `36650394c5b38c2990ccf2a3457165ca3e9d9726`, and the GitHub commit
+archive has SHA-256 `392ac15292437f4163fc6b05cdcc53e80cdc15f88459fd969673e6ac717d7af5`.
+
+**Source diff `rust-v0.154.0..rust-v0.157.1` (all paths under `codex-rs/`).**
+
+| Behavior mango relies on | Files checked | Result |
+| --- | --- | --- |
+| `--profile`/`-p` layers `$CODEX_HOME/<name>.config.toml`; name rule | `utils/cli/src/shared_options.rs`, `protocol/src/config_types.rs` (`ProfileV2Name`) | Unchanged: no diff to `shared_options.rs`; `config_types.rs` only adds a doc comment to an unrelated enum |
+| Profile file is a second user layer over `config.toml`; same-name legacy `profile =`/`[profiles.<name>]` refuses `--profile` | `config/src/loader/mod.rs`, `config/src/loader/layer_io.rs` | Legacy-refusal block byte-identical (now line 314). `layer_io.rs` unchanged. Other loader changes cover managed requirements, projectless detection and credential-broker env keys |
+| Root `profile = "..."` is a hard startup error | `core/src/config/mod.rs` | Byte-identical block (now line 3348) |
+| `--profile` scope (runtime commands, `mcp`, `sandbox`, `debug prompt-input`) | `cli/src/main.rs`, `cli/src/lib.rs` | No profile-related change. The only removed option is the unrelated `--aws-profile` |
+| `model`, `model_provider`, `model_reasoning_effort` keys and types | `config/src/config_toml.rs` | Unchanged types (now lines 168, 173, 392) |
+| `ReasoningEffort` variants and `from_str` | `protocol/src/openai_models.rs` | The enum-through-`FromStr` block is byte-identical: `none`..`xhigh`, `max`, `ultra`, `persistent`, empty is an error, other strings become `Custom`. The file hash changed for unrelated code |
+| Built-in `openai` provider; reserved IDs; merging `model_providers` | `model-provider-info/src/lib.rs`, `config/src/config_toml.rs` | `validate_reserved_model_provider_ids` is unchanged. Only Amazon Bedrock override validation and new optional fields changed |
+| Role files `<config dir>/agents/**/*.toml` | `agent-roles/src/{agent_role_config,loader,discovery}.rs` | Byte-identical (same file SHA-256 values as `0.154.0`) |
+| `$CODEX_HOME/AGENTS.md`, `AGENTS.override.md` wins | `codex-home/src/instructions/mod.rs` | Same file names and order (lines 12-13, 43-44) |
+| `~/AGENTS.md` only at the project root or working directory | `core/src/agents_md.rs` | Same walk to the nearest `project_root_markers` directory (lines 1-18, 192-245) |
+
+Behavioral differences found, none of which needs an adapter change:
+
+- **Managed provider requirements (new).** `requirements.toml`, a cloud
+  bundle, or macOS MDM can now set `model_provider` and `model_providers`.
+  A required `model_provider` wins over root, profile and session selection
+  (`core/src/config/mod.rs`, `model_provider_id`). Required provider
+  definitions replace same-ID `model_providers` entries before parsing
+  (`config/src/model_provider_requirements.rs`, `config/src/state.rs`
+  `effective_config`). This adds a managed override surface above the files
+  mango writes. mango does not read requirements, and no managed state was
+  exercised.
+- **Instructions refresh.** When a refresh of the `$CODEX_HOME` instructions
+  fails, Codex keeps the last good copy and reports each warning once. A
+  confirmed absence still clears it.
+- **Project doc fallbacks.** `project_doc_fallback_filenames` entries with
+  path syntax are now ignored. mango does not write this key.
+- **Project config sanitization.** Project layers now also drop
+  `features.system_proxy_fallback` and `features.network_proxy.credentials`,
+  and credential-broker env handling changed. None of these are mango keys.
+
+**Installed-binary controls.** Both npm binaries ran on 2026-09-26 in the
+same harness as the 2026-09-23 controls: bubblewrap with unshared
+network/PID/IPC/UTS, `--cap-drop ALL`, `env -i`, synthetic
+`HOME`/`XDG_CONFIG_HOME`/`CODEX_HOME`, no auth file, and a bounded timeout.
+Every `debug prompt-input hi` row of the named-profile table above gave the
+same exit code and error text on `0.157.1` as on `0.154.0`. That includes
+profile provider precedence over the root, typed `model`/effort errors in the
+profile file, the legacy-table and root-`profile` refusals, the tolerated
+unrelated `[profiles.dev]`, a missing profile treated as empty, and an
+accepted bogus effort string. The `--profile` scope error was identical too.
+App-server `config/read` on `0.157.1` returned root `openai`/`gpt-5.6`/`high`
+with `user` origins. An untrusted project was ignored. A trusted project won
+with `project-model`/`medium` (`project` origin), and session `-c` won with
+`runtime-model`/`minimal` (`sessionFlags` origin).
+`TestNativeCodexConfigConsumption` passed against the `0.157.1` binary and
+rejected the `0.154.0` binary by hash.
+
+The built CLI ran with synthetic `HOME`/`CODEX_HOME`/`PROFILE_MANGO_HOME`.
+With the `0.154.0` binary on `PATH` it warned
+`installed version 0.154.0 is outside tested range >=0.157.1 <0.158.0`. With
+`0.157.1` it applied `install default --target codex --default --override`
+and wrote `default.config.toml` plus the three root keys. The comment, the
+feature table and key order stayed intact. The pinned binary then accepted
+`--profile default` and plain runs, rejected the profile after its provider was
+edited to `no-such-provider` while the plain run still passed, and
+`config/read` reported the generated root values with `user` origins.
+
+Not repeated for `0.157.1`: the exact-source Cargo resolver test. Its opt-in
+harness now pins the `0.157.1` commit and archive, but no `0.157.1` test
+binary was built. Its claims rest on the unchanged source above plus the
+installed-binary observations. OAuth identity, model availability, per-model
+effort support, runtime delivery and managed-requirement precedence remain
+unverified. No provider call was made and no personal Codex home was read.
 
 ## Oh My Pi v18.2.6 source and preview-renderer evidence
 
