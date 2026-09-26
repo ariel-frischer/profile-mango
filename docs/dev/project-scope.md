@@ -39,11 +39,11 @@ As of 2026-09-23, the project ships the offline M0 canonical contract plus exact
 - The effective application home resolves by root `--home`, then
   `PROFILE_MANGO_HOME`, then `<user-home>/.profile-mango`; `home` prints it without
   creating it.
-- A Codex CLI `0.154.0` preview renderer that emits deterministic candidate syntax,
+- A Codex CLI `0.157.1` preview renderer that emits deterministic candidate syntax,
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
-- A separate Codex `0.154.0` settings-only installer for root `model_provider`,
+- A separate Codex `0.157.1` settings-only installer for root `model_provider`,
   `model`, and `model_reasoning_effort` (`none` through `xhigh`), consumed by the exact installed
   binary in an isolated synthetic home. It patches an
   explicit or documented default path with consent and backup, preserving unrelated TOML and target-owned
@@ -108,7 +108,7 @@ supported targets. This is product intent, not a current compatibility matrix:
 
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
-| Codex | First intended public adapter | Exact `0.154.0` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
+| Codex | First intended public adapter | Exact `0.157.1` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
 | Claude Code | Intended MVP target | Exact `2.1.278` model and `effortLevel` strict-JSON installer; explicit settings-file model and effort consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
 | Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
 | Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` `modelRoles` selector YAML installer (default natively qualified; per-role `:effort` selectors source-reviewed), full startup, precedence, authentication, delivery, and enforcement blocked |

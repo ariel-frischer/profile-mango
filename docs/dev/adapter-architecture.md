@@ -63,7 +63,7 @@ canonical digest before they are staged.
 
 ## Current target boundary
 
-Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
+Claude Code `2.1.278`, Codex `0.157.1`, Pi `0.86.1`, Oh My Pi `18.2.6`,
 OpenClaw `2026.9.5`, Hermes Agent `0.21.3`, and OpenCode `1.18.31` each have deterministic inert
 preview renderers. the Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
 also has a deterministic inert TOML renderer under the explicit target identity

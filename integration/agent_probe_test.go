@@ -36,8 +36,8 @@ func TestAgentConfigProbe(t *testing.T) {
 		t.Fatalf("probe did not report success:\n%s", output)
 	}
 	for name, expected := range map[string]string{
-		"exact Codex version":             "codex-version=codex-cli 0.154.0",
-		"exact Codex evidence hash":       "codex-sha256=3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+		"exact Codex version":             "codex-version=codex-cli 0.157.1",
+		"exact Codex evidence hash":       "codex-sha256=3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970",
 		"positive feature sentinel":       "codex-features-apps-synthetic=false",
 		"negative feature sentinel":       "codex-features-apps-baseline=true",
 		"runtime enable precedence":       "codex-features-apps-cli-enable=true",

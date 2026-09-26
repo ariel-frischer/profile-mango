@@ -111,12 +111,12 @@ func TestUndoEachTargetOfMultiTargetInstall(t *testing.T) {
 
 func TestUndoListPreviewRequiresPerTargetApply(t *testing.T) {
 	configs := installClaudeAndCodexAtDefault(t)
-	preview, err := runUndoForTest(t, restoreOptions{targets: []string{"codex,claude-code", "codex@0.154.0"}, jsonOutput: true})
+	preview, err := runUndoForTest(t, restoreOptions{targets: []string{"codex,claude-code", "codex@0.157.1"}, jsonOutput: true})
 	if err != nil {
 		t.Fatalf("multi-preview: %v\n%s", err, preview)
 	}
 	var plans []struct{ PlanID, Target string }
-	if err := json.Unmarshal([]byte(preview), &plans); err != nil || len(plans) != 2 || plans[0].Target != "codex@0.154.0" && plans[0].Target != "claude-code@2.1.278" || plans[0].PlanID == plans[1].PlanID {
+	if err := json.Unmarshal([]byte(preview), &plans); err != nil || len(plans) != 2 || plans[0].Target != "codex@0.157.1" && plans[0].Target != "claude-code@2.1.278" || plans[0].PlanID == plans[1].PlanID {
 		t.Fatalf("multi-preview plans: %v, %s", err, preview)
 	}
 	if _, err := runUndoForTest(t, restoreOptions{targets: []string{"codex,claude-code"}, apply: true, yes: true, expectPlan: plans[0].PlanID}); err == nil || !strings.Contains(err.Error(), "preview-only") {

@@ -17,7 +17,7 @@ func (codexAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: codex.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "settings-only: model_provider, model, and model_reasoning_effort install as a native profile file used with codex --profile <name>, and into config.toml only with --default; the isolated installed Codex 0.154.0 binary loaded these fields from both; trusted project and runtime overrides can shadow them; OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified",
+		Reason:         "settings-only: model_provider, model, and model_reasoning_effort install as a native profile file used with codex --profile <name>, and into config.toml only with --default; the isolated installed Codex 0.157.1 binary loaded these fields from both; trusted project, runtime, and managed requirements.toml provider overrides can shadow them; OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified",
 	}
 }
 
@@ -46,7 +46,7 @@ func (codexAdapter) Plan(input AdapterInput) (Patch, error) {
 	return patch, nil
 }
 
-// NamedProfileFile is the Codex 0.154.0 profile layer that `codex --profile <name>` reads.
+// NamedProfileFile is the Codex 0.157.1 profile layer that `codex --profile <name>` reads.
 func (codexAdapter) NamedProfileFile(name string) (string, error) {
 	if !codex.ValidProfileName(name) {
 		return "", fmt.Errorf("codex profile names may use only letters, digits, '_' or '-'")
@@ -66,9 +66,9 @@ func addCodexFile(patch *Patch, path, prefix string, configPatch codex.ConfigPat
 }
 
 func addCodexDiagnostics(patch *Patch) {
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; the isolated installed Codex 0.154.0 binary loaded these fields from config.toml and from a --profile file, but OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.route_fields_source_qualified", "target.config", "only model_provider, model, and model_reasoning_effort are installed; the isolated installed Codex 0.157.1 binary loaded these fields from config.toml and from a --profile file, but OAuth identity, delivery, runtime enforcement, and full-profile applicability remain unverified", 0, 0)
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.auth_unmanaged", "route.authentication", "authentication remains unmanaged and target-owned: run codex login status locally to distinguish API-key from ChatGPT login, but ChatGPT status also includes externally supplied tokens and does not prove exact OAuth; do not share credentials or status output containing key fragments", 0, 0)
-	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the named profile file, plus config.toml with --default, after rejecting legacy profile and provider shadow state; project-local layers and runtime overrides are not inspected or controlled", 0, 0)
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "codex.install.precedence_bounded", "target.config", "this patch changes only the named profile file, plus config.toml with --default, after rejecting legacy profile and provider shadow state; project-local layers, runtime overrides, and managed requirements are not inspected or controlled", 0, 0)
 }
 
 func validateCodexProfile(input AdapterInput) error {

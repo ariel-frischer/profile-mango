@@ -71,7 +71,7 @@ func TestDefaultConfigPathBlockedReasons(t *testing.T) {
 	}
 	writeInstallTestFile(t, filepath.Join(both, "opencode.json"), "{}\n")
 	writeInstallTestFile(t, filepath.Join(both, "opencode.jsonc"), "{}\n")
-	codex := Target{Name: "codex", Version: "0.154.0"}
+	codex := Target{Name: "codex", Version: "0.157.1"}
 	tests := map[string]struct {
 		adapter Adapter
 		target  Target
@@ -182,7 +182,7 @@ func TestDefaultPathCodexPreservesAuthSiblings(t *testing.T) {
 	writeInstallTestFile(t, config, before)
 	writeInstallTestFile(t, auth, "synthetic credential sentinel")
 	request.Env = syntheticPathEnv(t, filepath.Join(root, "home"), map[string]string{"CODEX_HOME": codexHome})
-	request.Targets = []TargetRequest{{Target: Target{Name: "codex", Version: "0.154.0"}}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "codex", Version: "0.157.1"}}}
 	plan, err := BuildPlan(request)
 	if err != nil || plan.Status != StatusReady || plan.Targets[0].Config.Path != config {
 		t.Fatalf("plan = %#v, err=%v", plan, err)

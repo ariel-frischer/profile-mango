@@ -207,7 +207,7 @@ func TestCodexInstallReportsNativeEvidenceAndBoundedPrecedence(t *testing.T) {
 		if diagnostic.Code != "codex.install.route_fields_source_qualified" {
 			continue
 		}
-		if !strings.Contains(diagnostic.Message, "installed Codex 0.154.0 binary") || strings.Contains(diagnostic.Message, "installed-binary equivalence") {
+		if !strings.Contains(diagnostic.Message, "installed Codex 0.157.1 binary") || strings.Contains(diagnostic.Message, "installed-binary equivalence") {
 			t.Fatalf("native evidence warning = %q", diagnostic.Message)
 		}
 	}
@@ -248,7 +248,7 @@ func TestCodexMetadataReportsSettingsOnlyQualification(t *testing.T) {
 	if !metadata.Installable || metadata.Status != StatusReady {
 		t.Fatalf("metadata = %#v, want settings-only installable", metadata)
 	}
-	for _, required := range []string{"settings-only", "model_provider", "installed Codex 0.154.0 binary", "OAuth identity"} {
+	for _, required := range []string{"settings-only", "model_provider", "installed Codex 0.157.1 binary", "OAuth identity"} {
 		if !strings.Contains(metadata.Reason, required) {
 			t.Fatalf("metadata reason = %q, want %q", metadata.Reason, required)
 		}
@@ -295,7 +295,7 @@ func codexTestRequest(t *testing.T) (Request, string) {
 	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	request.Targets = []TargetRequest{{Target: Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}
 	// Most Codex tests cover the config.toml patch, which only --default writes.
 	request.Default = true
 	return request, root

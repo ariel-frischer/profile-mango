@@ -20,7 +20,7 @@
       "supported_capability": "none",
       "version_context": {
         "kind": "separate_local_observation",
-        "version": "0.154.0",
+        "version": "0.157.1",
         "note": "Does not version or pin the mutable documentation sources."
       },
       "sources": [

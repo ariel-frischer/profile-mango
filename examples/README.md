@@ -53,7 +53,7 @@ mango render coding \
   --profiles ./my-agent-profiles/profiles \
   --resource-root ./my-agent-profiles \
   --bindings ./my-agent-profiles/bindings/local.yaml \
-  --target codex --target-version 0.154.0 \
+  --target codex --target-version 0.157.1 \
   --out ./my-coding-preview --preview --json
 ```
 

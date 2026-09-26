@@ -6,8 +6,8 @@ readonly requested_root="${PROFILE_MANGO_PROBE_ROOT:-}"
 readonly codex_requested="${PROFILE_MANGO_CODEX_BIN:-}"
 readonly jcode_requested="${PROFILE_MANGO_JCODE_BIN:-}"
 readonly keep_probe="${PROFILE_MANGO_KEEP_PROBE:-0}"
-readonly codex_expected_version='codex-cli 0.154.0'
-readonly codex_expected_sha256='3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022'
+readonly codex_expected_version='codex-cli 0.157.1'
+readonly codex_expected_sha256='3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970'
 readonly jcode_expected_version='jcode v0.83.909-dev (ca8017a3a)'
 readonly jcode_expected_sha256='392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992'
 

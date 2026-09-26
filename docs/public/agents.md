@@ -35,7 +35,7 @@ another agent is billed. A successful reply still does not prove its billing rou
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
 | Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/profiles/<profile>.json` next to `~/.claude/settings.json` |
-| Codex | `0.154.0` | `>=0.154.0 <0.155.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
+| Codex | `0.157.1` | `>=0.157.1 <0.158.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
 | Pi | `0.86.1` | `>=0.86.1 <0.87.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
 | Oh My Pi | `18.2.6` | `>=18.2.6 <18.3.0` | `~/.omp/agent/config.yml` |
@@ -79,7 +79,7 @@ The evidence behind every row is in the developer
   unless you pass `--default`, which also writes the same three settings there
   so plain `codex` uses them. Each profile you install gets its own file.
 - **Blocks:** a legacy `profile = ...` line, or a `[profiles.<profile>]` table
-  with the same name, in `config.toml`. Codex 0.154.0 refuses to start with
+  with the same name, in `config.toml`. Codex 0.157.1 refuses to start with
   either one, so remove or move it first. Other `[profiles.*]` tables are kept.
 - **Route:** needs provider `openai`, native transport, OAuth, and effort
   `none`, `minimal`, `low`, `medium`, `high`, or `xhigh`. Any other route blocks.
@@ -87,7 +87,8 @@ The evidence behind every row is in the developer
   doesn't prove you're signed in with OAuth. Run `codex login status` yourself.
   It tells an API key apart from a ChatGPT login, but not Codex-managed OAuth
   from externally supplied tokens. Don't share its output. Trusted project
-  config and `-c` overrides can replace these values at run time. Codex
+  config and `-c` overrides can replace these values at run time, and so can
+  an admin-managed `requirements.toml` provider setting. Codex
   treats a `--profile` name with no file as empty, so a mistyped name silently
   runs your default settings. Model availability and effort enforcement haven't
   been verified.

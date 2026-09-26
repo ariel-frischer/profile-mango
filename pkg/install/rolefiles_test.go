@@ -135,7 +135,7 @@ func TestRoleFileGates(t *testing.T) {
 		strict   bool
 	}{
 		"codex max effort is not applied": {test: cases["codex"], from: "effort: xhigh}", to: "effort: max}",
-			want: SkippedRequirement{Requirement: RequirementEffort, Value: "max", Role: "worker", Reason: "Codex 0.154.0 model_reasoning_effort is installed only as none, minimal, low, medium, high, xhigh"}},
+			want: SkippedRequirement{Requirement: RequirementEffort, Value: "max", Role: "worker", Reason: "Codex 0.157.1 model_reasoning_effort is installed only as none, minimal, low, medium, high, xhigh"}},
 		"claude minimal effort is not applied": {test: cases["claude-code"], from: "effort: xhigh}", to: "effort: minimal}",
 			want: SkippedRequirement{Requirement: RequirementEffort, Value: "minimal", Role: "worker", Reason: "Claude Code agent file effort accepts only low, medium, high, xhigh, max"}},
 		"codex foreign provider keeps the file without a model": {test: cases["codex"], from: "worker: {provider: openai", to: "worker: {provider: anthropic",

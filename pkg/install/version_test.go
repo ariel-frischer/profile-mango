@@ -17,7 +17,7 @@ func TestTildeRangeTable(t *testing.T) {
 		out       []string
 	}{
 		"semver":         {qualified: "2.1.278", wantRange: ">=2.1.278 <2.2.0", in: []string{"2.1.278", "2.1.280", "2.1.999"}, out: []string{"2.1.277", "2.2.0", "3.0.0", "1.9.999"}},
-		"zero major":     {qualified: "0.154.0", wantRange: ">=0.154.0 <0.155.0", in: []string{"0.154.0", "0.154.7"}, out: []string{"0.155.1", "0.153.9", "1.154.0"}},
+		"zero major":     {qualified: "0.157.1", wantRange: ">=0.157.1 <0.158.0", in: []string{"0.157.1", "0.157.7"}, out: []string{"0.155.1", "0.153.9", "1.154.0"}},
 		"calver":         {qualified: "2026.9.5", wantRange: ">=2026.9.5 <2026.10.0", in: []string{"2026.9.5", "2026.9.30"}, out: []string{"2026.9.4", "2026.10.1", "2027.9.5"}},
 		"calver dec":     {qualified: "2026.12.1", wantRange: ">=2026.12.1 <2026.13.0", in: []string{"2026.12.9"}, out: []string{"2027.1.0"}},
 		"dev suffix":     {qualified: "0.83.909-dev (ca8017a3a)", wantRange: ">=0.83.909 <0.84.0", in: []string{"0.83.910"}, out: []string{"0.84.0"}},
@@ -122,13 +122,13 @@ func TestCheckVersionTable(t *testing.T) {
 		"claude patch update in range": {metadata: claude, detection: VersionDetection{Binary: "claude", Found: true, Output: "2.1.280 (Claude Code)"},
 			want: VersionCheck{Binary: "claude", Qualified: claudecode.TargetVersion, Range: ">=2.1.278 <2.2.0", Detected: "2.1.280", Status: VersionInRange}},
 		"codex minor update out of range": {metadata: codexMetadata, detection: VersionDetection{Binary: "codex", Found: true, Output: "codex-cli 0.155.1"},
-			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.154.0 <0.155.0", Detected: "0.155.1", Status: VersionOutOfRange}},
+			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.157.1 <0.158.0", Detected: "0.155.1", Status: VersionOutOfRange}},
 		"not found": {metadata: codexMetadata, detection: VersionDetection{Binary: "codex"},
-			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.154.0 <0.155.0", Status: VersionNotFound}},
-		"probe failed": {metadata: codexMetadata, detection: VersionDetection{Binary: "codex", Found: true, Output: "codex-cli 0.154.0", Err: errors.New("exit status 1")},
-			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.154.0 <0.155.0", Status: VersionUnknown}},
+			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.157.1 <0.158.0", Status: VersionNotFound}},
+		"probe failed": {metadata: codexMetadata, detection: VersionDetection{Binary: "codex", Found: true, Output: "codex-cli 0.157.1", Err: errors.New("exit status 1")},
+			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.157.1 <0.158.0", Status: VersionUnknown}},
 		"unparseable output": {metadata: codexMetadata, detection: VersionDetection{Binary: "codex", Found: true, Output: "hello"},
-			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.154.0 <0.155.0", Status: VersionUnknown}},
+			want: VersionCheck{Binary: "codex", Qualified: codex.TargetVersion, Range: ">=0.157.1 <0.158.0", Status: VersionUnknown}},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestBuildPlanRecordsVersionCheckWithoutBlocking(t *testing.T) {
 		wantStatus  string
 		wantWarning string
 	}{
-		"in range":     {detect: fakeDetector("codex-cli 0.154.3", true), wantStatus: VersionInRange},
+		"in range":     {detect: fakeDetector("codex-cli 0.157.3", true), wantStatus: VersionInRange},
 		"out of range": {detect: fakeDetector("codex-cli 0.155.1", true), wantStatus: VersionOutOfRange, wantWarning: "install.version_out_of_range"},
 		"not found":    {detect: fakeDetector("", false), wantStatus: VersionNotFound, wantWarning: "install.version_not_found"},
 		"unreadable":   {detect: fakeDetector("garbage", true), wantStatus: VersionUnknown, wantWarning: "install.version_unknown"},
@@ -209,7 +209,7 @@ func TestPlanIDIsDeterministicForIdenticalDetection(t *testing.T) {
 	if first.PlanID != second.PlanID {
 		t.Fatalf("identical inputs produced different plan IDs: %s != %s", first.PlanID, second.PlanID)
 	}
-	request.DetectVersion = fakeDetector("codex-cli 0.154.0", true)
+	request.DetectVersion = fakeDetector("codex-cli 0.157.1", true)
 	changed, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)

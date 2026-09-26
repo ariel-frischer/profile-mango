@@ -43,7 +43,7 @@ a separate evidence level and must never be implied by these no-inference checks
 ## Repository probe harness
 
 [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh) retains the
-smallest repeatable native probe used for the Codex `0.154.0` build , and the Jcode fork
+smallest repeatable native probe used for the Codex `0.157.1` build, and the Jcode fork
 custom Jcode fork build. It requires explicit direct executable paths through
 `PROFILE_MANGO_CODEX_BIN` and `PROFILE_MANGO_JCODE_BIN`; it never resolves a
 launcher or reads a personal target home. Each invocation creates synthetic
@@ -63,7 +63,7 @@ PROFILE_MANGO_PROBE_ROOT="$PWD/.probe" \
 ```
 
 For Codex, the probe hashes the resolved direct executable and rejects any
-binary other than the pinned `codex-cli 0.154.0` SHA-256 before running target
+binary other than the pinned `codex-cli 0.157.1` SHA-256 before running target
 commands. Its native consumption check is intentionally limited to the safe
 `features list` inspector: positive, negative, malformed, and feature-only
 runtime-override cases are asserted. Route, authentication, project/profile

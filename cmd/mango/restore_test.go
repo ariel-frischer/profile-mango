@@ -22,7 +22,7 @@ func TestCodexRestorePlanAndApply(t *testing.T) {
 		t.Fatal(err)
 	}
 	request := install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true, Override: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}}
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}}
 	installed, err := install.BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,7 @@ func TestCodexRestorePlanAndApply(t *testing.T) {
 	var output bytes.Buffer
 	cmd := &cobra.Command{}
 	cmd.SetOut(&output)
-	options := restoreOptions{target: "codex@0.154.0", config: config, originalPlan: installed.PlanID, jsonOutput: true}
+	options := restoreOptions{target: "codex@0.157.1", config: config, originalPlan: installed.PlanID, jsonOutput: true}
 	if err := runRestore(cmd, options); err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := install.BuildRestorePlan("codex@0.154.0", config, id); err == nil {
+			if _, err := install.BuildRestorePlan("codex@0.157.1", config, id); err == nil {
 				t.Fatal("tampered install accepted")
 			}
 			after, err := os.ReadFile(config)
@@ -151,7 +151,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 
 func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 	config, id := installedRestoreFixture(t, true)
-	plan, err := install.BuildRestorePlan("codex@0.154.0", config, id)
+	plan, err := install.BuildRestorePlan("codex@0.157.1", config, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 			}
 		})
 	}
-	if _, err := install.BuildRestorePlan("codex@0.154.0", config, strings.Repeat("0", 64)); err == nil {
+	if _, err := install.BuildRestorePlan("codex@0.157.1", config, strings.Repeat("0", 64)); err == nil {
 		t.Fatal("wrong original ID accepted")
 	}
 	if _, err := install.BuildRestorePlan("codex@0.153.0", config, id); err == nil {
@@ -175,7 +175,7 @@ func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 		t.Fatal("stale preview accepted")
 	}
 	withoutBackup, otherID := installedRestoreFixture(t, false)
-	if _, err := install.BuildRestorePlan("codex@0.154.0", withoutBackup, otherID); err == nil {
+	if _, err := install.BuildRestorePlan("codex@0.157.1", withoutBackup, otherID); err == nil {
 		t.Fatal("no-backup install accepted")
 	}
 }
@@ -185,14 +185,14 @@ func TestCodexRestoreDeletesOriginallyAbsentConfigAndManifest(t *testing.T) {
 	profiles, bindings := writeCodexInstallInputs(t, root)
 	config := filepath.Join(root, "config.toml")
 	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}})
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	restore, err := install.BuildRestorePlan("codex@0.154.0", config, plan.PlanID)
+	restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,10 +221,10 @@ func TestRestoreCLIHelpAndConsent(t *testing.T) {
 	}
 	config, id := installedRestoreFixture(t, true)
 	for name, options := range map[string]restoreOptions{
-		"omitted consent":      {target: "codex@0.154.0", config: config, originalPlan: id, apply: true},
+		"omitted consent":      {target: "codex@0.157.1", config: config, originalPlan: id, apply: true},
 		"bare target":          {target: "codex", config: config, originalPlan: id, apply: true},
 		"deprecated alias":     {target: "codex", legacyConfig: config, originalPlan: id, apply: true},
-		"json without consent": {target: "codex@0.154.0", config: config, originalPlan: id, apply: true, jsonOutput: true},
+		"json without consent": {target: "codex@0.157.1", config: config, originalPlan: id, apply: true, jsonOutput: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := runRestore(command, options); err == nil || !strings.Contains(err.Error(), "--yes --expect-plan") {
@@ -277,7 +277,7 @@ func TestCodexRestoreRejectsSameContentReplacementAfterPreview(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			config, id := installedRestoreFixture(t, true)
-			plan, err := install.BuildRestorePlan("codex@0.154.0", config, id)
+			plan, err := install.BuildRestorePlan("codex@0.157.1", config, id)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -319,7 +319,7 @@ func TestCodexRestoreOriginalManifestCanonicalBoundary(t *testing.T) {
 			}
 			manifestPath := config + ".profile-mango.manifest.json"
 			owner := install.Manifest{APIVersion: install.ManifestAPIVersion, Kind: install.ManifestKind, Owner: "profile-mango", Generation: 1,
-				Profile: "route-only", Target: install.Target{Name: "codex", Version: "0.154.0"}, Files: []install.ManifestFile{{Path: config, SHA256: installfs.Hash(original)}}}
+				Profile: "route-only", Target: install.Target{Name: "codex", Version: "0.157.1"}, Files: []install.ManifestFile{{Path: config, SHA256: installfs.Hash(original)}}}
 			prior, err := json.MarshalIndent(owner, "", "  ")
 			if err != nil {
 				t.Fatal(err)
@@ -339,7 +339,7 @@ func TestCodexRestoreOriginalManifestCanonicalBoundary(t *testing.T) {
 			if _, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 				t.Fatal(err)
 			}
-			restore, err := install.BuildRestorePlan("codex@0.154.0", config, plan.PlanID)
+			restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID)
 			if !canonical {
 				if err == nil {
 					t.Fatal("reformatted original ownership manifest accepted")
@@ -369,7 +369,7 @@ func installedRestoreFixture(t *testing.T, backup bool) (string, string) {
 		t.Fatal(err)
 	}
 	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: backup, Override: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.154.0"}, ConfigPath: config}}})
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}})
 	if err != nil {
 		t.Fatal(err)
 	}

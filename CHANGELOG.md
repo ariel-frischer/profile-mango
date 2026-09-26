@@ -82,6 +82,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - OpenCode --default installs of a profile with more than one skill now list the skills as not installed instead of blocking; --strict still blocks
 - Moved to GitHub: Go module is github.com/ariel-frischer/profile-mango, CI and tag releases run on GitHub Actions with GoReleaser, and security reports go through GitHub private vulnerability reporting
 - go install now uses github.com/ariel-frischer/profile-mango/cmd/mango@latest to install a mango binary; version info falls back to Go build metadata without ldflags
+- Codex target requalified from 0.154.0 to 0.157.1 (tested range >=0.157.1 <0.158.0) with source-diff and isolated installed-binary evidence
 
 ### Removed
 

@@ -146,7 +146,7 @@ func contains(values []string, want string) bool {
 }
 
 func TestDoctorWritesNothing(t *testing.T) {
-	doctorFakeBinaries(t, map[string]string{"codex": "echo 'codex-cli 0.154.0'"})
+	doctorFakeBinaries(t, map[string]string{"codex": "echo 'codex-cli 0.157.1'"})
 	root := t.TempDir()
 	home := filepath.Join(root, "home")
 	t.Setenv("HOME", home)
@@ -156,7 +156,7 @@ func TestDoctorWritesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("doctor: %v\n%s", err, output)
 	}
-	if !strings.Contains(output, "codex@0.154.0") {
+	if !strings.Contains(output, "codex@0.157.1") {
 		t.Fatalf("doctor output missing codex row:\n%s", output)
 	}
 	if _, statErr := os.Stat(home); !os.IsNotExist(statErr) {
@@ -231,7 +231,7 @@ func TestDoctorJSONReportsVersionRange(t *testing.T) {
 		t.Fatalf("report envelope = %#v", report)
 	}
 	codexResult := doctorTargetNamed(t, report, "codex")
-	if !codexResult.BinaryFound || !codexResult.VersionMatch || !codexResult.InRange || codexResult.CompatibleRange != ">=0.154.0 <0.155.0" || codexResult.DetectedVersion != "codex-cli "+codex.TargetVersion {
+	if !codexResult.BinaryFound || !codexResult.VersionMatch || !codexResult.InRange || codexResult.CompatibleRange != ">=0.157.1 <0.158.0" || codexResult.DetectedVersion != "codex-cli "+codex.TargetVersion {
 		t.Fatalf("codex result = %#v", codexResult)
 	}
 	claudeResult := doctorTargetNamed(t, report, "claude-code")
@@ -250,7 +250,7 @@ func TestDoctorJSONReportsVersionRange(t *testing.T) {
 
 func TestDoctorHumanTableShowsInRange(t *testing.T) {
 	doctorFakeBinaries(t, map[string]string{
-		"codex":  "echo 'codex-cli 0.154.9'",
+		"codex":  "echo 'codex-cli 0.157.9'",
 		"claude": "echo '2.2.0 (Claude Code)'",
 	})
 	t.Setenv("HOME", filepath.Join(t.TempDir(), "home"))
@@ -261,7 +261,7 @@ func TestDoctorHumanTableShowsInRange(t *testing.T) {
 	if !strings.Contains(output, "IN RANGE") || strings.Contains(output, "MATCH") {
 		t.Fatalf("doctor header should say IN RANGE:\n%s", output)
 	}
-	for prefix, want := range map[string]string{"codex@": "codex-cli 0.154.9  yes  ", "claude-code@": "(Claude Code)  no (tested >=2.1.278 <2.2.0)  "} {
+	for prefix, want := range map[string]string{"codex@": "codex-cli 0.157.9  yes  ", "claude-code@": "(Claude Code)  no (tested >=2.1.278 <2.2.0)  "} {
 		if !strings.Contains(doctorRow(output, prefix), want) {
 			t.Fatalf("doctor row %s missing %q:\n%s", prefix, want, output)
 		}
@@ -433,9 +433,9 @@ func TestDoctorShowsVersionLineBehindStderrWarning(t *testing.T) {
 		script string
 		want   string
 	}{
-		"warning on stderr": {script: warning + "\necho 'codex-cli 0.154.9'", want: "codex-cli 0.154.9 (+1 more line(s))  yes  "},
-		"warning on stdout": {script: "echo 'WARNING: proceeding'\necho 'codex-cli 0.154.9'", want: "codex-cli 0.154.9 (+1 more line(s))  yes  "},
-		"version only":      {script: "echo 'codex-cli 0.154.9'", want: "codex-cli 0.154.9  yes  "},
+		"warning on stderr": {script: warning + "\necho 'codex-cli 0.157.9'", want: "codex-cli 0.157.9 (+1 more line(s))  yes  "},
+		"warning on stdout": {script: "echo 'WARNING: proceeding'\necho 'codex-cli 0.157.9'", want: "codex-cli 0.157.9 (+1 more line(s))  yes  "},
+		"version only":      {script: "echo 'codex-cli 0.157.9'", want: "codex-cli 0.157.9  yes  "},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

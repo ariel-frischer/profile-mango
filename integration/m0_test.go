@@ -47,7 +47,7 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 		evidenceHash string
 	}{
 		"claude-code": {version: "2.1.278", candidate: "preview/route-only.settings.json.preview", blocker: "claudecode.config.acceptance_unverified", evidenceHash: "d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7"},
-		"codex":       {version: "0.154.0", candidate: "preview/route-only.config.toml.preview", blocker: "codex.route.authentication_unverified", evidenceHash: "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"},
+		"codex":       {version: "0.157.1", candidate: "preview/route-only.config.toml.preview", blocker: "codex.route.authentication_unverified", evidenceHash: "3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970"},
 		"pi":          {version: "0.86.1", candidate: "preview/route-only.settings.json.preview", blocker: "pi.config.acceptance_unverified", evidenceHash: "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a"},
 		"oh-my-pi":    {version: "18.2.6", candidate: "preview/route-only.config.yml.preview", blocker: "ohmypi.config.inspector_unsafe", evidenceHash: "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e"},
 		"openclaw":    {version: "2026.9.5", candidate: "preview/route-only.config.json5.preview", blocker: "openclaw.config.inspector_unsafe", evidenceHash: "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4"},

@@ -22,11 +22,11 @@ func TestInstallOptionValidationTable(t *testing.T) {
 		wantErr string
 	}{
 		"requires-selection":   {options: installOptions{}, wantErr: "at least one"},
-		"all-conflicts-target": {options: installOptions{all: true, targets: []string{"codex@0.154.0"}}, wantErr: "mutually exclusive"},
-		"yes-needs-apply":      {options: installOptions{targets: []string{"codex@0.154.0"}, yes: true, expectPlan: "abc"}, wantErr: "--yes requires --apply"},
-		"yes-needs-hash":       {options: installOptions{targets: []string{"codex@0.154.0"}, apply: true, yes: true}, wantErr: "--yes requires --expect-plan"},
-		"json-apply-bound":     {options: installOptions{targets: []string{"codex@0.154.0"}, apply: true, jsonOutput: true}, wantErr: "JSON apply requires"},
-		"plan-valid":           {options: installOptions{targets: []string{"codex@0.154.0"}}, wantErr: ""},
+		"all-conflicts-target": {options: installOptions{all: true, targets: []string{"codex@0.157.1"}}, wantErr: "mutually exclusive"},
+		"yes-needs-apply":      {options: installOptions{targets: []string{"codex@0.157.1"}, yes: true, expectPlan: "abc"}, wantErr: "--yes requires --apply"},
+		"yes-needs-hash":       {options: installOptions{targets: []string{"codex@0.157.1"}, apply: true, yes: true}, wantErr: "--yes requires --expect-plan"},
+		"json-apply-bound":     {options: installOptions{targets: []string{"codex@0.157.1"}, apply: true, jsonOutput: true}, wantErr: "JSON apply requires"},
+		"plan-valid":           {options: installOptions{targets: []string{"codex@0.157.1"}}, wantErr: ""},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestInstallOptionValidationTable(t *testing.T) {
 
 func TestInstallTargetAndConfigPathParsing(t *testing.T) {
 	requests, err := installTargets(installOptions{
-		targets: []string{"codex@0.154.0", "opencode@1.18.31"},
+		targets: []string{"codex@0.157.1", "opencode@1.18.31"},
 		configs: []string{"opencode=/synthetic/opencode.json", "codex=/synthetic/config.toml"},
 	}, install.DefaultRegistry())
 	if err != nil {
@@ -65,25 +65,25 @@ func TestInstallTargetSelectionTable(t *testing.T) {
 			want: []want{{target: "claude-code@2.1.278", config: "/s/settings.json"}}},
 		"config alone implies target": {options: installOptions{configs: []string{"claude-code=/s/settings.json"}},
 			want: []want{{target: "claude-code@2.1.278", config: "/s/settings.json"}}},
-		"versioned config implies target": {options: installOptions{configs: []string{"codex@0.154.0=/s/config.toml"}},
-			want: []want{{target: "codex@0.154.0", config: "/s/config.toml"}}},
+		"versioned config implies target": {options: installOptions{configs: []string{"codex@0.157.1=/s/config.toml"}},
+			want: []want{{target: "codex@0.157.1", config: "/s/config.toml"}}},
 		"deprecated config-path alias": {options: installOptions{legacyConfigs: []string{"pi=/s/pi.json"}},
 			want: []want{{target: "pi@0.86.1", config: "/s/pi.json"}}},
 		"target order then implied": {options: installOptions{targets: []string{"pi"}, configs: []string{"codex=/s/c", "pi=/s/p"}},
-			want: []want{{target: "pi@0.86.1", config: "/s/p"}, {target: "codex@0.154.0", config: "/s/c"}}},
+			want: []want{{target: "pi@0.86.1", config: "/s/p"}, {target: "codex@0.157.1", config: "/s/c"}}},
 		"explicit unqualified version kept": {options: installOptions{targets: []string{"codex@0.153.0"}, configs: []string{"codex=/s/c"}},
 			want: []want{{target: "codex@0.153.0", config: "/s/c"}}},
 		"config-only unqualified version kept": {options: installOptions{configs: []string{"codex@0.153.0=/s/c"}},
 			want: []want{{target: "codex@0.153.0", config: "/s/c"}}},
-		"exact mapping wins over bare": {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/s/bare", "codex@0.154.0=/s/exact"}, manifests: []string{"codex=/s/m"}},
-			want: []want{{target: "codex@0.154.0", config: "/s/exact", manifest: "/s/m"}}},
+		"exact mapping wins over bare": {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/s/bare", "codex@0.157.1=/s/exact"}, manifests: []string{"codex=/s/m"}},
+			want: []want{{target: "codex@0.157.1", config: "/s/exact", manifest: "/s/m"}}},
 		"bare agent selector": {options: installOptions{agents: []string{"opencode=subagent:mango-review"}, configs: []string{"opencode=/s/agents/mango-review.md"}},
 			want: []want{{target: "opencode@1.18.31", config: "/s/agents/mango-review.md", agent: "subagent:mango-review"}}},
 		"config version mismatch":  {options: installOptions{targets: []string{"codex"}, configs: []string{"codex@0.153.0=/s/c"}}, wantErr: "--config target codex@0.153.0 does not match"},
 		"manifest without target":  {options: installOptions{targets: []string{"codex"}, manifests: []string{"pi=/s/m"}}, wantErr: "--manifest target pi does not match"},
 		"agent without target":     {options: installOptions{targets: []string{"opencode"}, agents: []string{"codex=primary:x"}}, wantErr: "--agent target codex does not match"},
 		"all rejects unknown":      {options: installOptions{all: true, configs: []string{"nope=/s/c"}}, wantErr: "--config target nope does not match"},
-		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.154.0"}}, want: []want{{target: "codex@0.154.0"}}},
+		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.157.1"}}, want: []want{{target: "codex@0.157.1"}}},
 		"duplicate config":         {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/a"}, legacyConfigs: []string{"codex=/b"}}, wantErr: "duplicate --config mapping: codex"},
 		"unknown bare target":      {options: installOptions{targets: []string{"jcode-fork"}}, wantErr: `unknown target "jcode-fork"; valid targets: claude-code, codex, hermes, oh-my-pi, openclaw, opencode, pi`},
 		"config missing separator": {options: installOptions{configs: []string{"/s/settings.json"}}, wantErr: "--config must use target[@version]=value"},
@@ -131,7 +131,7 @@ func TestInstallCommandConfigFlagForms(t *testing.T) {
 	}{
 		"bare target and config": {args: []string{"--target", "codex", "--config", "codex=" + config}},
 		"config alone":           {args: []string{"--config", "codex=" + config}},
-		"deprecated alias":       {args: []string{"--target", "codex@0.154.0", "--config-path", "codex=" + config}, deprecated: true},
+		"deprecated alias":       {args: []string{"--target", "codex@0.157.1", "--config-path", "codex=" + config}, deprecated: true},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestInstallCommandConfigFlagForms(t *testing.T) {
 			if err := command.Execute(); err != nil {
 				t.Fatalf("install: %v; stdout=%s stderr=%s", err, stdout.String(), stderr.String())
 			}
-			if !strings.Contains(stdout.String(), `"version": "0.154.0"`) || !strings.Contains(stdout.String(), `"status": "ready"`) {
+			if !strings.Contains(stdout.String(), `"version": "0.157.1"`) || !strings.Contains(stdout.String(), `"status": "ready"`) {
 				t.Fatalf("unexpected plan: %s", stdout.String())
 			}
 			if got := strings.Contains(stdout.String()+stderr.String(), "use --config target[@version]=path instead"); got != test.deprecated {
@@ -173,7 +173,7 @@ func TestInstallNamedAgentSelection(t *testing.T) {
 		t.Fatalf("requests = %#v, err = %v", requests, err)
 	}
 	for name, options := range map[string]installOptions{
-		"missing target": {targets: []string{"opencode@1.18.31"}, agents: []string{"codex@0.154.0=primary:mango-review"}},
+		"missing target": {targets: []string{"opencode@1.18.31"}, agents: []string{"codex@0.157.1=primary:mango-review"}},
 		"malformed":      {targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=primary"}},
 		"duplicate":      {targets: []string{"opencode@1.18.31"}, agents: []string{"opencode@1.18.31=primary:mango-review", "opencode@1.18.31=subagent:mango-review"}},
 	} {
@@ -234,7 +234,7 @@ func TestInstallCodexSettingsPlanWarnsWithoutWriting(t *testing.T) {
 	cmd.SetErr(&stderr)
 	err := runInstall(cmd, "route-only", installOptions{
 		profiles: profiles, resourceRoot: root, bindings: bindings,
-		targets: []string{"codex@0.154.0"}, configs: []string{"codex=" + targetPath},
+		targets: []string{"codex@0.157.1"}, configs: []string{"codex=" + targetPath},
 		jsonOutput: true,
 	})
 	if err != nil {
@@ -253,7 +253,7 @@ func TestInstallHumanPlanDisplaysTargetWarning(t *testing.T) {
 	command := &cobra.Command{}
 	command.SetOut(&output)
 	plan := install.Plan{PlanID: "synthetic", Status: install.StatusReady, Targets: []install.TargetPlan{{
-		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+		Target: install.Target{Name: "codex", Version: "0.157.1"}, Status: install.StatusReady,
 		Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning,
 			Code: "codex.install.auth_unmanaged", Message: "authentication is unmanaged; codex login status does not prove exact OAuth"}},
 	}}}
@@ -297,7 +297,7 @@ func TestInstallConsentRequiresTerminalOrHash(t *testing.T) {
 	if terminalInput(devNull) {
 		t.Fatal("/dev/null was accepted as terminal consent")
 	}
-	options := installOptions{targets: []string{"codex@0.154.0"}, apply: true, yes: true, expectPlan: "plan"}
+	options := installOptions{targets: []string{"codex@0.157.1"}, apply: true, yes: true, expectPlan: "plan"}
 	if err := validateInstallOptions(options); err != nil {
 		t.Fatal(err)
 	}

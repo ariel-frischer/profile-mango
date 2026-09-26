@@ -85,12 +85,12 @@ func TestUndoRejectsMultiApplyBeforeMutation(t *testing.T) {
 }
 
 func TestResolvedSelectorAliasesDeduplicate(t *testing.T) {
-	undo, err := resolvedUndoTargets([]string{"codex", "codex@0.154.0", "opencode"})
-	if err != nil || strings.Join(undo, ",") != "codex@0.154.0,opencode@1.18.31" {
+	undo, err := resolvedUndoTargets([]string{"codex", "codex@0.157.1", "opencode"})
+	if err != nil || strings.Join(undo, ",") != "codex@0.157.1,opencode@1.18.31" {
 		t.Fatalf("undo targets=%v error=%v", undo, err)
 	}
-	render, err := resolvedRenderTargets([]string{"codex", "codex@0.154.0"}, "")
-	if err != nil || len(render) != 1 || render[0] != "codex@0.154.0" {
+	render, err := resolvedRenderTargets([]string{"codex", "codex@0.157.1"}, "")
+	if err != nil || len(render) != 1 || render[0] != "codex@0.157.1" {
 		t.Fatalf("render targets=%v error=%v", render, err)
 	}
 }

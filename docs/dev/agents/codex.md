@@ -1,6 +1,6 @@
 # Codex configuration reference
 
-**Reference date:** 2026-09-23. **Status:** exact-version inert preview plus a separate three-setting installer for Codex CLI `0.154.0` that writes a named profile file by default. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and still reports `applicable: false` for the full profile because authentication, delivery, precedence, and enforcement remain unverified.
+**Reference date:** 2026-09-26. **Status:** exact-version inert preview plus a separate three-setting installer for Codex CLI `0.157.1` (requalified from `0.154.0`; see [the requalification evidence](../target-evidence.md#codex-01571-requalification-2026-09-26)) that writes a named profile file by default. The renderer emits candidate provider/model/effort syntax and copied resources only under an explicit staging directory. It never emits active `config.toml`, `AGENTS.md`, or skill locations, and still reports `applicable: false` for the full profile because authentication, delivery, precedence, and enforcement remain unverified.
 
 ## Configuration and precedence
 
@@ -29,7 +29,7 @@ See [AGENTS.md guidance][agents] and [skill guidance][skills].
 
 ## Preview renderer boundary
 
-`mango render <name> --target codex --target-version 0.154.0` is an
+`mango render <name> --target codex --target-version 0.157.1` is an
 offline compiler boundary, not an installer. Without `--preview`, applicability
 blockers produce diagnostics and no output. With `--preview`, the command may
 atomically create a new explicit `--out` directory containing `render.json`,
@@ -52,15 +52,15 @@ effect review.
 
 Future checks must use an isolated `CODEX_HOME` and project with no credentials
 or provider access. Native parsing does not prove runtime enforcement.
-In a bounded isolated empty-auth home, installed `codex-cli 0.154.0` app-server
-`config/read` reported all three installer-generated root fields and their user
+In a bounded isolated empty-auth home, installed `codex-cli 0.154.0` and
+`0.157.1` app-server `config/read` reported all three installer-generated root fields and their user
 origins. A trusted synthetic project and session overrides shadowed root model
 and effort; an untrusted project did not. App-server startup initializes other
 subsystems, so this is not a safe personal-home inspector or OAuth proof.
 
-## Named profiles in 0.154.0
+## Named profiles in 0.157.1
 
-Codex `0.154.0` profiles are files: `codex --profile <name>` layers
+Codex `0.157.1` profiles are files (unchanged since `0.154.0`): `codex --profile <name>` layers
 `$CODEX_HOME/<name>.config.toml` over `config.toml`. Names use ASCII letters,
 digits, `_` and `-`. The older `[profiles.<name>]` tables and root
 `profile = "<name>"` selector are legacy: the pinned binary refuses
@@ -70,7 +70,9 @@ file is treated as an empty layer, so a typo silently runs the base config.
 `--profile` applies only to runtime commands, `codex mcp`, `codex sandbox` and
 `codex debug prompt-input`; app-server `config/read` rejects it. Source lines
 and isolated installed-binary controls are in the
-[evidence ledger](../target-evidence.md#codex-01540-named-profile-installation-2026-09-23).
+[evidence ledger](../target-evidence.md#codex-01540-named-profile-installation-2026-09-23),
+repeated for `0.157.1` in the
+[requalification](../target-evidence.md#codex-01571-requalification-2026-09-26).
 
 ## Bounded settings-only installation
 
@@ -80,7 +82,7 @@ settings go to `<name>.config.toml` beside `$CODEX_HOME/config.toml` (default
 is read, checked, and left byte-for-byte unchanged. `--default` also writes the
 same three settings as root keys in `config.toml`, so plain `codex` uses them.
 `--config codex=<path>` names a different `config.toml`; the profile file goes
-next to it. Bare `codex` resolves to the single qualified `codex@0.154.0`. The
+next to it. Bare `codex` resolves to the single qualified `codex@0.157.1`. The
 installer plans only `model_provider`, `model`, and `model_reasoning_effort`
 (`none`, `minimal`, `low`, `medium`, `high`, or `xhigh`, which the pinned source
 parses as named `ReasoningEffort` variants; `max`, `ultra`, and others block) for an
@@ -127,6 +129,9 @@ the stored login is API-key or ChatGPT, but the same ChatGPT message covers
 Codex-managed OAuth and externally supplied tokens. Do not share status output
 containing key fragments. Project/runtime overrides were observed in a
 controlled synthetic home but are not inspected or controlled by installation.
+Since `0.157.1`, a managed `requirements.toml`, cloud bundle or MDM
+`model_provider` also overrides the installed provider. This is source-reviewed
+only, and installation does not inspect it.
 Installer-verified authentication identity,
 model availability, resource delivery and policy enforcement remain unverified.
 Settings-only success must not be reported as full-profile applicability.
@@ -145,21 +150,21 @@ no personal configuration was installed or changed. See the
 
 ## Global instruction files (ap-nym, 2026-09-25)
 
-`globalInstructions` may own `AGENTS.md` in `$CODEX_HOME` (source `rust-v0.154.0` `6b9826e`, `codex-rs/codex-home/src/instructions/mod.rs:9-10,26-27`); an existing `AGENTS.override.md` wins over it. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+`globalInstructions` may own `AGENTS.md` in `$CODEX_HOME` (source `rust-v0.157.1` `3665039`, `codex-rs/codex-home/src/instructions/mod.rs:12-13,43-44`); an existing `AGENTS.override.md` wins over it. Since `0.157.1`, a failed refresh keeps the last good copy. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
 
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
-`~/AGENTS.md` is read only when `$HOME` is the working directory or the nearest project root: `rust-v0.154.0` `6b9826e`, `codex-rs/core/src/agents_md.rs:1-16,187-240` walks up only to the nearest `project_root_markers` directory (`.git` by default). Codex therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+`~/AGENTS.md` is read only when `$HOME` is the working directory or the nearest project root: `rust-v0.157.1` `3665039`, `codex-rs/core/src/agents_md.rs:1-18,192-245` walks up only to the nearest `project_root_markers` directory (`.git` by default). Codex therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
 
 ## Role subagent files (ap-6lp, 2026-09-25)
 
-Each declared profile role becomes `$CODEX_HOME/agents/<role>.toml`, written only when the profile is the default (`install --default`, `mango use`). Source review of `rust-v0.154.0` (`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`):
+Each declared profile role becomes `$CODEX_HOME/agents/<role>.toml`, written only when the profile is the default (`install --default`, `mango use`). Source review of `rust-v0.157.1` (`36650394c5b38c2990ccf2a3457165ca3e9d9726`); the three `agent-roles` files are byte-identical to `rust-v0.154.0`:
 
 | Claim | Pinned source (file SHA-256) |
 | --- | --- |
 | Role files are TOML with `name`, `description`, `nickname_candidates`, plus flattened `ConfigToml` keys; unknown keys are rejected | `codex-rs/agent-roles/src/agent_role_config.rs` (`70ba8cf41c7339a06fee896d41c57a6e8344b770b1a1ed9a04c66d56e27d9511`), lines 20-28 |
 | `developer_instructions` is required and non-blank; `name` and `description` are validated | same file, lines 67-88, 120-157 |
 | User role files are discovered under `<config dir>/agents`, recursively as `*.toml`; `description` is required | `codex-rs/agent-roles/src/loader.rs` (`611e202c2bb4a2bad6c201bd93555d56b6c6c7021e96a294015556fd47b16b38`), lines 75-81, 237-249; `codex-rs/agent-roles/src/discovery.rs` (`7a82592608e9310c11da591bceef6134355c3ac925597b26e6f2d03e6c5f155a`), lines 7-40 |
-| `model` (line 157), `model_provider` (line 162), and `model_reasoning_effort` (line 371) are `ConfigToml` keys | `codex-rs/config/src/config_toml.rs` |
+| `model` (line 168), `model_provider` (line 173), and `model_reasoning_effort` (line 392) are `ConfigToml` keys | `codex-rs/config/src/config_toml.rs` |
 
 The file carries `name`, `description`, `developer_instructions` (the role's `instructions` resource, else its description), and, when the route binds the role, `model_provider`, `model`, and `model_reasoning_effort`. An effort outside `none`..`xhigh` is omitted and reported as `effort <v> (role <r>): NOT APPLIED`. Ownership is whole-file (`role-definition` in `mango status`): an unmanaged same-name file is adopted with a create-only backup, drift blocks without `--override`, `mango use` releases roles the next profile lacks (restoring adopted bytes), and undo restores bytes. Named-only installs skip `role-definitions` with the reason "subagent files are global; install with --default or mango use". Evidence level: source review plus a built-binary sandbox smoke (install, status, use, undo); Codex was not run against the generated files.
