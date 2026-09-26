@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-26
+
 ### Fixed
 
 - mango status, use, install, and undo accept an ownership manifest recorded at an earlier version of the same target; status shows the recorded version and the next apply rewrites it
@@ -132,5 +134,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.0.1...v0.1.0

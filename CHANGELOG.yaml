@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased:
+    unreleased: {}
+    0.1.1:
+        date: 2026-09-26
         fixed:
             - mango status, use, install, and undo accept an ownership manifest recorded at an earlier version of the same target; status shows the recorded version and the next apply rewrites it
             - mango install/use --apply no longer asks for consent or a terminal when the plan changes nothing
