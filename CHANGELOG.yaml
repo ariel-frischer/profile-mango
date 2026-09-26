@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased:
+    unreleased: {}
+    0.1.0:
+        date: 2026-09-26
         added:
             - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
             - Version-qualified target evidence with explicit public-support and applicability boundaries

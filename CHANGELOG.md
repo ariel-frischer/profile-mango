@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-26
+
 ### Added
 
 - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
@@ -121,4 +123,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.0.1...v0.1.0
