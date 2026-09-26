@@ -78,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Accept comma-separated, repeated, and -t agent selectors across install, undo, render, agents check, and doctor, with per-target undo consent
 - Install and undo now show concise styled human previews with visible field effects, every skipped requirement, copyable apply commands, and optional --verbose detail; JSON plans and consent remain unchanged
 - Binding roles now use the portable role names instead of Oh My Pi slot names; the old slot keys fail with a hint naming the portable key
+- OpenCode --default installs of a profile with more than one skill now list the skills as not installed instead of blocking; --strict still blocks
 
 ### Removed
 

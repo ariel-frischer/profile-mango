@@ -152,3 +152,39 @@ spec:
 		})
 	}
 }
+
+func TestOpenCodeDefaultInstallSkipsMultipleSkills(t *testing.T) {
+	request, root := openCodeTestRequest(t)
+	request.Default = true
+	writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), `apiVersion: profilemango.dev/v1alpha1
+kind: PolicyProfile
+metadata:
+  name: route-only
+spec:
+  routeRef: primary
+  skills:
+    - skills/one/SKILL.md
+    - skills/two/SKILL.md
+`)
+	for _, resourcePath := range []string{"skills/one/SKILL.md", "skills/two/SKILL.md"} {
+		path := filepath.Join(root, resourcePath)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		writeInstallTestFile(t, path, openCodeTestSkill)
+	}
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := SkippedRequirement{Requirement: RequirementSkills, Count: 2, Reason: "installs at most 1 skill; this profile has 2"}
+	target := plan.Targets[0]
+	if plan.Status != StatusReady || len(target.SkippedRequirements) != 1 || target.SkippedRequirements[0] != want {
+		t.Fatalf("plan = %#v", plan)
+	}
+	for _, file := range target.Files {
+		if strings.HasSuffix(file.Path, "SKILL.md") {
+			t.Fatalf("skipped skill still written: %s", file.Path)
+		}
+	}
+}

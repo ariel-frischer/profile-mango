@@ -262,7 +262,7 @@ func validateOpenCodeBase(input AdapterInput) error {
 }
 
 func validateOpenCodeSkillResource(input AdapterInput) (*render.Resource, error) {
-	if len(input.Profile.Skills) != 1 {
+	if len(input.Profile.Skills) != openCodeMaxSkills {
 		return nil, fmt.Errorf("OpenCode install supports exactly one skill resource")
 	}
 	var resource *render.Resource
@@ -357,3 +357,10 @@ func (openCodeAdapter) SupportedRequirements(agent AgentDestination, setsDefault
 	}
 	return []string{RequirementInstructions}
 }
+
+// openCodeMaxSkills is how many skill resources a default OpenCode install copies.
+const openCodeMaxSkills = 1
+
+// MaxSkills reports that a default OpenCode install copies at most one skill;
+// a profile with more lists every skill as skipped instead of blocking.
+func (openCodeAdapter) MaxSkills() int { return openCodeMaxSkills }
