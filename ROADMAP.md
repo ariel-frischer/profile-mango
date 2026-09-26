@@ -23,9 +23,10 @@ portable profiles remain target-owned and outside the product scope.
   skills.
 - Deterministic inheritance, resource hashing, diagnostics, plans, and ownership
   manifests.
-- Exact-version inert preview renderers for the intended MVP targets.
-- No applicable adapter, target installation, default-profile activation, role or
-  MCP projection, credential handling, or runtime enforcement claim yet.
+- Installers for the supported subsets in the README, with `use`/`status`,
+  role models on Oh My Pi, and whole-file global instructions.
+- No role subagent files, MCP projection, credential handling, or runtime
+  enforcement claim yet.
 
 ## Near-term priorities
 

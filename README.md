@@ -4,8 +4,8 @@
 
 ## What is a profile?
 
-- **Profile:** bundled agentic configuration. A profile describes portable intent: a description, a route name, and later permissions, instructions, and skills. Each profile is a flat YAML file inside its own folder.
-- **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides. They stay local and never hold credentials.
+- **Profile:** bundled agentic configuration. A profile describes portable intent: a description, a route name, optional roles (worker, planner, research, tiny), global instruction files (`globalInstructions`), and later permissions, instructions, and skills. Each profile is a flat YAML file inside its own folder.
+- **Bindings:** which provider, model, and effort each route uses, with optional per-agent overrides and a model per role. They stay local and never hold credentials.
 - **Install:** writes the settings each agent supports into that agent's own config. Where the agent has named profiles, native (Codex, OpenClaw, Hermes, OpenCode agents) or emulated (Claude Code), the profile is installed under its own name and your default settings are left alone unless you pass `--default`. It shows a plan first, backs up what it changes, and can be undone.
 
 ## Install
@@ -100,6 +100,8 @@ mean native behavior is unqualified. An effort an agent cannot apply is shown as
 
 Today mainly the model and route settings install. OpenCode installs as a named
 agent by default, with `--default` also patching the main config and one skill.
+`globalInstructions` owns whole global instruction files (`AGENTS.md`, `CLAUDE.md`,
+Oh My Pi `RULES.md`, and `~/AGENTS.md` through Pi).
 Anything else an agent can't take, such as instructions,
 permissions, tools, or skills, is listed in the plan as
 `not installed for this agent: ...` and skipped. Pass `--strict` to block
@@ -107,11 +109,11 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 
 | Agent | Installs | Details |
 | --- | --- | --- |
-| Claude Code | Model, effort, as an emulated named profile | [agents](docs/public/agents.md#claude-code) |
-| Codex | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#codex) |
-| OpenCode | Model, effort variant, and instructions, as a named agent | [agents](docs/public/agents.md#opencode) |
-| Pi | Provider, model, thinking level | [agents](docs/public/agents.md#pi) |
-| Oh My Pi | Model roles with per-role effort | [agents](docs/public/agents.md#oh-my-pi) |
+| Claude Code | Model, effort, as an emulated named profile; `CLAUDE.md` | [agents](docs/public/agents.md#claude-code) |
+| Codex | Provider, model, effort, as a named profile; `AGENTS.md` | [agents](docs/public/agents.md#codex) |
+| OpenCode | Model, effort variant, and instructions, as a named agent; `AGENTS.md` | [agents](docs/public/agents.md#opencode) |
+| Pi | Provider, model, thinking level; `~/AGENTS.md` | [agents](docs/public/agents.md#pi) |
+| Oh My Pi | Model roles with per-role effort, subagent effort cap; `AGENTS.md`, `RULES.md` | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |
 | Hermes | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#hermes) |
 

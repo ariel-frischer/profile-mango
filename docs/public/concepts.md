@@ -21,10 +21,16 @@ profiles/review/profile.yaml         bindings/local.yaml
 ## Profile
 
 A profile is portable intent: a description, the name of a route, and optionally
-permissions, tools, instructions, and skills. It lives at
-`profiles/<name>/profile.yaml`, and its name is the folder name. A profile can
-`extend` another one. Profiles hold no credentials and no machine-specific model
-IDs, so you can share them.
+roles, global instruction files, permissions, tools, instructions, and skills. It
+lives at `profiles/<name>/profile.yaml`, and its name is the folder name. A
+profile can `extend` another one. Profiles hold no credentials and no
+machine-specific model IDs, so you can share them.
+
+Roles classify subagent work with four portable names: `worker`
+(implementation), `planner` (planning), `research` (read-only exploration), and
+`tiny` (small mechanical tasks). A profile describes what each role does; a
+route's `roles:` picks each role's model and effort. Today only Oh My Pi installs
+role models; see the [profile reference](profile-reference.md).
 
 ## Bindings, routes, and target overrides
 
