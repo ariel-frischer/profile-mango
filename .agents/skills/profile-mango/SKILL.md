@@ -14,7 +14,7 @@ compatibility:
   - VS Code
 metadata:
   author: Ariel Frischer
-  version: 0.0.2
+  version: 0.0.3
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
@@ -110,7 +110,8 @@ To change an existing route, use `mango route set` instead of hand-editing the
 bindings file: it edits only the affected lines (comments survive), creates a
 missing `targets.<agent>`/`roles.<role>` entry, validates like install, and
 writes nothing when invalid or unchanged. `mango route unset` removes fields and
-prunes emptied entries. Then apply with `mango use <profile>`.
+prunes emptied entries. An effort no agent uses only warns. Then apply with
+`mango use <profile>`.
 
 ```bash
 mango route list                                   # routes + profiles using each

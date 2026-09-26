@@ -260,7 +260,8 @@ mango route unset sol --target oh-my-pi effort     # fields: provider, model, ef
 `roles.<role>` entry. `unset` removes an entry, and then its `targets` or
 `roles` map, once it is empty. Both check the edited file the way `install`
 does and write nothing if it is invalid or unchanged; `--target` and `--role`
-cannot be combined. They print the diff, then the profiles to apply with
+cannot be combined. An effort no supported agent uses prints a warning, since
+each agent checks its own efforts at install. They print the diff, then the profiles to apply with
 `mango use` or `mango install`; agent config never changes until you do.
 New routes are still added by hand.
 
