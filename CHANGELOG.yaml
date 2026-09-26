@@ -39,6 +39,7 @@ versions:
             - 'Profiles accept globalInstructions to own an agent''s global instruction file as a whole file: Codex AGENTS.md, Claude Code CLAUDE.md, OpenCode AGENTS.md, and Oh My Pi AGENTS.md/RULES.md, with create-only backups and undo'
             - 'Portable roles: profiles declare worker, planner, research, and tiny roles, and bindings give each a provider, model, and effort; Oh My Pi maps them to task, plan/slow, smol, and tiny/commit model slots, and the optional subagentMaxEffort route field sets Oh My Pi task.maxEffort'
             - globalInstructions.home writes ~/AGENTS.md through the Pi target, the only pinned agent that reads it from every directory under the home directory
+            - 'Profile roles install as native subagent files on default installs: Codex agents/<role>.toml, OpenCode agents/<role>.md, Oh My Pi agents/<role>.md (model from its role slot), and Claude Code agents/<role>.md; named-only installs and other agents list them as skipped'
         changed:
             - Successful profile-mango init output now shows the ANSI README logo
             - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together

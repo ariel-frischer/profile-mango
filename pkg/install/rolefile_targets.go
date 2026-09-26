@@ -98,7 +98,7 @@ func (claudeCodeAdapter) renderRoleFile(file roleFile) ([]byte, error) {
 		return nil, err
 	}
 	if file.Model != "" && strings.TrimSpace(file.Model) != file.Model {
-		return nil, fmt.Errorf("Claude Code role %q model has surrounding whitespace", file.Name)
+		return nil, fmt.Errorf("claude-code role %q model has surrounding whitespace", file.Name)
 	}
 	return markdownAgent([][2]string{{"name", file.Name}, {"description", file.Description}, {"model", file.Model}, {"effort", file.Effort}}, file.Instructions), nil
 }
