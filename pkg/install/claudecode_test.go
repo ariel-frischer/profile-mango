@@ -260,7 +260,8 @@ func claudeCodeNamedRequest(t *testing.T, names ...string) (Request, string) {
 func TestClaudeCodeNamedProfilesInstallSideBySideAndKeepSettings(t *testing.T) {
 	request, config := claudeCodeNamedRequest(t, "coding", "review")
 	plan := applyNamed(t, request, "coding")
-	want := InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding", UseCommand: "claude --settings ~/.claude/profiles/coding.json"}
+	useCommand := "claude --settings " + filepath.Join(filepath.Dir(config), "profiles", "coding.json")
+	want := InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding", UseCommand: useCommand}
 	if got := plan.Targets[0].Install; got == nil || *got != want {
 		t.Fatalf("install mode = %#v, want %#v", got, want)
 	}
@@ -279,12 +280,43 @@ func TestClaudeCodeNamedProfilesInstallSideBySideAndKeepSettings(t *testing.T) {
 	}
 }
 
-func TestClaudeCodeNamedPlanJSONReportsModeAndUseCommand(t *testing.T) {
-	request, _ := claudeCodeNamedRequest(t, "coding")
-	request.ProfileName = "coding"
+// The use command names the profile file actually planned: home-relative when it sits
+// below the user's home (so plan JSON carries no home directory), absolute otherwise.
+func TestClaudeCodeNamedPlanUseCommandNamesResolvedFile(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	tests := map[string]struct {
+		config   string
+		explicit bool
+		want     string
+	}{
+		"default path":          {config: filepath.Join(home, ".claude", "settings.json"), want: "claude --settings ~/.claude/profiles/coding.json"},
+		"explicit below home":   {config: filepath.Join(home, "work dir", ".claude", "settings.json"), explicit: true, want: "claude --settings ~/'work dir/.claude/profiles/coding.json'"},
+		"explicit outside home": {config: filepath.Join(root, "elsewhere", "settings.json"), explicit: true, want: "claude --settings " + filepath.Join(root, "elsewhere", "profiles", "coding.json")},
+		"explicit with quote":   {config: filepath.Join(root, "it's", "settings.json"), explicit: true, want: "claude --settings '" + filepath.Join(root, `it'\''s`, "profiles", "coding.json") + "'"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, _ := claudeCodeNamedRequest(t, "coding")
+			request.ProfileName, request.Env = "coding", syntheticPathEnv(t, home, nil)
+			if err := os.MkdirAll(filepath.Dir(test.config), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeInstallTestFile(t, test.config, claudeCodeNamedBase)
+			request.Targets[0].ConfigPath = ""
+			if test.explicit {
+				request.Targets[0].ConfigPath = test.config
+			}
+			assertClaudeCodeUseCommand(t, request, test.want)
+		})
+	}
+}
+
+func assertClaudeCodeUseCommand(t *testing.T, request Request, want string) {
+	t.Helper()
 	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
+	if err != nil || plan.Status != StatusReady {
+		t.Fatalf("status=%s err=%v plan=%#v", plan.Status, err, plan)
 	}
 	data, err := plan.JSON()
 	if err != nil {
@@ -299,8 +331,8 @@ func TestClaudeCodeNamedPlanJSONReportsModeAndUseCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 	install := decoded.Targets[0].Install
-	if install["mode"] != "named-profile" || install["profileName"] != "coding" || install["useCommand"] != "claude --settings ~/.claude/profiles/coding.json" {
-		t.Fatalf("install JSON = %#v", install)
+	if install["mode"] != "named-profile" || install["profileName"] != "coding" || install["useCommand"] != want {
+		t.Fatalf("install JSON = %#v, want useCommand %q", install, want)
 	}
 }
 

@@ -292,6 +292,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.named_profile_path_unsafe")
 	}
+	useNamedProfileFile(adapter, targetPlan.Install, namedFile.Path, request.Env)
 	profile, resources, route, skipped, strictReason := targetSubset(adapter, request, targetRequest, loaded)
 	if strictReason != "" {
 		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")

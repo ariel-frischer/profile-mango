@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -143,19 +146,50 @@ func TestCompactSkippedListsRoleRequirements(t *testing.T) {
 	}
 }
 
-func TestCompactClaudeExplicitDestinationAndUse(t *testing.T) {
-	target := install.TargetPlan{Target: install.Target{Name: "claude-code", Version: "2.1.278"}, Status: install.StatusReady,
-		Config:  &install.ConfigDestination{Path: "/sandbox/agent home/settings.json"},
-		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "claude --settings ~/.claude/profiles/demo.json"}}
-	var output bytes.Buffer
-	if err := writeCompactTarget(&output, target, newOutputStyles(false)); err != nil {
+// Every plan view prints the Claude Code profile file actually written, including one
+// beside an explicit --config.
+func TestInstallClaudeUseCommandNamesWrittenFile(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	tests := map[string]struct {
+		config   string
+		explicit bool
+		want     string
+	}{
+		"default path":    {config: filepath.Join(home, ".claude", "settings.json"), want: "claude --settings ~/.claude/profiles/route-only.json"},
+		"explicit config": {config: filepath.Join(root, "agent home", "settings.json"), explicit: true, want: "claude --settings '" + filepath.Join(root, "agent home", "profiles", "route-only.json") + "'"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			options := claudeUseInstallOptions(t, root, home, test.config)
+			if test.explicit {
+				options.configs = []string{"claude-code=" + test.config}
+			}
+			for view, want := range map[string]string{"compact": "use it: " + test.want, "verbose": "use it: " + test.want + "\n", "json": `"useCommand": ` + strconv.Quote(test.want)} {
+				options.verbose, options.jsonOutput = view == "verbose", view == "json"
+				if output := runInstallForTest(t, options); !strings.Contains(output, want) {
+					t.Fatalf("%s view missing %q:\n%s", view, want, output)
+				}
+			}
+		})
+	}
+}
+
+func claudeUseInstallOptions(t *testing.T, root, home, config string) installOptions {
+	t.Helper()
+	t.Setenv("HOME", home)
+	if err := os.MkdirAll(filepath.Dir(config), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"destination: /sandbox/agent home/profiles/demo.json", "use it: claude --settings '/sandbox/agent home/profiles/demo.json'"} {
-		if !strings.Contains(output.String(), want) {
-			t.Fatalf("missing %q in %s", want, output.String())
-		}
+	writeFile(t, config, "{}\n")
+	profiles := filepath.Join(root, "profiles")
+	if err := os.MkdirAll(filepath.Join(profiles, "route-only"), 0o755); err != nil {
+		t.Fatal(err)
 	}
+	writeFile(t, filepath.Join(profiles, "route-only", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: main\n")
+	bindings := filepath.Join(root, "bindings.yaml")
+	writeFile(t, bindings, baseOpenAIBindings+"    targets:\n      claude-code:\n        provider: anthropic\n        model: claude-fable-5-1\n")
+	return installOptions{profiles: profiles, resourceRoot: root, bindings: bindings, targets: []string{"claude-code"}}
 }
 
 func TestCompactConflictGolden(t *testing.T) {

@@ -60,6 +60,9 @@ strict JSON from any path the caller supplies. `mango install <name>
 `effortLevel` when the route effort is `low`, `medium`, `high`, or `xhigh`) is
 written to a Mango-owned `profiles/<name>.json` beside `settings.json`, and the plan
 prints `use it: claude --settings <path>` so you can start Claude Code with it.
+`<path>` is the file actually planned, beside an explicit `--config` too; it is
+shown as `~/...` below your home, else absolute, and shell-quoted when needed.
+The JSON plan's `install.useCommand` carries the same command.
 `settings.json` itself is read only to check it exists and is not byte-empty,
 and stays byte-for-byte unchanged unless `--default` is also given, which then
 patches `settings.json` the same way the installer did before this file

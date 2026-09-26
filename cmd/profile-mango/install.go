@@ -501,9 +501,6 @@ func compactUseCommand(target install.TargetPlan) string {
 	if target.Install == nil || target.Install.Mode != install.InstallModeNamedProfile {
 		return ""
 	}
-	if target.Config != nil && target.Target.Name == "claude-code" {
-		return "claude --settings " + shellQuote(primaryInstallPath(target))
-	}
 	return target.Install.UseCommand
 }
 
@@ -740,7 +737,7 @@ func installApplyCommand(profile string, options installOptions, planID string) 
 	args = append(args, installPlanArgs(options)...)
 	args = append(args, "--apply", "--yes", "--expect-plan", planID)
 	for index, arg := range args {
-		args[index] = shellQuote(arg)
+		args[index] = install.ShellQuote(arg)
 	}
 	return strings.Join(args, " ")
 }
@@ -769,17 +766,6 @@ func installPlanArgs(options installOptions) []string {
 		}
 	}
 	return args
-}
-
-// shellQuote leaves plain words alone and single-quotes anything a POSIX shell would reinterpret.
-func shellQuote(value string) string {
-	plain := value != "" && strings.IndexFunc(value, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune("@%+=:,./_-", r)
-	}) < 0
-	if plain {
-		return value
-	}
-	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
 
 func writeTargetWarnings(output io.Writer, diagnostics profilemango.Diagnostics) error {
