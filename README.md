@@ -40,12 +40,12 @@ mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 mango use <profile>             # switch managed agents to another profile (same plan/apply)
 mango status                    # which profile each agent runs, and edited or stale files
 mango route list                # routes, their models, and the profiles using them
-mango route set sol --effort medium   # change a route in bindings/local.yaml
+mango route set local --effort medium   # change a route in bindings/local.yaml
 ```
 
 The plan ends with the exact apply command, including its plan ID. On a terminal,
-`--apply` alone asks for y/N confirmation instead. `--all` skips agents that are
-not installed, and an existing config is adopted with a backup.
+`--apply` alone asks for y/N confirmation instead. `--all` skips agents whose
+config folder does not exist, and an existing config is adopted with a backup.
 Human plans show each agent's status, resolved destination, installed model and
 effort when known, use command, file and field effects, every skipped requirement,
 and actionable warnings. They end with target and file counts. Add `--verbose`

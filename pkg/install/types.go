@@ -201,7 +201,7 @@ type Request struct {
 	// DetectVersion, when set, reports each ready target's installed agent version.
 	DetectVersion VersionDetector
 	// SkipNotInstalled (install --all) skips a default-path target whose config folder is
-	// missing and whose command DetectVersion does not find, instead of blocking the plan.
+	// missing, even when its command is on PATH, instead of blocking the plan.
 	SkipNotInstalled bool
 	// Strict blocks a target on any known requirement it cannot install instead
 	// of installing the supported subset and listing the rest as skipped.
