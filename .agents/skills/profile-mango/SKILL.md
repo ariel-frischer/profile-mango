@@ -87,16 +87,28 @@ other values block), Claude Code `effortLevel` (low/medium/high/xhigh), OpenCode
 `effort <v>: NOT APPLIED (<reason>)` in the plan and a JSON
 `skippedRequirements` entry; it is never dropped silently.
 
-Optional `roles` under a route bind extra model roles (Oh My Pi built-ins:
-`task`, `plan`, `slow`, `smol`, `tiny`, `commit`, `advisor`, `vision`); each
-installs as `modelRoles.<role>: provider/model:effort`. Other agents list
-roles as skipped:
+Roles use a fixed portable vocabulary: `worker` (implementation subagents),
+`planner` (planning/architecture), `research` (read-only scouting), `tiny`
+(small mechanical tasks, commit messages). Any other name fails; old Oh My Pi
+slot names fail with a hint (`smol` -> `research`, `task` -> `worker`,
+`plan`/`slow` -> `planner`, `commit` -> `tiny`). Optional `roles` under a route
+bind a model per role. Oh My Pi installs them as `modelRoles.<slot>:
+provider/model:effort` (worker: task; planner: plan, slow; research: smol; tiny:
+tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
+(a cap on caller-requested per-spawn effort); other agents skip both
+(`--strict` blocks):
 
 ```yaml
+    subagentMaxEffort: high
     roles:
-      plan: {provider: anthropic, model: claude-opus-5-5, effort: high}
-      smol: {provider: opencode-go, model: gpt-6-luna, effort: high}
+      planner: {provider: anthropic, model: claude-opus-5-5, effort: high}
+      research: {provider: opencode-go, model: gpt-6-luna, effort: high}
 ```
+
+Profile `roles.<role>: {description, instructions?}` describes each role
+(`instructions` is a package resource path; a child's role replaces the
+parent's same-name role). No agent installs these yet: plans list them as
+`role-definitions` under "not installed for this agent" (`--strict` blocks).
 
 Optional `globalInstructions` owns whole global instruction files per agent
 (file name to package resource). Qualified files only: Claude Code `CLAUDE.md`,

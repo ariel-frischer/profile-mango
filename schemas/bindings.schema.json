@@ -23,6 +23,7 @@
             "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
             "additionalProperties": {"$ref": "#/$defs/targetOverride"}
           },
+          "subagentMaxEffort": {"$ref": "#/$defs/subagentMaxEffort"},
           "roles": {"$ref": "#/$defs/roles"}
         }
       }
@@ -39,12 +40,18 @@
         "authentication": {"$ref": "#/$defs/field"},
         "model": {"$ref": "#/$defs/field"},
         "effort": {"$ref": "#/$defs/field"},
+        "subagentMaxEffort": {"$ref": "#/$defs/subagentMaxEffort"},
         "roles": {"$ref": "#/$defs/roles"}
       }
     },
+    "subagentMaxEffort": {
+      "description": "Cap on subagent effort. Installed only on Oh My Pi as task.maxEffort; skipped elsewhere.",
+      "enum": ["minimal", "low", "medium", "high", "xhigh", "max"]
+    },
     "roles": {
+      "description": "Per-role routes keyed by portable role. Oh My Pi slots: worker=task, planner=plan+slow, research=smol, tiny=tiny+commit.",
       "type": "object", "minProperties": 1,
-      "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$", "not": {"const": "default"}},
+      "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
       "additionalProperties": {"$ref": "#/$defs/roleRoute"}
     },
     "roleRoute": {

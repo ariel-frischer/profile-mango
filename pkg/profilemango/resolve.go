@@ -100,6 +100,7 @@ func emptyResolved(profile PolicyProfile) ResolvedProfile {
 		resolved.Skills = append([]string(nil), (*profile.Skills)...)
 	}
 	resolved.GlobalInstructions = mergeGlobalInstructions(nil, profile.GlobalInstructions)
+	resolved.Roles = mergeRoleDefinitions(nil, profile.Roles)
 	return resolved
 }
 
@@ -119,6 +120,7 @@ func mergeProfile(parent ResolvedProfile, child PolicyProfile) ResolvedProfile {
 		result.Skills = append([]string(nil), (*child.Skills)...)
 	}
 	result.GlobalInstructions = mergeGlobalInstructions(parent.GlobalInstructions, child.GlobalInstructions)
+	result.Roles = mergeRoleDefinitions(parent.Roles, child.Roles)
 	return result
 }
 

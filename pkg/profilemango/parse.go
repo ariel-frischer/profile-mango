@@ -99,6 +99,7 @@ func ParseBindings(data []byte) (Bindings, Diagnostics) {
 		}
 		validateRouteTargets(path, route, &diagnostics)
 		validateRouteRoles(path, route, &diagnostics)
+		validateSubagentMaxEffort(path, route, &diagnostics)
 	}
 	return bindings, diagnostics.Sorted()
 }
@@ -122,6 +123,7 @@ func validateProfile(profile PolicyProfile, diagnostics *Diagnostics) {
 	validatePermission(profile.Permissions, diagnostics)
 	validateRules(profile.Tools, diagnostics)
 	validateGlobalInstructions(profile.GlobalInstructions, diagnostics)
+	validateRoleDefinitions(profile.Roles, diagnostics)
 }
 
 func validatePermission(policy *PermissionPolicy, diagnostics *Diagnostics) {

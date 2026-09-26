@@ -121,6 +121,21 @@ func TestCompactRouteUsesInstalledFieldsOnly(t *testing.T) {
 	}
 }
 
+func TestCompactSkippedListsRoleRequirements(t *testing.T) {
+	var output bytes.Buffer
+	skipped := []install.SkippedRequirement{
+		{Requirement: install.RequirementRoleDefinitions, Count: 2},
+		{Requirement: install.RequirementRoles, Count: 3},
+		{Requirement: install.RequirementSubagentMaxEffort, Value: "high"},
+	}
+	if err := writeSkippedRequirements(&output, skipped); err != nil {
+		t.Fatal(err)
+	}
+	if want := "    not installed for this agent: role-definitions (2), roles (3), subagentMaxEffort high\n"; output.String() != want {
+		t.Fatalf("skipped = %q, want %q", output.String(), want)
+	}
+}
+
 func TestCompactClaudeExplicitDestinationAndUse(t *testing.T) {
 	target := install.TargetPlan{Target: install.Target{Name: "claude-code", Version: "2.1.278"}, Status: install.StatusReady,
 		Config:  &install.ConfigDestination{Path: "/sandbox/agent home/settings.json"},

@@ -30,6 +30,9 @@ type PolicyProfile struct {
 	// GlobalInstructions maps a target name to whole global instruction files
 	// (file name -> resource path), e.g. codex: {AGENTS.md: instructions/codex.md}.
 	GlobalInstructions map[string]map[string]string `yaml:"globalInstructions,omitempty" json:"globalInstructions,omitempty"`
+	// Roles describes portable roles (worker, planner, research, tiny); models for
+	// them come from the bound route's roles.
+	Roles map[string]RoleDefinition `yaml:"roles,omitempty" json:"roles,omitempty"`
 }
 
 // Metadata is the resolved identity carried by ResolvedProfile.
@@ -54,6 +57,13 @@ type InstructionsSpec struct {
 	Append *[]string `yaml:"append,omitempty" json:"append,omitempty"`
 }
 
+// RoleDefinition describes one portable role. Instructions is an optional
+// resource path beneath the package root.
+type RoleDefinition struct {
+	Description  string  `yaml:"description" json:"description"`
+	Instructions *string `yaml:"instructions,omitempty" json:"instructions,omitempty"`
+}
+
 // Bindings contains machine-local route identity without credentials.
 type Bindings struct {
 	Routes map[string]RouteBinding `yaml:"routes" json:"routes"`
@@ -62,17 +72,19 @@ type Bindings struct {
 // RouteBinding is a base route plus optional explicit per-target overrides.
 // Targets is empty in every effective route returned by RouteFor. ParseBindings
 // fills an omitted Transport with DefaultTransport and Authentication with
-// DefaultAuthentication. Roles maps additional named roles (for example a
-// planner or a fast helper) to their own route; the base route is the default
-// role. Target overrides never change Roles.
+// DefaultAuthentication. Roles maps portable roles (worker, planner, research,
+// tiny) to their own route; the base route is the default role.
+// SubagentMaxEffort caps the effort a caller may request for one subagent spawn.
+// Target overrides never change Roles or SubagentMaxEffort.
 type RouteBinding struct {
-	Provider       string                   `yaml:"provider" json:"provider"`
-	Transport      string                   `yaml:"transport" json:"transport"`
-	Authentication string                   `yaml:"authentication" json:"authentication"`
-	Model          string                   `yaml:"model" json:"model"`
-	Effort         string                   `yaml:"effort" json:"effort"`
-	Targets        map[string]RouteOverride `yaml:"targets,omitempty" json:"targets,omitempty"`
-	Roles          map[string]RoleRoute     `yaml:"roles,omitempty" json:"roles,omitempty"`
+	Provider          string                   `yaml:"provider" json:"provider"`
+	Transport         string                   `yaml:"transport" json:"transport"`
+	Authentication    string                   `yaml:"authentication" json:"authentication"`
+	Model             string                   `yaml:"model" json:"model"`
+	Effort            string                   `yaml:"effort" json:"effort"`
+	SubagentMaxEffort string                   `yaml:"subagentMaxEffort,omitempty" json:"subagentMaxEffort,omitempty"`
+	Targets           map[string]RouteOverride `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Roles             map[string]RoleRoute     `yaml:"roles,omitempty" json:"roles,omitempty"`
 }
 
 // RouteOverride replaces any non-empty base route field for one target.
@@ -84,7 +96,7 @@ type RouteOverride struct {
 	Effort         string `yaml:"effort,omitempty" json:"effort,omitempty"`
 }
 
-// RoleRoute is the provider, model, and optional effort for one named role.
+// RoleRoute is the provider, model, and optional effort for one portable role.
 type RoleRoute struct {
 	Provider string `yaml:"provider" json:"provider"`
 	Model    string `yaml:"model" json:"model"`
@@ -106,7 +118,9 @@ type ResolvedProfile struct {
 	Skills       []string          `json:"skills,omitempty"`
 	// GlobalInstructions maps a target name to whole global instruction files it owns.
 	GlobalInstructions map[string]map[string]string `json:"globalInstructions,omitempty"`
-	Parent             string                       `json:"parent,omitempty"`
+	// Roles is the resolved portable role definitions.
+	Roles  map[string]RoleDefinition `json:"roles,omitempty"`
+	Parent string                    `json:"parent,omitempty"`
 }
 
 type ResolvedRules struct {

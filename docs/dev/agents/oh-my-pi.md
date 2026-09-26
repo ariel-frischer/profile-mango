@@ -126,15 +126,54 @@ effort onto each selector:
 
 The installer therefore writes `modelRoles.default: provider/model:effort` and
 no longer writes `defaultThinkingLevel`, so hand-picked models keep their own
-thinking default. Roles outside the built-in list fail closed: custom keys are
-stored, but only built-in roles have a known consumer. A role without effort is
-written bare, and a bare model whose last `:` segment the parser would read as
-a level (including unambiguous prefixes such as `:hi`) is rejected until effort
-is set.
+thinking default. A role without effort is written bare, and a bare model whose
+last `:` segment the parser would read as a level (including unambiguous
+prefixes such as `:hi`) is rejected until effort is set.
 
 Evidence level: source review only. The 2026-09-22 native getter probe covered
 `modelRoles.default` storage, not suffix interpretation or non-default roles,
 and was not re-run. The plan warning says so.
+
+## Portable roles and `task.maxEffort`, 2026-09-25
+
+Bindings roles now use the portable names `worker`, `planner`, `research`, and
+`tiny`; the installer expands each into the slots whose consumers match its
+purpose. Source review of the same checkout
+(`78b753124d11f8dd3ae73e2524125890ff7c977e`):
+
+| Portable role | Slots | Consumer in pinned source (file SHA-256) |
+| --- | --- | --- |
+| `worker` | `task` | `packages/coding-agent/src/task/agents.ts` (`c978977edd83b8f05759763af9b931243390fbe95cd5ca4437a352fda90710e0`): bundled task agent `model: "@task"` (line 54) |
+| `planner` | `plan`, `slow` | `packages/coding-agent/src/modes/interactive-mode.ts` (`f37f5f7389f008ba8929751b13eece5a827a49d9ac98aba2e702741551f35254`): plan mode `resolveRoleModelWithThinking("plan")` (line 3482); `packages/coding-agent/src/prompts/agents/reviewer.md` (`c6abab43dcf55776830225a8a8b277fc39b9e3bbdc49271635c28e309ec9c2c0`): `model: "@slow"` |
+| `research` | `smol` | `packages/coding-agent/src/prompts/agents/scout.md` (`c65a6e928a80009acac0510c17bd70dc5cdc688121ffd30976c7e6b0e8ce58fe`): scout `model: "@smol"`; `task/agents.ts` line 68 `@smol` |
+| `tiny` | `tiny`, `commit` | `packages/coding-agent/src/utils/title-generator.ts` (`f76bd8fec0d2f3e1fd0b3ecd92243ca28413729e07b5e00f4b13b8f224889c8b`): candidates `["tiny", "commit", "smol"]` (line 126); `packages/coding-agent/src/commit/model-selection.ts` (`2cdc1f844f5072e62f8924a18be9dfb613a6335d9569354b9c361f86d930605e`): `["commit", "smol", ...]` (line 46) |
+
+`advisor` and `vision` have no portable role and are never written. Each slot
+keeps its own manifest field (`config.modelRoles.<slot>`) and
+`ohmypi-role-prior:<slot>=<value>` marker, so `mango use` gives back every
+slot of a role the new route drops. Profile role definitions (description,
+instructions) have no model-slot surface; they are skipped as
+`role-definitions`, and `--strict` blocks.
+
+`task.maxEffort` is a cap on subagent effort, so bindings model it as the
+optional route field `subagentMaxEffort`:
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| `task.maxEffort` is an enum of `THINKING_EFFORTS`, default `max`, "Maximum Per-Spawn Effort"; "Lower values prevent callers from escalating subagents above this ceiling" | `packages/coding-agent/src/config/settings-schema.ts` (`080e5c2b040afebdcc629a9692d0eac21aa78e75b0fd1f247abe1b59a0023153`), line 5222 |
+| `THINKING_EFFORTS` is `minimal`, `low`, `medium`, `high`, `xhigh`, `max` (no `auto`) | `packages/catalog/src/effort.ts` (`78858ce4b34cc03759dd49bcbdb6243821deaae2624afc8ee833f890b8a2dcb3`) |
+| The ceiling is read only when the task caller passes a per-spawn effort hint | `packages/coding-agent/src/task/executor.ts` (`c6012cb3fa82e4cc8b2d034deffa674a9472224eabd0d81c8c803ec1c490b0f0`), line 3594 |
+| The hint maps onto the model's supported range, then clamps to the highest supported level at or below the cap; a model with none throws | `packages/tui/src/thinking.ts` (`7500a8a9ccd1bd2118e207d37ad0faca5745c4400990f6ca3edbbdd6aff9aad6`): `resolveTaskEffortLevel` |
+| Dotted keys are stored as nested YAML (`task:` / `maxEffort:`) | `packages/coding-agent/src/config/settings.ts` (`b21706c954cf21c545a333aba7537212b5ce10b72370d4f49dddf1fcfd0ccfdc`): `setByPath` |
+
+The installer writes `task.maxEffort` in place or inserts a `task:` block,
+owns `config.task.maxEffort`, records `ohmypi-setting-prior:task.maxEffort=<prior>`,
+and on `mango use` without the field restores the prior value or removes the
+key (and a `task:` block left empty). It does not affect spawns that pass no
+effort, nor role slot efforts. Other targets skip it as `subagentMaxEffort`.
+
+Evidence level: source review only; no native probe of slot consumers or of
+`task.maxEffort` was run.
 
 ## Preview adapter boundary
 

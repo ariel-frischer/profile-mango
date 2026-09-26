@@ -666,6 +666,8 @@ func semanticFieldLabel(path string) string {
 		return "effort"
 	case "defaultThinkingLevel", "thinkingDefault":
 		return "thinking level"
+	case "maxEffort":
+		return "subagent max effort"
 	case "model_provider", "defaultProvider", "provider":
 		return "provider"
 	case "defaultModel", "modelRoles":
@@ -867,6 +869,8 @@ func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequire
 			names = append(names, fmt.Sprintf("%s (%d files)", requirement.Requirement, requirement.Count))
 		case requirement.Count > 0:
 			names = append(names, fmt.Sprintf("%s (%d)", requirement.Requirement, requirement.Count))
+		case requirement.Value != "":
+			names = append(names, requirement.Requirement+" "+requirement.Value)
 		default:
 			names = append(names, requirement.Requirement)
 		}

@@ -2,6 +2,7 @@ package profilemango
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -56,7 +57,7 @@ func TestParseBindingsTargets(t *testing.T) {
 }
 
 const rolesBindingsYAML = flatBindingsYAML + `    roles:
-      smol:
+      research:
         provider: opencode-go
         model: gpt-6-luna
         effort: high
@@ -65,24 +66,42 @@ const rolesBindingsYAML = flatBindingsYAML + `    roles:
         model: glm-5.3-flash
 `
 
+func roleBindingsYAML(role string) string {
+	return flatBindingsYAML + "    roles:\n      " + role + ":\n        provider: openai\n        model: m\n"
+}
+
 func TestParseBindingsRoles(t *testing.T) {
 	t.Parallel()
 	cases := map[string]struct {
-		yaml string
-		code string
-		path string
+		yaml    string
+		code    string
+		path    string
+		message string
 	}{
-		"valid roles":       {yaml: rolesBindingsYAML},
-		"empty roles":       {yaml: flatBindingsYAML + "    roles: {}\n", code: "binding.roles_empty", path: "routes.main.roles"},
-		"null roles":        {yaml: flatBindingsYAML + "    roles:\n", code: "yaml.null", path: "routes.main.roles"},
-		"null role":         {yaml: flatBindingsYAML + "    roles:\n      smol:\n", code: "yaml.null", path: "routes.main.roles.smol"},
-		"empty role":        {yaml: flatBindingsYAML + "    roles:\n      smol: {}\n", code: "binding.role_incomplete", path: "routes.main.roles.smol"},
-		"missing model":     {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: openai\n", code: "binding.role_incomplete", path: "routes.main.roles.smol"},
-		"unknown role key":  {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: openai\n        model: m\n        transport: native\n", code: "yaml.strict", path: "document"},
-		"invalid role name": {yaml: flatBindingsYAML + "    roles:\n      Fast_Helper:\n        provider: openai\n        model: m\n", code: "binding.role_name_invalid", path: "routes.main.roles.Fast_Helper"},
-		"reserved default":  {yaml: flatBindingsYAML + "    roles:\n      default:\n        provider: openai\n        model: m\n", code: "binding.role_name_reserved", path: "routes.main.roles.default"},
-		"duplicate role":    {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: a\n        model: m\n      smol:\n        provider: b\n        model: m\n", code: "yaml.duplicate_key", path: "routes.main.roles.smol"},
-		"null role effort":  {yaml: flatBindingsYAML + "    roles:\n      smol:\n        provider: a\n        model: m\n        effort:\n", code: "yaml.null", path: "routes.main.roles.smol.effort"},
+		"valid roles":           {yaml: rolesBindingsYAML},
+		"every portable role":   {yaml: roleBindingsYAML("worker") + "      planner: {provider: a, model: m}\n      research: {provider: a, model: m}\n      tiny: {provider: a, model: m}\n"},
+		"empty roles":           {yaml: flatBindingsYAML + "    roles: {}\n", code: "binding.roles_empty", path: "routes.main.roles"},
+		"null roles":            {yaml: flatBindingsYAML + "    roles:\n", code: "yaml.null", path: "routes.main.roles"},
+		"null role":             {yaml: flatBindingsYAML + "    roles:\n      worker:\n", code: "yaml.null", path: "routes.main.roles.worker"},
+		"empty role":            {yaml: flatBindingsYAML + "    roles:\n      worker: {}\n", code: "binding.role_incomplete", path: "routes.main.roles.worker"},
+		"missing model":         {yaml: flatBindingsYAML + "    roles:\n      worker:\n        provider: openai\n", code: "binding.role_incomplete", path: "routes.main.roles.worker"},
+		"unknown role key":      {yaml: roleBindingsYAML("worker") + "        transport: native\n", code: "yaml.strict", path: "document"},
+		"unknown role name":     {yaml: roleBindingsYAML("reviewer"), code: "binding.role_unknown", path: "routes.main.roles.reviewer", message: "expected one of worker, planner, research, tiny"},
+		"invalid role name":     {yaml: roleBindingsYAML("Fast_Helper"), code: "binding.role_unknown", path: "routes.main.roles.Fast_Helper"},
+		"reserved default":      {yaml: roleBindingsYAML("default"), code: "binding.role_unknown", path: "routes.main.roles.default", message: "remove roles.default"},
+		"old task slot":         {yaml: roleBindingsYAML("task"), code: "binding.role_unknown", path: "routes.main.roles.task", message: `use the portable role "worker"`},
+		"old plan slot":         {yaml: roleBindingsYAML("plan"), code: "binding.role_unknown", path: "routes.main.roles.plan", message: `use the portable role "planner"`},
+		"old slow slot":         {yaml: roleBindingsYAML("slow"), code: "binding.role_unknown", path: "routes.main.roles.slow", message: `use the portable role "planner"`},
+		"old smol slot":         {yaml: roleBindingsYAML("smol"), code: "binding.role_unknown", path: "routes.main.roles.smol", message: `use the portable role "research"`},
+		"old commit slot":       {yaml: roleBindingsYAML("commit"), code: "binding.role_unknown", path: "routes.main.roles.commit", message: `use the portable role "tiny"`},
+		"old advisor slot":      {yaml: roleBindingsYAML("advisor"), code: "binding.role_unknown", path: "routes.main.roles.advisor", message: "no portable role"},
+		"old vision slot":       {yaml: roleBindingsYAML("vision"), code: "binding.role_unknown", path: "routes.main.roles.vision", message: "no portable role"},
+		"duplicate role":        {yaml: flatBindingsYAML + "    roles:\n      worker:\n        provider: a\n        model: m\n      worker:\n        provider: b\n        model: m\n", code: "yaml.duplicate_key", path: "routes.main.roles.worker"},
+		"null role effort":      {yaml: roleBindingsYAML("worker") + "        effort:\n", code: "yaml.null", path: "routes.main.roles.worker.effort"},
+		"subagent max effort":   {yaml: flatBindingsYAML + "    subagentMaxEffort: high\n"},
+		"null subagent effort":  {yaml: flatBindingsYAML + "    subagentMaxEffort:\n", code: "yaml.null", path: "routes.main.subagentMaxEffort"},
+		"unknown subagent cap":  {yaml: flatBindingsYAML + "    subagentMaxEffort: ultra\n", code: "binding.subagent_max_effort_invalid", path: "routes.main.subagentMaxEffort", message: "expected one of minimal, low, medium, high, xhigh, max"},
+		"override subagent cap": {yaml: flatBindingsYAML + "    targets:\n      oh-my-pi:\n        subagentMaxEffort: high\n", code: "yaml.strict", path: "document"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -95,27 +114,27 @@ func TestParseBindingsRoles(t *testing.T) {
 				return
 			}
 			for _, diagnostic := range diagnostics {
-				if diagnostic.Code == test.code && diagnostic.Path == test.path && diagnostic.Severity == SeverityError {
+				if diagnostic.Code == test.code && diagnostic.Path == test.path && diagnostic.Severity == SeverityError && strings.Contains(diagnostic.Message, test.message) {
 					return
 				}
 			}
-			t.Fatalf("missing %s at %s in %v", test.code, test.path, diagnostics)
+			t.Fatalf("missing %s at %s containing %q in %v", test.code, test.path, test.message, diagnostics)
 		})
 	}
 }
 
 func TestRouteForKeepsRolesAcrossTargetOverrides(t *testing.T) {
 	t.Parallel()
-	bindings, diagnostics := ParseBindings([]byte(rolesBindingsYAML + "    targets:\n      oh-my-pi:\n        model: gpt-5.7\n"))
+	bindings, diagnostics := ParseBindings([]byte(rolesBindingsYAML + "    subagentMaxEffort: high\n    targets:\n      oh-my-pi:\n        model: gpt-5.7\n"))
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
 	}
 	route, _ := bindings.RouteFor("main", "oh-my-pi")
 	want := map[string]RoleRoute{
-		"smol": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "high"},
-		"tiny": {Provider: "opencode-go", Model: "glm-5.3-flash"},
+		"research": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "high"},
+		"tiny":     {Provider: "opencode-go", Model: "glm-5.3-flash"},
 	}
-	if route.Model != "gpt-5.7" || !reflect.DeepEqual(route.Roles, want) {
+	if route.Model != "gpt-5.7" || route.SubagentMaxEffort != "high" || !reflect.DeepEqual(route.Roles, want) {
 		t.Fatalf("route = %#v", route)
 	}
 }

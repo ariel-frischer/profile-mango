@@ -15,11 +15,14 @@ routes:
         model: claude-sonnet-5
       opencode:
         model: gpt-6-luna
-    # `roles` is optional: extra named roles with their own model. Only Oh My Pi
-    # installs them (as modelRoles.<role>: provider/model:effort); other agents
-    # list them as not installed.
+    # `roles` is optional: a model per portable role (worker, planner, research,
+    # tiny). Only Oh My Pi installs them, into its model slots (worker: task;
+    # planner: plan, slow; research: smol; tiny: tiny, commit); other agents
+    # list them as not installed. `subagentMaxEffort` (Oh My Pi task.maxEffort)
+    # caps the effort a subagent spawn may request.
+    # subagentMaxEffort: high
     # roles:
-    #   smol:
+    #   research:
     #     provider: opencode-go
     #     model: gpt-6-luna
     #     effort: high

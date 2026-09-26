@@ -133,16 +133,20 @@ The evidence behind every row is in the developer
 
 ## Oh My Pi
 
-- **Installs:** `modelRoles.default` as `provider/model:effort`, plus one
-  `modelRoles.<role>` selector per bound route role (built-in roles only), in
-  `config.yml`. Effort stays on each selector; `defaultThinkingLevel`, which
-  applies to models you pick by hand, is left alone.
+- **Installs:** `modelRoles.default` as `provider/model:effort`, plus the
+  model slots of each bound portable role (`worker`: `task`; `planner`:
+  `plan`, `slow`; `research`: `smol`; `tiny`: `tiny`, `commit`), and
+  `task.maxEffort` from `subagentMaxEffort`, in `config.yml`. Effort stays on
+  each selector; `defaultThinkingLevel`, which applies to models you pick by
+  hand, is left alone.
+- **Skips:** profile `roles` definitions (descriptions and instructions), as
+  `role-definitions`; model slots hold only a model.
 - **Global instructions:** `globalInstructions` can own `AGENTS.md` and
   `RULES.md` in `~/.omp/agent`; Oh My Pi has no named profiles, so every
   install writes them.
-- **Caveats:** unbound model roles and provider options are left alone. A role
-  a later profile no longer binds gets its pre-install value back, or is
-  removed if profile-mango added it.
+- **Caveats:** unbound model slots and provider options are left alone. A slot
+  or `task.maxEffort` a later profile no longer sets gets its pre-install value
+  back, or is removed if profile-mango added it.
 - [Reference](../dev/agents/oh-my-pi.md)
 
 ## OpenClaw

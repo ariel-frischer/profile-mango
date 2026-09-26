@@ -61,20 +61,17 @@ const ohMyPiRolesBindings = `routes:
     provider: anthropic
     model: claude-opus-5-5
     effort: medium
+    subagentMaxEffort: high
     roles:
-      task:
+      worker:
         provider: anthropic
         model: claude-opus-5-5
         effort: medium
-      plan:
+      planner:
         provider: anthropic
         model: claude-opus-5-5
         effort: high
-      slow:
-        provider: anthropic
-        model: claude-opus-5-5
-        effort: high
-      smol:
+      research:
         provider: opencode-go
         model: gpt-6-luna
         effort: high
@@ -89,17 +86,17 @@ func TestOhMyPiInstallRolesPreservesUnrelatedKeysAndUndoes(t *testing.T) {
 	original := "# keep\nmodelRoles:\n  reviewer: other/model\n  smol: old/fast:low # mine\ndefaultThinkingLevel: xhigh\nunknown:\n  apiKey: SYNTHETIC\n"
 	config, _ := installAtDefault(t, test, &original)
 	want := "# keep\nmodelRoles:\n  reviewer: other/model\n  smol: \"opencode-go/gpt-6-luna:high\" # mine\n" +
-		"  default: \"anthropic/claude-opus-5-5:medium\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n" +
+		"  default: \"anthropic/claude-opus-5-5:medium\"\n  commit: \"opencode-go/glm-5.3-flash:low\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n" +
 		"  task: \"anthropic/claude-opus-5-5:medium\"\n  tiny: \"opencode-go/glm-5.3-flash:low\"\n" +
-		"defaultThinkingLevel: xhigh\nunknown:\n  apiKey: SYNTHETIC\n"
+		"defaultThinkingLevel: xhigh\nunknown:\n  apiKey: SYNTHETIC\ntask:\n  maxEffort: \"high\"\n"
 	assertInstallTestFile(t, config, want)
 	manifest, err := os.ReadFile(config + ".profile-mango.manifest.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, role := range []string{"default", "plan", "slow", "smol", "task", "tiny"} {
-		if !strings.Contains(string(manifest), `"config.modelRoles.`+role+`"`) {
-			t.Fatalf("manifest does not own modelRoles.%s:\n%s", role, manifest)
+	for _, field := range []string{"modelRoles.default", "modelRoles.commit", "modelRoles.plan", "modelRoles.slow", "modelRoles.smol", "modelRoles.task", "modelRoles.tiny", "task.maxEffort"} {
+		if !strings.Contains(string(manifest), `"config.`+field+`"`) {
+			t.Fatalf("manifest does not own %s:\n%s", field, manifest)
 		}
 	}
 	if strings.Contains(string(manifest), "defaultThinkingLevel") {
@@ -127,26 +124,61 @@ func TestOhMyPiRolePlanReportsEveryRoleField(t *testing.T) {
 	}
 	want := map[string]string{
 		"config.modelRoles.default": "anthropic/claude-opus-5-5:medium",
+		"config.modelRoles.commit":  "opencode-go/glm-5.3-flash:low",
 		"config.modelRoles.plan":    "anthropic/claude-opus-5-5:high",
 		"config.modelRoles.slow":    "anthropic/claude-opus-5-5:high",
 		"config.modelRoles.smol":    "opencode-go/gpt-6-luna:high",
 		"config.modelRoles.task":    "anthropic/claude-opus-5-5:medium",
 		"config.modelRoles.tiny":    "opencode-go/glm-5.3-flash:low",
+		"config.task.maxEffort":     "high",
 	}
 	if !reflect.DeepEqual(after, want) {
 		t.Fatalf("fields = %v, want %v", after, want)
 	}
 }
 
-func TestOhMyPiUnknownRoleBlocksTarget(t *testing.T) {
+func TestOhMyPiOldSlotRoleNamesFailWithPortableHint(t *testing.T) {
 	request, _ := ohMyPiTestRequest(t)
-	writeInstallTestFile(t, request.BindingsPath, "routes:\n  primary:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n    roles:\n      researcher:\n        provider: openai\n        model: gpt-5.6-mini\n")
-	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
+	writeInstallTestFile(t, request.BindingsPath, "routes:\n  primary:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n    roles:\n      smol:\n        provider: openai\n        model: gpt-5.6-mini\n")
+	_, err := BuildPlan(request)
+	if err == nil || !strings.Contains(err.Error(), `routes.primary.roles.smol`) || !strings.Contains(err.Error(), `use the portable role "research"`) {
+		t.Fatalf("err = %v", err)
 	}
-	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, `rejects role "researcher"`) {
-		t.Fatalf("plan = %s reason=%s", plan.Status, plan.Targets[0].Reason)
+}
+
+func TestOhMyPiSkipsRoleDefinitionsOrBlocksUnderStrict(t *testing.T) {
+	tests := map[string]struct {
+		strict bool
+		status string
+	}{
+		"subset": {status: StatusReady},
+		"strict": {strict: true, status: StatusBlocked},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, root := ohMyPiTestRequest(t)
+			request.Strict = test.strict
+			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), rolesProfile)
+			writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			target := plan.Targets[0]
+			if target.Status != test.status {
+				t.Fatalf("target = %s (%s)", target.Status, target.Reason)
+			}
+			if test.strict {
+				if !strings.Contains(target.Reason, "2 role definitions cannot be installed") {
+					t.Fatalf("strict reason = %s", target.Reason)
+				}
+				return
+			}
+			want := []SkippedRequirement{{Requirement: RequirementRoleDefinitions, Count: 2, Reason: roleDefinitionsUnsupportedReason}}
+			if !reflect.DeepEqual(target.SkippedRequirements, want) {
+				t.Fatalf("skipped = %#v", target.SkippedRequirements)
+			}
+		})
 	}
 }
 

@@ -242,19 +242,28 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 		return finishRender(cmd, result, options, false)
 	}
 	result = adapter.render(render.Input{Profile: resolved, Route: route, Resources: resources, Target: target})
-	addUnrenderedRolesDiagnostic(&result, options.target, route)
+	addUnrenderedRolesDiagnostic(&result, options.target, resolved, route)
 	result.Diagnostics = append(result.Diagnostics, diagnostics...)
 	result.Diagnostics = result.Diagnostics.Sorted()
 	return finishRender(cmd, result, options, true)
 }
 
-// addUnrenderedRolesDiagnostic reports route roles a target preview omits;
-// only Oh My Pi renders roles (as modelRoles selectors).
-func addUnrenderedRolesDiagnostic(result *render.Result, target string, route profilemango.RouteBinding) {
-	if len(route.Roles) == 0 || target == ohmypi.TargetName {
+// addUnrenderedRolesDiagnostic reports role requirements a target preview omits:
+// only Oh My Pi renders route roles (as modelRoles slots) and subagentMaxEffort
+// (as task.maxEffort), and no target renders profile role definitions.
+func addUnrenderedRolesDiagnostic(result *render.Result, target string, profile profilemango.ResolvedProfile, route profilemango.RouteBinding) {
+	if count := len(profile.Roles); count > 0 {
+		result.Diagnostics.Add(profilemango.SeverityWarning, "render.profile.role_definitions_unsupported", "roles", fmt.Sprintf("%d role definitions are not rendered for %s; no qualified target installs role descriptions or instructions", count, target), 0, 0)
+	}
+	if target == ohmypi.TargetName {
 		return
 	}
-	result.Diagnostics.Add(profilemango.SeverityWarning, "render.route.roles_unsupported", "route.roles", fmt.Sprintf("%d route roles are not rendered for %s; only Oh My Pi renders per-role routes", len(route.Roles), target), 0, 0)
+	if len(route.Roles) > 0 {
+		result.Diagnostics.Add(profilemango.SeverityWarning, "render.route.roles_unsupported", "route.roles", fmt.Sprintf("%d route roles are not rendered for %s; only Oh My Pi renders per-role routes", len(route.Roles), target), 0, 0)
+	}
+	if route.SubagentMaxEffort != "" {
+		result.Diagnostics.Add(profilemango.SeverityWarning, "render.route.subagent_max_effort_unsupported", "route.subagentMaxEffort", fmt.Sprintf("subagentMaxEffort is not rendered for %s; only Oh My Pi renders it (task.maxEffort)", target), 0, 0)
+	}
 }
 
 func resolvedRenderTargets(values []string, version string) ([]string, error) {
