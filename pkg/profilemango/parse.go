@@ -123,6 +123,7 @@ func validateProfile(profile PolicyProfile, diagnostics *Diagnostics) {
 	validatePermission(profile.Permissions, diagnostics)
 	validateRules(profile.Tools, diagnostics)
 	validateGlobalInstructions(profile.GlobalInstructions, diagnostics)
+	validateAgentFiles(profile.AgentFiles, diagnostics)
 	validateRoleDefinitions(profile.Roles, diagnostics)
 }
 

@@ -86,6 +86,8 @@ The evidence behind every row is in the developer
   `~/.claude/agents/<role>.md` with its bound `model` (provider `anthropic`
   only) and `effort` (`low` to `max`). Checked against installed `2.1.280` and
   `2.1.281` binaries, not `2.1.278` itself.
+- **Agent files:** `agentFiles.claude-code` copies native `.md` subagent files
+  unchanged to `~/.claude/agents/`, with `mango use` or `--default`.
 - [Reference](../dev/agents/claude-code.md)
 
 ## Codex
@@ -115,6 +117,8 @@ The evidence behind every row is in the developer
 - **Roles:** with `mango use` or `--default`, each profile role becomes
   `~/.codex/agents/<role>.toml` with `developer_instructions` and its bound
   model and effort (`none` to `xhigh`; others are `NOT APPLIED`).
+- **Agent files:** `agentFiles.codex` copies native `.toml` role files
+  unchanged to `~/.codex/agents/`, with `mango use` or `--default`.
 - [Reference](../dev/agents/codex.md)
 
 ## OpenCode
@@ -152,6 +156,8 @@ The evidence behind every row is in the developer
 - **Roles:** with `mango use` or `--default`, each profile role becomes a
   subagent, `~/.config/opencode/agents/<role>.md`, with its bound model and
   effort `variant`.
+- **Agent files:** `agentFiles.opencode` copies native `.md` agent files
+  unchanged to `~/.config/opencode/agents/`, with `mango use` or `--default`.
 - [Reference](../dev/agents/opencode.md)
 
 ## Pi
@@ -182,6 +188,9 @@ The evidence behind every row is in the developer
 - **Roles:** with `--default` or `mango use`, each profile role becomes
   `~/.omp/agent/agents/<role>.md`, whose `model: "@<slot>"` resolves the slot
   above, so model and effort come from the active config.
+- **Agent files:** `agentFiles.oh-my-pi` copies native `.md` agent files
+  unchanged to `~/.omp/agent/agents/`, with `mango use` or `--default`. A
+  file named like a bundled agent, such as `scout.md`, replaces it.
 - **Global instructions:** `globalInstructions` can own `AGENTS.md` and
   `RULES.md` in `~/.omp/agent`, written with `mango use` or `--default`.
 - **Caveats:** the overlay wins over global and project config; slots it does

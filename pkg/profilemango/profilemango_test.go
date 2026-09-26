@@ -25,6 +25,12 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 		"global unknown target":  {yaml: validProfileYAML() + "globalInstructions:\n  claude:\n    CLAUDE.md: a.md\n", code: "profile.global_instructions_target_unknown"},
 		"global nested file":     {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    rules/AGENTS.md: a.md\n", code: "profile.global_instructions_file_invalid"},
 		"global escaping source": {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    AGENTS.md: ../secret.md\n", code: "profile.global_instructions_path_invalid"},
+		"agent unknown target":   {yaml: validProfileYAML() + "agentFiles:\n  omp:\n    scout.md: a.md\n", code: "profile.agent_files_target_unknown"},
+		"agent home target":      {yaml: validProfileYAML() + "agentFiles:\n  home:\n    scout.md: a.md\n", code: "profile.agent_files_target_unknown"},
+		"agent nested file":      {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    sub/scout.md: a.md\n", code: "profile.agent_files_file_invalid"},
+		"agent bad extension":    {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.txt: a.md\n", code: "profile.agent_files_file_invalid"},
+		"agent escaping source":  {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.md: ../secret.md\n", code: "profile.agent_files_path_invalid"},
+		"agent absolute source":  {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.md: /etc/passwd\n", code: "profile.agent_files_path_invalid"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {

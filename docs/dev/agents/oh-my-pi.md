@@ -198,6 +198,11 @@ agent file never repeats them. Ownership and the named-only `role-definitions`
 skip match Codex and OpenCode. Evidence level: source review plus sandbox
 install tests; no native probe of agent discovery was run.
 
+Profile `agentFiles.oh-my-pi` copies native `*.md` agent files verbatim into the
+same directory (kind `agent-file`, same gates and ownership). Because user agents
+precede bundled ones, a user `scout.md` replaces the bundled `scout`. See
+[target evidence](../target-evidence.md#profile-agent-files-2026-09-26-ap-8x5).
+
 ## Named profile overlay
 
 `mango install <name> --target oh-my-pi` writes a Mango-owned whole file,

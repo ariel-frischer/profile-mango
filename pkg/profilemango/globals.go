@@ -45,9 +45,10 @@ func safeGlobalResource(value string) bool {
 		!strings.HasPrefix(clean, ".."+string(filepath.Separator)) && !strings.ContainsRune(value, '\x00')
 }
 
-// mergeGlobalInstructions applies a child's per-target file maps over the parent's.
+// mergeTargetFiles applies a child's per-target file maps (globalInstructions,
+// agentFiles) over the parent's.
 // A child target entry replaces the parent's entry for that target; an empty map clears it.
-func mergeGlobalInstructions(parent, child map[string]map[string]string) map[string]map[string]string {
+func mergeTargetFiles(parent, child map[string]map[string]string) map[string]map[string]string {
 	if parent == nil && child == nil {
 		return nil
 	}

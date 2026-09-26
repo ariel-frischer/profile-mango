@@ -1129,6 +1129,25 @@ HOME for Codex and OpenCode ran install (named-only and `--default`), status,
 drift, `use` to a role-less profile, and undo; undo left every target file
 byte-identical. No agent was run against the generated files.
 
+### Profile agent files, 2026-09-26 (ap-8x5)
+
+`agentFiles.<target>.<file>` copies a package resource byte-for-byte to the
+directory of that target's role files (`agents/` beside the main config), under
+the same gates as role subagent files: only the four targets above, only when
+the profile is the agent's default, and only with the target's role-file
+extension (`.toml` for Codex, `.md` otherwise; another blocks with
+`install.agent_file_extension_invalid`). Pi, Hermes, OpenClaw, the jcode fork,
+and named-only installs list `agentFiles` in `skippedRequirements`; `--strict`
+blocks. A file named like a resolved role fails resolution with
+`profile.agent_files_role_conflict`. Ownership is the whole-file machinery with
+kind `agent-file`. The discovery evidence is the role-file table above; mango
+does not parse or validate the copied content. For Oh My Pi, user agents take
+precedence over bundled ones (`task/discovery.ts` lines 51-105 in the
+[oh-my-pi reference](agents/oh-my-pi.md#role-subagent-files-ap-6lp-2026-09-25)),
+so a user `scout.md` replaces the bundled `scout`; override precedence is not
+claimed for the other targets. Tests: `pkg/install/agentfiles_test.go`,
+`pkg/profilemango/agentfiles_test.go`, all in a synthetic sandbox HOME.
+
 ## Hermes Agent v0.21.3 evidence
 
 ### Immutable source, build inputs, and platform

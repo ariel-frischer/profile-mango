@@ -19,18 +19,19 @@ import (
 // RequirementGlobalInstructions is the profile's globalInstructions files for a target.
 const RequirementGlobalInstructions = "globalInstructions"
 
-// Manifest ownership markers. A whole owned file (a global instruction file or a
-// role subagent file) carries its kind plus the state it had before profile-mango
+// Manifest ownership markers. A whole owned file (a global instruction file, a role
+// subagent file, or a profile agent file) carries its kind plus the state it had before profile-mango
 // first wrote it, so "mango use" can release it.
 const (
 	ownershipGlobalInstruction = "global-instruction"
 	ownershipRoleDefinition    = "role-definition"
+	ownershipAgentFile         = "agent-file"
 	priorAbsent                = "prior:absent"
 	priorSHA256Prefix          = "prior-sha256:"
 )
 
 // wholeFileKinds are the ownership tags of separately owned whole files.
-var wholeFileKinds = []string{ownershipGlobalInstruction, ownershipRoleDefinition}
+var wholeFileKinds = []string{ownershipGlobalInstruction, ownershipRoleDefinition, ownershipAgentFile}
 
 // wholeFileKind returns the whole-file ownership tag among fields, or "".
 func wholeFileKind(fields []string) string {
@@ -203,8 +204,8 @@ func globalSkipReason(target TargetRequest, qualified []string, mode *InstallMod
 	return ""
 }
 
-// extendPatch adds the target's global and home instruction files and role subagent
-// files and, for mango use, releases of owned files the new plan no longer writes. A
+// extendPatch adds the target's global and home instruction files, agent files, and
+// role subagent files and, for mango use, releases of owned files the new plan no longer writes. A
 // non-empty reason blocks the target.
 func extendPatch(request Request, target TargetRequest, loaded loadedInput, roles roleInput, ownership Manifest, configPath string, patch *Patch, targetPlan *TargetPlan) (string, string) {
 	for _, plan := range []func(Request, TargetRequest, loadedInput, *InstallMode) ([]FilePatch, *SkippedRequirement, string, string){globalPatches, homePatches} {
@@ -218,6 +219,9 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, role
 		patch.Files = append(patch.Files, files...)
 	}
 	addHomeWarning(patch, targetPlan)
+	if reason, code := addAgentFilePatches(request, roles, patch, targetPlan); reason != "" {
+		return reason, code
+	}
 	if reason, code := addRolePatches(request, roles, patch, targetPlan); reason != "" {
 		return reason, code
 	}

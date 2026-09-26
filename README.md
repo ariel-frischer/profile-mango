@@ -102,7 +102,9 @@ routes:
 
 `mango use daily-driver` then writes the role files (for example
 `~/.codex/agents/research.toml`) and the global files, backing up anything it
-replaces. Full example: [`examples/profiles/daily-driver`](examples/profiles/daily-driver/profile.yaml).
+replaces. `agentFiles` also ships native subagent files as-is, for example
+`agentFiles: {oh-my-pi: {scout.md: agents/omp/scout.md}}` replaces Oh My Pi's
+bundled `scout` agent. Full example: [`examples/profiles/daily-driver`](examples/profiles/daily-driver/profile.yaml).
 
 ## Documentation
 

@@ -118,7 +118,7 @@
       "additionalProperties": false,
       "required": ["requirement"],
       "properties": {
-        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "role-definitions", "subagentMaxEffort", "effort", "globalInstructions"]},
+        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "role-definitions", "subagentMaxEffort", "effort", "globalInstructions", "agentFiles"]},
         "count": {"type": "integer", "minimum": 1},
         "value": {"type": "string", "minLength": 1},
         "role": {"enum": ["worker", "planner", "research", "tiny"]},
