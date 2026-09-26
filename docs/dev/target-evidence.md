@@ -593,8 +593,17 @@ effort gate was widened on 2026-09-25, see
 [below](#codex-01540-reasoning-effort-values-2026-09-25)).
 Permissions, tools, instructions, skills, non-native transport, non-OpenAI
 providers, non-OAuth bindings, other efforts, malformed/duplicate TOML, and
-ambiguous profile/provider shadow state block. The installer does not write
+profile/provider shadow state block. The installer does not write
 authentication settings or read a credential store.
+
+Since 2026-09-25 (ap-pp9) keys are read as TOML defines them: bare, basic or
+literal quoted, and dotted with spaces around dots. Quoted forms of a shadow
+(`[model_providers."openai"]`) are detected like the bare form, while a quoted
+name that only contains dots (`[projects."model_providers.openai"]`) is not.
+Tables Codex writes itself, `[projects."/abs/path"]` trust entries and repeated
+`[[skills.config]]` elements, are preserved byte-for-byte; each `[[...]]`
+element is its own key scope. A copy of a real 622-line user config planned,
+applied only `model_reasoning_effort`, and undid byte-identically.
 
 Retained local qualification at `.worktrees/reports/ap-6fu.14/qualification-milestone-20260922.md`
 used exact `rust-v0.154.0` source commit
