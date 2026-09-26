@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 )
 
-// allSkipSandbox gives the sandbox HOME only a codex config folder, with no agent commands on PATH.
+// allSkipSandbox gives the sandbox HOME only a codex config folder; oh-my-pi, openclaw, and pi
+// commands are on PATH without config folders, and no other agent command is.
 func allSkipSandbox(t *testing.T) (installOptions, string) {
 	t.Helper()
 	root := t.TempDir()
 	home := filepath.Join(root, "home")
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", "")
-	doctorFakeBinaries(t, nil)
+	doctorFakeBinaries(t, map[string]string{"omp": "echo omp 1.0.0", "openclaw": "echo openclaw 1.0.0", "pi": "echo pi 1.0.0"})
 	withAgentDetection(t)
 	if err := os.MkdirAll(filepath.Join(home, ".codex"), 0o700); err != nil {
 		t.Fatal(err)
@@ -43,7 +45,7 @@ func TestInstallAllSkipsAgentsThatAreNotInstalled(t *testing.T) {
 		t.Fatalf("installed codex must plan ready:\n%s", output)
 	}
 	for _, name := range []string{"hermes", "oh-my-pi", "openclaw", "opencode", "pi"} {
-		if !strings.Contains(output, name+"@") || !strings.Contains(output, ": skipped (not installed: no ") {
+		if !regexp.MustCompile(`(?m)^  ` + name + `@\S+: skipped \(config folder ~/\S+ not found\)$`).MatchString(output) {
 			t.Fatalf("%s not listed as skipped:\n%s", name, output)
 		}
 	}

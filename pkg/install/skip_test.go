@@ -58,7 +58,7 @@ func TestSkipNotInstalledPlansInstalledAgentsOnly(t *testing.T) {
 	if plan.Status != StatusReady || present.Status != StatusReady || absent.Status != StatusSkipped {
 		t.Fatalf("statuses plan=%s present=%s absent=%s (%s)", plan.Status, present.Status, absent.Status, absent.Reason)
 	}
-	if absent.Reason != "not installed: no absent on PATH and no config folder" || absent.Config == nil || absent.Config.Path != filepath.Join(home, ".absent", "config") {
+	if absent.Reason != "config folder ~/.absent not found" || absent.Config == nil || absent.Config.Path != filepath.Join(home, ".absent", "config") {
 		t.Fatalf("skipped target = %#v", absent)
 	}
 	data, err := plan.JSON()
@@ -77,16 +77,16 @@ func TestSkipNotInstalledPlansInstalledAgentsOnly(t *testing.T) {
 	}
 }
 
-func TestSkipNotInstalledKeepsAgentFoundOnPath(t *testing.T) {
-	request, home := skipTestRequest(t)
+func TestSkipNotInstalledSkipsMissingFolderEvenWhenCommandIsOnPath(t *testing.T) {
+	request, _ := skipTestRequest(t)
 	request.DetectVersion = fakeDetector("absent 1.0.0", true)
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
 	absent := targetByName(t, plan, "absent")
-	if plan.Status != StatusBlocked || absent.Status != StatusBlocked || !strings.Contains(absent.Reason, filepath.Join(home, ".absent")+" not found") {
-		t.Fatalf("installed agent without folder must block clearly: plan=%s target=%#v", plan.Status, absent)
+	if plan.Status != StatusReady || absent.Status != StatusSkipped || absent.Reason != "config folder ~/.absent not found" {
+		t.Fatalf("--all must skip an agent without a config folder: plan=%s target=%#v", plan.Status, absent)
 	}
 }
 

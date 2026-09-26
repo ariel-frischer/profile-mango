@@ -231,17 +231,19 @@ func lookupDoctorBinary(name string) (string, bool) {
 
 // probeDoctorVersion runs "<path> --version" with a bounded timeout, a
 // stripped-down environment that carries no credentials or proxy
-// configuration, and capped combined stdout/stderr. It never writes anything.
+// configuration, and capped stdout/stderr. Stdout comes first in the returned
+// text so a stderr warning never shadows the version line. It never writes anything.
 func probeDoctorVersion(path string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), doctorProbeTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, path, "--version")
 	cmd.Env = doctorProbeEnv()
-	output := &doctorCapBuffer{limit: doctorProbeCapBytes}
-	cmd.Stdout = output
-	cmd.Stderr = output
+	stdout := &doctorCapBuffer{limit: doctorProbeCapBytes}
+	stderr := &doctorCapBuffer{limit: doctorProbeCapBytes}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	runErr := cmd.Run()
-	text := strings.TrimSpace(output.buf.String())
+	text := joinProbeOutput(stdout.buf.String(), stderr.buf.String())
 	if ctx.Err() == context.DeadlineExceeded {
 		return text, fmt.Errorf("timed out after %s", doctorProbeTimeout)
 	}
@@ -249,6 +251,21 @@ func probeDoctorVersion(path string) (string, error) {
 		return text, runErr
 	}
 	return text, nil
+}
+
+// joinProbeOutput puts trimmed stdout before stderr and caps the result.
+func joinProbeOutput(stdout, stderr string) string {
+	parts := make([]string, 0, 2)
+	for _, part := range []string{stdout, stderr} {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			parts = append(parts, trimmed)
+		}
+	}
+	text := strings.Join(parts, "\n")
+	if len(text) > doctorProbeCapBytes {
+		text = text[:doctorProbeCapBytes]
+	}
+	return text
 }
 
 // doctorProbeEnv keeps only the variables an agent CLI needs to start (PATH,
@@ -365,15 +382,27 @@ func doctorVersionCell(target doctorTarget) string {
 	case target.DetectedVersion == "":
 		return "(empty)"
 	default:
-		// The table is one row per target; only show the first line of a
-		// chatty multi-line "--version" probe here. The full text stays in
-		// the JSON report's detectedVersion field.
-		firstLine, rest, multiline := strings.Cut(target.DetectedVersion, "\n")
-		if multiline && rest != "" {
-			return firstLine + " (+" + strconv.Itoa(strings.Count(rest, "\n")+1) + " more line(s))"
+		// The table is one row per target; show only the line install's version
+		// check parses (or the first line) of a chatty multi-line "--version"
+		// probe. The full text stays in the JSON report's detectedVersion field.
+		lines := strings.Split(target.DetectedVersion, "\n")
+		line := doctorVersionLine(lines)
+		if len(lines) > 1 {
+			return line + " (+" + strconv.Itoa(len(lines)-1) + " more line(s))"
 		}
-		return firstLine
+		return line
 	}
+}
+
+// doctorVersionLine returns the first line holding a major.minor.patch
+// version, the same number install.ParseVersion extracts, else the first line.
+func doctorVersionLine(lines []string) string {
+	for _, line := range lines {
+		if _, ok := install.ParseVersion(line); ok {
+			return line
+		}
+	}
+	return lines[0]
 }
 
 // doctorRangeCell reports whether the detected version lies in the tested

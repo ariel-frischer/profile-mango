@@ -85,7 +85,7 @@ func TestInstallTargetSelectionTable(t *testing.T) {
 		"all rejects unknown":      {options: installOptions{all: true, configs: []string{"nope=/s/c"}}, wantErr: "--config target nope does not match"},
 		"duplicate resolved":       {options: installOptions{targets: []string{"codex", "codex@0.154.0"}}, want: []want{{target: "codex@0.154.0"}}},
 		"duplicate config":         {options: installOptions{targets: []string{"codex"}, configs: []string{"codex=/a"}, legacyConfigs: []string{"codex=/b"}}, wantErr: "duplicate --config mapping: codex"},
-		"unknown bare target":      {options: installOptions{targets: []string{"jcode-fork"}}, wantErr: "jcode-fork has no qualified version"},
+		"unknown bare target":      {options: installOptions{targets: []string{"jcode-fork"}}, wantErr: `unknown target "jcode-fork"; valid targets: claude-code, codex, hermes, oh-my-pi, openclaw, opencode, pi`},
 		"config missing separator": {options: installOptions{configs: []string{"/s/settings.json"}}, wantErr: "--config must use target[@version]=value"},
 		"config empty version":     {options: installOptions{configs: []string{"codex@=/s/c"}}, wantErr: "target or target@version"},
 		"config path as target":    {options: installOptions{configs: []string{"a/b=/s/c"}}, wantErr: "simple name"},

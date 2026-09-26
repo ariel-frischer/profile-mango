@@ -426,3 +426,28 @@ func TestDoctorPlanMatchesInstallForUnownedConfig(t *testing.T) {
 		t.Fatalf("doctor plan %q (%s), install plan %q; want both ready", doctorResult.PlanStatus, doctorResult.PlanReason, plan.Targets[0].Status)
 	}
 }
+
+func TestDoctorShowsVersionLineBehindStderrWarning(t *testing.T) {
+	warning := "echo 'WARNING: proceeding, even though we could not create PATH aliases' >&2"
+	cases := map[string]struct {
+		script string
+		want   string
+	}{
+		"warning on stderr": {script: warning + "\necho 'codex-cli 0.154.9'", want: "codex-cli 0.154.9 (+1 more line(s))  yes  "},
+		"warning on stdout": {script: "echo 'WARNING: proceeding'\necho 'codex-cli 0.154.9'", want: "codex-cli 0.154.9 (+1 more line(s))  yes  "},
+		"version only":      {script: "echo 'codex-cli 0.154.9'", want: "codex-cli 0.154.9  yes  "},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			doctorFakeBinaries(t, map[string]string{"codex": tc.script})
+			t.Setenv("HOME", filepath.Join(t.TempDir(), "home"))
+			output, err := runDoctorForTest(t, "--target", "codex")
+			if err != nil {
+				t.Fatalf("doctor: %v\n%s", err, output)
+			}
+			if row := doctorRow(output, "codex@"); !strings.Contains(row, tc.want) {
+				t.Fatalf("codex row %q missing %q:\n%s", row, tc.want, output)
+			}
+		})
+	}
+}
