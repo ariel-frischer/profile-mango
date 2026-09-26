@@ -22,8 +22,8 @@ func TestCleanOfflineInstallAndInstalledBinary(t *testing.T) {
 	tempRoot := t.TempDir()
 	env := cleanInstallEnv(t, tempRoot)
 	builtBinary := filepath.Join(tempRoot, "build", executableName())
-	runGo(t, repoRoot, env, "build", "-o", builtBinary, "./cmd/profile-mango")
-	runGo(t, repoRoot, env, "install", "./cmd/profile-mango")
+	runGo(t, repoRoot, env, "build", "-o", builtBinary, "./cmd/mango")
+	runGo(t, repoRoot, env, "install", "./cmd/mango")
 
 	installedBinary := filepath.Join(tempRoot, "bin", executableName())
 	fixtures := filepath.Join(repoRoot, "pkg", "profilemango", "testdata", "fixtures")
@@ -104,7 +104,7 @@ func testInstalledCommands(t *testing.T, binary, repoRoot, fixtures, bindings st
 	}{
 		"help":       {args: []string{"--help"}, contains: []string{"mango", "home", "validate", "--home", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
 		"home":       {args: []string{"home"}, contains: []string{profileHome}},
-		"version":    {args: []string{"version", "--plain"}, contains: []string{"mango dev", "go: "}},
+		"version":    {args: []string{"version", "--plain"}, contains: []string{"mango ", "commit: ", "go: "}},
 		"route-only": {args: validateArgs(filepath.Join(fixtures, "route-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "route-only"`}},
 		"read-only":  {args: validateArgs(filepath.Join(fixtures, "read-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "read-only"`}},
 	}
@@ -216,9 +216,9 @@ func validateArgs(profile, bindings string) []string {
 
 func executableName() string {
 	if runtime.GOOS == "windows" {
-		return "profile-mango.exe"
+		return "mango.exe"
 	}
-	return "profile-mango"
+	return "mango"
 }
 
 func absolutePath(t *testing.T, path string) string {

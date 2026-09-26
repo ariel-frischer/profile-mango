@@ -81,6 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Binding roles now use the portable role names instead of Oh My Pi slot names; the old slot keys fail with a hint naming the portable key
 - OpenCode --default installs of a profile with more than one skill now list the skills as not installed instead of blocking; --strict still blocks
 - Moved to GitHub: Go module is github.com/ariel-frischer/profile-mango, CI and tag releases run on GitHub Actions with GoReleaser, and security reports go through GitHub private vulnerability reporting
+- go install now uses github.com/ariel-frischer/profile-mango/cmd/mango@latest to install a mango binary; version info falls back to Go build metadata without ldflags
 
 ### Removed
 

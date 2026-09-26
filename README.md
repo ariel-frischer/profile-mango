@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-go install github.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
+go install github.com/ariel-frischer/profile-mango/cmd/mango@latest
 ```
 
 Or install a checksum-verified binary from GitHub releases:

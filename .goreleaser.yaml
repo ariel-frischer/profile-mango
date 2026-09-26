@@ -7,7 +7,7 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/profile-mango/
+  - main: ./cmd/mango/
     binary: mango
     ldflags:
       - -s -w

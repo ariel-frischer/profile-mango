@@ -14,7 +14,7 @@ compatibility:
   - VS Code
 metadata:
   author: Ariel Frischer
-  version: 0.0.4
+  version: 0.0.5
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
@@ -26,7 +26,7 @@ identity: author/validate profiles, render inert previews, and plan only the
 version-qualified installs below. Install the CLI first if not on PATH:
 
 ```bash
-go install github.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
+go install github.com/ariel-frischer/profile-mango/cmd/mango@latest
 # or a checksum-verified release binary:
 curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/install.sh | sh
 mango version

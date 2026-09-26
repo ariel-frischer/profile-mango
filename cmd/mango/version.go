@@ -45,13 +45,17 @@ func printPrettyVersion(writer io.Writer) {
 }
 
 func printVersionBox(writer io.Writer, styles outputStyles) {
-	const boxWidth = 44
+	items := versionInfo()
+	boxWidth := 44
+	for _, item := range items {
+		boxWidth = max(boxWidth, 18+len(item.value))
+	}
 	_, _ = fmt.Fprintln(writer, "╭"+strings.Repeat("─", boxWidth-2)+"╮")
 	_, _ = fmt.Fprintln(writer, "│"+strings.Repeat(" ", boxWidth-2)+"│")
-	for _, item := range versionInfo() {
+	for _, item := range items {
 		label := styles.heading(fmt.Sprintf("%10s", item.label))
 		value := styles.success(item.value)
-		padding := max(boxWidth-18-len(item.value), 0)
+		padding := boxWidth - 18 - len(item.value)
 		_, _ = fmt.Fprintln(writer, "│   "+label+"  "+value+strings.Repeat(" ", padding)+" │")
 	}
 	_, _ = fmt.Fprintln(writer, "│"+strings.Repeat(" ", boxWidth-2)+"│")
