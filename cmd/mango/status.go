@@ -100,7 +100,7 @@ func writeHumanTargetStatus(output io.Writer, target install.TargetStatus, style
 		if len(file.Fields) > 0 {
 			fields = "  " + strings.Join(file.Fields, ", ")
 		}
-		if _, err := fmt.Fprintf(output, "  %-8s %-18s %s%s\n", file.State, file.Kind, file.Path, fields); err != nil {
+		if _, err := fmt.Fprintf(output, "  %-11s %-18s %s%s\n", file.State, file.Kind, file.Path, fields); err != nil {
 			return err
 		}
 	}
