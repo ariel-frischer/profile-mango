@@ -200,6 +200,9 @@ The evidence behind every row is in the developer
   sessions, skills, or credentials from your default profile. profile-mango
   doesn't copy them. Reserved Hermes profile names (`hermes`, `test`, `tmp`,
   `root`, `sudo`) are blocked, matching what `hermes -p` itself refuses.
+  `hermes -p` only looks under `$HERMES_HOME` (or `~/.hermes`), so a
+  `--config` elsewhere is blocked for any profile other than `default`. Undo
+  removes the profile directory again if install created it and it is empty.
 - [Reference](../dev/agents/hermes.md)
 
 ## Not supported

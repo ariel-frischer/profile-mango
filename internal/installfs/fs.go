@@ -53,6 +53,9 @@ type Change struct {
 	Content []byte
 	Delete  bool
 	Mode    fs.FileMode // optional replacement permission override for verified recovery
+	// RemoveEmptyDirs lists, deepest first, parent directories of Path that a Delete removes
+	// afterwards while they are empty: directories an earlier transaction created for Path.
+	RemoveEmptyDirs []string
 }
 
 type ApplyOptions struct {
@@ -88,7 +91,10 @@ type JournalEntry struct {
 	AfterSHA256  string `json:"afterSHA256"`
 	BackupPath   string `json:"backupPath,omitempty"`
 	Delete       bool   `json:"delete,omitempty"`
-	Applied      bool   `json:"applied"`
+	// CreatedDirs lists, deepest first, the parent directories that were missing when this
+	// transaction created Path; rollback and undo remove them again while they are empty.
+	CreatedDirs []string `json:"createdDirs,omitempty"`
+	Applied     bool     `json:"applied"`
 }
 
 type preparedBackup struct {
@@ -217,11 +223,17 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 }
 
 // journalAnchor is the first changed path whose directory already exists, so the lock and
-// journal never need directories that apply has yet to create.
+// journal never need directories that apply has yet to create. It prefers a file whose
+// directory the transaction does not try to remove, so the lock cannot keep it non-empty.
 func journalAnchor(changes []Change) (string, error) {
-	for _, change := range changes {
-		if info, err := os.Lstat(filepath.Dir(change.Path)); err == nil && info.IsDir() {
-			return change.Path, nil
+	for _, removable := range []bool{false, true} {
+		for _, change := range changes {
+			if len(change.RemoveEmptyDirs) > 0 != removable {
+				continue
+			}
+			if info, err := os.Lstat(filepath.Dir(change.Path)); err == nil && info.IsDir() {
+				return change.Path, nil
+			}
 		}
 	}
 	return "", fmt.Errorf("no changed file has an existing directory for the install journal")
@@ -313,8 +325,11 @@ func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []s
 	owned := make([]preparedBackup, 0, len(changes))
 	for index, change := range changes {
 		entry := JournalEntry{Path: change.Path, BeforeExists: change.Before.Exists, BeforeSHA256: change.Before.SHA256, BeforeMode: uint32(change.Before.Mode), AfterSHA256: Hash(change.Content), Delete: change.Delete}
+		if !change.Before.Exists && !change.Delete {
+			entry.CreatedDirs = missingParentDirs(change.Path)
+		}
 		if options.Backup && change.Before.Exists {
-			backup := BackupPath(change.Path, options.PlanID)
+			backup := backupPathFor(change, options, index)
 			if _, err := os.Lstat(backup); err == nil {
 				return nil, nil, nil, preparationFailure(fmt.Errorf("backup already exists: %s", backup), owned)
 			} else if !os.IsNotExist(err) {
@@ -400,7 +415,10 @@ func applyChange(change Change) error {
 		if !current.Exists {
 			return nil
 		}
-		return os.Remove(change.Path)
+		if err := os.Remove(change.Path); err != nil {
+			return err
+		}
+		return removeCreatedDirs(change.Path, change.RemoveEmptyDirs)
 	}
 	mode := change.Before.Mode
 	if change.Mode != 0 {
@@ -415,7 +433,7 @@ func applyChange(change Change) error {
 }
 
 // ensureParentDirs creates missing private parent directories without following symlinks.
-// Undo removes created files but leaves created directories in place.
+// The journal records which ones were missing, so rollback and undo can remove them.
 func ensureParentDirs(path string) error {
 	parent := filepath.Dir(path)
 	parts := strings.Split(strings.TrimPrefix(parent, string(os.PathSeparator)), string(os.PathSeparator))
@@ -503,13 +521,13 @@ func restoreChange(change Change, entry JournalEntry) error {
 			}
 			content, mode = backup.Content, backup.Mode
 		}
-		return atomicReplace(change.Path, content, current, mode)
+		return restoreDeleted(change.Path, content, current, mode)
 	}
 	if !current.Exists || current.SHA256 != entry.AfterSHA256 {
 		return fmt.Errorf("%s is not transaction-owned", change.Path)
 	}
 	if !entry.BeforeExists {
-		return os.Remove(change.Path)
+		return removeCreatedFile(change.Path, entry.CreatedDirs)
 	}
 	content := change.Before.Content
 	mode := change.Before.Mode
@@ -587,7 +605,7 @@ func restoreEntry(entry JournalEntry) error {
 		if err != nil {
 			return err
 		}
-		return atomicReplace(entry.Path, backup.Content, current, backup.Mode)
+		return restoreDeleted(entry.Path, backup.Content, current, backup.Mode)
 	}
 	if current.Exists && current.SHA256 == entry.BeforeSHA256 {
 		return nil
@@ -596,7 +614,7 @@ func restoreEntry(entry JournalEntry) error {
 		return fmt.Errorf("%s: %w", entry.Path, ErrRecoveryRequired)
 	}
 	if !entry.BeforeExists {
-		return os.Remove(entry.Path)
+		return removeCreatedFile(entry.Path, entry.CreatedDirs)
 	}
 	backup, err := verifiedBackup(entry)
 	if err != nil {

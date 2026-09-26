@@ -10,8 +10,9 @@ import (
 // Pinned Hermes Agent v0.21.3 (source release v2026.9.14, commit 345cd2b0) profile
 // layout. hermes_cli/profiles.py:132-135 _get_profiles_root and :232-244 get_profile_dir
 // resolve a named profile to <hermes-home>/profiles/<name>/config.yaml, where
-// <hermes-home> is the directory holding the main config.yaml (default ~/.hermes;
-// hermes_cli/profiles.py:138-142 _get_default_hermes_home). hermes_cli/main.py:508-556
+// <hermes-home> is HERMES_HOME (its grandparent when it names a profiles/<name> dir) or
+// ~/.hermes (hermes_cli/profiles.py:1799-1806 resolve_profile_env; :138-142
+// _get_default_hermes_home), not the directory of any given config. hermes_cli/main.py:508-556
 // _apply_profile_override pre-parses `-p`/`--profile <name>` and points HERMES_HOME at
 // that directory via hermes_cli/profiles.py:1789-1813 resolve_profile_env, which only
 // requires the directory to exist (profile_dir.is_dir()) and not be tombstoned; no
@@ -44,10 +45,11 @@ func IsDefaultProfile(name string) bool { return strings.EqualFold(name, "defaul
 
 // ProfileConfigPath returns the config.yaml file `hermes -p <name>` reads: the resolved
 // main config itself for "default" (hermes_cli/profiles.py:1808-1809), or
-// <config-dir>/profiles/<name>/config.yaml for any other valid id, derived from
-// whatever directory holds the resolved main config.yaml. Only that directory needs to
-// exist for `-p <name>` to resolve (hermes_cli/profiles.py:1810-1812), so an install that
-// writes config.yaml there is enough; no `hermes profile create` bootstrap is required.
+// <config-dir>/profiles/<name>/config.yaml for any other valid id. That is where Hermes
+// looks only when configPath is <hermes-home>/config.yaml, which the installer checks.
+// Only that directory needs to exist for `-p <name>` to resolve (hermes_cli/profiles.py:
+// 1810-1812), so an install that writes config.yaml there is enough; no `hermes profile
+// create` bootstrap is required.
 func ProfileConfigPath(configPath, name string) (string, error) {
 	clean := filepath.Clean(configPath)
 	if IsDefaultProfile(name) {

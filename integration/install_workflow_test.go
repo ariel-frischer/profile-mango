@@ -125,6 +125,13 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 			t.Fatal(err)
 		}
 	}
+	if strings.HasPrefix(target, "hermes@") {
+		// hermes -p reads profiles under the Hermes home, so named install needs its config.
+		w.config = filepath.Join(root, "home", ".hermes", "config.yaml")
+		if err := os.MkdirAll(filepath.Dir(w.config), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	files[w.config] = w.original
 	for path, content := range files {
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {

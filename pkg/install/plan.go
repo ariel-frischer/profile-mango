@@ -288,7 +288,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
 		}
 	}
-	namedFile, err := snapshotNamedFile(adapter, targetPlan.Install, config)
+	namedFile, err := snapshotNamedFile(adapter, targetPlan.Install, config, request.Env)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.named_profile_path_unsafe")
 	}

@@ -77,6 +77,40 @@ func (hermesAdapter) NamedProfilePath(configPath, name string) (string, error) {
 	return hermes.ProfileConfigPath(configPath, name)
 }
 
+// CheckNamedProfileHome requires configPath to be <hermes-home>/config.yaml: `hermes -p
+// <name>` looks under that home whatever config profile-mango was pointed at. The
+// "default" profile is configPath itself, so it needs no home.
+func (hermesAdapter) CheckNamedProfileHome(configPath, name string, env PathEnv) error {
+	if hermes.IsDefaultProfile(name) {
+		return nil
+	}
+	if !env.enabled() {
+		return fmt.Errorf("hermes -p %s reads <hermes-home>/profiles/%s/config.yaml, but the Hermes home cannot be resolved here", name, name)
+	}
+	home, err := hermesProfilesRoot(env)
+	if err != nil {
+		return fmt.Errorf("resolve the Hermes home for hermes -p %s: %w", name, err)
+	}
+	if want := filepath.Join(home, "config.yaml"); filepath.Clean(configPath) != want {
+		return fmt.Errorf("hermes -p %s reads %s/profiles/%s/config.yaml, which can only be derived from %s, not %s; set HERMES_HOME to that config's directory or omit --config", name, home, name, want, configPath)
+	}
+	return nil
+}
+
+// hermesProfilesRoot mirrors hermes_cli/profiles.py:1789-1806 resolve_profile_env: the
+// root is HERMES_HOME, or its grandparent when it names a profiles/<name> directory,
+// else ~/.hermes.
+func hermesProfilesRoot(env PathEnv) (string, error) {
+	home, err := env.dirOrHome("HERMES_HOME", ".hermes")
+	if err != nil {
+		return "", err
+	}
+	if parent := filepath.Dir(home); filepath.Base(parent) == "profiles" {
+		return filepath.Dir(parent), nil
+	}
+	return home, nil
+}
+
 func (hermesAdapter) NamedProfileUse(name string) string { return "hermes -p " + name }
 
 func addHermesFile(patch *Patch, file hermesFile, route profilemango.RouteBinding) error {
