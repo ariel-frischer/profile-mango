@@ -10,3 +10,8 @@ tools:
 instructions:
   append: [instructions/docs-research/AGENTS.md]
 skills: [skills/docs-research/SKILL.md]
+roles:
+  research:
+    description: Reads local docs and returns cited findings
+    instructions: instructions/roles/research.md
+  tiny: {description: Fixes links and typos}

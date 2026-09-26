@@ -66,9 +66,10 @@ func assertExampleInstallGate(t *testing.T, binary, repoRoot string, env []strin
 	}
 	for _, target := range plan.Targets {
 		installed := target.Target.Name == "claude-code" || target.Target.Name == "codex"
-		// permissions, tools, instructions, skills, and role-definitions (named-only install).
-		if installed && (target.Status != "ready" || len(target.SkippedRequirements) != 5) {
-			t.Fatalf("%s must plan ready with five skipped requirements: %#v", target.Target.Name, target)
+		// permissions, tools, instructions, skills, role-definitions (named-only
+		// install), roles (bound tiny with no profile role), subagentMaxEffort.
+		if installed && (target.Status != "ready" || len(target.SkippedRequirements) != 7) {
+			t.Fatalf("%s must plan ready with seven skipped requirements: %#v", target.Target.Name, target)
 		}
 		if !installed && target.Status != "skipped" {
 			t.Fatalf("%s must be skipped as not installed: %#v", target.Target.Name, target)

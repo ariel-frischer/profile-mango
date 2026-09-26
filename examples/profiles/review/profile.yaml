@@ -10,3 +10,5 @@ tools:
 instructions:
   append: [instructions/review/AGENTS.md]
 skills: [skills/code-review/SKILL.md]
+roles:
+  research: {description: Finds callers and tests affected by the change under review}

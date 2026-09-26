@@ -16,17 +16,18 @@ routes:
       opencode:
         model: gpt-6-luna
     # `roles` is optional: a model per portable role (worker, planner, research,
-    # tiny). Only Oh My Pi installs them, into its model slots (worker: task;
-    # planner: plan, slow; research: smol; tiny: tiny, commit); other agents
-    # list them as not installed. `subagentMaxEffort` (Oh My Pi task.maxEffort)
+    # tiny). Profile roles install as subagent files with these models (Codex,
+    # OpenCode, Claude Code) or as Oh My Pi model slots (worker: task; planner:
+    # plan, slow; research: smol; tiny: tiny, commit). A role without a model
+    # here uses the agent's default model. `subagentMaxEffort` (Oh My Pi task.maxEffort)
     # caps the effort a subagent spawn may request.
-    # subagentMaxEffort: high
-    # roles:
-    #   research:
-    #     provider: opencode-go
-    #     model: gpt-6-luna
-    #     effort: high
-    #   tiny:
-    #     provider: opencode-go
-    #     model: glm-5.3-flash
-    #     effort: low
+    subagentMaxEffort: high
+    roles:
+      research:
+        provider: openai
+        model: gpt-6-luna
+        effort: medium
+      tiny:
+        provider: openai
+        model: gpt-6-luna
+        effort: low

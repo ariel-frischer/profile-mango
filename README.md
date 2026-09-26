@@ -96,6 +96,38 @@ OpenClaw and Hermes named profiles may need separate sign-in. Version warnings
 mean native behavior is unqualified. An effort an agent cannot apply is shown as
 `effort <value>: NOT APPLIED`.
 
+## Roles and global instructions
+
+A profile can declare subagent **roles** (`worker`, `planner`, `research`,
+`tiny`) and own whole **global instruction files**. Bindings pick each role's
+model, so the profile stays shareable:
+
+```yaml
+# profiles/daily-driver/profile.yaml
+globalInstructions:
+  codex: {AGENTS.md: instructions/global/AGENTS.md}
+  claude-code: {CLAUDE.md: instructions/global/AGENTS.md}
+roles:
+  worker: {description: Implements one scoped change, instructions: instructions/roles/worker.md}
+  research: {description: Read-only codebase scout}
+
+# bindings/local.yaml
+routes:
+  openai:
+    provider: openai
+    model: gpt-6-sol
+    effort: high
+    roles:
+      research: {provider: openai, model: gpt-6-luna, effort: medium}
+```
+
+`mango use daily-driver` then writes `~/.codex/agents/research.toml`,
+`~/.claude/agents/worker.md`, OpenCode and Oh My Pi `agents/<role>.md`, and the
+global files, backing up anything it replaces. See
+[`examples/profiles/daily-driver`](examples/profiles/daily-driver/profile.yaml),
+[`examples/bindings/local.example.yaml`](examples/bindings/local.example.yaml),
+and the [profile reference](docs/public/profile-reference.md#roles).
+
 ## What installs today
 
 Today mainly the model and route settings install. OpenCode installs as a named
