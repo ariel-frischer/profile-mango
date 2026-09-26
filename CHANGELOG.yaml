@@ -3,6 +3,7 @@ versions:
     unreleased:
         fixed:
             - mango status, use, install, and undo accept an ownership manifest recorded at an earlier version of the same target; status shows the recorded version and the next apply rewrites it
+            - mango install/use --apply no longer asks for consent or a terminal when the plan changes nothing
         added:
             - 'mango status lists drift: each owned setting whose live value differs from the profile, with live and profile values, and each whole owned file that differs'
     0.1.0:

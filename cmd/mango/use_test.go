@@ -147,6 +147,43 @@ func TestUseSwitchesManagedAgentsAndReleasesGlobalFiles(t *testing.T) {
 	}
 }
 
+// Without a terminal, --apply succeeds only when the plan writes nothing.
+func TestUseApplyWithoutTerminalNeedsConsentOnlyForChanges(t *testing.T) {
+	env := newUseTestHome(t)
+	options := env.options
+	options.targets, options.makeDefault, options.apply = []string{"oh-my-pi"}, true, true
+	tests := map[string]struct {
+		setup   func()
+		wantErr string
+	}{
+		"ready plan": {wantErr: "interactive apply requires a terminal"},
+		"unchanged plan": {setup: func() {
+			planOnly := options
+			planOnly.apply = false
+			env.planThenApply(t, "work", planOnly)
+		}},
+	}
+	for _, name := range []string{"ready plan", "unchanged plan"} {
+		test := tests[name]
+		if test.setup != nil {
+			test.setup()
+		}
+		cmd := &cobra.Command{}
+		var output bytes.Buffer
+		cmd.SetOut(&output)
+		cmd.SetErr(&output)
+		cmd.SetIn(strings.NewReader("y\n"))
+		err := runInstall(cmd, "work", options)
+		if test.wantErr == "" && err != nil || test.wantErr != "" && (err == nil || !strings.Contains(err.Error(), test.wantErr)) {
+			t.Fatalf("%s: err = %v, want %q\n%s", name, err, test.wantErr, output.String())
+		}
+		if strings.Contains(output.String(), "[y/N]") {
+			t.Fatalf("%s prompted without a terminal:\n%s", name, output.String())
+		}
+	}
+	assertFileContent(t, filepath.Join(env.ompDir, "RULES.md"), "# work rules\n")
+}
+
 func TestStatusReportsEditedAndMissingOwnedFiles(t *testing.T) {
 	env := newUseTestHome(t)
 	installWork := env.options
