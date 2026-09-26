@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- mango status, use, install, and undo accept an ownership manifest recorded at an earlier version of the same target; status shows the recorded version and the next apply rewrites it
+
+### Added
+
+- mango status lists drift: each owned setting whose live value differs from the profile, with live and profile values, and each whole owned file that differs
+
 ## [0.1.0] - 2026-09-26
 
 ### Added
