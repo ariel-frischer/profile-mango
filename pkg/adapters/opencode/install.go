@@ -98,6 +98,12 @@ func routeModel(route profilemango.RouteBinding) (string, error) {
 	return route.Provider + "/" + route.Model, nil
 }
 
+// RoleModel is the provider/model selector a role subagent file's model names
+// (packages/core/src/v1/config/agent.ts model).
+func RoleModel(provider, model string) (string, error) {
+	return routeModel(profilemango.RouteBinding{Transport: "native", Provider: provider, Model: model})
+}
+
 func validateInstallRoute(route profilemango.RouteBinding) (string, error) {
 	model, err := routeModel(route)
 	if err != nil {

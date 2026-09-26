@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 
@@ -27,6 +26,8 @@ type loadedInput struct {
 	Sources     []sourceCheck
 	// Globals holds each target's loaded globalInstructions files.
 	Globals map[string][]globalFile
+	// RoleInstructions holds each role's loaded instructions resource.
+	RoleInstructions map[string][]byte
 }
 
 func BuildPlan(request Request) (Plan, error) {
@@ -126,6 +127,8 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	globals, globalDigests, globalDiagnostics, globalSources := loadGlobalInstructions(request.ResourceRoot, resolved)
 	diagnostics = append(diagnostics, globalDiagnostics...)
 	sources = append(sources, globalSources...)
+	roles, roleDigests, roleDiagnostics, roleSources := loadRoleInstructions(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, roleDiagnostics...), append(sources, roleSources...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
 	}
@@ -138,11 +141,11 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		Route     profilemango.RouteBinding
 		Resources []profilemango.ResourceDigest
 		Globals   []profilemango.ResourceDigest `json:",omitempty"`
-	}{Profile: resolved, Route: route, Resources: digest, Globals: globalDigests})
+	}{Profile: resolved, Route: route, Resources: digest, Globals: append(globalDigests, roleDigests...)})
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
-	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals}, diagnostics.Sorted(), nil
+	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals, RoleInstructions: roles}, diagnostics.Sorted(), nil
 }
 
 // missingBindingsError names the exact fix for a missing local bindings file:
@@ -304,7 +307,8 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)
 	targetPlan.Fields = publicFields(patch.Fields)
-	if reason, code := extendPatch(request, targetRequest, loaded, ownership, config.Path, &patch, &targetPlan); reason != "" {
+	roles := newRoleInput(adapter, profile, loaded, targetRequest.Target.Name)
+	if reason, code := extendPatch(request, targetRequest, loaded, roles, ownership, config.Path, &patch, &targetPlan); reason != "" {
 		return blockedTargetPlan(targetPlan, reason, code)
 	}
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
@@ -499,8 +503,8 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 		}
 		if file.Action == ActionNoop {
 			priorHash, owned := ownershipHash(ownership, actualPath)
-			// A whole global file already holding the profile's bytes is claimed as is.
-			if (!owned || priorHash != file.BeforeSHA256) && !slices.Contains(file.ownership, ownershipGlobalInstruction) {
+			// A whole owned file already holding the profile's bytes is claimed as is.
+			if (!owned || priorHash != file.BeforeSHA256) && wholeFileKind(file.ownership) == "" {
 				continue
 			}
 		}

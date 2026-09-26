@@ -1,7 +1,6 @@
 package install
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -156,19 +155,33 @@ const rolesProfile = "name: route-only\nroute: primary\nroles:\n  worker: {descr
 
 const rolesSubagentBindings = "routes:\n  primary:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n    subagentMaxEffort: medium\n    roles:\n      research:\n        provider: openai\n        model: gpt-5.6-mini\n      planner:\n        provider: openai\n        model: gpt-5.6\n        effort: xhigh\n"
 
-func TestTargetsWithoutRoleSupportSkipRolesOrBlockUnderStrict(t *testing.T) {
+// TestCodexRoleSubsetByInstallMode checks what a Codex install keeps of the profile's
+// roles: a default install writes declared roles as subagent files and skips only the
+// route role no definition carries; a named-only install skips every role requirement.
+func TestCodexRoleSubsetByInstallMode(t *testing.T) {
 	tests := map[string]struct {
-		strict bool
-		status string
+		named, strict bool
+		status        string
+		want          []SkippedRequirement
+		strictReason  string
 	}{
-		"subset": {status: StatusReady},
-		"strict": {strict: true, status: StatusBlocked},
+		"default": {status: StatusReady, want: []SkippedRequirement{
+			{Requirement: RequirementRoles, Count: 1, Reason: rolesUnsupportedReason},
+			{Requirement: RequirementSubagentMaxEffort, Value: "medium", Reason: subagentMaxEffortUnsupportedReason},
+		}},
+		"default strict": {strict: true, status: StatusBlocked, strictReason: "1 route roles cannot be installed"},
+		"named": {named: true, status: StatusReady, want: []SkippedRequirement{
+			{Requirement: RequirementRoleDefinitions, Count: 2, Reason: roleFilesNamedOnlyReason},
+			{Requirement: RequirementRoles, Count: 2, Reason: rolesUnsupportedReason},
+			{Requirement: RequirementSubagentMaxEffort, Value: "medium", Reason: subagentMaxEffortUnsupportedReason},
+		}},
+		"named strict": {named: true, strict: true, status: StatusBlocked, strictReason: "2 role definitions cannot be installed: " + roleFilesNamedOnlyReason},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			request, root := codexTestRequest(t)
 			request.Registry = DefaultRegistry()
-			request.Strict = test.strict
+			request.Default, request.Strict = !test.named, test.strict
 			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), rolesProfile)
 			writeInstallTestFile(t, request.BindingsPath, rolesSubagentBindings)
 			plan, err := BuildPlan(request)
@@ -176,29 +189,26 @@ func TestTargetsWithoutRoleSupportSkipRolesOrBlockUnderStrict(t *testing.T) {
 				t.Fatal(err)
 			}
 			target := plan.Targets[0]
-			if target.Status != test.status {
+			if target.Status != test.status || !strings.Contains(target.Reason, test.strictReason) {
 				t.Fatalf("target = %s (%s)", target.Status, target.Reason)
 			}
-			if test.strict {
-				if !strings.Contains(target.Reason, "2 role definitions cannot be installed") || len(target.SkippedRequirements) != 0 {
-					t.Fatalf("strict target = %#v", target)
-				}
-				return
-			}
-			want := []SkippedRequirement{
-				{Requirement: RequirementRoleDefinitions, Count: 2, Reason: roleDefinitionsUnsupportedReason},
-				{Requirement: RequirementRoles, Count: 2, Reason: rolesUnsupportedReason},
-				{Requirement: RequirementSubagentMaxEffort, Value: "medium", Reason: subagentMaxEffortUnsupportedReason},
-			}
-			if !reflect.DeepEqual(target.SkippedRequirements, want) {
+			if !test.strict && !reflect.DeepEqual(target.SkippedRequirements, test.want) {
 				t.Fatalf("skipped = %#v", target.SkippedRequirements)
 			}
-			data, err := json.Marshal(plan)
-			if err != nil || !strings.Contains(string(data), `{"requirement":"roles","count":2,"reason":"per-role routes are only installed for Oh My Pi`) || !strings.Contains(string(data), `{"requirement":"role-definitions","count":2,`) {
-				t.Fatalf("plan JSON lacks role skips (%v): %s", err, data)
+			if wrote := hasPlannedFile(target, "agents/research.toml"); wrote != (test.status == StatusReady && !test.named) {
+				t.Fatalf("research role file planned = %v: %#v", wrote, target.Files)
 			}
 		})
 	}
+}
+
+func hasPlannedFile(target TargetPlan, path string) bool {
+	for _, file := range target.Files {
+		if file.Path == path {
+			return true
+		}
+	}
+	return false
 }
 
 func TestStrictBlocksRouteRolesWithoutRoleDefinitions(t *testing.T) {

@@ -565,9 +565,10 @@ func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
 	return err
 }
 
+// skippedEffort is the base route's unapplied effort; role subagent efforts are listed apart.
 func skippedEffort(skipped []install.SkippedRequirement) (install.SkippedRequirement, bool) {
 	for _, requirement := range skipped {
-		if requirement.Requirement == install.RequirementEffort {
+		if requirement.Requirement == install.RequirementEffort && requirement.Role == "" {
 			return requirement, true
 		}
 	}
@@ -860,9 +861,11 @@ func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequire
 	for _, requirement := range skipped {
 		switch {
 		case requirement.Requirement == install.RequirementEffort:
-			if _, err := fmt.Fprintf(output, "    effort %s: NOT APPLIED (%s)\n", humanPath(requirement.Value), humanPath(requirement.Reason)); err != nil {
+			if _, err := fmt.Fprintf(output, "    effort %s%s: NOT APPLIED (%s)\n", humanPath(requirement.Value), roleSuffix(requirement.Role), humanPath(requirement.Reason)); err != nil {
 				return err
 			}
+		case requirement.Role != "":
+			names = append(names, requirement.Requirement+roleSuffix(requirement.Role)+": "+humanPath(requirement.Reason))
 		case requirement.Requirement == install.RequirementInstructions && requirement.Count == 1:
 			names = append(names, requirement.Requirement+" (1 file)")
 		case requirement.Requirement == install.RequirementInstructions:
@@ -880,6 +883,14 @@ func writeSkippedRequirements(output io.Writer, skipped []install.SkippedRequire
 	}
 	_, err := fmt.Fprintf(output, "    not installed for this agent: %s\n", strings.Join(names, ", "))
 	return err
+}
+
+// roleSuffix names the portable role a skipped requirement belongs to, if any.
+func roleSuffix(role string) string {
+	if role == "" {
+		return ""
+	}
+	return " (role " + humanPath(role) + ")"
 }
 
 // writeHumanVersionCheck notes the installed agent version against the tested

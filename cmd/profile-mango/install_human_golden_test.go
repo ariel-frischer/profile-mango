@@ -121,18 +121,25 @@ func TestCompactRouteUsesInstalledFieldsOnly(t *testing.T) {
 	}
 }
 
+// TestCompactSkippedListsRoleRequirements checks that a role subagent file's unapplied
+// effort gets its own NOT APPLIED line naming the role and is not shown as the route effort.
 func TestCompactSkippedListsRoleRequirements(t *testing.T) {
 	var output bytes.Buffer
 	skipped := []install.SkippedRequirement{
 		{Requirement: install.RequirementRoleDefinitions, Count: 2},
 		{Requirement: install.RequirementRoles, Count: 3},
 		{Requirement: install.RequirementSubagentMaxEffort, Value: "high"},
+		{Requirement: install.RequirementEffort, Value: "max", Role: "worker", Reason: "unsupported"},
+		{Requirement: install.RequirementRoles, Role: "research", Reason: "foreign provider"},
 	}
 	if err := writeSkippedRequirements(&output, skipped); err != nil {
 		t.Fatal(err)
 	}
-	if want := "    not installed for this agent: role-definitions (2), roles (3), subagentMaxEffort high\n"; output.String() != want {
+	if want := "    effort max (role worker): NOT APPLIED (unsupported)\n    not installed for this agent: role-definitions (2), roles (3), subagentMaxEffort high, roles (role research): foreign provider\n"; output.String() != want {
 		t.Fatalf("skipped = %q, want %q", output.String(), want)
+	}
+	if _, found := skippedEffort(skipped); found {
+		t.Fatal("a role subagent effort was reported as the route effort")
 	}
 }
 
