@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Oh My Pi: role and task.maxEffort values that omp re-serialized (for example unquoted) no longer count as edits, so mango use re-owns config.yml instead of reporting a conflict
 
+### Changed
+
+- mango status labels a field-owned config whose owned values match the profile but whose other bytes changed as other-edits instead of edited
+
 ## [0.1.1] - 2026-09-26
 
 ### Fixed

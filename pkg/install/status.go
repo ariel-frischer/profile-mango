@@ -18,6 +18,9 @@ const (
 	FileInSync  = "in-sync"
 	FileEdited  = "edited"
 	FileMissing = "missing"
+	// FileOtherEdits is a field-owned file whose owned values match the profile
+	// while other bytes changed, e.g. the agent re-serialized its config.
+	FileOtherEdits = "other-edits"
 
 	SourceCurrent = "current"
 	SourceChanged = "changed"
@@ -249,8 +252,25 @@ func sourceState(request StatusRequest, registry *Registry, status *TargetStatus
 	}
 	if len(plan.Targets) > 0 {
 		status.Drift = targetDrift(plan.Targets[0], *status, request.Env)
+		markOtherEdits(status, plan.Targets[0], request.Env)
 	}
 	status.Source, status.SourceReason = sourceVerdict(plan, *status)
+}
+
+// markOtherEdits relabels edited field-owned files the plan leaves unchanged: their
+// owned values already match the profile, so only unrelated content differs.
+func markOtherEdits(status *TargetStatus, target TargetPlan, env PathEnv) {
+	unchanged := map[string]bool{}
+	for _, file := range target.Files {
+		if file.Action == ActionNoop && file.targetPath != "" {
+			unchanged[relativeOwnedPath(status.ConfigPath, file.targetPath, env)] = true
+		}
+	}
+	for index, file := range status.Files {
+		if file.State == FileEdited && wholeFileKind([]string{file.Kind}) == "" && unchanged[file.Path] {
+			status.Files[index].State = FileOtherEdits
+		}
+	}
 }
 
 // sourceVerdict says whether the plan would change anything and how to apply it; live

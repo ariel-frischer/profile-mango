@@ -85,6 +85,16 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			wantSource: install.SourceChanged,
 			wantLines:  []string{"    AGENTS.md  edited\n"},
 		},
+		"re-serialized config with equal owned values is not drift": {
+			edit: func(t *testing.T, _ useTestHome, config string) {
+				replaceInFile(t, config, `maxEffort: "high"`, "maxEffort: high")
+				replaceInFile(t, config, `plan: "anthropic/opus:high"`, "plan: anthropic/opus:high")
+				data, _ := os.ReadFile(config)
+				writeFile(t, config, string(data)+"theme: dark\n")
+			},
+			wantSource: install.SourceCurrent,
+			wantLines:  []string{"  other-edits config             config.yml"},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

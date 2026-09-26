@@ -5,6 +5,8 @@ versions:
             - 'Profiles can ship native subagent files with agentFiles: each file is copied unchanged into the agent''s agents/ folder (Claude Code, Codex, OpenCode, Oh My Pi), for example to replace Oh My Pi''s bundled scout agent. mango status lists them as agent-file, edits need --override, and mango use removes or restores files the next profile drops.'
         fixed:
             - 'Oh My Pi: role and task.maxEffort values that omp re-serialized (for example unquoted) no longer count as edits, so mango use re-owns config.yml instead of reporting a conflict'
+        changed:
+            - mango status labels a field-owned config whose owned values match the profile but whose other bytes changed as other-edits instead of edited
     0.1.1:
         date: 2026-09-26
         fixed:
