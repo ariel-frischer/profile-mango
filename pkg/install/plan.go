@@ -26,6 +26,8 @@ type loadedInput struct {
 	Sources     []sourceCheck
 	// Globals holds each target's loaded globalInstructions files.
 	Globals map[string][]globalFile
+	// AgentFiles holds each target's loaded agentFiles.
+	AgentFiles map[string][]globalFile
 	// RoleInstructions holds each role's loaded instructions resource.
 	RoleInstructions map[string][]byte
 }
@@ -129,6 +131,8 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	sources = append(sources, globalSources...)
 	roles, roleDigests, roleDiagnostics, roleSources := loadRoleInstructions(request.ResourceRoot, resolved)
 	diagnostics, sources = append(diagnostics, roleDiagnostics...), append(sources, roleSources...)
+	agentFiles, agentDigests, agentDiagnostics, agentSources := loadAgentFiles(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, agentDiagnostics...), append(sources, agentSources...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
 	}
@@ -141,11 +145,11 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		Route     profilemango.RouteBinding
 		Resources []profilemango.ResourceDigest
 		Globals   []profilemango.ResourceDigest `json:",omitempty"`
-	}{Profile: resolved, Route: route, Resources: digest, Globals: append(globalDigests, roleDigests...)})
+	}{Profile: resolved, Route: route, Resources: digest, Globals: append(append(globalDigests, roleDigests...), agentDigests...)})
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
-	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals, RoleInstructions: roles}, diagnostics.Sorted(), nil
+	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals, AgentFiles: agentFiles, RoleInstructions: roles}, diagnostics.Sorted(), nil
 }
 
 // missingBindingsError names the exact fix for a missing local bindings file:
@@ -308,7 +312,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)
 	targetPlan.Fields = publicFields(patch.Fields)
-	roles := newRoleInput(adapter, profile, loaded, targetRequest.Target.Name)
+	roles := newRoleInput(adapter, request, targetRequest, profile, loaded)
 	if reason, code := extendPatch(request, targetRequest, loaded, roles, ownership, config.Path, &patch, &targetPlan); reason != "" {
 		return blockedTargetPlan(targetPlan, reason, code)
 	}

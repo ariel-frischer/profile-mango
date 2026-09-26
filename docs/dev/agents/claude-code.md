@@ -168,3 +168,5 @@ Each declared profile role becomes `~/.claude/agents/<role>.md`, written only wh
 | `effort` must be `low`, `medium`, `high`, `xhigh`, `max`, or an integer | `ad=["low","medium","high","xhigh","max"]`; ``Agent file ${e} has invalid effort '${$e}'. Valid options: ${ad.join(", ")} or an integer`` |
 
 The file carries `name`, `description`, the role's `instructions` (else its description) as the body, and, when the route binds the role, `model` (anthropic provider only; other providers skip the role's model as `roles` with a reason) and `effort` (`low`..`max`; anything else is `NOT APPLIED`). Ownership and the named-only `role-definitions` skip match Codex. Residual risk: acceptance is inferred from strings of later patch releases in range, not a native probe of `2.1.278`.
+
+Profile `agentFiles.claude-code` copies native `*.md` files verbatim into the same directory (kind `agent-file`, same gates and ownership as role files); mango does not parse them. See [target evidence](../target-evidence.md#profile-agent-files-2026-09-26-ap-8x5).

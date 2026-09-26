@@ -41,6 +41,7 @@ skills: [skills/review/SKILL.md]
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
 | `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
 | `globalInstructions` | Whole global instruction files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
+| `agentFiles` | Whole native subagent files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 | `roles` | Portable role definitions, see below. | A child's role replaces the parent's same-name role; other parent roles are inherited |
 
 Unknown fields are rejected. A field with the wrong YAML shape fails with its
@@ -141,13 +142,44 @@ install lists the roles as `role-definitions` under "not installed for this
 agent", because subagent files are global. Pi, Hermes, and OpenClaw always
 skip them. `install --strict` blocks skipped roles.
 
+### `agentFiles`
+
+`agentFiles` ships agent definitions in an agent's own format, including
+frontmatter mango does not model. Each entry maps a file name to a resource
+relative to the package root; the installer copies the bytes unchanged into the
+folder that holds the agent's role files:
+
+```yaml
+agentFiles:
+  oh-my-pi:
+    scout.md: agents/omp/scout.md    # ~/.omp/agent/agents/scout.md
+  codex:
+    reviewer.toml: agents/codex/reviewer.toml
+```
+
+Only the agents in the role file table above accept them, with the same
+extension: `.toml` for Codex, `.md` for the others. The wrong extension blocks
+the install. A file name must be plain (no `/`). A name that matches an agent's
+bundled subagent overrides it where the agent lets user files win; Oh My Pi,
+for example, loads `~/.omp/agent/agents/scout.md` over its bundled `scout`. A
+name that matches a role in the same profile (`research.md` with
+`roles.research`) fails validation, since both would write the same file.
+
+Ownership matches global instruction files: an existing file is adopted with a
+create-only backup, an edited file shows as `edited` with kind `agent-file` in
+`mango status` and needs `--override`, `mango use` of a profile without the
+file deletes it or restores the original, and `mango undo` reverses each step.
+Agent files are global, so a named-only install lists them as `agentFiles`
+under "not installed for this agent"; Pi, Hermes, OpenClaw, and the jcode fork
+always skip them, and `install --strict` blocks instead.
+
 ### Older wrapped format
 
 Profiles written as `apiVersion` / `kind` / `metadata` / `spec` (with
 `spec.routeRef`) still load, with a deprecation warning. Move the fields to the
 top level and rename `routeRef` to `route`.
 
-The wrapped format does not accept `roles`.
+The wrapped format does not accept `roles` or `agentFiles`.
 
 ## Bindings fields
 

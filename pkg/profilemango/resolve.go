@@ -80,6 +80,7 @@ func resolve(profiles map[string]PolicyProfile, name string, stack []string) (Re
 	if duplicates := duplicateStrings(result.Instructions); len(duplicates) > 0 {
 		diagnostics.Add(SeverityError, "resolution.duplicate_instruction", "instructions.append", fmt.Sprintf("duplicate resolved paths: %v", duplicates), 0, 0)
 	}
+	validateAgentFileRoles(result, &diagnostics)
 	return result, diagnostics.Sorted()
 }
 
@@ -99,7 +100,8 @@ func emptyResolved(profile PolicyProfile) ResolvedProfile {
 	if profile.Skills != nil {
 		resolved.Skills = append([]string(nil), (*profile.Skills)...)
 	}
-	resolved.GlobalInstructions = mergeGlobalInstructions(nil, profile.GlobalInstructions)
+	resolved.GlobalInstructions = mergeTargetFiles(nil, profile.GlobalInstructions)
+	resolved.AgentFiles = mergeTargetFiles(nil, profile.AgentFiles)
 	resolved.Roles = mergeRoleDefinitions(nil, profile.Roles)
 	return resolved
 }
@@ -119,7 +121,8 @@ func mergeProfile(parent ResolvedProfile, child PolicyProfile) ResolvedProfile {
 	if child.Skills != nil {
 		result.Skills = append([]string(nil), (*child.Skills)...)
 	}
-	result.GlobalInstructions = mergeGlobalInstructions(parent.GlobalInstructions, child.GlobalInstructions)
+	result.GlobalInstructions = mergeTargetFiles(parent.GlobalInstructions, child.GlobalInstructions)
+	result.AgentFiles = mergeTargetFiles(parent.AgentFiles, child.AgentFiles)
 	result.Roles = mergeRoleDefinitions(parent.Roles, child.Roles)
 	return result
 }

@@ -158,6 +158,24 @@ globalInstructions:
 
 `home` accepts only `AGENTS.md` and is written by the Pi target (the one agent
 that reads it in every folder under your home); installs without Pi skip it.
+Optional `agentFiles` ships native subagent files verbatim into the agent's
+role-file folder (`agents/`), for frontmatter mango does not model or to
+override a bundled agent by name (Oh My Pi loads `~/.omp/agent/agents/scout.md`
+over its bundled `scout`):
+
+```yaml
+agentFiles:
+  oh-my-pi: {scout.md: agents/omp/scout.md}
+  codex: {reviewer.toml: agents/codex/reviewer.toml}
+```
+
+Only role-file agents accept them (Codex `.toml`; Claude Code, OpenCode, Oh My
+Pi `.md`; a wrong extension blocks); other agents and named-only installs skip
+them as `agentFiles` (`--strict` blocks). A name matching a profile role
+(`research.md` with `roles.research`) fails validation. Ownership matches global
+files: adopt with backup, `agent-file` kind in `mango status`, edits need
+`--override`, `use` releases, `undo` restores.
+
 A full example with all four roles and global files:
 `examples/profiles/daily-driver/profile.yaml` in the source checkout.
 

@@ -32,20 +32,31 @@ type roleFileWriter interface {
 }
 
 // roleInput is what one target installs as subagent files: the role definitions kept
-// by roleDefinitionSubset, their instructions, and the bound route's per-role routes.
+// by roleDefinitionSubset, their instructions, the bound route's per-role routes, and
+// the profile's agentFiles with why this install cannot write them, if it cannot.
 type roleInput struct {
 	writer       roleFileWriter
 	definitions  map[string]profilemango.RoleDefinition
 	instructions map[string][]byte
 	routes       map[string]profilemango.RoleRoute
+	agentFiles   []globalFile
+	agentSkip    string
 }
 
-func newRoleInput(adapter Adapter, profile profilemango.ResolvedProfile, loaded loadedInput, target string) roleInput {
-	writer, qualified := adapter.(roleFileWriter)
-	if !qualified || len(profile.Roles) == 0 {
-		return roleInput{}
+func newRoleInput(adapter Adapter, request Request, target TargetRequest, profile profilemango.ResolvedProfile, loaded loadedInput) roleInput {
+	input := roleInput{agentFiles: loaded.AgentFiles[target.Target.Name]}
+	if len(input.agentFiles) > 0 {
+		input.agentSkip = roleFileSkipReason(adapter, target.Agent, request.Default)
 	}
-	return roleInput{writer: writer, definitions: profile.Roles, instructions: loaded.RoleInstructions, routes: loaded.Route.For(target).Roles}
+	writer, qualified := adapter.(roleFileWriter)
+	if !qualified {
+		return input
+	}
+	input.writer = writer
+	if len(profile.Roles) > 0 {
+		input.definitions, input.instructions, input.routes = profile.Roles, loaded.RoleInstructions, loaded.Route.For(target.Target.Name).Roles
+	}
+	return input
 }
 
 // loadRoleInstructions reads every role's instructions resource beneath root.

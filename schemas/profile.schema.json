@@ -23,6 +23,7 @@
         "instructions": {"$ref": "#/$defs/instructions"},
         "skills": {"$ref": "#/$defs/paths"},
         "globalInstructions": {"$ref": "#/$defs/globalInstructions"},
+        "agentFiles": {"$ref": "#/$defs/agentFiles"},
         "roles": {"$ref": "#/$defs/roles"}
       }
     },
@@ -75,6 +76,16 @@
       "additionalProperties": {
         "type": "object",
         "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.md$"},
+        "additionalProperties": {"type": "string", "minLength": 1}
+      }
+    },
+    "agentFiles": {
+      "description": "Whole native subagent files per target, installed verbatim in the target's subagent directory (agents/ under its config directory): file name to resource path beneath the package root. Only targets that install role subagent files accept them, with their role-file extension (.toml for codex, .md otherwise); others are skipped or blocked. A file named like a declared role is rejected.",
+      "type": "object",
+      "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.(md|toml)$"},
         "additionalProperties": {"type": "string", "minLength": 1}
       }
     },
