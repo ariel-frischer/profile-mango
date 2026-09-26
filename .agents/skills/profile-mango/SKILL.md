@@ -14,7 +14,7 @@ compatibility:
   - VS Code
 metadata:
   author: Ariel Frischer
-  version: 0.0.1
+  version: 0.0.2
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
@@ -102,9 +102,14 @@ tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
 ```yaml
     subagentMaxEffort: high
     roles:
-      planner: {provider: anthropic, model: claude-opus-5-5, effort: high}
+      planner: {provider: anthropic, model: claude-opus-5-5, effort: medium}
       research: {provider: opencode-go, model: gpt-6-luna, effort: high}
 ```
+
+`targets` overrides never change roles, and agents filter role providers:
+Claude Code role files take only `anthropic` models and Codex only its OpenAI
+provider; another provider leaves that role file without a model (the agent
+default) and the plan says why.
 
 Profile `roles.<role>: {description, instructions?}` describes each role
 (`instructions` is a package resource path; a child's role replaces the
@@ -117,7 +122,10 @@ bound model/effort: Codex `~/.codex/agents/<role>.toml`, OpenCode
 `role-definitions` (subagent files are global); Pi, Hermes, and OpenClaw always
 skip them; `--strict` blocks. A role effort the agent cannot write shows as
 `effort <v> (role <r>): NOT APPLIED`; a bound role with no declared profile role
-installs only on Oh My Pi and is otherwise skipped as `roles`.
+installs only on Oh My Pi and is otherwise skipped as `roles`. A same-name
+unmanaged file (e.g. a hand-written `~/.codex/agents/planner.toml`) is adopted
+with a backup and replaced whole, so native-only fields such as Codex
+`sandbox_mode` are lost: check the plan's `adopt` rows first.
 
 Optional `globalInstructions` owns whole global instruction files per agent
 (file name to package resource). Qualified files only: Claude Code `CLAUDE.md`,
@@ -129,7 +137,13 @@ profiles:
 ```yaml
 globalInstructions:
   oh-my-pi: {AGENTS.md: instructions/work/AGENTS.md, RULES.md: instructions/work/RULES.md}
+  home: {AGENTS.md: instructions/work/home-AGENTS.md}   # ~/AGENTS.md, owned via Pi
 ```
+
+`home` accepts only `AGENTS.md` and is written by the Pi target (the one agent
+that reads it in every folder under your home); installs without Pi skip it.
+A full example with all four roles and global files:
+`examples/profiles/daily-driver/profile.yaml` in the source checkout.
 
 ## Validate, preview, check readiness
 
@@ -204,6 +218,12 @@ current`/`changed`/`unknown` against the current profile files and bindings.
 mango status --json
 mango use <profile-name>            # add --apply --yes --expect-plan <id>
 ```
+
+`mango use` only covers agents already managed (see `status`). To bring a new
+agent under a profile, first run `mango install <profile> --default --target
+<name>`. Known blockers: Codex plans block on quoted TOML table headers such as
+`[projects."/home/u"]` (Bead ap-pp9), and an OpenCode default install accepts
+exactly one skill resource; install the other targets with `--target`.
 
 ## Safety boundary
 
