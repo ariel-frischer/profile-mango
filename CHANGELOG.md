@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-26
+
 ### Added
 
 - Profiles can ship native subagent files with agentFiles: each file is copied unchanged into the agent's agents/ folder (Claude Code, Codex, OpenCode, Oh My Pi), for example to replace Oh My Pi's bundled scout agent. mango status lists them as agent-file, edits need --override, and mango use removes or restores files the next profile drops.
@@ -146,6 +148,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.0.1...v0.1.0

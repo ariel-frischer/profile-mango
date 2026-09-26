@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased:
+    unreleased: {}
+    0.1.2:
+        date: 2026-09-26
         added:
             - 'Profiles can ship native subagent files with agentFiles: each file is copied unchanged into the agent''s agents/ folder (Claude Code, Codex, OpenCode, Oh My Pi), for example to replace Oh My Pi''s bundled scout agent. mango status lists them as agent-file, edits need --override, and mango use removes or restores files the next profile drops.'
         fixed:
