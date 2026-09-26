@@ -277,6 +277,11 @@ func patchExistingRoles(document yamlDocument, roles mappingEntry, assignments [
 			missing = append(missing, assignment)
 			continue
 		}
+		if entry.value.Kind == yaml.ScalarNode && entry.value.Value == assignment.selector {
+			// Already the desired value: keep its bytes, however omp re-quoted them.
+			changes[index].Before = entry.value.Value
+			continue
+		}
 		edit, before, err := replaceScalar(document, entry.value, assignment.selector)
 		if err != nil {
 			return nil, fmt.Errorf("patch %s.%s: %w", roles.key.Value, assignment.role, err)

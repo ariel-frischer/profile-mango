@@ -32,6 +32,13 @@ func TestPatchConfigTable(t *testing.T) {
 			want:   "modelRoles:\n  reviewer: other/model\n  default: \"openai/gpt-5.6:high\"\nunknown: true\n",
 			roles:  []RoleChange{{Role: "default", After: "openai/gpt-5.6:high"}},
 		},
+		"equal values re-quoted by omp keep their bytes": {
+			source:   "modelRoles:\n  default: openai/gpt-5.6:high\ntask:\n  maxEffort: high\n",
+			route:    withMaxEffort("high"),
+			want:     "modelRoles:\n  default: openai/gpt-5.6:high\ntask:\n  maxEffort: high\n",
+			roles:    []RoleChange{{Role: "default", Before: "openai/gpt-5.6:high", After: "openai/gpt-5.6:high"}},
+			settings: []SettingChange{{Path: "task.maxEffort", Before: "high", After: "high"}},
+		},
 		"portable roles expand to every mapped slot in a missing config": {
 			route: roleRoute(),
 			want:  "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n  commit: \"opencode-go/glm-5.3-flash\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n  smol: \"opencode-go/gpt-6-luna:low\"\n  tiny: \"opencode-go/glm-5.3-flash\"\n",
