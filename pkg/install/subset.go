@@ -26,19 +26,23 @@ const (
 
 // Skip reasons for route and role requirements a target cannot install.
 const (
-	rolesUnsupportedReason             = "per-role routes are only installed for Oh My Pi modelRoles; this target installs the default route only"
-	roleDefinitionsUnsupportedReason   = "no qualified target surface installs role descriptions or instructions; Oh My Pi model slots take only a model selector"
+	rolesUnsupportedReason             = "per-role routes install only as Oh My Pi modelRoles or as the model of a declared role's subagent file"
+	roleDefinitionsUnsupportedReason   = "no pinned evidence qualifies user-global subagent files for this target"
+	roleFilesNamedOnlyReason           = "subagent files are global; install with --default or mango use"
+	roleFilesAgentReason               = "named agent destinations do not install subagent files"
 	subagentMaxEffortUnsupportedReason = "the subagent effort cap is only installed for Oh My Pi task.maxEffort"
 )
 
 // SkippedRequirement is a known profile requirement a target cannot honor. A
 // non-strict plan lists it and installs the rest instead of blocking. Value is
-// the route value that was not applied (effort); Reason is set when the
-// requirement name alone does not explain the skip.
+// the route value that was not applied (effort); Role names the portable role
+// whose subagent file lacks it; Reason is set when the requirement name alone
+// does not explain the skip.
 type SkippedRequirement struct {
 	Requirement string `json:"requirement"`
 	Count       int    `json:"count,omitempty"`
 	Value       string `json:"value,omitempty"`
+	Role        string `json:"role,omitempty"`
 	Reason      string `json:"reason,omitempty"`
 }
 
@@ -87,15 +91,19 @@ func supportedSubset(adapter Adapter, agent AgentDestination, setsDefault bool, 
 }
 
 // routeSubset strips the per-role routes and subagent effort cap a target cannot
-// install. It reports them as skipped, or as a strict blocking reason when strict is set.
-func routeSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bool, route profilemango.RouteBinding) (profilemango.RouteBinding, []SkippedRequirement, string) {
+// install. A target without modelRoles still installs a route role as the model of a
+// declared role's subagent file (definitions). It reports the rest as skipped, or as a
+// strict blocking reason when strict is set.
+func routeSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bool, route profilemango.RouteBinding, definitions map[string]profilemango.RoleDefinition) (profilemango.RouteBinding, []SkippedRequirement, string) {
 	var skipped []SkippedRequirement
-	if count := len(route.Roles); count > 0 && !supportsRequirement(adapter, agent, setsDefault, RequirementRoles) {
-		if strict {
-			return route, nil, fmt.Sprintf("--strict: %d route roles cannot be installed: %s", count, rolesUnsupportedReason)
+	if !supportsRequirement(adapter, agent, setsDefault, RequirementRoles) {
+		if count := uncoveredRoles(route.Roles, definitions); count > 0 {
+			if strict {
+				return route, nil, fmt.Sprintf("--strict: %d route roles cannot be installed: %s", count, rolesUnsupportedReason)
+			}
+			skipped = append(skipped, SkippedRequirement{Requirement: RequirementRoles, Count: count, Reason: rolesUnsupportedReason})
 		}
 		route.Roles = nil
-		skipped = append(skipped, SkippedRequirement{Requirement: RequirementRoles, Count: count, Reason: rolesUnsupportedReason})
 	}
 	if effort := route.SubagentMaxEffort; effort != "" && !supportsRequirement(adapter, agent, setsDefault, RequirementSubagentMaxEffort) {
 		if strict {
@@ -107,18 +115,47 @@ func routeSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bo
 	return route, skipped, ""
 }
 
-// roleDefinitionSubset strips the profile's role definitions when the target cannot
-// install them, reporting them as skipped or, with strict, as a blocking reason.
+// uncoveredRoles counts the route roles no installed role definition carries.
+func uncoveredRoles(roles map[string]profilemango.RoleRoute, definitions map[string]profilemango.RoleDefinition) int {
+	count := 0
+	for name := range roles {
+		if _, covered := definitions[name]; !covered {
+			count++
+		}
+	}
+	return count
+}
+
+// roleDefinitionSubset strips the profile's role definitions when the target writes no
+// subagent files for this install, reporting them as skipped or, with strict, as a
+// blocking reason.
 func roleDefinitionSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bool, profile profilemango.ResolvedProfile) (profilemango.ResolvedProfile, *SkippedRequirement, string) {
 	count := len(profile.Roles)
-	if count == 0 || supportsRequirement(adapter, agent, setsDefault, RequirementRoleDefinitions) {
+	reason := roleFileSkipReason(adapter, agent, setsDefault)
+	if count == 0 || reason == "" {
 		return profile, nil, ""
 	}
 	if strict {
-		return profile, nil, fmt.Sprintf("--strict: %d role definitions cannot be installed: %s", count, roleDefinitionsUnsupportedReason)
+		return profile, nil, fmt.Sprintf("--strict: %d role definitions cannot be installed: %s", count, reason)
 	}
 	profile.Roles = nil
-	return profile, &SkippedRequirement{Requirement: RequirementRoleDefinitions, Count: count, Reason: roleDefinitionsUnsupportedReason}, ""
+	return profile, &SkippedRequirement{Requirement: RequirementRoleDefinitions, Count: count, Reason: reason}, ""
+}
+
+// roleFileSkipReason explains why an install writes no subagent files: no qualified
+// surface, a named agent destination, or a named profile that is not made the default,
+// since the agent reads subagent files for every profile.
+func roleFileSkipReason(adapter Adapter, agent AgentDestination, setsDefault bool) string {
+	if _, qualified := adapter.(roleFileWriter); !qualified {
+		return roleDefinitionsUnsupportedReason
+	}
+	if !agent.Empty() {
+		return roleFilesAgentReason
+	}
+	if _, named := adapter.(namedProfileUser); named && !setsDefault {
+		return roleFilesNamedOnlyReason
+	}
+	return ""
 }
 
 // targetSubset applies every requirement subset for one target: the profile and
@@ -134,7 +171,7 @@ func targetSubset(adapter Adapter, request Request, target TargetRequest, loaded
 	if strictReason != "" {
 		return profile, resources, profilemango.RouteBinding{}, nil, strictReason
 	}
-	route, skippedRoute, strictReason := routeSubset(adapter, target.Agent, request.Default, request.Strict, loaded.Route.For(target.Target.Name))
+	route, skippedRoute, strictReason := routeSubset(adapter, target.Agent, request.Default, request.Strict, loaded.Route.For(target.Target.Name), profile.Roles)
 	if strictReason != "" {
 		return profile, resources, route, nil, strictReason
 	}

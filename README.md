@@ -101,7 +101,9 @@ mean native behavior is unqualified. An effort an agent cannot apply is shown as
 Today mainly the model and route settings install. OpenCode installs as a named
 agent by default, with `--default` also patching the main config and one skill.
 `globalInstructions` owns whole global instruction files (`AGENTS.md`, `CLAUDE.md`,
-Oh My Pi `RULES.md`, and `~/AGENTS.md` through Pi).
+Oh My Pi `RULES.md`, and `~/AGENTS.md` through Pi). With `--default` or
+`mango use`, profile roles become subagent files for Claude Code, Codex,
+OpenCode, and Oh My Pi.
 Anything else an agent can't take, such as instructions,
 permissions, tools, or skills, is listed in the plan as
 `not installed for this agent: ...` and skipped. Pass `--strict` to block
@@ -109,11 +111,11 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 
 | Agent | Installs | Details |
 | --- | --- | --- |
-| Claude Code | Model, effort, as an emulated named profile; `CLAUDE.md` | [agents](docs/public/agents.md#claude-code) |
-| Codex | Provider, model, effort, as a named profile; `AGENTS.md` | [agents](docs/public/agents.md#codex) |
-| OpenCode | Model, effort variant, and instructions, as a named agent; `AGENTS.md` | [agents](docs/public/agents.md#opencode) |
+| Claude Code | Model, effort, as an emulated named profile; `CLAUDE.md`; role subagents | [agents](docs/public/agents.md#claude-code) |
+| Codex | Provider, model, effort, as a named profile; `AGENTS.md`; role subagents | [agents](docs/public/agents.md#codex) |
+| OpenCode | Model, effort variant, and instructions, as a named agent; `AGENTS.md`; role subagents | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level; `~/AGENTS.md` | [agents](docs/public/agents.md#pi) |
-| Oh My Pi | Model roles with per-role effort, subagent effort cap; `AGENTS.md`, `RULES.md` | [agents](docs/public/agents.md#oh-my-pi) |
+| Oh My Pi | Model roles with per-role effort, subagent effort cap; `AGENTS.md`, `RULES.md`; role subagents | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |
 | Hermes | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#hermes) |
 

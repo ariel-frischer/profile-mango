@@ -152,3 +152,16 @@ Primary sources: [settings][settings], [model configuration][model],
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
 Documentation context only (code.claude.com/docs/en/memory retrieved 2026-09-25, SHA-256 `cf73d3a5…192a8f`, lines 333-360): `2.1.277+` reads `AGENTS.md` in the working directory and above only when no `CLAUDE.md`/`CLAUDE.local.md` exists there. Claude Code therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+
+## Role subagent files (ap-6lp, 2026-09-25)
+
+Each declared profile role becomes `~/.claude/agents/<role>.md`, written only when the profile is the default (`install --default`, `mango use`). Evidence is read-only `strings` observation of installed binaries inside the tested range `>=2.1.278 <2.2.0`: `2.1.281` (SHA-256 `56fe3da88458465fb27d7e9299dddb3fead55750fb9c2de795f233b5eea6dce1`) and `2.1.280` (SHA-256 `1e08503dbdf3c2cb0d706d32f3408277388d1c76ef108673e8fe42c1b322925b`). No `2.1.278` binary was available, and no command was run against the files.
+
+| Claim | Observed string (2.1.281) |
+| --- | --- |
+| User agents load from `<config home>/agents` beside skills and commands | `e==="user"?M(p,"agents")` |
+| `name` and `description` frontmatter are required | `Missing required "name" field in frontmatter`, `Missing required "description" field in frontmatter` |
+| `model` is a model name or `inherit`, recorded as `agent_frontmatter` | `y&&y!=="inherit"` ... `"agent_frontmatter"` |
+| `effort` must be `low`, `medium`, `high`, `xhigh`, `max`, or an integer | `ad=["low","medium","high","xhigh","max"]`; ``Agent file ${e} has invalid effort '${$e}'. Valid options: ${ad.join(", ")} or an integer`` |
+
+The file carries `name`, `description`, the role's `instructions` (else its description) as the body, and, when the route binds the role, `model` (anthropic provider only; other providers skip the role's model as `roles` with a reason) and `effort` (`low`..`max`; anything else is `NOT APPLIED`). Ownership and the named-only `role-definitions` skip match Codex. Residual risk: acceptance is inferred from strings of later patch releases in range, not a native probe of `2.1.278`.

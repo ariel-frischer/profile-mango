@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 
@@ -199,14 +198,14 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 	switch {
 	case filepath.Clean(file.Path) == filepath.Clean(configPath):
 		return "config"
-	case slices.Contains(file.Fields, ownershipGlobalInstruction):
-		return ownershipGlobalInstruction
+	case wholeFileKind(file.Fields) != "":
+		return wholeFileKind(file.Fields)
 	}
 	return "file"
 }
 
 func isOwnershipMarker(field string) bool {
-	return field == ownershipGlobalInstruction || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix)
+	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix)
 }
 
 // sourceState plans the recorded profile again without writing: a no-op plan means the

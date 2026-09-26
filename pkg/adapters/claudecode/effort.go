@@ -26,6 +26,20 @@ func EffortSupport(effort string) (bool, string) {
 	return false, "Claude Code " + TargetVersion + " settings effortLevel accepts only " + strings.Join(installEfforts, ", ")
 }
 
+// agentEfforts are the named effort values a ~/.claude/agents/*.md frontmatter
+// effort accepts: the binary validates it against ["low","medium","high","xhigh","max"]
+// (installed 2.1.281 binary, "Agent file ... has invalid effort"). Integers are
+// also accepted there but are not portable efforts.
+var agentEfforts = []string{"low", "medium", "high", "xhigh", "max"}
+
+// AgentEffortSupport reports whether effort is writable as agent file frontmatter effort.
+func AgentEffortSupport(effort string) (bool, string) {
+	if slices.Contains(agentEfforts, effort) {
+		return true, ""
+	}
+	return false, "Claude Code agent file effort accepts only " + strings.Join(agentEfforts, ", ")
+}
+
 // SettingsPatch is the model plus, when installable, the effortLevel change.
 type SettingsPatch struct {
 	Content      []byte

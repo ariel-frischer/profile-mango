@@ -64,6 +64,10 @@ The evidence behind every row is in the developer
   must not be empty.
 - **Global instructions:** `globalInstructions` can own `~/.claude/CLAUDE.md`
   (documentation-backed only), written with `mango use` or `--default`.
+- **Roles:** with `mango use` or `--default`, each profile role becomes
+  `~/.claude/agents/<role>.md` with its bound `model` (provider `anthropic`
+  only) and `effort` (`low` to `max`). Checked against installed `2.1.280` and
+  `2.1.281` binaries, not `2.1.278` itself.
 - [Reference](../dev/agents/claude-code.md)
 
 ## Codex
@@ -89,6 +93,9 @@ The evidence behind every row is in the developer
 - **Global instructions:** `globalInstructions` can own `$CODEX_HOME/AGENTS.md`,
   written with `mango use` or `--default`. An existing `AGENTS.override.md`
   is read instead of it.
+- **Roles:** with `mango use` or `--default`, each profile role becomes
+  `~/.codex/agents/<role>.toml` with `developer_instructions` and its bound
+  model and effort (`none` to `xhigh`; others are `NOT APPLIED`).
 - [Reference](../dev/agents/codex.md)
 
 ## OpenCode
@@ -122,6 +129,9 @@ The evidence behind every row is in the developer
 - **Global instructions:** `globalInstructions` can own
   `~/.config/opencode/AGENTS.md`, written with `mango use` or `--default`.
   OpenCode also reads `~/.claude/CLAUDE.md`.
+- **Roles:** with `mango use` or `--default`, each profile role becomes a
+  subagent, `~/.config/opencode/agents/<role>.md`, with its bound model and
+  effort `variant`.
 - [Reference](../dev/agents/opencode.md)
 
 ## Pi
@@ -145,8 +155,9 @@ The evidence behind every row is in the developer
   `task.maxEffort` from `subagentMaxEffort`, in `config.yml`. Effort stays on
   each selector; `defaultThinkingLevel`, which applies to models you pick by
   hand, is left alone.
-- **Skips:** profile `roles` definitions (descriptions and instructions), as
-  `role-definitions`; model slots hold only a model.
+- **Roles:** each profile role becomes `~/.omp/agent/agents/<role>.md`, whose
+  `model: "@<slot>"` resolves the slot above, so model and effort come from
+  `config.yml`.
 - **Global instructions:** `globalInstructions` can own `AGENTS.md` and
   `RULES.md` in `~/.omp/agent`; Oh My Pi has no named profiles, so every
   install writes them.

@@ -29,8 +29,9 @@ machine-specific model IDs, so you can share them.
 Roles classify subagent work with four portable names: `worker`
 (implementation), `planner` (planning), `research` (read-only exploration), and
 `tiny` (small mechanical tasks). A profile describes what each role does; a
-route's `roles:` picks each role's model and effort. Today only Oh My Pi installs
-role models; see the [profile reference](profile-reference.md).
+route's `roles:` picks each role's model and effort. Codex, OpenCode, Oh My Pi,
+and Claude Code get one subagent file per role when the profile is their
+default; see the [profile reference](profile-reference.md#roles).
 
 ## Bindings, routes, and target overrides
 

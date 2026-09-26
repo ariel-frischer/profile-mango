@@ -123,9 +123,23 @@ valid names; an Oh My Pi slot name such as `smol` also names the portable role
 to use instead. The model for each role comes from the route's `roles` in the
 bindings file.
 
-No agent installs role descriptions or instructions yet. Every agent lists
-them as `role-definitions` under "not installed for this agent", and
-`install --strict` blocks them.
+When the profile is an agent's default (`install --default` or `mango use`),
+each role becomes one subagent file, with the bound model and effort when the
+route binds the role:
+
+| Agent | Role file |
+| --- | --- |
+| Codex | `~/.codex/agents/<role>.toml` |
+| OpenCode | `~/.config/opencode/agents/<role>.md` |
+| Oh My Pi | `~/.omp/agent/agents/<role>.md`, model `@<slot>` |
+| Claude Code | `~/.claude/agents/<role>.md` |
+
+The file body is the role's `instructions`, or its description. Mango owns each
+file: an existing one is backed up and adopted, `mango use` removes or restores
+files the next profile lacks, and `undo` restores the originals. A named-only
+install lists the roles as `role-definitions` under "not installed for this
+agent", because subagent files are global. Pi, Hermes, and OpenClaw always
+skip them. `install --strict` blocks skipped roles.
 
 ### Older wrapped format
 
@@ -203,8 +217,8 @@ routes:
         effort: high
 ```
 
-Only Oh My Pi installs roles today. It writes each role into its model slots
-as `modelRoles.<slot>: provider/model:effort`:
+Oh My Pi writes each bound role into its model slots as
+`modelRoles.<slot>: provider/model:effort`:
 
 | Role | Oh My Pi slots |
 | --- | --- |
@@ -213,8 +227,12 @@ as `modelRoles.<slot>: provider/model:effort`:
 | `research` | `smol` |
 | `tiny` | `tiny`, `commit` |
 
-Other agents install only the default route and list `roles` under "not
-installed for this agent"; `install --strict` blocks them instead.
+Codex, OpenCode, and Claude Code install a bound role's model and effort only
+inside that role's subagent file, so the profile must also declare the role and
+be the agent's default (see [profile `roles`](#roles)). Other bound roles are
+listed as `roles` under "not installed for this agent", and an effort the agent
+cannot write shows as `effort <value> (role <role>): NOT APPLIED`;
+`install --strict` blocks them instead.
 
 ### `subagentMaxEffort`
 

@@ -150,3 +150,16 @@ no personal configuration was installed or changed. See the
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
 `~/AGENTS.md` is read only when `$HOME` is the working directory or the nearest project root: `rust-v0.154.0` `6b9826e`, `codex-rs/core/src/agents_md.rs:1-16,187-240` walks up only to the nearest `project_root_markers` directory (`.git` by default). Codex therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+
+## Role subagent files (ap-6lp, 2026-09-25)
+
+Each declared profile role becomes `$CODEX_HOME/agents/<role>.toml`, written only when the profile is the default (`install --default`, `mango use`). Source review of `rust-v0.154.0` (`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`):
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| Role files are TOML with `name`, `description`, `nickname_candidates`, plus flattened `ConfigToml` keys; unknown keys are rejected | `codex-rs/agent-roles/src/agent_role_config.rs` (`70ba8cf41c7339a06fee896d41c57a6e8344b770b1a1ed9a04c66d56e27d9511`), lines 20-28 |
+| `developer_instructions` is required and non-blank; `name` and `description` are validated | same file, lines 67-88, 120-157 |
+| User role files are discovered under `<config dir>/agents`, recursively as `*.toml`; `description` is required | `codex-rs/agent-roles/src/loader.rs` (`611e202c2bb4a2bad6c201bd93555d56b6c6c7021e96a294015556fd47b16b38`), lines 75-81, 237-249; `codex-rs/agent-roles/src/discovery.rs` (`7a82592608e9310c11da591bceef6134355c3ac925597b26e6f2d03e6c5f155a`), lines 7-40 |
+| `model` (line 157), `model_provider` (line 162), and `model_reasoning_effort` (line 371) are `ConfigToml` keys | `codex-rs/config/src/config_toml.rs` |
+
+The file carries `name`, `description`, `developer_instructions` (the role's `instructions` resource, else its description), and, when the route binds the role, `model_provider`, `model`, and `model_reasoning_effort`. An effort outside `none`..`xhigh` is omitted and reported as `effort <v> (role <r>): NOT APPLIED`. Ownership is whole-file (`role-definition` in `mango status`): an unmanaged same-name file is adopted with a create-only backup, drift blocks without `--override`, `mango use` releases roles the next profile lacks (restoring adopted bytes), and undo restores bytes. Named-only installs skip `role-definitions` with the reason "subagent files are global; install with --default or mango use". Evidence level: source review plus a built-binary sandbox smoke (install, status, use, undo); Codex was not run against the generated files.

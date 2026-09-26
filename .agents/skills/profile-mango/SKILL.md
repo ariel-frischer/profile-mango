@@ -95,8 +95,9 @@ slot names fail with a hint (`smol` -> `research`, `task` -> `worker`,
 bind a model per role. Oh My Pi installs them as `modelRoles.<slot>:
 provider/model:effort` (worker: task; planner: plan, slow; research: smol; tiny:
 tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
-(a cap on caller-requested per-spawn effort); other agents skip both
-(`--strict` blocks):
+(a cap on caller-requested per-spawn effort); other agents skip
+`subagentMaxEffort` and install bound roles only through role subagent files
+(below; `--strict` blocks skips):
 
 ```yaml
     subagentMaxEffort: high
@@ -107,8 +108,16 @@ tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
 
 Profile `roles.<role>: {description, instructions?}` describes each role
 (`instructions` is a package resource path; a child's role replaces the
-parent's same-name role). No agent installs these yet: plans list them as
-`role-definitions` under "not installed for this agent" (`--strict` blocks).
+parent's same-name role). When the profile is the agent's default (`--default`
+or `mango use`) each role becomes a whole-file owned subagent file carrying the
+bound model/effort: Codex `~/.codex/agents/<role>.toml`, OpenCode
+`~/.config/opencode/agents/<role>.md` (`mode: subagent`, `variant`), Oh My Pi
+`~/.omp/agent/agents/<role>.md` (`model: "@<slot>"`), Claude Code
+`~/.claude/agents/<role>.md` (anthropic only). Named-only installs list them as
+`role-definitions` (subagent files are global); Pi, Hermes, and OpenClaw always
+skip them; `--strict` blocks. A role effort the agent cannot write shows as
+`effort <v> (role <r>): NOT APPLIED`; a bound role with no declared profile role
+installs only on Oh My Pi and is otherwise skipped as `roles`.
 
 Optional `globalInstructions` owns whole global instruction files per agent
 (file name to package resource). Qualified files only: Claude Code `CLAUDE.md`,

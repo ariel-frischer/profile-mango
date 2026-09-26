@@ -907,8 +907,8 @@ Bindings roles use the portable names `worker`, `planner`, `research`, and
 agent `@task`, plan mode and reviewer `@slow`, scout `@smol`, title and commit
 message selection). The old slot names fail in bindings validation with the
 portable name to use; `advisor` and `vision` are never written. Profile role
-definitions have no qualified surface and are a skipped `role-definitions`
-requirement on every target.
+definitions install as agent files on default installs; see
+[role subagent files](#role-subagent-files-2026-09-25-ap-6lp).
 
 `task.maxEffort` (`settings-schema.ts` line 5222, enum `THINKING_EFFORTS`,
 default `max`) is the ceiling `task/executor.ts` passes to
@@ -917,6 +917,32 @@ modelled as the route field `subagentMaxEffort`, installed only on Oh My Pi
 with its own manifest field and prior marker, and skipped as
 `subagentMaxEffort` elsewhere. File hashes are recorded in the
 [target reference](agents/oh-my-pi.md#portable-roles-and-taskmaxeffort-2026-09-25).
+
+### Role subagent files, 2026-09-25 (ap-6lp)
+
+Each declared profile role (`roles.<role>: {description, instructions?}`)
+becomes one whole-file owned agent definition per qualified target, written
+only when the profile is the agent's default (`install --default`,
+`mango use`); named-only installs skip `role-definitions` with the reason
+"subagent files are global; install with --default or mango use". A bound
+role (`routes.<n>.roles.<role>`) adds its model and effort.
+
+| Target | File | Model / effort | Evidence |
+| --- | --- | --- | --- |
+| Codex `rust-v0.154.0` `6b9826e` | `$CODEX_HOME/agents/<role>.toml` (`name`, `description`, `developer_instructions`) | `model_provider`, `model`, `model_reasoning_effort` (`none`..`xhigh`) | Source: `codex-rs/agent-roles/src/{agent_role_config,loader,discovery}.rs` ([codex](agents/codex.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| OpenCode `v1.18.31` `a97622c` | `<config>/opencode/agents/<role>.md` (`description`, `mode: subagent`) | `model: provider/model`, `variant` | Source: `packages/opencode/src/config/agent.ts`, `packages/core/src/v1/config/agent.ts` ([opencode](agents/opencode.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| Oh My Pi `78b7531` | `~/.omp/agent/agents/<role>.md` (`name`, `description`) | `model: "@<slot>"`, resolving the `modelRoles` slot the same install writes | Source: `discovery/helpers.ts`, `task/discovery.ts`, `config/model-resolver.ts` ([oh-my-pi](agents/oh-my-pi.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| Claude Code `>=2.1.278 <2.2.0` | `~/.claude/agents/<role>.md` (`name`, `description`) | `model` (anthropic only), `effort` (`low`..`max`) | Installed-binary strings of `2.1.280`/`2.1.281`; no `2.1.278` binary ([claude-code](agents/claude-code.md#role-subagent-files-ap-6lp-2026-09-25)) |
+
+Pi, Hermes, and OpenClaw have no qualified surface and skip
+`role-definitions`; `--strict` blocks. An effort a target cannot write is
+omitted and listed as `effort <v> (role <r>): NOT APPLIED`. Ownership reuses the
+global instruction file machinery (`role-definition` kind): adopt with
+create-only backup, drift conflict unless `--override`, release on `mango use`
+(restoring adopted bytes), status, undo. A built-binary smoke in a `mktemp`
+HOME for Codex and OpenCode ran install (named-only and `--default`), status,
+drift, `use` to a role-less profile, and undo; undo left every target file
+byte-identical. No agent was run against the generated files.
 
 ## Hermes Agent v0.21.3 evidence
 

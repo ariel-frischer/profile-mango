@@ -146,39 +146,22 @@ func TestOhMyPiOldSlotRoleNamesFailWithPortableHint(t *testing.T) {
 	}
 }
 
-func TestOhMyPiSkipsRoleDefinitionsOrBlocksUnderStrict(t *testing.T) {
-	tests := map[string]struct {
-		strict bool
-		status string
-	}{
-		"subset": {status: StatusReady},
-		"strict": {strict: true, status: StatusBlocked},
+// TestOhMyPiRoleFilesNameModelSlots checks that each declared role becomes a subagent
+// file whose model is the @ alias of the modelRoles slot the same install writes.
+func TestOhMyPiRoleFilesNameModelSlots(t *testing.T) {
+	request, root := ohMyPiTestRequest(t)
+	request.Strict = true
+	writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), rolesProfile+"  tiny: {description: Writes commit messages}\n")
+	writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
+	applySwitchTestPlan(t, request)
+	agents := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "agents")
+	want := map[string]string{
+		"worker.md":   "---\nname: \"worker\"\ndescription: \"Implements\"\nmodel: \"@task\"\n---\n\nImplements\n",
+		"research.md": "---\nname: \"research\"\ndescription: \"Scouts read-only\"\nmodel: \"@smol\"\n---\n\nScouts read-only\n",
+		"tiny.md":     "---\nname: \"tiny\"\ndescription: \"Writes commit messages\"\nmodel: \"@commit\"\n---\n\nWrites commit messages\n",
 	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			request, root := ohMyPiTestRequest(t)
-			request.Strict = test.strict
-			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), rolesProfile)
-			writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
-			plan, err := BuildPlan(request)
-			if err != nil {
-				t.Fatal(err)
-			}
-			target := plan.Targets[0]
-			if target.Status != test.status {
-				t.Fatalf("target = %s (%s)", target.Status, target.Reason)
-			}
-			if test.strict {
-				if !strings.Contains(target.Reason, "2 role definitions cannot be installed") {
-					t.Fatalf("strict reason = %s", target.Reason)
-				}
-				return
-			}
-			want := []SkippedRequirement{{Requirement: RequirementRoleDefinitions, Count: 2, Reason: roleDefinitionsUnsupportedReason}}
-			if !reflect.DeepEqual(target.SkippedRequirements, want) {
-				t.Fatalf("skipped = %#v", target.SkippedRequirements)
-			}
-		})
+	for name, content := range want {
+		assertInstallTestFile(t, filepath.Join(agents, name), content)
 	}
 }
 

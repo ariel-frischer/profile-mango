@@ -10,3 +10,8 @@ tools:
 instructions:
   append: [instructions/coding/AGENTS.md]
 skills: [skills/test-driven-coding/SKILL.md]
+# Each role becomes a subagent file (Codex, OpenCode, Oh My Pi, Claude Code)
+# when this profile is the agent's default; bindings routes pick its model.
+roles:
+  worker: {description: Implements one scoped change test-first}
+  research: {description: Read-only codebase scout}

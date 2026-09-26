@@ -121,6 +121,7 @@
         "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "role-definitions", "subagentMaxEffort", "effort", "globalInstructions"]},
         "count": {"type": "integer", "minimum": 1},
         "value": {"type": "string", "minLength": 1},
+        "role": {"enum": ["worker", "planner", "research", "tiny"]},
         "reason": {"type": "string", "minLength": 1}
       }
     },
