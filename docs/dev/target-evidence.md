@@ -1503,7 +1503,7 @@ path each target reads, not observed runtime delivery or precedence.
 | OpenCode `1.18.31` | `AGENTS.md` (`${XDG_CONFIG_HOME:-~/.config}/opencode`) | release `v1.18.31` commit `a97622c801f4ca571530ddc51076af659a9c32cd`, `packages/opencode/src/session/instruction.ts:61` (`path.join(Global.Path.config, "AGENTS.md")`; line 62 also reads `~/.claude/CLAUDE.md`), `packages/core/src/global.ts:13` |
 | Claude Code `2.1.278` | `CLAUDE.md` (`~/.claude`) | documentation context only: mutable `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, row "User instructions `~/.claude/CLAUDE.md`"; not observed in the pinned binary |
 
-Tests: `pkg/install/globals_test.go`, `cmd/profile-mango/use_test.go`
+Tests: `pkg/install/globals_test.go`, `cmd/mango/use_test.go`
 (`TestUse*`, `TestStatus*`, `TestUndoAfterUseRestoresEachGeneration`), all in a
 synthetic sandbox HOME.
 
@@ -1536,5 +1536,5 @@ so none of them owns it; they do not install it on their own because that would
 claim a delivery the evidence does not give inside a Git repository.
 
 Tests: `pkg/install/globals_test.go` (`TestHomeInstructionGates`) and
-`cmd/profile-mango/use_test.go` (`TestUseOwnsHomeAgentsMDThroughPi`: install,
+`cmd/mango/use_test.go` (`TestUseOwnsHomeAgentsMDThroughPi`: install,
 status, release on `use`, undo of each generation), in a synthetic sandbox HOME.

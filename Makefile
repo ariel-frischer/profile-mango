@@ -35,7 +35,7 @@ install: ## Install mango (and profile-mango alias) to ~/.local/bin (override: P
 	@case "$(GOBIN_DIR)" in */mise/installs/*|*/.asdf/installs/*) \
 		echo "warning: $(GOBIN_DIR) is inside a mise/asdf toolchain; mango may be unreachable outside this repo" >&2;; esac
 	@mkdir -p "$(GOBIN_DIR)"
-	go build ${LDFLAGS} -o "$(GOBIN_DIR)/mango" ./cmd/profile-mango/
+	go build ${LDFLAGS} -o "$(GOBIN_DIR)/mango" ./cmd/mango/
 	cp "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
 
 i: install ## Alias for install
@@ -116,19 +116,19 @@ clean: ## Clean build artifacts
 c: clean ## Alias for clean
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/mango ./cmd/profile-mango/
+	go build ${LDFLAGS} -o bin/mango ./cmd/mango/
 
 b: build ## Alias for build
 
 bin: build ## Alias for build
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/profile-mango/
+	go run ${LDFLAGS} ./cmd/mango/
 
 r: run ## Alias for run
 
 check-agent-sources: ## Check documented agent sources without writing changes
-	go run ./cmd/profile-mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
+	go run ./cmd/mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)

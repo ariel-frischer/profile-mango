@@ -27,7 +27,7 @@ make format         # Format code
 ## Architecture
 
 ```
-cmd/profile-mango/             # CLI entry point (cobra)
+cmd/mango/          # CLI entry point (cobra)
   home.go             # effective profile-home inspection
   validate.go         # offline strict validation
 internal/profilehome/  # --home/env/user-home resolution
