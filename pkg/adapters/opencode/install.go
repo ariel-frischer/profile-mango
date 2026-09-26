@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // ModelPatch is the model-only OpenCode configuration effect.

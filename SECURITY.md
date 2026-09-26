@@ -3,7 +3,6 @@
 ## Supported Versions
 
 Security updates are provided for the latest released version of profile-mango.
-If you maintain older versions, document any additional supported branches here.
 
 | Version | Supported |
 | ------- | --------- |
@@ -15,9 +14,8 @@ If you maintain older versions, document any additional supported branches here.
 Please report suspected vulnerabilities privately. Do not open a public issue for
 security-sensitive reports.
 
-Send your report to the maintainer security contact for this project. If no
-private contact is listed, ask the maintainers for a private reporting channel at
-https://gitlab.com/ariel-frischer/profile-mango/issues before sharing vulnerability details.
+Report it through GitHub private vulnerability reporting:
+https://github.com/ariel-frischer/profile-mango/security/advisories/new
 
 Include:
 

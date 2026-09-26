@@ -9,7 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // ConfigPatch changes only the qualified OpenClaw model and thinking fields.

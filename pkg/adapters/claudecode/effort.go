@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 const effortKey = "effortLevel"

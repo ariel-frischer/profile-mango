@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // roleFile is one portable role rendered as a target's native subagent file. Model and

@@ -3,8 +3,8 @@ package install
 import (
 	"fmt"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/pi"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type piAdapter struct{}

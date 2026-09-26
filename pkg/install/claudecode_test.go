@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestClaudeCodeInstallMetadata(t *testing.T) {

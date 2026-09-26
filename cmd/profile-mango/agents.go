@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ariel-frischer/profile-mango/internal/agentcheck"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/agentcheck"
 )
 
 func newAgentsCmd() *cobra.Command {

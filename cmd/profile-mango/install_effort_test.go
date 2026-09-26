@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 // withRouteEffort rewrites the synthetic codex bindings to request effort.

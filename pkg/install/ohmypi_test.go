@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {

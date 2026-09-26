@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 const baseOpenAIBindings = "routes:\n  main:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-6-sol\n    effort: high\n"

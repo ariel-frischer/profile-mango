@@ -10,9 +10,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type routeOptions struct {

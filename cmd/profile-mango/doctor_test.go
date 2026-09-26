@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 // runDoctorForTest builds a fresh doctor command for every call instead of

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 const starterProfileYAML = `# The profile name defaults to its folder name (default).

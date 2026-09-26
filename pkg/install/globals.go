@@ -7,13 +7,13 @@ import (
 	"sort"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/pi"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // RequirementGlobalInstructions is the profile's globalInstructions files for a target.

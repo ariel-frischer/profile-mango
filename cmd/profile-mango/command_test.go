@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/internal/profilehome"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
 )
 
 func executeCommand(t *testing.T, args ...string) string {

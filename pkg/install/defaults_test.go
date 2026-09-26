@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
 )
 
 // syntheticPathEnv never consults the process environment or the real user home.

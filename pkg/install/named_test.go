@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 const codexNamedBase = "# keep\nmodel = \"root-model\"\n[features]\napps = false\n[profiles.dev]\nmodel = \"legacy\"\n"

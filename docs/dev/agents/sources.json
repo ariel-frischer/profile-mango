@@ -285,9 +285,9 @@
         "note": "No canonical public release or public support claim."
       },
       "sources": [
-        { "locator": "~/repos/jcode/crates/jcode-config-types/src/lib.rs", "kind": "local_snapshot_source" },
-        { "locator": "~/repos/jcode/src/cli/profile.rs", "kind": "local_snapshot_source" },
-        { "locator": "~/repos/jcode/docs/SYSTEM_PROMPT_CONFIG.md", "kind": "local_snapshot_documentation" }
+        { "locator": "local jcode fork snapshot at commit ed9b93b: crates/jcode-config-types/src/lib.rs", "kind": "local_snapshot_source" },
+        { "locator": "local jcode fork snapshot at commit ed9b93b: src/cli/profile.rs", "kind": "local_snapshot_source" },
+        { "locator": "local jcode fork snapshot at commit ed9b93b: docs/SYSTEM_PROMPT_CONFIG.md", "kind": "local_snapshot_documentation" }
       ]
     }
   ]

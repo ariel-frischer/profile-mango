@@ -6,9 +6,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 	"gopkg.in/yaml.v3"
 )
 

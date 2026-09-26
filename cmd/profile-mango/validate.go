@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func newValidateCmd() *cobra.Command {

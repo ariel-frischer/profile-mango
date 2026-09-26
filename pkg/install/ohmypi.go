@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // ohMyPiRolePriorPrefix marks, on the config's manifest entry, the selector a

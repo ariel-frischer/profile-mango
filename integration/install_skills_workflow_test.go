@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 const workflowSkill = "---\nname: synthetic-profile\ndescription: Use only for disposable installation tests.\n---\n\nSynthetic skill body.\n"

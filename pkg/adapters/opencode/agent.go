@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // variantEfforts are the effort names OpenCode 1.18.31 uses as built-in model

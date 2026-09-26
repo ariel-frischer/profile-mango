@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestCompactInstallGolden(t *testing.T) {

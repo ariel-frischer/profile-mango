@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 type journalCandidate struct {

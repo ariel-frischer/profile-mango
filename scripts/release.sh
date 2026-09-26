@@ -98,6 +98,7 @@ git push origin "${TAG}"
 
 echo ""
 echo "Done! ${TAG} tagged and pushed."
+echo "The tag push triggers the GitHub Actions release workflow (.github/workflows/release.yml)."
 echo ""
 echo "Next steps:"
 echo "  Watch the release:   gh run watch"

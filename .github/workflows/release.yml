@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Extract release notes
+        run: |
+          go install github.com/ariel-frischer/chlog/cmd/chlog@v0.3.0
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p .release
+          "$(go env GOPATH)/bin/chlog" extract "$version" > .release/notes.md
+          test -s .release/notes.md
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --release-notes=.release/notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

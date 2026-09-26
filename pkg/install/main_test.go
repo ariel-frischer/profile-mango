@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/testenv"
+	"github.com/ariel-frischer/profile-mango/internal/testenv"
 )
 
 // TestMain isolates every test from the real user home and refuses to run if any

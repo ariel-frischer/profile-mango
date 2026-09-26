@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gopkg.in/yaml.v3"
 )
 
