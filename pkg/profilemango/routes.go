@@ -2,6 +2,7 @@ package profilemango
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -85,15 +86,23 @@ func validateRouteRoles(path string, route RouteBinding, diagnostics *Diagnostic
 	}
 	for _, name := range route.SortedRoleNames() {
 		rolePath := path + ".roles." + name
-		if !profileNamePattern.MatchString(name) {
-			diagnostics.Add(SeverityError, "binding.role_name_invalid", rolePath, "role name must be lowercase kebab-case", 0, 0)
-		}
-		if name == ReservedRoleDefault {
-			diagnostics.Add(SeverityError, "binding.role_name_reserved", rolePath, "the route's own provider, model, and effort are the default role; remove roles.default", 0, 0)
+		if !PortableRole(name) {
+			diagnostics.Add(SeverityError, "binding.role_unknown", rolePath, unknownRoleMessage(name), 0, 0)
 		}
 		role := route.Roles[name]
 		if role.Provider == "" || role.Model == "" {
 			diagnostics.Add(SeverityError, "binding.role_incomplete", rolePath, "provider and model are required", 0, 0)
 		}
 	}
+}
+
+// SubagentEfforts are the accepted subagentMaxEffort values, matching the
+// thinking-effort enum of Oh My Pi's task.maxEffort (the only target that installs it).
+var SubagentEfforts = []string{"minimal", "low", "medium", "high", "xhigh", "max"}
+
+func validateSubagentMaxEffort(path string, route RouteBinding, diagnostics *Diagnostics) {
+	if route.SubagentMaxEffort == "" || slices.Contains(SubagentEfforts, route.SubagentMaxEffort) {
+		return
+	}
+	diagnostics.Add(SeverityError, "binding.subagent_max_effort_invalid", path+".subagentMaxEffort", fmt.Sprintf("unknown effort %q; expected one of %s", route.SubagentMaxEffort, strings.Join(SubagentEfforts, ", ")), 0, 0)
 }

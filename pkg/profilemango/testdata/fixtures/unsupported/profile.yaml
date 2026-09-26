@@ -6,5 +6,5 @@ permissions:
 tools:
   allow: [read]
   deny: [read]
-roles:
-  - reviewer
+hooks:
+  - pre-commit

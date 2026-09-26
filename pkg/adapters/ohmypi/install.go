@@ -16,14 +16,16 @@ import (
 )
 
 // ConfigPatch is the lossless change set for the Oh My Pi model-role
-// selectors that have exact source-native YAML evidence. Each selector carries
-// its own `:<effort>` suffix, so no global thinking default is changed. It
-// deliberately does not represent credentials, provider options, or policy
-// settings.
+// selectors and task settings that have exact source-native YAML evidence. Each
+// selector carries its own `:<effort>` suffix, so no global thinking default is
+// changed. It deliberately does not represent credentials, provider options, or
+// policy settings.
 type ConfigPatch struct {
 	Content []byte
 	// Roles lists the default role first, then every other role by name.
 	Roles []RoleChange
+	// Settings lists the non-role settings the route sets, by dotted path.
+	Settings []SettingChange
 }
 
 // RoleChange is one modelRoles.<Role> selector before and after the patch.
@@ -34,17 +36,48 @@ type RoleChange struct {
 	After  string
 }
 
+// SettingChange is one dotted config setting (e.g. task.maxEffort) before and
+// after the patch. Before is empty when the setting was absent.
+type SettingChange struct {
+	Path   string
+	Before string
+	After  string
+}
+
 // BuiltInRoles are the non-default model roles defined by the pinned Oh My Pi
 // 18.2.6 source (packages/coding-agent/src/config/model-roles.ts MODEL_ROLES).
 var BuiltInRoles = []string{"advisor", "commit", "plan", "slow", "smol", "task", "tiny", "vision"}
+
+// RoleSlots maps each portable role to the Oh My Pi 18.2.6 modelRoles slots it
+// sets. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
+// resolves plan (modes/interactive-mode.ts) and the reviewer agent @slow
+// (prompts/agents/reviewer.md); the scout agent uses @smol
+// (prompts/agents/scout.md); commit messages resolve commit first
+// (commit/model-selection.ts) and small utilities tiny (utils/title-generator.ts).
+var RoleSlots = map[string][]string{
+	profilemango.RoleWorker:   {"task"},
+	profilemango.RolePlanner:  {"plan", "slow"},
+	profilemango.RoleResearch: {"smol"},
+	profilemango.RoleTiny:     {"commit", "tiny"},
+}
+
+// TaskMaxEffortSetting is the Oh My Pi 18.2.6 setting route.subagentMaxEffort
+// installs: the ceiling on the task tool's per-spawn effort hint
+// (config/settings-schema.ts "task.maxEffort", task/executor.ts).
+const TaskMaxEffortSetting = "task.maxEffort"
+
+// subagentEfforts are the values task.maxEffort accepts (THINKING_EFFORTS in
+// packages/catalog/src/effort.ts); unlike role selectors it has no "auto".
+var subagentEfforts = []string{"minimal", "low", "medium", "high", "xhigh", "max"}
 
 type roleAssignment struct {
 	role     string
 	selector string
 }
 
-// PatchConfig sets modelRoles.default and every route role to a
-// `provider/model[:effort]` selector while preserving unrelated YAML bytes and keys.
+// PatchConfig sets modelRoles.default, the slots of every route role, and
+// task.maxEffort when the route caps subagent effort, while preserving unrelated
+// YAML bytes and keys.
 func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, error) {
 	assignments, err := installAssignments(route)
 	if err != nil {
@@ -54,11 +87,34 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	edits, changes, err := patchModelRoles(document, assignments)
+	edits, changes, err := patchBlock(document, "modelRoles", assignments)
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	return ConfigPatch{Content: applyEdits(source, edits), Roles: changes}, nil
+	patch := ConfigPatch{Content: applyEdits(source, edits), Roles: changes}
+	if route.SubagentMaxEffort == "" {
+		return patch, nil
+	}
+	return patchTaskMaxEffort(patch, route.SubagentMaxEffort)
+}
+
+// patchTaskMaxEffort sets task.maxEffort on the already role-patched content.
+func patchTaskMaxEffort(patch ConfigPatch, effort string) (ConfigPatch, error) {
+	if !slices.Contains(subagentEfforts, effort) {
+		return ConfigPatch{}, fmt.Errorf("oh my pi %s rejects %q; expected one of %s", TaskMaxEffortSetting, effort, strings.Join(subagentEfforts, ", "))
+	}
+	document, err := parseConfig(patch.Content)
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	block, key, _ := strings.Cut(TaskMaxEffortSetting, ".")
+	edits, changes, err := patchBlock(document, block, []roleAssignment{{role: key, selector: effort}})
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	patch.Content = applyEdits(patch.Content, edits)
+	patch.Settings = []SettingChange{{Path: TaskMaxEffortSetting, Before: changes[0].Before, After: effort}}
+	return patch, nil
 }
 
 // RoleSelector formats an Oh My Pi model-role selector. The pinned source
@@ -87,15 +143,42 @@ func installAssignments(route profilemango.RouteBinding) ([]roleAssignment, erro
 	if err != nil {
 		return nil, err
 	}
+	slots, err := roleSlots(route)
+	if err != nil {
+		return nil, err
+	}
 	assignments := []roleAssignment{{role: profilemango.ReservedRoleDefault, selector: selector}}
-	for _, name := range route.SortedRoleNames() {
-		selector, err := roleSelector(name, route.Roles[name])
+	for _, slot := range slots {
+		selector, err := roleSelector(slot.role, slot.route)
 		if err != nil {
 			return nil, err
 		}
-		assignments = append(assignments, roleAssignment{role: name, selector: selector})
+		assignments = append(assignments, roleAssignment{role: slot.slot, selector: selector})
 	}
 	return assignments, nil
+}
+
+// slotRoute is one Oh My Pi modelRoles slot set from a portable route role.
+type slotRoute struct {
+	slot  string
+	role  string
+	route profilemango.RoleRoute
+}
+
+// roleSlots expands every route role into its Oh My Pi slots, ordered by slot.
+func roleSlots(route profilemango.RouteBinding) ([]slotRoute, error) {
+	var slots []slotRoute
+	for _, name := range route.SortedRoleNames() {
+		mapped, found := RoleSlots[name]
+		if !found {
+			return nil, fmt.Errorf("oh my pi install rejects role %q; portable roles are %s", name, strings.Join(profilemango.PortableRoles, ", "))
+		}
+		for _, slot := range mapped {
+			slots = append(slots, slotRoute{slot: slot, role: name, route: route.Roles[name]})
+		}
+	}
+	sort.Slice(slots, func(left, right int) bool { return slots[left].slot < slots[right].slot })
+	return slots, nil
 }
 
 func validateInstallRoute(route profilemango.RouteBinding) (string, error) {
@@ -118,9 +201,6 @@ func validateInstallRoute(route profilemango.RouteBinding) (string, error) {
 }
 
 func roleSelector(name string, role profilemango.RoleRoute) (string, error) {
-	if !slices.Contains(BuiltInRoles, name) {
-		return "", fmt.Errorf("oh my pi install rejects role %q; Oh My Pi %s built-in roles are %s", name, TargetVersion, strings.Join(BuiltInRoles, ", "))
-	}
 	if role.Provider == "" || role.Model == "" {
 		return "", fmt.Errorf("oh my pi role %q requires provider and model", name)
 	}
@@ -163,29 +243,31 @@ func ambiguousThinkingSuffix(model string) bool {
 	return false
 }
 
-func patchModelRoles(document yamlDocument, assignments []roleAssignment) ([]textEdit, []RoleChange, error) {
+// patchBlock sets block.<role> for every assignment, creating the root block
+// when absent. Changes carry each key's prior value.
+func patchBlock(document yamlDocument, block string, assignments []roleAssignment) ([]textEdit, []RoleChange, error) {
 	changes := make([]RoleChange, 0, len(assignments))
 	for _, assignment := range assignments {
 		changes = append(changes, RoleChange{Role: assignment.role, After: assignment.selector})
 	}
-	roles, found, err := findEntry(document.root, "modelRoles")
+	roles, found, err := findEntry(document.root, block)
 	if err != nil {
 		return nil, nil, err
 	}
 	ending := lineEnding(document.source)
 	if !found {
-		content := "modelRoles:" + ending + roleLines(assignments, 2, ending)
+		content := block + ":" + ending + roleLines(assignments, 2, ending)
 		return []textEdit{rootInsertion(document, content)}, changes, nil
 	}
 	if roles.value.Kind != yaml.MappingNode || roles.value.Style&yaml.FlowStyle != 0 {
-		return nil, nil, fmt.Errorf("modelRoles must be a block mapping")
+		return nil, nil, fmt.Errorf("%s must be a block mapping", block)
 	}
 	edits, err := patchExistingRoles(document, roles, assignments, changes)
 	return edits, changes, err
 }
 
-// patchExistingRoles replaces present role scalars in place, recording their
-// prior values in changes, and inserts absent roles as one block.
+// patchExistingRoles replaces present key scalars in place, recording their
+// prior values in changes, and inserts absent keys as one block.
 func patchExistingRoles(document yamlDocument, roles mappingEntry, assignments []roleAssignment, changes []RoleChange) ([]textEdit, error) {
 	var edits []textEdit
 	var missing []roleAssignment
@@ -200,7 +282,7 @@ func patchExistingRoles(document yamlDocument, roles mappingEntry, assignments [
 		}
 		edit, before, err := replaceScalar(document, entry.value, assignment.selector)
 		if err != nil {
-			return nil, fmt.Errorf("patch modelRoles.%s: %w", assignment.role, err)
+			return nil, fmt.Errorf("patch %s.%s: %w", roles.key.Value, assignment.role, err)
 		}
 		edits, changes[index].Before = append(edits, edit), before
 	}
@@ -505,7 +587,7 @@ func insertRoles(document yamlDocument, roles mappingEntry, assignments []roleAs
 		childKey := roles.value.Content[0]
 		indent = childKey.Column - 1
 		if indent <= roles.key.Column-1 {
-			return textEdit{}, fmt.Errorf("modelRoles child indentation is ambiguous")
+			return textEdit{}, fmt.Errorf("%s child indentation is ambiguous", roles.key.Value)
 		}
 	}
 	offset := mappingInsertionOffset(document, roles.key.Line, roles.key.Column-1)

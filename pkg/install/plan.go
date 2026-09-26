@@ -289,23 +289,11 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.named_profile_path_unsafe")
 	}
-	profile, resources := loaded.Profile, loaded.Resources
-	if !request.Strict {
-		profile, resources, targetPlan.SkippedRequirements = supportedSubset(adapter, targetRequest.Agent, request.Default, loaded)
-	}
-	route, skippedRoles, strictReason := routeSubset(adapter, targetRequest.Agent, request.Default, request.Strict, loaded.Route.For(targetRequest.Target.Name))
+	profile, resources, route, skipped, strictReason := targetSubset(adapter, request, targetRequest, loaded)
 	if strictReason != "" {
 		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")
 	}
-	skippedEffort, strictReason := effortSubset(adapter, request.Strict, route.Effort)
-	if strictReason != "" {
-		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")
-	}
-	for _, skipped := range []*SkippedRequirement{skippedRoles, skippedEffort} {
-		if skipped != nil {
-			targetPlan.SkippedRequirements = append(targetPlan.SkippedRequirements, *skipped)
-		}
-	}
+	targetPlan.SkippedRequirements = skipped
 	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
 	if targetPlan.Install != nil {
 		input.Install = *targetPlan.Install

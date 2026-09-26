@@ -12,10 +12,11 @@ import (
 
 func TestPatchConfigTable(t *testing.T) {
 	tests := map[string]struct {
-		source string
-		route  profilemango.RouteBinding
-		want   string
-		roles  []RoleChange
+		source   string
+		route    profilemango.RouteBinding
+		want     string
+		roles    []RoleChange
+		settings []SettingChange
 	}{
 		"missing config": {
 			want:  "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n",
@@ -31,26 +32,51 @@ func TestPatchConfigTable(t *testing.T) {
 			want:   "modelRoles:\n  reviewer: other/model\n  default: \"openai/gpt-5.6:high\"\nunknown: true\n",
 			roles:  []RoleChange{{Role: "default", After: "openai/gpt-5.6:high"}},
 		},
-		"roles into missing config": {
+		"portable roles expand to every mapped slot in a missing config": {
 			route: roleRoute(),
-			want:  "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  smol: \"opencode-go/gpt-6-luna:high\"\n  tiny: \"opencode-go/glm-5.3-flash\"\n",
+			want:  "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n  commit: \"opencode-go/glm-5.3-flash\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n  smol: \"opencode-go/gpt-6-luna:low\"\n  tiny: \"opencode-go/glm-5.3-flash\"\n",
 			roles: []RoleChange{
 				{Role: "default", After: "openai/gpt-5.6:high"},
+				{Role: "commit", After: "opencode-go/glm-5.3-flash"},
 				{Role: "plan", After: "anthropic/claude-opus-5-5:high"},
-				{Role: "smol", After: "opencode-go/gpt-6-luna:high"},
+				{Role: "slow", After: "anthropic/claude-opus-5-5:high"},
+				{Role: "smol", After: "opencode-go/gpt-6-luna:low"},
 				{Role: "tiny", After: "opencode-go/glm-5.3-flash"},
 			},
 		},
-		"roles replace present and insert absent with existing indentation": {
+		"portable roles replace present slots and insert absent ones with existing indentation": {
 			route:  roleRoute(),
 			source: "modelRoles:\n    smol: old/fast:low # mine\n    custom: keep/me\nother: 1\n",
-			want:   "modelRoles:\n    smol: \"opencode-go/gpt-6-luna:high\" # mine\n    custom: keep/me\n    default: \"openai/gpt-5.6:high\"\n    plan: \"anthropic/claude-opus-5-5:high\"\n    tiny: \"opencode-go/glm-5.3-flash\"\nother: 1\n",
+			want:   "modelRoles:\n    smol: \"opencode-go/gpt-6-luna:low\" # mine\n    custom: keep/me\n    default: \"openai/gpt-5.6:high\"\n    commit: \"opencode-go/glm-5.3-flash\"\n    plan: \"anthropic/claude-opus-5-5:high\"\n    slow: \"anthropic/claude-opus-5-5:high\"\n    tiny: \"opencode-go/glm-5.3-flash\"\nother: 1\n",
 			roles: []RoleChange{
 				{Role: "default", After: "openai/gpt-5.6:high"},
+				{Role: "commit", After: "opencode-go/glm-5.3-flash"},
 				{Role: "plan", After: "anthropic/claude-opus-5-5:high"},
-				{Role: "smol", Before: "old/fast:low", After: "opencode-go/gpt-6-luna:high"},
+				{Role: "slow", After: "anthropic/claude-opus-5-5:high"},
+				{Role: "smol", Before: "old/fast:low", After: "opencode-go/gpt-6-luna:low"},
 				{Role: "tiny", After: "opencode-go/glm-5.3-flash"},
 			},
+		},
+		"worker maps to the task slot": {
+			route: withRole("worker", profilemango.RoleRoute{Provider: "anthropic", Model: "claude-opus-5-5", Effort: "medium"}),
+			want:  "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n  task: \"anthropic/claude-opus-5-5:medium\"\n",
+			roles: []RoleChange{
+				{Role: "default", After: "openai/gpt-5.6:high"},
+				{Role: "task", After: "anthropic/claude-opus-5-5:medium"},
+			},
+		},
+		"subagent max effort inserts a task block": {
+			route:    withMaxEffort("high"),
+			want:     "modelRoles:\n  default: \"openai/gpt-5.6:high\"\ntask:\n  maxEffort: \"high\"\n",
+			roles:    []RoleChange{{Role: "default", After: "openai/gpt-5.6:high"}},
+			settings: []SettingChange{{Path: "task.maxEffort", After: "high"}},
+		},
+		"subagent max effort replaces in an existing task block": {
+			route:    withMaxEffort("medium"),
+			source:   "task:\n  isolation: none # keep\n  maxEffort: max\nmodelRoles:\n  default: old/model\n",
+			want:     "task:\n  isolation: none # keep\n  maxEffort: \"medium\"\nmodelRoles:\n  default: \"openai/gpt-5.6:high\"\n",
+			roles:    []RoleChange{{Role: "default", Before: "old/model", After: "openai/gpt-5.6:high"}},
+			settings: []SettingChange{{Path: "task.maxEffort", Before: "max", After: "medium"}},
 		},
 	}
 	for name, test := range tests {
@@ -68,6 +94,9 @@ func TestPatchConfigTable(t *testing.T) {
 			}
 			if !reflect.DeepEqual(patch.Roles, test.roles) {
 				t.Fatalf("roles = %#v, want %#v", patch.Roles, test.roles)
+			}
+			if !reflect.DeepEqual(patch.Settings, test.settings) {
+				t.Fatalf("settings = %#v, want %#v", patch.Settings, test.settings)
 			}
 			assertParsedRoles(t, patch.Content, test.roles)
 			second, err := PatchConfig([]byte(test.source), route)
@@ -148,21 +177,34 @@ func TestPatchConfigRejectsAmbiguousInput(t *testing.T) {
 			want:  `rejects role "researcher"`,
 		},
 		"unsupported role effort": {
-			route: withRole("smol", profilemango.RoleRoute{Provider: "openai", Model: "m", Effort: "ultra"}),
-			want:  `role "smol" rejects unsupported thinking level`,
+			route: withRole("research", profilemango.RoleRoute{Provider: "openai", Model: "m", Effort: "ultra"}),
+			want:  `role "research" rejects unsupported thinking level`,
 		},
 		"role provider with slash": {
-			route: withRole("smol", profilemango.RoleRoute{Provider: "open/ai", Model: "m"}),
+			route: withRole("research", profilemango.RoleRoute{Provider: "open/ai", Model: "m"}),
 			want:  "unsupported characters",
 		},
 		"role model with thinking-like suffix and no effort": {
-			route: withRole("smol", profilemango.RoleRoute{Provider: "zai", Model: "glm-4.7:max"}),
+			route: withRole("research", profilemango.RoleRoute{Provider: "zai", Model: "glm-4.7:max"}),
 			want:  "set effort explicitly",
+		},
+		"omp-native slot name as role": {
+			route: withRole("smol", profilemango.RoleRoute{Provider: "openai", Model: "m"}),
+			want:  `rejects role "smol"`,
 		},
 		"non-string existing role": {
 			route:  roleRoute(),
 			source: "modelRoles:\n  smol: 3\n",
 			want:   "patch modelRoles.smol",
+		},
+		"unsupported subagent max effort": {
+			route: withMaxEffort("off"),
+			want:  `task.maxEffort rejects "off"`,
+		},
+		"flow task block": {
+			route:  withMaxEffort("high"),
+			source: "task: {maxEffort: max}\n",
+			want:   "task must be a block mapping",
 		},
 	}
 	for name, test := range tests {
@@ -228,10 +270,16 @@ func installRoute() profilemango.RouteBinding {
 func roleRoute() profilemango.RouteBinding {
 	route := installRoute()
 	route.Roles = map[string]profilemango.RoleRoute{
-		"plan": {Provider: "anthropic", Model: "claude-opus-5-5", Effort: "high"},
-		"smol": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "high"},
-		"tiny": {Provider: "opencode-go", Model: "glm-5.3-flash"},
+		"planner":  {Provider: "anthropic", Model: "claude-opus-5-5", Effort: "high"},
+		"research": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "low"},
+		"tiny":     {Provider: "opencode-go", Model: "glm-5.3-flash"},
 	}
+	return route
+}
+
+func withMaxEffort(effort string) profilemango.RouteBinding {
+	route := installRoute()
+	route.SubagentMaxEffort = effort
 	return route
 }
 

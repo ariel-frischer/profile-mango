@@ -150,7 +150,10 @@ func addRouteCapabilities(result *Result, route profilemango.RouteBinding) {
 		result.AddCapability("route."+field, StatusPartial, "documented candidate syntax only")
 	}
 	if len(route.Roles) > 0 {
-		result.AddCapability("route.roles", StatusPartial, "documented modelRoles selector syntax only")
+		result.AddCapability("route.roles", StatusPartial, "portable roles map to documented modelRoles slots (worker: task; planner: plan, slow; research: smol; tiny: commit, tiny)")
+	}
+	if route.SubagentMaxEffort != "" {
+		result.AddCapability("route.subagentMaxEffort", StatusPartial, "documented task.maxEffort setting syntax only")
 	}
 	result.AddCapability("route.transport", StatusBlocking, "Oh My Pi transport mapping is not qualified")
 }
@@ -167,11 +170,17 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 	if !render.ValidName(profile.Metadata.Name) || route.Provider == "" || route.Model == "" || route.Effort == "" {
 		return Artifact{}
 	}
+	slots, err := roleSlots(route)
+	if err != nil {
+		return Artifact{}
+	}
 	var roles strings.Builder
 	fmt.Fprintf(&roles, "  default: %s\n", yamlString(RoleSelector(route.Provider, route.Model, route.Effort)))
-	for _, name := range route.SortedRoleNames() {
-		role := route.Roles[name]
-		fmt.Fprintf(&roles, "  %s: %s\n", name, yamlString(RoleSelector(role.Provider, role.Model, role.Effort)))
+	for _, slot := range slots {
+		fmt.Fprintf(&roles, "  %s: %s\n", slot.slot, yamlString(RoleSelector(slot.route.Provider, slot.route.Model, slot.route.Effort)))
+	}
+	if route.SubagentMaxEffort != "" {
+		fmt.Fprintf(&roles, "task:\n  maxEffort: %s\n", yamlString(route.SubagentMaxEffort))
 	}
 	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n%s", TargetVersion, roles.String()))
 	return render.NewArtifact("preview/"+profile.Metadata.Name+".config.yml.preview", "candidate-config", content)

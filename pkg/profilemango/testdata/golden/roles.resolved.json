@@ -1,0 +1,21 @@
+{
+  "apiVersion": "profilemango.dev/v1alpha1",
+  "kind": "PolicyProfile",
+  "metadata": {
+    "name": "child"
+  },
+  "routeRef": "main",
+  "roles": {
+    "research": {
+      "description": "Explores read-only"
+    },
+    "tiny": {
+      "description": "Writes commit messages",
+      "instructions": "roles/tiny.md"
+    },
+    "worker": {
+      "description": "Implements with tests first"
+    }
+  },
+  "parent": "base"
+}

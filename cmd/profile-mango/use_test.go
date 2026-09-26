@@ -205,20 +205,20 @@ func TestUndoAfterUseRestoresEachGeneration(t *testing.T) {
 func TestUseSwitchesOhMyPiRolesAndReleasesDroppedOnes(t *testing.T) {
 	env := newUseTestHome(t)
 	config := filepath.Join(env.ompDir, "config.yml")
-	writeFile(t, config, "modelRoles:\n  smol: user/fast:low\n")
+	writeFile(t, config, "modelRoles:\n  smol: user/fast:low\ntask:\n  maxEffort: max\n")
 	writeFile(t, filepath.Join(env.options.profiles, "roles-a", "profile.yaml"), "route: a\n")
 	writeFile(t, filepath.Join(env.options.profiles, "roles-b", "profile.yaml"), "route: b\n")
-	route := "    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n    roles:\n"
-	writeFile(t, env.options.bindings, "routes:\n  a:\n"+route+
-		"      plan: {provider: anthropic, model: opus, effort: high}\n      smol: {provider: openai, model: mini, effort: low}\n      tiny: {provider: openai, model: nano}\n"+
-		"  b:\n"+route+"      plan: {provider: openai, model: gpt-5.6, effort: xhigh}\n")
+	route := "    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6\n    effort: high\n"
+	writeFile(t, env.options.bindings, "routes:\n  a:\n"+route+"    subagentMaxEffort: high\n    roles:\n"+
+		"      planner: {provider: anthropic, model: opus, effort: high}\n      research: {provider: openai, model: mini, effort: low}\n      tiny: {provider: openai, model: nano}\n"+
+		"  b:\n"+route+"    roles:\n      planner: {provider: openai, model: gpt-5.6, effort: xhigh}\n")
 	installA := env.options
 	installA.targets, installA.makeDefault = []string{"oh-my-pi"}, true
 	env.planThenApply(t, "roles-a", installA)
-	assertFileContent(t, config, "modelRoles:\n  smol: \"openai/mini:low\"\n  default: \"openai/gpt-5.6:high\"\n  plan: \"anthropic/opus:high\"\n  tiny: \"openai/nano\"\n")
+	assertFileContent(t, config, "modelRoles:\n  smol: \"openai/mini:low\"\n  default: \"openai/gpt-5.6:high\"\n  commit: \"openai/nano\"\n  plan: \"anthropic/opus:high\"\n  slow: \"anthropic/opus:high\"\n  tiny: \"openai/nano\"\ntask:\n  maxEffort: \"high\"\n")
 
 	env.planThenApply(t, "roles-b", env.useOptions())
-	assertFileContent(t, config, "modelRoles:\n  smol: \"user/fast:low\"\n  default: \"openai/gpt-5.6:high\"\n  plan: \"openai/gpt-5.6:xhigh\"\n")
+	assertFileContent(t, config, "modelRoles:\n  smol: \"user/fast:low\"\n  default: \"openai/gpt-5.6:high\"\n  plan: \"openai/gpt-5.6:xhigh\"\n  slow: \"openai/gpt-5.6:xhigh\"\ntask:\n  maxEffort: \"max\"\n")
 	omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
 	if omp.Profile != "roles-b" || omp.Source != install.SourceCurrent || fileState(omp, "config.yml") != install.FileInSync {
 		t.Fatalf("status after use = %#v", omp)
