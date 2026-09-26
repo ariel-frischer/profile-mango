@@ -17,7 +17,7 @@ func newStatusCmd() *cobra.Command {
 		Short: "Show which profile each agent uses and whether its owned files are edited or out of date; never writes",
 		Long: "Reads each agent's ownership manifest at its default config path (or --config), reports the recorded " +
 			"profile, every owned file as in-sync, edited, or missing, and whether the profile's current sources " +
-			"would change what is installed.",
+			"would change what is installed, naming each owned setting whose live value differs from the profile.",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -88,7 +88,11 @@ func writeHumanTargetStatus(output io.Writer, target install.TargetStatus, style
 	if target.SourceReason != "" {
 		source += ": " + target.SourceReason
 	}
-	if _, err := fmt.Fprintf(output, "%s  profile %s (generation %d) in %s\n  sources: %s\n", styles.label(target.Target.String()), target.Profile, target.Generation, humanPath(filepath.Dir(target.ConfigPath)), source); err != nil {
+	recorded := ""
+	if target.RecordedVersion != "" {
+		recorded = " (recorded at " + target.RecordedVersion + ")"
+	}
+	if _, err := fmt.Fprintf(output, "%s%s  profile %s (generation %d) in %s\n  sources: %s\n", styles.label(target.Target.String()), recorded, target.Profile, target.Generation, humanPath(filepath.Dir(target.ConfigPath)), source); err != nil {
 		return err
 	}
 	for _, file := range target.Files {
@@ -100,5 +104,32 @@ func writeHumanTargetStatus(output io.Writer, target install.TargetStatus, style
 			return err
 		}
 	}
+	return writeHumanDrift(output, target.Drift)
+}
+
+// writeHumanDrift prints one line per owned setting or file that differs from the profile.
+func writeHumanDrift(output io.Writer, drift []install.FieldDrift) error {
+	if len(drift) == 0 {
+		return nil
+	}
+	if _, err := fmt.Fprintln(output, "  drift:"); err != nil {
+		return err
+	}
+	for _, entry := range drift {
+		line := fmt.Sprintf("    %s  live %s  profile %s", entry.Path, driftValue(entry.Live), driftValue(entry.Profile))
+		if entry.State != "" {
+			line = fmt.Sprintf("    %s  %s", entry.Path, entry.State)
+		}
+		if _, err := fmt.Fprintln(output, line); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func driftValue(value string) string {
+	if value == "" {
+		return "(absent)"
+	}
+	return value
 }
