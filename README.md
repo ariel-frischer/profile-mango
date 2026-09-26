@@ -48,15 +48,17 @@ mango route set local --model gpt-6-sol --effort medium
 mango use default                                    # apply to every managed agent
 ```
 
-## How it works
+## What's a profile?
 
-- **Profile:** what you want, independent of any agent: a route, optional
-  subagent roles, and global instruction files. One YAML file per profile.
-- **Bindings:** which provider, model, and effort each route uses, optionally
-  per agent or role. They stay on your machine and never hold credentials.
-- **Install:** writes what each agent supports into that agent's own config.
-  Your default settings stay untouched unless you pass `--default` or run
-  `mango use`. Anything an agent can't take is listed in the plan and skipped.
+One YAML file describing how you want your agents set up. It bundles:
+
+- **Model route:** which model and effort to use
+- **Subagent roles:** worker, planner, research, tiny, each with its own model
+- **Global instructions:** files like `AGENTS.md` and `CLAUDE.md`
+
+The actual provider and model names live in a local bindings file, so profiles
+stay shareable and never hold credentials. `mango` writes what each agent
+supports and lists the rest as skipped.
 
 ## Supported agents
 
