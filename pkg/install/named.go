@@ -58,6 +58,13 @@ type namedProfilePathResolver interface {
 	NamedProfilePath(configPath, name string) (string, error)
 }
 
+// namedProfileHomeChecker is implemented by adapters whose agent resolves named profiles
+// under a home fixed by the environment, so only that home's main config can locate them.
+type namedProfileHomeChecker interface {
+	// CheckNamedProfileHome reports why configPath cannot locate the named profile, or nil.
+	CheckNamedProfileHome(configPath, name string, env PathEnv) error
+}
+
 // installModeFor picks named-profile mode when the adapter supports it; named agent
 // destinations keep their own mode and report none.
 func installModeFor(adapter Adapter, request Request, target TargetRequest) *InstallMode {
@@ -72,9 +79,14 @@ func installModeFor(adapter Adapter, request Request, target TargetRequest) *Ins
 }
 
 // snapshotNamedFile reads the named profile's current file next to the main config.
-func snapshotNamedFile(adapter Adapter, mode *InstallMode, config installfs.Snapshot) (installfs.Snapshot, error) {
+func snapshotNamedFile(adapter Adapter, mode *InstallMode, config installfs.Snapshot, env PathEnv) (installfs.Snapshot, error) {
 	if mode == nil || mode.Mode != InstallModeNamedProfile {
 		return installfs.Snapshot{}, nil
+	}
+	if checker, found := adapter.(namedProfileHomeChecker); found {
+		if err := checker.CheckNamedProfileHome(config.Path, mode.ProfileName, env); err != nil {
+			return installfs.Snapshot{}, err
+		}
 	}
 	name, err := namedProfileFile(adapter, mode.ProfileName, config.Path)
 	if err != nil {

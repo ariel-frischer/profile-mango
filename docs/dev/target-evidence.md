@@ -72,7 +72,7 @@ reproducible fixtures, and evidence independent of the developer's machine.
 | Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; per-role `:effort` selectors, portable-role slot mapping, and `task.maxEffort` source-reviewed only | `modelRoles` selectors (default natively qualified; portable-role slots and effort suffixes source-reviewed) and `task.maxEffort` installable; role definitions, standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
-| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `profiles/<name>/config.yaml` profile below the resolved `config.yaml`'s directory that `hermes -p <name>` reads, and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
+| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `<hermes-home>/profiles/<name>/config.yaml` profile that `hermes -p <name>` reads (main config must be `<hermes-home>/config.yaml`), and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
 | Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
@@ -1431,17 +1431,18 @@ Source-only evidence from the pinned commit
 `345cd2b057a452236de401d3534b8502a7465e8d` (`v2026.9.14`), fetched read-only.
 `hermes_cli/profiles.py` `get_profile_dir`/`resolve_profile_env` map
 `hermes -p <name>` to `<hermes-home>/profiles/<name>/config.yaml`, where
-`<hermes-home>` is the directory holding the main `config.yaml` (default
-`~/.hermes`); `"default"` (any case) resolves to that root directory itself,
+`<hermes-home>` is `HERMES_HOME` (its grandparent when it is itself a
+`profiles/<name>` directory) or `~/.hermes`; `"default"` (any case) resolves to that root directory itself,
 not `profiles/default`. `hermes_cli/main.py` `_apply_profile_override` pre-parses
 `-p`/`--profile <name>` and requires `resolve_profile_env` to find an existing,
 non-tombstoned `profiles/<name>` directory before it sets `HERMES_HOME`;
 `hermes -p <name>` refuses to start otherwise (`FileNotFoundError`) rather than
 creating it. The installer writes the qualified fields to
 `profiles/<name>/config.yaml` (creating that directory) and changes the main
-config only with `--default`. Unlike OpenClaw, no fixed directory-name check is
-needed: the profile path is always `profiles/<name>` below whatever directory
-holds the resolved `config.yaml`. Reserved ids (`hermes`, `test`, `tmp`,
+config only with `--default`. As with OpenClaw, a main config other than
+`<hermes-home>/config.yaml` blocks named install
+(`install.named_profile_path_unsafe`), and undo removes a profile directory the
+install created once it is empty. Reserved ids (`hermes`, `test`, `tmp`,
 `root`, `sudo`) and ids outside `[a-z0-9][a-z0-9_-]{0,63}` block named install
 (`install.named_profile_path_unsafe`), matching what `hermes -p <name>` itself
 refuses. The profile named `default` patches the main config in place. No

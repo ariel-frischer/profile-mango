@@ -192,7 +192,7 @@ func TestSnapshotNamedFilePaths(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			mode := &InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding"}
-			snapshot, err := snapshotNamedFile(pathNamedAdapter{file: tc.file}, mode, installfsSnapshot(config))
+			snapshot, err := snapshotNamedFile(pathNamedAdapter{file: tc.file}, mode, installfsSnapshot(config), PathEnv{})
 			if tc.want == "" {
 				if err == nil {
 					t.Fatalf("path %q was accepted", tc.file)
@@ -231,7 +231,7 @@ func TestSnapshotNamedFileResolverPaths(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			mode := &InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding"}
-			snapshot, err := snapshotNamedFile(resolverNamedAdapter{path: tc.path}, mode, installfsSnapshot(config))
+			snapshot, err := snapshotNamedFile(resolverNamedAdapter{path: tc.path}, mode, installfsSnapshot(config), PathEnv{})
 			want := outside
 			if tc.path == config {
 				want = "" // the named profile is the main config, which is already snapshotted

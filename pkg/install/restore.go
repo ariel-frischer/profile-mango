@@ -272,7 +272,7 @@ func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current i
 	case !entry.BeforeExists && !current.Exists:
 		file.Action = ActionNoop
 	case !entry.BeforeExists:
-		file.Action, change.Delete = ActionDelete, true
+		file.Action, change.Delete, change.RemoveEmptyDirs = ActionDelete, true, entry.CreatedDirs
 	default:
 		file.Action, file.AfterSHA256 = ActionUpdate, original.SHA256
 		// The transaction engine preserves the current mode by default; restore the original mode explicitly.

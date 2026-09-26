@@ -12,6 +12,7 @@ func hermesNamedRequest(t *testing.T, name string) (Request, string) {
 	t.Helper()
 	request, config := hermesInstallRequest(t)
 	request.Default, request.ProfileName = false, name
+	request.Env = syntheticPathEnv(t, t.TempDir(), map[string]string{"HERMES_HOME": filepath.Dir(config)})
 	if err := os.MkdirAll(filepath.Join(request.ProfilesRoot, name), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -59,18 +60,77 @@ func TestHermesNamedProfileWithDefaultAlsoPatchesMainConfig(t *testing.T) {
 }
 
 func TestHermesNamedUndoRemovesProfileConfig(t *testing.T) {
-	request, config := hermesNamedRequest(t, "coding")
-	plan := applyNamed(t, request, "coding")
-	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
-	if undone.OriginalPlanID != plan.PlanID {
-		t.Fatalf("undo selected %s, want %s", undone.OriginalPlanID, plan.PlanID)
+	tests := map[string]struct {
+		preexisting bool
+	}{
+		"install created the profile dir": {},
+		"profile dir already existed":     {preexisting: true},
 	}
-	for _, path := range []string{hermesProfileConfig(config, "coding"), config + manifestSuffix} {
-		if _, err := os.Lstat(path); !os.IsNotExist(err) {
-			t.Fatalf("%s survived undo: %v", path, err)
-		}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, config := hermesNamedRequest(t, "coding")
+			dir := filepath.Dir(hermesProfileConfig(config, "coding"))
+			if test.preexisting {
+				if err := os.MkdirAll(dir, 0o700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			plan := applyNamed(t, request, "coding")
+			undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+			if undone.OriginalPlanID != plan.PlanID {
+				t.Fatalf("undo selected %s, want %s", undone.OriginalPlanID, plan.PlanID)
+			}
+			for _, path := range []string{hermesProfileConfig(config, "coding"), config + manifestSuffix} {
+				if _, err := os.Lstat(path); !os.IsNotExist(err) {
+					t.Fatalf("%s survived undo: %v", path, err)
+				}
+			}
+			// Hermes treats any profiles/<name> directory as a valid profile.
+			if _, err := os.Lstat(dir); os.IsNotExist(err) == test.preexisting {
+				t.Fatalf("profile dir exists=%v after undo, want %v", !os.IsNotExist(err), test.preexisting)
+			}
+			assertInstallTestFile(t, config, hermesExistingConfig())
+		})
 	}
-	assertInstallTestFile(t, config, hermesExistingConfig())
+}
+
+// `hermes -p <name>` resolves profiles under its home (HERMES_HOME, its grandparent when
+// it is itself a profile dir, else ~/.hermes), not beside whatever config was given.
+func TestHermesNamedProfileRequiresHermesHomeConfig(t *testing.T) {
+	tests := map[string]struct {
+		home    func(config string) map[string]string
+		blocked string
+	}{
+		"HERMES_HOME is the config dir": {home: func(config string) map[string]string { return map[string]string{"HERMES_HOME": filepath.Dir(config)} }},
+		"config outside default home":   {home: func(string) map[string]string { return nil }, blocked: "can only be derived from"},
+		"config outside HERMES_HOME": {home: func(config string) map[string]string {
+			return map[string]string{"HERMES_HOME": filepath.Join(config, "..", "..", "elsewhere")}
+		}, blocked: "can only be derived from"},
+		"HERMES_HOME is a profile dir": {home: func(config string) map[string]string {
+			return map[string]string{"HERMES_HOME": filepath.Join(filepath.Dir(config), "profiles", "work")}
+		}},
+		"relative HERMES_HOME": {home: func(string) map[string]string { return map[string]string{"HERMES_HOME": "rel"} }, blocked: "HERMES_HOME must be an absolute path"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, config := hermesNamedRequest(t, "coding")
+			request.Env = syntheticPathEnv(t, t.TempDir(), test.home(config))
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			target := plan.Targets[0]
+			if test.blocked == "" {
+				if target.Status != StatusReady {
+					t.Fatalf("target = %s %q", target.Status, target.Reason)
+				}
+				return
+			}
+			if target.Status != StatusBlocked || !hasDiagnostic(target.Diagnostics, "install.named_profile_path_unsafe") || !strings.Contains(target.Reason, test.blocked) {
+				t.Fatalf("target = %s %q %v", target.Status, target.Reason, target.Diagnostics)
+			}
+		})
+	}
 }
 
 // `hermes -p default` reads the default config, so that profile patches it in place.

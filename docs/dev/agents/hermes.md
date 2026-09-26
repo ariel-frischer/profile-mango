@@ -135,18 +135,19 @@ above does not exercise profile resolution).
 | same | 189-206 | `validate_profile_name` special-cases `"default"` to pass instead of rejecting it, then enforces the id pattern and rejects `_RESERVED_NAMES`. |
 | same | 232-244 | `get_profile_dir(name)`: `"default"` returns the root home unchanged; any other valid id returns `<profiles-root>/<name>`. |
 | same | 247-256 | `profile_exists(name)`: for a named profile, true only when `profile_dir.is_dir()` and the directory is not tombstoned — no other marker file is required. |
-| same | 1789-1813 | `resolve_profile_env(profile_name)`, called from `main.py` before HERMES_HOME is set: `"default"` returns the resolved root; otherwise it requires `<root>/profiles/<canon>` to already exist as a directory (`is_dir()`, not tombstoned) and raises `FileNotFoundError` otherwise — the directory is **not** auto-created by profile selection. |
+| same | 1789-1813 | `resolve_profile_env(profile_name)`, called from `main.py` before HERMES_HOME is set: the root is `HERMES_HOME` when set (its grandparent when its parent directory is named `profiles`), else `~/.hermes` (1799-1806); `"default"` returns that root; otherwise it requires `<root>/profiles/<canon>` to already exist as a directory (`is_dir()`, not tombstoned) and raises `FileNotFoundError` otherwise — the directory is **not** auto-created by profile selection. |
 | [`hermes_cli/main.py`](https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/hermes_cli/main.py) | 401, 419-446 | `_scan_profile_flag` pre-parses `-p`/`--profile <name>` (and `--profile=<name>`) from `sys.argv` before any hermes module import. |
 | same | 508-556 | `_apply_profile_override()` calls `resolve_profile_env(profile_name)` and sets `os.environ["HERMES_HOME"]` to the result before any other hermes import; a missing profile directory prints `Error: Profile '<name>' does not exist. Create it with: hermes profile create <name>` and exits 1 (except a `SUDO_USER` fallback that does not apply here). |
 | [`hermes_cli/config_home.py`](https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/hermes_cli/config_home.py) | 43-54 | `initialize_home` can create a missing `HERMES_HOME` and its required subdirectories — but this runs only *after* `HERMES_HOME` is set, i.e. after `resolve_profile_env` has already required the profile directory to exist. It does not rescue a missing named-profile directory. |
 
-**Path rule.** profile-mango derives the profile config from the resolved main
-config path: `<dir>/config.yaml` gives `<dir>/profiles/<name>/config.yaml`.
-Unlike OpenClaw, this needs no fixed directory-name check, because Hermes
-always resolves named profiles to a `profiles/` subdirectory directly below
-whatever directory holds `config.yaml` — `<dir>` need not be literally named
-`.hermes`. A relocated `--config` is accepted the same way a relocated default
-config is accepted for any other target.
+**Path rule.** `hermes -p <name>` looks under the Hermes home that
+`resolve_profile_env` computes from `HERMES_HOME` (or `~/.hermes`), not beside
+any particular config file. So named install requires the main config to be
+`<hermes-home>/config.yaml` and writes `<hermes-home>/profiles/<name>/config.yaml`.
+Any other `--config` (for example one outside `~/.hermes` with `HERMES_HOME`
+unset, or a relative `HERMES_HOME`) is blocked with
+`install.named_profile_path_unsafe`. The `default` profile is exempt: it is
+the given config itself.
 
 **Profile validity.** Only the `profiles/<name>` directory needs to exist for
 `hermes -p <name>` to resolve (`profile_exists`/`resolve_profile_env` above);
@@ -174,5 +175,11 @@ blocking, and undo. A sandbox run of the built binary in a scratch `HOME`,
 with `PROFILE_MANGO_HOME` inside it, installed a `coding` profile. It created
 `~/.hermes/profiles/coding/config.yaml` and left `~/.hermes/config.yaml`
 byte-identical (SHA-256 `7ada0c81a5c481d8836800b97e0bedc79243d22e072c966e1f0f5d9be62f3231`
-before and after). Undo then removed the profile config (keeping the
-now-empty `profiles/coding` directory) and left the default config untouched.
+before and after). Undo then removed the profile config and left the default config untouched.
+
+**Undo.** Hermes treats any `profiles/<name>` directory as a live profile
+(`profile_exists`), so an empty leftover would still start. The install journal
+records the parent directories the install created (`createdDirs`); undo
+removes them again once they are empty. A directory that already existed, or
+that has gained other files, is kept. Undo keeps its backup of the removed file
+next to the undo journal instead of inside that directory.
