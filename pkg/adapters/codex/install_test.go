@@ -158,14 +158,39 @@ func TestPatchConfigRedactsInvalidTOMLDiagnostics(t *testing.T) {
 	}
 }
 
-func TestPatchConfigRedactsAmbiguousTableName(t *testing.T) {
-	source := "[\"private.credential_canary\"]\nkey = true\n"
+func TestPatchConfigRedactsInvalidTableName(t *testing.T) {
+	source := "[\"private.credential_canary]\nkey = true\n"
 	_, err := PatchConfig([]byte(source), installRoute())
-	if err == nil || !strings.Contains(err.Error(), "ambiguous") {
-		t.Fatalf("ambiguous table diagnostic = %v", err)
+	if err == nil || !strings.Contains(err.Error(), "invalid") {
+		t.Fatalf("invalid table diagnostic = %v", err)
 	}
 	if strings.Contains(err.Error(), "credential_canary") {
-		t.Fatalf("ambiguous table diagnostic exposed target-owned name: %v", err)
+		t.Fatalf("invalid table diagnostic exposed target-owned name: %v", err)
+	}
+}
+
+// Codex writes [projects."/abs/path"] when a folder is trusted and
+// [[skills.config]] per skill; both must patch cleanly, stay byte-identical,
+// and never alias a bare path Mango checks.
+func TestPatchConfigPreservesCodexWrittenTables(t *testing.T) {
+	tests := map[string]string{
+		"trusted project":        "[projects.\"/home/u\"]\ntrust_level = \"trusted\"\n",
+		"literal quoted table":   "[projects.'/home/u/repo']\ntrust_level = \"trusted\"\n",
+		"dotted name in quotes":  "[projects.\"model_providers.openai\"]\nname = \"x\"\n",
+		"array of tables":        "[[skills.config]]\npath = \"/a\"\nenabled = true\n\n[[skills.config]]\npath = \"/b\"\nenabled = false\n",
+		"quoted root dotted key": "\"model_providers.openai\" = \"not a provider\"\n",
+		"escaped quote":          "[projects.\"/tmp/a\\\"b\"]\ntrust_level = \"trusted\"\n",
+	}
+	for name, source := range tests {
+		t.Run(name, func(t *testing.T) {
+			patch, err := PatchConfig([]byte(source), installRoute())
+			if err != nil {
+				t.Fatalf("PatchConfig = %v", err)
+			}
+			if !strings.Contains(string(patch.Content), source) || !strings.Contains(string(patch.Content), "model = \"gpt-5.6\"\n") {
+				t.Fatalf("quoted state not preserved or route missing: %q", patch.Content)
+			}
+		})
 	}
 }
 
@@ -180,7 +205,7 @@ func TestPatchConfigRejectsProviderShadowState(t *testing.T) {
 		},
 		"quoted": {
 			source: "[model_providers.\"openai\"]\nmodel = \"nested\"\n",
-			want:   "ambiguous",
+			want:   "provider override state",
 		},
 		"dotted": {
 			source: "model_providers.openai.name = \"shadow\"\n",
@@ -191,12 +216,12 @@ func TestPatchConfigRejectsProviderShadowState(t *testing.T) {
 			want:   "provider override state",
 		},
 		"quoted components": {
-			source: "[\"model_providers\".\"openai\"]\nmodel = \"nested\"\n",
-			want:   "ambiguous",
+			source: "[\"model_providers\".'openai']\nmodel = \"nested\"\n",
+			want:   "provider override state",
 		},
 		"spaced components": {
 			source: "model_providers . openai . name = \"shadow\"\n",
-			want:   "ambiguous",
+			want:   "provider override state",
 		},
 	}
 	for name, source := range tests {
@@ -229,14 +254,6 @@ func TestPatchConfigRejectsProfileAndProviderPrecedenceSurfaces(t *testing.T) {
 			source: "profile = \"work\"\n",
 			want:   "legacy profile = setting",
 		},
-		"quoted profile definition": {
-			source: "[\"profiles\".foo]\nmodel = \"profile-model\"\n",
-			want:   "ambiguous",
-		},
-		"spaced profile definition": {
-			source: "profiles . work = { model = \"profile-model\" }\n",
-			want:   "ambiguous",
-		},
 		"inline provider map": {
 			source: "model_providers = { openai = { name = \"shadow\" } }\n",
 			want:   "provider override state",
@@ -260,6 +277,8 @@ func TestPatchConfigPreservesLegacyProfileTables(t *testing.T) {
 	sources := []string{
 		"[profiles.work]\nmodel = \"profile-model\"\n",
 		"profiles.work = { model = \"profile-model\" }\n",
+		"[\"profiles\".work]\nmodel = \"profile-model\"\n",
+		"profiles . work = { model = \"profile-model\" }\n",
 	}
 	for _, source := range sources {
 		patch, err := PatchConfig([]byte(source), installRoute())

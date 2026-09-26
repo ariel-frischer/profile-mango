@@ -113,8 +113,23 @@ type configDocument struct {
 	assignments map[string]configAssignment
 	rootKeys    map[string]struct{}
 	tableNames  map[string]struct{}
+	arrayCounts map[string]int
 	firstTable  int
 	newline     string
+}
+
+// tableScope records a table header and returns the key prefix for its
+// assignments. Each [[array]] element gets its own name[index] scope, so the
+// same key in two elements is not a duplicate; "[" is never bare, so scopes
+// cannot alias a bare path.
+func (document configDocument) tableScope(name string, array bool) string {
+	document.tableNames[name] = struct{}{}
+	if !array {
+		return name
+	}
+	index := document.arrayCounts[name]
+	document.arrayCounts[name] = index + 1
+	return fmt.Sprintf("%s[%d]", name, index)
 }
 
 type configAssignment struct {
@@ -132,6 +147,7 @@ func scanConfig(data []byte) (configDocument, error) {
 		assignments: make(map[string]configAssignment),
 		rootKeys:    make(map[string]struct{}),
 		tableNames:  make(map[string]struct{}),
+		arrayCounts: make(map[string]int),
 		firstTable:  -1,
 		newline:     lineEnding(data),
 	}
@@ -144,12 +160,11 @@ func scanConfig(data []byte) (configDocument, error) {
 			continue
 		}
 		if data[start] == '[' {
-			parsed, err := parseTableHeader(data[start:lineEnd])
+			parsed, array, err := parseTableHeader(data[start:lineEnd])
 			if err != nil {
 				return configDocument{}, err
 			}
-			table = parsed
-			document.tableNames[table] = struct{}{}
+			table = document.tableScope(parsed, array)
 			if document.firstTable < 0 {
 				document.firstTable = offset
 			}
@@ -207,21 +222,21 @@ func hasProviderShadow(document configDocument) bool {
 		}
 	}
 	for table := range document.tableNames {
-		if canonicalConfigPath(table) == "model_providers" || isOpenAIProviderPath(table) {
+		if table == "model_providers" || isOpenAIProviderPath(table) {
 			return true
 		}
 	}
 	return false
 }
 
+// isOpenAIProviderPath reports whether a canonical path (see canonicalDottedKey)
+// addresses the built-in openai provider under model_providers.
 func isOpenAIProviderPath(path string) bool {
-	path = canonicalConfigPath(path)
-	const prefix = "model_providers."
-	if !strings.HasPrefix(path, prefix) {
+	rest, found := strings.CutPrefix(path, "model_providers.")
+	if !found {
 		return false
 	}
-	provider, _, _ := strings.Cut(path[len(prefix):], ".")
-	provider = strings.Trim(provider, " \t\"'")
+	provider, _, _ := strings.Cut(rest, ".")
 	return provider == "openai"
 }
 
@@ -240,17 +255,7 @@ func hasConfigPath(rootKeys, tableNames map[string]struct{}, path string) bool {
 }
 
 func configPathMatches(candidate, expected string) bool {
-	candidate = canonicalConfigPath(candidate)
 	return candidate == expected || strings.HasPrefix(candidate, expected+".")
-}
-
-func canonicalConfigPath(path string) string {
-	return strings.Map(func(character rune) rune {
-		if unicode.IsSpace(character) || character == '"' || character == '\'' {
-			return -1
-		}
-		return character
-	}, path)
 }
 
 func hasRootKey(rootKeys map[string]struct{}, key string) bool {
@@ -305,42 +310,108 @@ func skipSpace(data []byte) int {
 	return index
 }
 
-func parseTableHeader(line []byte) (string, error) {
+func parseTableHeader(line []byte) (string, bool, error) {
 	trimmed := strings.TrimSpace(string(stripComment(line)))
 	if strings.HasPrefix(trimmed, "[[") && strings.HasSuffix(trimmed, "]]") {
-		return nonEmptyTableName(trimmed[2 : len(trimmed)-2])
+		name, err := nonEmptyTableName(trimmed[2 : len(trimmed)-2])
+		return name, true, err
 	}
 	if strings.HasPrefix(trimmed, "[") && strings.HasSuffix(trimmed, "]") {
-		return nonEmptyTableName(trimmed[1 : len(trimmed)-1])
+		name, err := nonEmptyTableName(trimmed[1 : len(trimmed)-1])
+		return name, false, err
 	}
-	return "", fmt.Errorf("invalid Codex TOML table header")
+	return "", false, fmt.Errorf("invalid Codex TOML table header")
 }
 
 func nonEmptyTableName(raw string) (string, error) {
-	name := strings.TrimSpace(raw)
-	if name == "" {
+	if strings.TrimSpace(raw) == "" {
 		return "", fmt.Errorf("invalid Codex TOML table header")
 	}
-	if err := validateDottedConfigPath(name); err != nil {
-		return "", err
+	name, err := canonicalDottedKey(raw)
+	if err != nil {
+		return "", fmt.Errorf("invalid Codex TOML table header: %w", err)
 	}
 	return name, nil
 }
 
-func validateDottedConfigPath(path string) error {
-	if !strings.Contains(path, ".") {
-		return nil
+// canonicalDottedKey parses a TOML key (bare, quoted, or dotted with optional
+// whitespace around dots) into one canonical path. Bare-valid components are
+// written as-is and every other component is Go-quoted, so a quoted key such
+// as projects."/home/u" can never collide with a bare path Mango inspects.
+// Errors never echo target-owned key text.
+func canonicalDottedKey(raw string) (string, error) {
+	components, err := splitDottedKey(strings.TrimSpace(raw))
+	if err != nil {
+		return "", err
 	}
-	for _, component := range strings.Split(path, ".") {
+	for index, component := range components {
 		if !validBareConfigComponent(component) {
-			return fmt.Errorf("ambiguous codex TOML dotted path; only bare components are supported")
+			components[index] = strconv.Quote(component)
 		}
 	}
-	return nil
+	return strings.Join(components, "."), nil
+}
+
+func splitDottedKey(rest string) ([]string, error) {
+	var components []string
+	for {
+		component, remainder, err := readKeyComponent(rest)
+		if err != nil {
+			return nil, err
+		}
+		components = append(components, component)
+		remainder = strings.TrimLeft(remainder, " \t")
+		if remainder == "" {
+			return components, nil
+		}
+		if remainder[0] != '.' {
+			return nil, errInvalidConfigKey
+		}
+		rest = strings.TrimLeft(remainder[1:], " \t")
+	}
+}
+
+var errInvalidConfigKey = errors.New("invalid codex TOML key")
+
+func readKeyComponent(text string) (string, string, error) {
+	switch {
+	case strings.HasPrefix(text, `"`):
+		return readBasicKeyString(text)
+	case strings.HasPrefix(text, "'"):
+		end := strings.IndexByte(text[1:], '\'')
+		if end < 0 {
+			return "", "", errInvalidConfigKey
+		}
+		return text[1 : end+1], text[end+2:], nil
+	}
+	end := strings.IndexFunc(text, func(character rune) bool { return !validBareConfigComponent(string(character)) })
+	if end < 0 {
+		end = len(text)
+	}
+	if end == 0 {
+		return "", "", errInvalidConfigKey
+	}
+	return text[:end], text[end:], nil
+}
+
+func readBasicKeyString(text string) (string, string, error) {
+	for index := 1; index < len(text); index++ {
+		switch text[index] {
+		case '\\':
+			index++
+		case '"':
+			value, err := strconv.Unquote(text[:index+1])
+			if err != nil {
+				return "", "", errInvalidConfigKey
+			}
+			return value, text[index+1:], nil
+		}
+	}
+	return "", "", errInvalidConfigKey
 }
 
 func validBareConfigComponent(component string) bool {
-	if component == "" || strings.TrimSpace(component) != component {
+	if component == "" {
 		return false
 	}
 	for _, character := range component {
@@ -432,30 +503,10 @@ func findEquals(line []byte) (int, error) {
 }
 
 func normalizeKey(raw []byte) (string, error) {
-	key := strings.TrimSpace(string(raw))
-	if key == "" {
+	if strings.TrimSpace(string(raw)) == "" {
 		return "", fmt.Errorf("codex TOML key is empty")
 	}
-	if strings.Contains(key, ".") {
-		if err := validateDottedConfigPath(key); err != nil {
-			return "", err
-		}
-		return key, nil
-	}
-	if len(key) >= 2 && key[0] == '"' && key[len(key)-1] == '"' {
-		decoded, err := strconv.Unquote(key)
-		if err != nil {
-			return "", fmt.Errorf("invalid Codex TOML quoted key: %w", err)
-		}
-		return decoded, nil
-	}
-	if len(key) >= 2 && key[0] == '\'' && key[len(key)-1] == '\'' {
-		return key[1 : len(key)-1], nil
-	}
-	if !validBareConfigComponent(key) {
-		return "", fmt.Errorf("invalid codex TOML key")
-	}
-	return key, nil
+	return canonicalDottedKey(string(raw))
 }
 
 func skipValueSpace(data []byte, offset, lineEnd int) int {
