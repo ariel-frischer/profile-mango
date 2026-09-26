@@ -221,8 +221,8 @@ mango use <profile-name>            # add --apply --yes --expect-plan <id>
 
 `mango use` only covers agents already managed (see `status`). To bring a new
 agent under a profile, first run `mango install <profile> --default --target
-<name>`. Known blocker: an OpenCode default install accepts exactly one skill
-resource; install the other targets with `--target`.
+<name>`. An OpenCode default install copies at most one skill; with more it
+lists skills as not installed.
 
 ## Safety boundary
 

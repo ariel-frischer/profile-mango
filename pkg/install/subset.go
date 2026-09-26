@@ -59,6 +59,18 @@ type requirementSupporter interface {
 	SupportedRequirements(agent AgentDestination, setsDefault bool) []string
 }
 
+// skillLimiter lets an adapter cap how many skills it installs.
+type skillLimiter interface{ MaxSkills() int }
+
+// skillLimitReason explains why count skills exceed the adapter's limit, or "".
+func skillLimitReason(adapter Adapter, count int) string {
+	limiter, ok := adapter.(skillLimiter)
+	if !ok || count <= limiter.MaxSkills() {
+		return ""
+	}
+	return fmt.Sprintf("installs at most %d skill; this profile has %d", limiter.MaxSkills(), count)
+}
+
 func supportsRequirement(adapter Adapter, agent AgentDestination, setsDefault bool, name string) bool {
 	supporter, ok := adapter.(requirementSupporter)
 	return ok && slices.Contains(supporter.SupportedRequirements(agent, setsDefault), name)
@@ -82,10 +94,14 @@ func supportedSubset(adapter Adapter, agent AgentDestination, setsDefault bool, 
 		resources = withoutResourceKind(resources, "instruction")
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementInstructions, Count: count})
 	}
-	if count := len(profile.Skills); count > 0 && !supportsRequirement(adapter, agent, setsDefault, RequirementSkills) {
-		profile.Skills = nil
-		resources = withoutResourceKind(resources, "skill")
-		skipped = append(skipped, SkippedRequirement{Requirement: RequirementSkills, Count: count})
+	if count := len(profile.Skills); count > 0 {
+		supported := supportsRequirement(adapter, agent, setsDefault, RequirementSkills)
+		reason := skillLimitReason(adapter, count)
+		if !supported || reason != "" {
+			profile.Skills = nil
+			resources = withoutResourceKind(resources, "skill")
+			skipped = append(skipped, SkippedRequirement{Requirement: RequirementSkills, Count: count, Reason: reason})
+		}
 	}
 	return profile, resources, skipped
 }

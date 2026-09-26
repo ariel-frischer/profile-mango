@@ -109,7 +109,8 @@ The evidence behind every row is in the developer
 - **`--default` also writes:** the top-level `model` (as `provider/model`)
   in `opencode.json`, plus, if the profile has exactly one skill, a
   `SKILL.md` copied next to the config with that folder added to
-  `skills.paths`. Skills are a directory-wide setting in OpenCode, not
+  `skills.paths`. A profile with more skills lists them as not installed
+  (`--strict` blocks). Skills are a directory-wide setting in OpenCode, not
   per-agent, which is why they only install alongside `--default`. Removing
   the skill from the profile later removes only an unchanged skill file
   profile-mango created; other skills in that folder can still be found, so
