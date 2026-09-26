@@ -7,16 +7,16 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// profileFileSuffix names the Codex 0.154.0 profile layer that `codex --profile <name>`
+// profileFileSuffix names the Codex 0.157.1 profile layer that `codex --profile <name>`
 // reads from $CODEX_HOME/<name>.config.toml on top of config.toml.
 const profileFileSuffix = ".config.toml"
 
-var errLegacyProfileSelector = errors.New("codex config contains a legacy profile = setting, which Codex 0.154.0 refuses to start with; remove it before installing")
+var errLegacyProfileSelector = errors.New("codex config contains a legacy profile = setting, which Codex 0.157.1 refuses to start with; remove it before installing")
 
 // ProfileFileName returns the profile file name, relative to the Codex home.
 func ProfileFileName(name string) string { return name + profileFileSuffix }
 
-// ValidProfileName mirrors the Codex 0.154.0 --profile name rule: ASCII letters, digits, '_' and '-'.
+// ValidProfileName mirrors the Codex 0.157.1 --profile name rule: ASCII letters, digits, '_' and '-'.
 func ValidProfileName(name string) bool {
 	if name == "" {
 		return false
@@ -59,7 +59,7 @@ func checkBaseValues(config map[string]any, name string) error {
 	}
 	if profiles, ok := config["profiles"].(map[string]any); ok {
 		if _, found := profiles[name]; found {
-			return fmt.Errorf("codex config contains a legacy [profiles.%s] table, which Codex 0.154.0 refuses to combine with --profile %s; move or remove it before installing", name, name)
+			return fmt.Errorf("codex config contains a legacy [profiles.%s] table, which Codex 0.157.1 refuses to combine with --profile %s; move or remove it before installing", name, name)
 		}
 	}
 	providers, _ := config["model_providers"].(map[string]any)

@@ -13,7 +13,7 @@ import (
 // openai provider the default route install also qualifies.
 const RoleProvider = "openai"
 
-// RoleFile is one portable role rendered as a rust-v0.154.0 agent role file,
+// RoleFile is one portable role rendered as a rust-v0.157.1 agent role file,
 // discovered from <config dir>/agents/*.toml (codex-rs/agent-roles/src/loader.rs
 // discover_agent_roles_in_dir). Model and Effort are empty when the role inherits.
 type RoleFile struct {

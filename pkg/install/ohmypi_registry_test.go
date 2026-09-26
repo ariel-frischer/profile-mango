@@ -10,7 +10,7 @@ func TestDefaultRegistryOhMyPiQualification(t *testing.T) {
 	}{
 		"qualified exact version": {Target{"oh-my-pi", "18.2.6"}, true, true},
 		"unknown version":         {Target{"oh-my-pi", "18.2.7"}, false, false},
-		"Codex settings-only":     {Target{"codex", "0.154.0"}, true, true},
+		"Codex settings-only":     {Target{"codex", "0.157.1"}, true, true},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

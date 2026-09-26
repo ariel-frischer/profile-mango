@@ -280,7 +280,7 @@ func TestNonInteractiveFlagIsGlobal(t *testing.T) {
 }
 
 func TestNonInteractiveInstallStillRequiresExplicitConsent(t *testing.T) {
-	_, err := executeCommandResult(t, "--non-interactive", "install", "route-only", "--target", "codex@0.154.0", "--apply")
+	_, err := executeCommandResult(t, "--non-interactive", "install", "route-only", "--target", "codex@0.157.1", "--apply")
 	if err == nil || !strings.Contains(err.Error(), "--non-interactive apply requires --yes --expect-plan") {
 		t.Fatalf("error = %v, want explicit consent error", err)
 	}

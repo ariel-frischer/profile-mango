@@ -53,11 +53,11 @@ func TestCompactInstallWarningAndPathStyles(t *testing.T) {
 			t.Setenv("NO_COLOR", test.noColor)
 			t.Setenv("TERM", test.term)
 			var output bytes.Buffer
-			target := install.TargetPlan{Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+			target := install.TargetPlan{Target: install.Target{Name: "codex", Version: "0.157.1"}, Status: install.StatusReady,
 				Config:              &install.ConfigDestination{Path: "/sandbox/config.toml"},
 				Files:               []install.FilePlan{{Path: "profile.toml", Action: install.ActionCreate}},
 				SkippedRequirements: []install.SkippedRequirement{{Requirement: "tools"}},
-				VersionCheck:        &install.VersionCheck{Status: install.VersionOutOfRange, Detected: "0.155.0", Range: ">=0.154.0 <0.155.0"}}
+				VersionCheck:        &install.VersionCheck{Status: install.VersionOutOfRange, Detected: "0.155.0", Range: ">=0.157.1 <0.158.0"}}
 			if err := writeCompactTarget(&output, target, newOutputStyles(test.enabled)); err != nil {
 				t.Fatal(err)
 			}

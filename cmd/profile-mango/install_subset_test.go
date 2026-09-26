@@ -25,7 +25,7 @@ func subsetSandbox(t *testing.T) installOptions {
 func TestInstallListsSkippedRequirementsAndPlansReady(t *testing.T) {
 	options := subsetSandbox(t)
 	output := runInstallForTest(t, options)
-	want := "  codex@0.154.0: ready | destination:"
+	want := "  codex@0.157.1: ready | destination:"
 	skipped := "    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n"
 	if !strings.Contains(output, want) || !strings.Contains(output, skipped) {
 		t.Fatalf("subset plan must be ready and list skips:\n%s", output)
@@ -47,7 +47,7 @@ func TestInstallStrictBlocksUnsupportedRequirements(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "install plan is blocked") {
 		t.Fatalf("strict install error = %v\n%s", err, output)
 	}
-	if !strings.Contains(output, "codex@0.154.0: blocked") || strings.Contains(output, "not installed for this agent") {
+	if !strings.Contains(output, "codex@0.157.1: blocked") || strings.Contains(output, "not installed for this agent") {
 		t.Fatalf("strict plan must block without listing skips:\n%s", output)
 	}
 }

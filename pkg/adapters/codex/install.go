@@ -91,7 +91,7 @@ func validateInstallRoute(route profilemango.RouteBinding) (map[string]string, e
 	}, nil
 }
 
-// installEfforts are the model_reasoning_effort values rust-v0.154.0
+// installEfforts are the model_reasoning_effort values rust-v0.157.1
 // (codex-rs/protocol/src/openai_models.rs ReasoningEffort::from_str) parses as named
 // variants and that the install qualifies. Whether a given model accepts a level
 // remains model-dependent and unverified.

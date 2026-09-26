@@ -281,7 +281,7 @@ func ExampleFormatText() {
 			Name:          "Codex",
 			ProductStatus: "candidate",
 			VersionContext: map[string]json.RawMessage{
-				"version": json.RawMessage(`"0.154.0"`),
+				"version": json.RawMessage(`"0.157.1"`),
 			},
 			Sources: []SourceReport{{
 				URL:            "https://example.test/schema.json",
@@ -299,7 +299,7 @@ func ExampleFormatText() {
 	// Output:
 	// manifest: docs/dev/agents/sources.json
 	// retrieved_at: 2026-09-20
-	// target: codex (Codex) product_status=candidate version_context=version="0.154.0"
+	// target: codex (Codex) product_status=candidate version_context=version="0.157.1"
 	//   source: https://example.test/schema.json kind=mutable_unversioned_schema category=schema state=unchanged
 	//     recommendation: No source refresh is indicated; this does not establish target compatibility.
 	// summary: unchanged=1 changed=0 unversioned=0 unavailable=0 relocated=0 not_checked=0

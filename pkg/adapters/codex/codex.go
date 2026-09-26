@@ -10,12 +10,12 @@ import (
 
 const (
 	TargetName          = "codex"
-	TargetVersion       = "0.154.0"
+	TargetVersion       = "0.157.1"
 	CodexVersion        = TargetVersion
 	AdapterVersion      = "profilemango.dev/codex/v1alpha1"
 	RenderAPIVersion    = render.APIVersion
 	RenderKind          = render.Kind
-	EvidenceSHA256      = "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"
+	EvidenceSHA256      = "3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970"
 	CodexEvidenceSHA256 = EvidenceSHA256
 	EvidenceSource      = "docs/dev/target-evidence.md"
 	EvidenceLevel       = "native-config-parsing"

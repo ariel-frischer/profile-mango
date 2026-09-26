@@ -53,13 +53,13 @@ func TestInstallReportsInstalledAgentVersion(t *testing.T) {
 		want    []string
 		absent  string
 	}{
-		"in range": {scripts: map[string]string{"codex": "echo 'codex-cli 0.154.3'"}, status: install.VersionInRange,
-			want: []string{"    installed version: 0.154.3 (in tested range >=0.154.0 <0.155.0)\n"}, absent: "warning: installed codex"},
+		"in range": {scripts: map[string]string{"codex": "echo 'codex-cli 0.157.3'"}, status: install.VersionInRange,
+			want: []string{"    installed version: 0.157.3 (in tested range >=0.157.1 <0.158.0)\n"}, absent: "warning: installed codex"},
 		"out of range": {scripts: map[string]string{"codex": "echo 'codex-cli 0.155.1'"}, status: install.VersionOutOfRange,
-			want: []string{"    installed version: 0.155.1 (outside tested range >=0.154.0 <0.155.0)\n",
-				"    warning: installed codex 0.155.1 is outside the tested range >=0.154.0 <0.155.0; settings are written for 0.154.0 and may not be honored\n"}},
+			want: []string{"    installed version: 0.155.1 (outside tested range >=0.157.1 <0.158.0)\n",
+				"    warning: installed codex 0.155.1 is outside the tested range >=0.157.1 <0.158.0; settings are written for 0.157.1 and may not be honored\n"}},
 		"not found": {scripts: nil, status: install.VersionNotFound,
-			want: []string{"    installed version: codex not found on PATH\n", "    warning: codex not found on PATH; installing settings for 0.154.0\n"}},
+			want: []string{"    installed version: codex not found on PATH\n", "    warning: codex not found on PATH; installing settings for 0.157.1\n"}},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -92,7 +92,7 @@ func TestInstallShowsVersionProbeProgressWithoutPollutingJSON(t *testing.T) {
 	installVersionDetector = func(target install.Target) install.VersionDetection {
 		close(started)
 		<-release
-		return install.VersionDetection{Binary: target.Name, Found: true, Output: "codex-cli 0.154.0"}
+		return install.VersionDetection{Binary: target.Name, Found: true, Output: "codex-cli 0.157.1"}
 	}
 	t.Cleanup(func() { installVersionDetector = original })
 	options := codexVersionInstallOptions(t, true)
@@ -135,7 +135,7 @@ func assertPlanVersionStatus(t *testing.T, data, status string) {
 		t.Fatalf("decode plan: %v\n%s", err, data)
 	}
 	check := plan.Targets[0].VersionCheck
-	if plan.Status != install.StatusReady || check == nil || check.Status != status || check.Range != ">=0.154.0 <0.155.0" || check.Binary != "codex" {
+	if plan.Status != install.StatusReady || check == nil || check.Status != status || check.Range != ">=0.157.1 <0.158.0" || check.Binary != "codex" {
 		t.Fatalf("plan JSON version check = %#v (plan status %s)", check, plan.Status)
 	}
 }

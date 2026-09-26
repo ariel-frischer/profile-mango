@@ -11,7 +11,7 @@ import (
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-// Codex rust-v0.154.0 discovers <config dir>/agents/**/*.toml role files
+// Codex rust-v0.157.1 discovers <config dir>/agents/**/*.toml role files
 // (codex-rs/agent-roles/src/loader.rs, discovery.rs); see docs/dev/agents/codex.md.
 func (codexAdapter) roleFilePath(role string) string { return "agents/" + role + ".toml" }
 

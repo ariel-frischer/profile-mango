@@ -108,7 +108,7 @@ func runExampleInstall(t *testing.T, binary, repoRoot string, env, args []string
 func publicTargetVersions() map[string]string {
 	return map[string]string{
 		"claude-code": "2.1.278",
-		"codex":       "0.154.0",
+		"codex":       "0.157.1",
 		"hermes":      "0.21.3",
 		"oh-my-pi":    "18.2.6",
 		"openclaw":    "2026.9.5",

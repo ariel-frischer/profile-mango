@@ -24,8 +24,8 @@ const (
 	nativeSourceFixtureEnv     = "PROFILE_MANGO_CODEX_SOURCE_FIXTURE"
 	nativeSourceTestFilter     = "config::tests::load_profile_mango_route_fixture_into_effective_config"
 	nativeDynamicModel         = "profile-mango-dynamic-model"
-	nativeSourceCommit         = "6b9826e3aa83b1a5947db50f4332cb9c65f1b340"
-	nativeSourceArchiveSHA256  = "848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4"
+	nativeSourceCommit         = "36650394c5b38c2990ccf2a3457165ca3e9d9726"
+	nativeSourceArchiveSHA256  = "392ac15292437f4163fc6b05cdcc53e80cdc15f88459fd969673e6ac717d7af5"
 	nativeSourceFixtureSHA256  = "f3e634765552aa50cb6a42045536ff5808237af2bf9fcc8c01adb0f789f20fd3"
 )
 

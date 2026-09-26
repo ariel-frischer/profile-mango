@@ -16,13 +16,13 @@ import (
 func TestCompactInstallGolden(t *testing.T) {
 	plan := install.Plan{PlanID: "example-id", Status: install.StatusReady, Targets: []install.TargetPlan{
 		{Target: install.Target{Name: "zeta", Version: "1"}, Status: install.StatusBlocked, Reason: "not qualified"},
-		{Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady, Reason: "long adapter evidence caveat", Config: &install.ConfigDestination{Path: "/sandbox/config.toml"}, Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"}, Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}, {Path: "config.secret", Before: "secret", After: "changed", Sensitive: true}}, Files: []install.FilePlan{{Path: "/sandbox/demo.toml", Action: install.ActionCreate}}, SkippedRequirements: []install.SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}, {Requirement: "skills", Count: 1}}, Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning, Code: "codex.install.auth_unmanaged", Message: "Authentication remains target-owned; check it locally."}}},
+		{Target: install.Target{Name: "codex", Version: "0.157.1"}, Status: install.StatusReady, Reason: "long adapter evidence caveat", Config: &install.ConfigDestination{Path: "/sandbox/config.toml"}, Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"}, Fields: []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}, {Path: "config.secret", Before: "secret", After: "changed", Sensitive: true}}, Files: []install.FilePlan{{Path: "/sandbox/demo.toml", Action: install.ActionCreate}}, SkippedRequirements: []install.SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}, {Requirement: "skills", Count: 1}}, Diagnostics: profilemango.Diagnostics{{Severity: profilemango.SeverityWarning, Code: "codex.install.auth_unmanaged", Message: "Authentication remains target-owned; check it locally."}}},
 	}}
 	var output bytes.Buffer
 	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
 		t.Fatal(err)
 	}
-	const golden = "plan example-id (ready)\n  codex@0.154.0: ready | destination: /sandbox/demo.config.toml | use it: codex --profile demo\n    route: model gpt-test, effort high | changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n    files: /sandbox/demo.toml create\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 conflict, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	const golden = "plan example-id (ready)\n  codex@0.157.1: ready | destination: /sandbox/demo.config.toml | use it: codex --profile demo\n    route: model gpt-test, effort high | changes: secret \"<redacted>\" -> \"<redacted>\", model \"\" -> \"gpt-test\", effort \"\" -> \"high\"\n    files: /sandbox/demo.toml create\n    not installed for this agent: permissions, tools, instructions (2 files), skills (1)\n  zeta@1: blocked (not qualified)\nSummary: 1 ready, 0 unchanged, 1 blocked, 0 conflict, 0 skipped; files: 1 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
 	if output.String() != golden {
 		t.Fatalf("compact golden mismatch:\n%s", output.String())
 	}
@@ -57,12 +57,12 @@ func TestCompactInstallGolden(t *testing.T) {
 }
 
 func TestCompactUndoGoldenAndVerbose(t *testing.T) {
-	plan := install.RestorePlan{PlanID: "undo-id", OriginalPlanID: "install-id", Target: "codex@0.154.0", Status: "ready", Files: []install.RestoreFile{{Path: "/sandbox/config.toml", Action: "update", BeforeSHA256: "old", AfterSHA256: "new", Diff: "--- before\n+++ after\n@@ -1 +1 @@\n-old\n+new\n"}}}
+	plan := install.RestorePlan{PlanID: "undo-id", OriginalPlanID: "install-id", Target: "codex@0.157.1", Status: "ready", Files: []install.RestoreFile{{Path: "/sandbox/config.toml", Action: "update", BeforeSHA256: "old", AfterSHA256: "new", Diff: "--- before\n+++ after\n@@ -1 +1 @@\n-old\n+new\n"}}}
 	var output bytes.Buffer
 	if err := writeRestorePlan(commandOutput(&output), plan, false, false); err != nil {
 		t.Fatal(err)
 	}
-	const golden = "undo plan undo-id (ready), original install install-id\n  target: codex@0.154.0\n  update /sandbox/config.toml\n    --- before\n    +++ after\n    @@ -1 +1 @@\n    -old\n    +new\n"
+	const golden = "undo plan undo-id (ready), original install install-id\n  target: codex@0.157.1\n  update /sandbox/config.toml\n    --- before\n    +++ after\n    @@ -1 +1 @@\n    -old\n    +new\n"
 	if output.String() != golden {
 		t.Fatalf("undo golden mismatch:\n%s", output.String())
 	}
@@ -94,7 +94,7 @@ func TestCompactWarningsAndUndoHint(t *testing.T) {
 		t.Fatalf("duplicate warning or ANSI in non-TTY output: %s", output.String())
 	}
 	output.Reset()
-	undo := install.RestorePlan{Target: "codex@0.154.0", PlanID: "undo-id"}
+	undo := install.RestorePlan{Target: "codex@0.157.1", PlanID: "undo-id"}
 	options := restoreOptions{config: "/sandbox/a b.toml", originalPlan: "original"}
 	if err := writeUndoHint(&output, undo, options); err != nil {
 		t.Fatal(err)
@@ -218,7 +218,7 @@ func TestCompactConflictGolden(t *testing.T) {
 
 func TestTypicalReadyTargetFitsThreeLines(t *testing.T) {
 	plan := install.Plan{PlanID: "ready-id", Status: install.StatusReady, Targets: []install.TargetPlan{{
-		Target: install.Target{Name: "codex", Version: "0.154.0"}, Status: install.StatusReady,
+		Target: install.Target{Name: "codex", Version: "0.157.1"}, Status: install.StatusReady,
 		Config:  &install.ConfigDestination{Path: "/sandbox/config.toml"},
 		Install: &install.InstallMode{Mode: install.InstallModeNamedProfile, ProfileName: "demo", UseCommand: "codex --profile demo"},
 		Fields:  []install.FieldChange{{Path: "demo.config.model", After: "gpt-test"}, {Path: "demo.config.model_reasoning_effort", After: "high"}},
