@@ -196,7 +196,8 @@ name and leave the agent's default settings alone; the plan prints
 from `~/.openclaw-<profile-name>/openclaw.json`; Claude Code, which has no native
 profiles: `claude --settings ~/.claude/profiles/<profile-name>.json`; OpenCode:
 `opencode --agent <profile-name>`, from `agents/<profile-name>.md` beside `opencode.json`;
-Hermes: `hermes -p <profile-name>`, from `<hermes-home>/profiles/<profile-name>/config.yaml`).
+Hermes: `hermes -p <profile-name>`, from `<hermes-home>/profiles/<profile-name>/config.yaml`;
+Oh My Pi, emulated: `omp --config ~/.omp/agent/profiles/<profile-name>.yml`).
 Add `--default` to also write the agent's default settings. Agents without
 profiles are installed as their default settings, with a plan note saying so.
 Without `--config`, plans use the target's documented default config path.

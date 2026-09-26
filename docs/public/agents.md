@@ -30,7 +30,7 @@ another agent is billed. A successful reply still does not prove its billing rou
 | [Hermes](#hermes) | Inspect `~/.hermes/profiles/<profile>/config.yaml`. Verify sign-in for that profile, CLI/environment overrides and provider fallbacks, then the account's billing. The default profile's credentials are not copied. |
 | [Claude Code](#claude-code) | Check the plan's `--settings` path, other active settings layers, the agent's login method and account billing. Mango installs only the model and effort. |
 | [Pi](#pi) | Check global and project settings for the effective provider/model, then the agent's active credentials and provider billing. Project settings can win. |
-| [Oh My Pi](#oh-my-pi) | Check the default model role and any other role selected for the test, then active credentials and provider billing. |
+| [Oh My Pi](#oh-my-pi) | Inspect `profiles/<profile>.yml` and use `omp --config <path>`. Check the default model role and any other role selected for the test, then active credentials and provider billing. |
 
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
@@ -152,18 +152,25 @@ The evidence behind every row is in the developer
 - **Installs:** `modelRoles.default` as `provider/model:effort`, plus the
   model slots of each bound portable role (`worker`: `task`; `planner`:
   `plan`, `slow`; `research`: `smol`; `tiny`: `tiny`, `commit`), and
-  `task.maxEffort` from `subagentMaxEffort`, in `config.yml`. Effort stays on
-  each selector; `defaultThinkingLevel`, which applies to models you pick by
-  hand, is left alone.
-- **Roles:** each profile role becomes `~/.omp/agent/agents/<role>.md`, whose
-  `model: "@<slot>"` resolves the slot above, so model and effort come from
-  `config.yml`.
+  `task.maxEffort` from `subagentMaxEffort`, in an emulated named profile:
+  the overlay `~/.omp/agent/profiles/<profile>.yml`. Start it with
+  `omp --config <path>`, printed by the plan as `use it:`. `config.yml` is not
+  changed unless you pass `--default`, which also writes these there so plain
+  `omp` uses them. Effort stays on each selector; `defaultThinkingLevel`, which
+  applies to models you pick by hand, is left alone. Native `omp --profile`
+  moves sign-in and sessions too, so it is not used.
+- **Roles:** with `--default` or `mango use`, each profile role becomes
+  `~/.omp/agent/agents/<role>.md`, whose `model: "@<slot>"` resolves the slot
+  above, so model and effort come from the active config.
 - **Global instructions:** `globalInstructions` can own `AGENTS.md` and
-  `RULES.md` in `~/.omp/agent`; Oh My Pi has no named profiles, so every
-  install writes them.
-- **Caveats:** unbound model slots and provider options are left alone. A slot
-  or `task.maxEffort` a later profile no longer sets gets its pre-install value
-  back, or is removed if profile-mango added it.
+  `RULES.md` in `~/.omp/agent`, written with `mango use` or `--default`.
+- **Caveats:** the overlay wins over global and project config; slots it does
+  not set still come from them, and command-line `--model`/`--thinking` still
+  win. Omp refuses to start if the `--config` file is missing, so undoing the
+  profile breaks aliases that point at it. Unbound model slots and provider
+  options are left alone. In `config.yml`, a slot or `task.maxEffort` a later
+  profile no longer sets gets its pre-install value back, or is removed if
+  profile-mango added it.
 - [Reference](../dev/agents/oh-my-pi.md)
 
 ## OpenClaw

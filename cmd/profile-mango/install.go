@@ -547,7 +547,7 @@ func writeCompactRoute(output io.Writer, target install.TargetPlan) error {
 			path = strings.TrimPrefix(path, target.Install.ProfileName+".")
 		}
 		switch path {
-		case "config.modelRoles.default":
+		case "config.modelRoles.default", "profile.modelRoles.default":
 			model, effort = ohmypi.SplitRoleSelector(field.After)
 		case "profile.model", "agent.model", "config.model", "config.model.default", "config.defaultModel", "config.agents.defaults.model.primary":
 			model = field.After
@@ -657,7 +657,7 @@ func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{},
 
 func semanticFieldLabel(path string) string {
 	name := path[strings.LastIndex(path, ".")+1:]
-	if strings.HasPrefix(path, "config.modelRoles.") && name != "default" {
+	if (strings.HasPrefix(path, "config.modelRoles.") || strings.HasPrefix(path, "profile.modelRoles.")) && name != "default" {
 		return "role " + name
 	}
 	switch name {

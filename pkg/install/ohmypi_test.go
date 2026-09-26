@@ -29,10 +29,10 @@ func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {
 	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionOverride {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if got := fieldPaths(plan.Targets[0].Fields); got != "config.modelRoles.default" {
+	if got := fieldPaths(plan.Targets[0].Fields); got != "config.modelRoles.default,profile.modelRoles.default" {
 		t.Fatalf("fields = %s", got)
 	}
-	if len(plan.Targets[0].Files) != 2 {
+	if len(plan.Targets[0].Files) != 3 {
 		t.Fatalf("files = %#v", plan.Targets[0].Files)
 	}
 
@@ -108,6 +108,7 @@ func TestOhMyPiInstallRolesPreservesUnrelatedKeysAndUndoes(t *testing.T) {
 
 func TestOhMyPiRolePlanReportsEveryRoleField(t *testing.T) {
 	request, _ := ohMyPiTestRequest(t)
+	request.Default = false
 	writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
 	request.Strict = true
 	plan, err := BuildPlan(request)
@@ -123,14 +124,14 @@ func TestOhMyPiRolePlanReportsEveryRoleField(t *testing.T) {
 		after[field.Path] = field.After
 	}
 	want := map[string]string{
-		"config.modelRoles.default": "anthropic/claude-opus-5-5:medium",
-		"config.modelRoles.commit":  "opencode-go/glm-5.3-flash:low",
-		"config.modelRoles.plan":    "anthropic/claude-opus-5-5:high",
-		"config.modelRoles.slow":    "anthropic/claude-opus-5-5:high",
-		"config.modelRoles.smol":    "opencode-go/gpt-6-luna:high",
-		"config.modelRoles.task":    "anthropic/claude-opus-5-5:medium",
-		"config.modelRoles.tiny":    "opencode-go/glm-5.3-flash:low",
-		"config.task.maxEffort":     "high",
+		"profile.modelRoles.default": "anthropic/claude-opus-5-5:medium",
+		"profile.modelRoles.commit":  "opencode-go/glm-5.3-flash:low",
+		"profile.modelRoles.plan":    "anthropic/claude-opus-5-5:high",
+		"profile.modelRoles.slow":    "anthropic/claude-opus-5-5:high",
+		"profile.modelRoles.smol":    "opencode-go/gpt-6-luna:high",
+		"profile.modelRoles.task":    "anthropic/claude-opus-5-5:medium",
+		"profile.modelRoles.tiny":    "opencode-go/glm-5.3-flash:low",
+		"profile.task.maxEffort":     "high",
 	}
 	if !reflect.DeepEqual(after, want) {
 		t.Fatalf("fields = %v, want %v", after, want)
@@ -256,7 +257,8 @@ func ohMyPiTestRequest(t *testing.T) (Request, string) {
     model: gpt-5.6
     effort: high
 `)
-	request.Override = true
+	// Most tests here cover the config.yml patch, which only --default writes.
+	request.Override, request.Default = true, true
 	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.2.6"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}
 	if err := os.MkdirAll(filepath.Dir(request.Targets[0].ConfigPath), 0o755); err != nil {
 		t.Fatal(err)

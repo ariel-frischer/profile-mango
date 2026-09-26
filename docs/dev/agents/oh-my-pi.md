@@ -195,6 +195,39 @@ agent file never repeats them. Ownership and the named-only `role-definitions`
 skip match Codex and OpenCode. Evidence level: source review plus sandbox
 install tests; no native probe of agent discovery was run.
 
+## Named profile overlay
+
+`mango install <name> --target oh-my-pi` writes a Mango-owned whole file,
+`profiles/<name>.yml` beside `config.yml`, holding the same `modelRoles`
+selectors and `task.maxEffort` the default install writes, and prints
+`use it: omp --config <path>`. `config.yml` stays byte-identical unless
+`--default` is also given, which patches it as above. Undo removes the overlay
+or restores its previous bytes. Native `--profile` is not used: it relocates
+the agent home, including `auth.json` and sessions
+(`packages/coding-agent/src/cli/profile-bootstrap.ts:77-229`,
+`packages/utils/src/dirs.ts:110-132`).
+
+Pinned source, `78b753124d11f8dd3ae73e2524125890ff7c977e`:
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| `--config <file>` is repeatable and handed to settings init | `packages/coding-agent/src/cli/flag-tables.ts` (`934b82db61b5567defebbf98f42a81e53615210fb89d175feb4e8343fd98a27b`): 117-119; `packages/coding-agent/src/main.ts` (`1c4173f9b4a07b41fe4e699346a567ba44704e6cd087001b439834e35f59b55d`): 1735 |
+| Overlays resolve `~` and relative paths, deep-merge after global and project config and before runtime overrides; a missing, unparsable, or non-mapping file throws | `packages/coding-agent/src/config/settings.ts` (`b21706c954cf21c545a333aba7537212b5ce10b72370d4f49dddf1fcfd0ccfdc`): 603-605, 1957-1998, 3131-3135 |
+| The session's default model and thinking level come from the merged `modelRoles.default` | `settings.ts` 1342-1346 `getModelRole`; `packages/coding-agent/src/sdk.ts` (`566103f262f8e5dd80df2d0ea3e46b57ffe024eac7444d00be230654d2df9c64`): 1538, `pickInitialThinkingLevel` |
+
+Installed-binary observation (`omp/18.3.2`, not the pinned version; ELF
+SHA-256 `8cbbcd4bea7a7b86116a13352f31e3778fd4d93df931036bb1771738b0702534`):
+in a disposable `HOME` with `unshare -rn` (no network), an emptied environment
+and a synthetic `ANTHROPIC_API_KEY`, `config.yml` held
+`default: "anthropic/claude-sonnet-4-5:low"` and the overlay
+`default: "anthropic/claude-opus-4-5:high"`. `omp --config <overlay> --mode json
+-p hi` recorded `model_change` `anthropic/claude-opus-4-5` and
+`thinking_level_change` `high`; without `--config`, `claude-sonnet-4-5` and
+`low`. Both requests failed with a connection error, and neither file changed.
+A missing overlay path aborted startup with `Config overlay not found`.
+Evidence level: pinned source plus that newer-binary observation; slot
+consumers and `task.maxEffort` in the overlay rest on the source review above.
+
 ## Preview adapter boundary
 
 The CLI target is `oh-my-pi` with the exact version `18.2.6`. The renderer emits
