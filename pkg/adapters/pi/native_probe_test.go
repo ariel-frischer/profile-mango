@@ -46,7 +46,7 @@ if (mode === "positive") {
 func TestNativeSettingsModuleQualification(t *testing.T) {
 	packageRoot := os.Getenv("PROFILE_MANGO_PI_NATIVE_PACKAGE")
 	if packageRoot == "" {
-		t.Skip("set PROFILE_MANGO_PI_NATIVE_PACKAGE to the exact 0.86.1 package root for native qualification")
+		t.Skip("set PROFILE_MANGO_PI_NATIVE_PACKAGE to the exact "+TargetVersion+" package root for native qualification")
 	}
 	var err error
 	packageRoot, err = filepath.Abs(packageRoot)

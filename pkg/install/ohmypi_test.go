@@ -226,7 +226,7 @@ func TestOhMyPiAdapterBlocksUnverifiedRequirements(t *testing.T) {
 			if route.Provider == "" {
 				route = ohMyPiRoute()
 			}
-			_, err := (ohMyPiAdapter{}).Plan(AdapterInput{Target: Target{Name: "oh-my-pi", Version: "18.2.6"}, Profile: test.profile, Route: route})
+			_, err := (ohMyPiAdapter{}).Plan(AdapterInput{Target: Target{Name: "oh-my-pi", Version: "18.3.2"}, Profile: test.profile, Route: route})
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -259,7 +259,7 @@ func ohMyPiTestRequest(t *testing.T) (Request, string) {
 `)
 	// Most tests here cover the config.yml patch, which only --default writes.
 	request.Override, request.Default = true, true
-	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.2.6"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.3.2"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}
 	if err := os.MkdirAll(filepath.Dir(request.Targets[0].ConfigPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

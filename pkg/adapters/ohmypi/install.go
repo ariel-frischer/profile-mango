@@ -44,16 +44,13 @@ type SettingChange struct {
 	After  string
 }
 
-// BuiltInRoles are the non-default model roles defined by the pinned Oh My Pi
-// 18.2.6 source (packages/coding-agent/src/config/model-roles.ts MODEL_ROLES).
-var BuiltInRoles = []string{"advisor", "commit", "plan", "slow", "smol", "task", "tiny", "vision"}
-
-// RoleSlots maps each portable role to the Oh My Pi 18.2.6 modelRoles slots it
+// RoleSlots maps each portable role to the Oh My Pi 18.3.2 modelRoles slots it
 // sets. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
 // resolves plan (modes/interactive-mode.ts) and the reviewer agent @slow
 // (prompts/agents/reviewer.md); the scout agent uses @smol
 // (prompts/agents/scout.md); commit messages resolve commit first
-// (commit/model-selection.ts) and small utilities tiny (utils/title-generator.ts).
+// (commit/model-selection.ts) and small utilities tiny (utils/title-generator.ts;
+// the memory slot also falls back to a configured tiny, config/model-resolver.ts).
 var RoleSlots = map[string][]string{
 	profilemango.RoleWorker:   {"task"},
 	profilemango.RolePlanner:  {"plan", "slow"},
@@ -61,9 +58,9 @@ var RoleSlots = map[string][]string{
 	profilemango.RoleTiny:     {"commit", "tiny"},
 }
 
-// TaskMaxEffortSetting is the Oh My Pi 18.2.6 setting route.subagentMaxEffort
+// TaskMaxEffortSetting is the Oh My Pi 18.3.2 setting route.subagentMaxEffort
 // installs: the ceiling on the task tool's per-spawn effort hint
-// (config/settings-schema.ts "task.maxEffort", task/executor.ts).
+// (task/settings.ts "task.maxEffort", task/executor.ts).
 const TaskMaxEffortSetting = "task.maxEffort"
 
 // subagentEfforts are the values task.maxEffort accepts (THINKING_EFFORTS in

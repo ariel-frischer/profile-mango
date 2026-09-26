@@ -1,20 +1,20 @@
 # Pi configuration reference
 
-**Reference and qualification date:** 2026-09-21 UTC. **Release pin:** `v0.86.1`, commit `13cbf77df2396303013a41646bcfa77b4271ae56`. **Status:** exact-version inert preview plus a three-default settings installer. Native settings-module getters and project-over-global precedence were qualified on 2026-09-22; full startup, authentication, delivery, and enforcement remain blocked. Pi is qualified independently from [Oh My Pi](oh-my-pi.md).
+**Reference and qualification date:** 2026-09-21 UTC, requalified 2026-09-26. **Release pin:** `v0.87.1`, commit `f07218c4d4bbc12bef056a7058c3dd49dfe41abe` (originally `v0.86.1`, commit `13cbf77df2396303013a41646bcfa77b4271ae56`; see [requalification](#requalification-to-v0871-2026-09-26)). **Status:** exact-version inert preview plus a three-default settings installer. Native settings-module getters and project-over-global precedence were qualified on 2026-09-22 and re-run against the `0.87.1` package on 2026-09-26; full startup, authentication, delivery, and enforcement remain blocked. Pi is qualified independently from [Oh My Pi](oh-my-pi.md).
 
 ## Immutable release and package evidence
 
-The release tag resolved with `git ls-remote` to commit
-`13cbf77df2396303013a41646bcfa77b4271ae56`. Retrieved source archive hashes:
+The release tag `v0.87.1` resolved with `git ls-remote` to commit
+`f07218c4d4bbc12bef056a7058c3dd49dfe41abe`. Retrieved source archive hashes:
 
-- Tag archive `pi-v0.86.1.tar.gz`: SHA-256 `16d65ce53bfab1ae24d625538d434c341c4789d34b352d8c6ef699cf1d1d567d`.
-- Commit-pinned archive: SHA-256 `016d83312289ca9b8d3a9d2a5ad804b265277c659472833cfd602cdceecf3818`.
+- Tag archive `pi-v0.87.1.tar.gz`: SHA-256 `c3902f45689af9ed9c8ee225554d31a649a993b06f04ab2022bb91ed75e808dc`.
+- Commit-pinned archive: SHA-256 `f6ba24ed7e1e6dbda1844ca55c61e20e3ef21e5cc66f9eb2e0611318f6c46c15`.
 
-The immutable npm package is `@earendil-works/pi-coding-agent@0.86.1`.
+The immutable npm package is `@earendil-works/pi-coding-agent@0.87.1`.
 Its registry tarball has SHA-256
-`8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a` and
+`1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f` and
 registry integrity
-`sha512-vZBuNfJnruxZyemZ3O05V0S/Ylze08ahFTIQ1Mik++gVdOevPl89gt/Uv0U97BPAJaj9cj6Vf9rcIgKtUrd0BA==`.
+`sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==`.
 The registry integrity was recomputed from the retrieved tarball. The package
 metadata declares Node.js `>=22.19.0`, and its `bin.pi` entrypoint is
 `dist/bundle/cli.js`; the extracted entrypoint SHA-256 is
@@ -75,7 +75,7 @@ the commands are unsafe in every environment.
 
 ## Inert preview adapter boundary
 
-The `mango render --target pi --target-version 0.86.1` adapter emits a
+The `mango render --target pi --target-version 0.87.1` adapter emits a
 candidate at `preview/<profile>.settings.json.preview` using only the exact
 source-grounded `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`
 keys. It never emits authentication, API keys, auth-file data, model-store data,
@@ -93,14 +93,14 @@ qualification decision.
 
 ## Pinned sources
 
-[settings]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md
-[providers]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md
-[models]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md
-[security]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md
-[skills]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md
-[readme]: https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/README.md
-[package]: https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1
-[source]: https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent
+[settings]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/settings.md
+[providers]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/providers.md
+[models]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/models.md
+[security]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/security.md
+[skills]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/skills.md
+[readme]: https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/README.md
+[package]: https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.87.1
+[source]: https://github.com/earendil-works/pi/tree/f07218c4d4bbc12bef056a7058c3dd49dfe41abe/packages/coding-agent
 
 ## Installation qualification update, 2026-09-22
 
@@ -114,4 +114,26 @@ full authenticated runtime behavior.
 
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
-`globalInstructions.home` owns `~/AGENTS.md` through Pi: source `v0.86.1` `13cbf77`, `packages/coding-agent/src/core/resource-loader.ts:71-72,119-156` walks every ancestor of the working directory to `/`, taking each directory's first of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so `~/AGENTS.md` applies in every directory under `$HOME` unless `~/AGENTS.override.md` exists. Pi is the single owner: its manifest records the file with create-only backup, drift checks, release on `use`, and undo; plans warn that other agents share it. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+`globalInstructions.home` owns `~/AGENTS.md` through Pi: source `v0.87.1` `f07218c` (unchanged lines from `v0.86.1` `13cbf77`), `packages/coding-agent/src/core/resource-loader.ts:71-72,119-156` walks every ancestor of the working directory to `/`, taking each directory's first of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so `~/AGENTS.md` applies in every directory under `$HOME` unless `~/AGENTS.override.md` exists. Pi is the single owner: its manifest records the file with create-only backup, drift checks, release on `use`, and undo; plans warn that other agents share it. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+
+## Requalification to v0.87.1, 2026-09-26
+
+Source diff `v0.86.1..v0.87.1` (blobless clone of `earendil-works/pi`) over the
+files Mango relies on:
+
+| File (v0.87.1 SHA-256) | Result |
+| --- | --- |
+| `src/core/settings-manager.ts` (`5d1bdac20da52fdbac76d49fb9ce22d142c375e8efd5bf446bf6c047c5edac42`) | identical; the packaged `dist/core/settings-manager.js` is still `5368b155…` |
+| `src/config.ts` (`7874d7f63a62778f4281a324f99ba4faee8dc9a5c7ae80e2c531552d199257f9`) | identical (agent dir, `PI_CODING_AGENT_DIR`) |
+| `src/core/resource-loader.ts` (`60e8b49790ab7ab7997dcaa647bef5eaaabdb8273c317c72b1f9567d78e99620`) | only prompt-template diagnostics changed; context-file lines 71-72 and 119-156 identical |
+| `docs/settings.md` (`f7d55373909e38b111e8e0b002401ebf3bde7e5ef25a7597eb8a29679f431cf3`) | restructured (locations moved to new `docs/configuration.md`); still lists `defaultProvider`, `defaultModel`, `defaultThinkingLevel` and states that project settings override agent-directory settings |
+| `dist/bundle/cli.js` in the package | identical hash `e79626f2…` |
+
+Other changes (a newer xAI default model, `imageResize`/`inputLimits` in
+model config) do not touch fields Mango writes or reads. No behavioral
+difference was found for Mango's settings or `~/AGENTS.md` ownership.
+
+`TestNativeSettingsModuleQualification` was re-run with
+`PROFILE_MANGO_PI_NATIVE_PACKAGE` set to the extracted `0.87.1` tarball and
+`PROFILE_MANGO_PI_NATIVE_TARBALL` set to the tarball itself (hash checked by the
+test); both the positive/precedence and malformed-settings cases passed.

@@ -17,7 +17,7 @@ func (piAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: pi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Pi 0.86.1 settings-module consumption is qualified for three top-level route defaults",
+		Reason:         "exact Pi 0.87.1 settings-module consumption is qualified for three top-level route defaults",
 	}
 }
 

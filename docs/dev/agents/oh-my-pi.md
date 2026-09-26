@@ -1,7 +1,9 @@
 # Oh My Pi configuration reference
 
-**Reference date:** 2026-09-21. **Documentation pin:** release `v18.2.6`,
-commit `78b753124d11f8dd3ae73e2524125890ff7c977e`. **Status:** profile-mango
+**Reference date:** 2026-09-21, requalified 2026-09-26. **Documentation pin:**
+release `v18.3.2`, commit `7853b4e499936f9dcc13c9b64adb55f6b342aabf` (originally
+`v18.2.6`, commit `78b753124d11f8dd3ae73e2524125890ff7c977e`; see
+[requalification](#requalification-to-v1832-2026-09-26)). **Status:** profile-mango
 ships an inert preview renderer and, since 2026-09-22, a model-role installer
 whose `modelRoles.default` storage is qualified through exact source-native
 read-only getters; since 2026-09-25 it writes suffixed per-role selectors on
@@ -32,7 +34,8 @@ and tool diagnostics instead of claiming equivalence or enforcement.
 
 ## Exact source observation
 
-The task-owned checkout is `.external/oh-my-pi` at the exact tag and commit above.
+This section records the original `v18.2.6` qualification. The task-owned
+checkout was `.external/oh-my-pi` at the original tag and commit above.
 The frozen `bun.lock` was installed with Bun `1.3.14`. The direct source entrypoint
 was run only with `--version`, an isolated task-owned `HOME`, and a sanitized
 environment:
@@ -228,9 +231,56 @@ A missing overlay path aborted startup with `Config overlay not found`.
 Evidence level: pinned source plus that newer-binary observation; slot
 consumers and `task.maxEffort` in the overlay rest on the source review above.
 
+## Requalification to v18.3.2, 2026-09-26
+
+Tag `v18.3.2` is commit `7853b4e499936f9dcc13c9b64adb55f6b342aabf` (blobless
+clone of `can1357/oh-my-pi`, read with `git show v18.3.2:<path>`). The
+installed `omp` ELF, SHA-256
+`8cbbcd4bea7a7b86116a13352f31e3778fd4d93df931036bb1771738b0702534`, equals
+the digest of the GitHub release asset `omp-linux-x64` for `v18.3.2` (the
+release is not marked immutable). `packages/coding-agent/package.json` is
+`2d07016b28d5d866c4947b4aa273ae31dbd29655513c508d9c658d024a721830` (the new
+`EvidenceSHA256`); `bun.lock` is
+`aa191001b0daac1cc4b21a4a6be4fd613234e19958308657b56313708d9fafb1`.
+
+Every file cited above was diffed from `v18.2.6` to `v18.3.2`:
+
+| Claim | v18.3.2 source (file SHA-256) | Result |
+| --- | --- | --- |
+| `modelRoles` is a string record | `settings-schema.ts` was deleted; settings are now declared per domain. `packages/coding-agent/src/config/model-settings.ts` (`b8a89791a8c32f59fd6732e668352bdd21dba24c92e1f2f395e817c4c4d68de2`): 97 `cfgModelRoles = register({ id: "modelRoles", type: "record" })`, no `env` | unchanged |
+| Built-in roles | `packages/coding-agent/src/config/model-roles.ts` (`7a306f6445810c3361de70dc9cce799589ef0abc11b618194758c443711f479e`): 55-90 `MODEL_ROLES` | new slots `memory` (chat section, accepts tiny or chat models), `image`, `web`, `speech`, `dictation`, `judge` (kind section); earlier nine unchanged |
+| `memory` falls back to a configured `tiny` | `packages/coding-agent/src/config/model-resolver.ts` (`a4496c33782ad2bcb0529c0e88067e130b4046f37d62904e1589a986be88e597`): 1091-1109 `ROLE_CONFIGURED_FALLBACK` | new; Mango's `tiny` slot now also drives an unset `memory` |
+| `:<level>` suffix parsing, `@<role>` resolution | `packages/tui/src/overlays/model-selector.ts` (`32cf3259…`, identical); `model-resolver.ts` 1012-1038, 1261-1282 identical to the earlier 984-1010, 1225-1246 | unchanged |
+| Bare wire-tier ids imply a level | `model-resolver.ts` 852-866 `inferWireRouteThinkingLevel`, used on exact full-pattern matches (896) | new; a bare selector naming a retired wire-tier id (such as `gemini-3.8-flash-high`) now counts as an explicit level. Suffixed selectors are unaffected |
+| Default role's suffix picks the initial level | `packages/coding-agent/src/sdk.ts` (`79c3ad9645a34d82b0dde2ce6033313aa018f0810dcce5ab029e6d00e1e25c0e`): 1734, 1826 `pickInitialThinkingLevel` | unchanged logic |
+| `task.maxEffort` | `packages/coding-agent/src/task/settings.ts` (`34f0a771313071ead747961df008b519fedc785800659699e5ef3c22065cc85f`): 343-356, enum `THINKING_EFFORTS`, default `max`, no `env`; `packages/catalog/src/effort.ts` and `packages/tui/src/thinking.ts` identical | unchanged values |
+| Ceiling read only with a per-spawn hint | `packages/coding-agent/src/task/executor.ts` (`82057a1a96dfc3cd7d1a94ce3392a846467c32e7ced361f6381a9aa66b7cadc0`): 3701-3704 | unchanged; new: 3841 also passes the ceiling to the child session as `thinkingLevelCeiling`, so retry fallback cannot raise effort past it |
+| Slot consumers | `task/agents.ts` identical (54 `@task`, 68 `@smol`); `modes/interactive-mode.ts` (`19e7e4f7…`) 3972, 4000 `plan`; `prompts/agents/reviewer.md` (`35d17237…`) `@slow`; `prompts/agents/scout.md` (`04bfabcf…`) `@smol`; `commit/model-selection.ts` (`8f0b8ded…`) 46 `["commit", "smol", ...]`; `utils/title-generator.ts` (`cb637d01…`) 128 `["tiny", "commit", "smol"]` | unchanged |
+| `--config` overlays | `cli/flag-tables.ts` (`af6578ff…`) 117-119; `main.ts` (`8b303fb4…`) 1798; `config/settings.ts` (`2ae0e992e2cbd0b5c3b89a5ec08b473eba97dcf1704097ae306205d306394219`) 610-612, 2243-2287 (missing file: `Config overlay not found`), 3614-3618 `#mergeOwnLayers` global, project, overlay, runtime | unchanged order; `docs/config-usage.md` now lists a setting's declared environment variable above all layers, and neither `modelRoles` nor `task.maxEffort` declares one |
+| `getModelRole`, `setByPath` | `settings.ts` 1617-1621, 192 | unchanged |
+| Legacy `providers.tinyModel` / `memoryModel` | `settings.ts` 3171-3185 in `#migrateRawSettings` (2357), applied to each loaded layer | new; a legacy value is prepended as `local/<model>` to that layer's `tiny`/`memory` slot. Mango does not write these keys; a user's legacy key in the same file changes the effective `tiny` chain |
+| Agent frontmatter and discovery | `discovery/helpers.ts` (`946f9775…`) 280, 306-365; `task/discovery.ts` identical | unchanged |
+| Native `--profile` relocation | `cli/profile-bootstrap.ts` identical; `packages/utils/src/dirs.ts` (`a47c7f44…`) 113-135 | unchanged |
+| Global/home instruction files | `discovery/builtin.ts` (`70a3e5ec…`) 397 `RULES.md`, 917 `AGENTS.md`; `discovery/agents-md.ts` identical; `helpers.ts` 687-714 | unchanged |
+
+Installed-binary observation (the exact `v18.3.2` ELF above): the worktree's
+compiled `mango install default --target oh-my-pi --apply` in a disposable
+`HOME` wrote `profiles/default.yml` with all seven slots (`default`, `task`,
+`plan`, `slow`, `smol`, `tiny`, `commit`, each suffixed) and `task.maxEffort:
+"medium"`, leaving `config.yml` (`default` `:low`, bare `tiny`, `maxEffort:
+xhigh`) byte-identical. Under `unshare -rn` with `env -i`, `omp config list
+--json` with `PI_CONFIG_FILES=<overlay>` returned the overlay's seven slots and
+`medium`; without it, `config.yml`'s two slots and `xhigh`. `config.yml` and the
+overlay were unchanged afterwards (omp created only logs, `agent.db`, and
+extracted natives in the sandbox). `omp --config <overlay> config ...` did not
+apply the overlay to the `config` subcommand, so the overlay was supplied through
+`PI_CONFIG_FILES`, which `settings.ts` 610-612 loads before `--config` files in
+the same overlay layer. Slot consumers and the effort ceiling at spawn time rest
+on the source review above.
+
 ## Preview adapter boundary
 
-The CLI target is `oh-my-pi` with the exact version `18.2.6`. The renderer emits
+The CLI target is `oh-my-pi` with the exact version `18.3.2`. The renderer emits
 `preview/<profile>.config.yml.preview` and digest-verified resource copies that
 preserve their original relative paths.
 Every report is `applicable: false` and includes explicit blockers for:
@@ -247,17 +297,17 @@ the [target evidence ledger](../target-evidence.md) and
 [adapter architecture](../adapter-architecture.md) for the exact report and
 failure-boundary evidence.
 
-[settings]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md
-[providers]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/providers.md
-[models]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md
-[approval]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md
-[context]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/context-files.md
-[skills]: https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/skills.md
+[settings]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/settings.md
+[providers]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/providers.md
+[models]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/models.md
+[approval]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/approval-mode.md
+[context]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/context-files.md
+[skills]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/skills.md
 
 ## Global instruction files (ap-nym, 2026-09-25)
 
-`globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.2.6` `78b7531`, `packages/coding-agent/src/discovery/builtin.ts:393,913`). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+`globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.3.2` `7853b4e`, `packages/coding-agent/src/discovery/builtin.ts:397,917`; originally `v18.2.6` `78b7531` lines 393, 913). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
 
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
-`~/AGENTS.md` is read only when no repository encloses the working directory or the repository root is `$HOME`: `v18.2.6` `78b7531`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:684-711`. Oh My Pi therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+`~/AGENTS.md` is read only when no repository encloses the working directory or the repository root is `$HOME`: `v18.3.2` `7853b4e`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:687-714` (originally `v18.2.6` `78b7531`, `helpers.ts:684-711`). Oh My Pi therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

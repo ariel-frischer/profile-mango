@@ -77,7 +77,7 @@ func TestRenderTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			target := DefaultTarget()
 			if name == "unsupported-version" {
-				target.Version, target.EvidenceSHA256 = "0.86.2", "bad"
+				target.Version, target.EvidenceSHA256 = "0.87.2", "bad"
 			}
 			result := Render(Input{Profile: test.profile, Route: testRoute(), Target: target, Resources: test.resources})
 			if result.Applicable {
@@ -147,7 +147,7 @@ func TestRenderCandidateContainsOnlyExactPiSettingsKeys(t *testing.T) {
 
 func TestRenderRejectsEvidenceAndVersion(t *testing.T) {
 	target := DefaultTarget()
-	target.Version, target.EvidenceSHA256 = "0.86.2", "bad"
+	target.Version, target.EvidenceSHA256 = "0.87.2", "bad"
 	result := Render(Input{Profile: testProfile(), Route: testRoute(), Target: target})
 	if result.Applicable || !hasCode(result.Diagnostics, "pi.target.version_unsupported") || !hasCode(result.Diagnostics, "pi.version.evidence_mismatch") {
 		t.Fatalf("version/hash mismatch was not blocking: %#v", result)

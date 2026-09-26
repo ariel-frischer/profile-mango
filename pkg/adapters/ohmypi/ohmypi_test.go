@@ -69,7 +69,7 @@ func TestRenderTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			target := DefaultTarget()
 			if name == "unsupported-version" {
-				target.Version = "18.2.7"
+				target.Version = "18.3.3"
 				target.EvidenceSHA256 = "bad"
 			}
 			result := Render(Input{Profile: test.profile, Route: testRoute(), Target: target, Resources: test.resources})
