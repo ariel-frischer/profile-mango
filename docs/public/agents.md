@@ -32,6 +32,23 @@ another agent is billed. A successful reply still does not prove its billing rou
 | [Pi](#pi) | Check global and project settings for the effective provider/model, then the agent's active credentials and provider billing. Project settings can win. |
 | [Oh My Pi](#oh-my-pi) | Inspect `profiles/<profile>.yml` and use `omp --config <path>`. Check the default model role and any other role selected for the test, then active credentials and provider billing. |
 
+To confirm the files match the profile without calling a model, repeat the
+install without `--apply`: `unchanged` means the installed files match the plan,
+not that an agent used that route. After the checks above, a minimal live test
+for a profile named `sol-daily`:
+
+```bash
+codex --profile sol-daily
+opencode run --agent sol-daily "Reply with exactly OK."
+hermes -p sol-daily -z "Reply with exactly OK."
+openclaw --profile sol-daily agent --local --message "Reply with exactly OK." --timeout 30
+```
+
+Each prompt makes a model call and may create a session. A reply does not
+prove which model served it; check the agent's own model or session details, and
+do not override model or thinking while testing. An effort an agent cannot
+apply shows in the plan as `effort <value>: NOT APPLIED`.
+
 | Agent | Tested version | Tested range | Default config path |
 | --- | --- | --- | --- |
 | Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/profiles/<profile>.json` next to `~/.claude/settings.json` |

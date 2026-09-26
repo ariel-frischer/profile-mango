@@ -3,6 +3,7 @@
 ## User docs
 
 - [`public/concepts.md`](public/concepts.md) - Profiles, bindings, routes, and target overrides; what install writes, skips, backs up, and undoes; tested version ranges.
+- [`public/cli.md`](public/cli.md) - Shared command-line behavior: plans and consent, target selection, route edits, output, and the command alias.
 - [`public/profile-reference.md`](public/profile-reference.md) - Every profile and bindings field, inheritance rules, defaults, `targets` overrides, and the older wrapped format.
 - [`public/agents.md`](public/agents.md) - Per-agent cost/authentication preflight, installed settings, default paths, tested versions and ranges, and caveats.
 - [`../examples/README.md`](../examples/README.md) - Three credential-free workflow profiles (coding, review, docs-research) with original instructions, skills, and a `targets`-override binding example.
