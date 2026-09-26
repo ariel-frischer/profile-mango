@@ -1,6 +1,6 @@
 # profile-mango 🥭
 
-**Set up your coding agents once: one profile, installed into Claude Code, Codex, OpenCode, and more.**
+**A CLI that sets up all your coding agents from one profile: models, effort, and instructions, installed into Claude Code, Codex, OpenCode, and more.**
 
 Choose your models and effort in one place. `mango` writes them into each
 agent's own config, usually as a named profile you can switch to. It shows you
