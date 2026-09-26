@@ -42,7 +42,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - install and doctor check the installed agent version against a tested range and warn outside it
 - Bindings routes accept an optional roles map (role -> provider/model/effort); Oh My Pi installs one modelRoles selector per role with its effort suffix and no longer rewrites the global defaultThinkingLevel; other agents list roles as skipped (--strict blocks)
 - mango use <profile> switches every managed agent to a profile in one plan (installs it as default and gives back files the previous profile owned that the new one does not, including dropped Oh My Pi roles), and mango status shows each agent's managed profile and whether owned files are in sync, edited, or missing; both keep the plan, backup, drift, and --expect-plan gates
-- Profiles accept globalInstructions to own an agent's global instruction file as a whole file: Codex AGENTS.md, Claude Code CLAUDE.md, OpenCode AGENTS.md, and Oh My Pi AGENTS.md/RULES.md, with create-only backups and undo; ~/AGENTS.md is not covered
+- Profiles accept globalInstructions to own an agent's global instruction file as a whole file: Codex AGENTS.md, Claude Code CLAUDE.md, OpenCode AGENTS.md, and Oh My Pi AGENTS.md/RULES.md, with create-only backups and undo
+- Portable roles: profiles declare worker, planner, research, and tiny roles, and bindings give each a provider, model, and effort; Oh My Pi maps them to task, plan/slow, smol, and tiny/commit model slots, and the optional subagentMaxEffort route field sets Oh My Pi task.maxEffort
+- globalInstructions.home writes ~/AGENTS.md through the Pi target, the only pinned agent that reads it from every directory under the home directory
 
 ### Changed
 
@@ -74,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The CLI command is now mango (make build gives bin/mango; the installer, make install and releases ship mango plus a profile-mango compatibility alias); the ~/.profile-mango home, PROFILE_MANGO_HOME and on-disk .profile-mango.* files are unchanged
 - Accept comma-separated, repeated, and -t agent selectors across install, undo, render, agents check, and doctor, with per-target undo consent
 - Install and undo now show concise styled human previews with visible field effects, every skipped requirement, copyable apply commands, and optional --verbose detail; JSON plans and consent remain unchanged
+- Binding roles now use the portable role names instead of Oh My Pi slot names; the old slot keys fail with a hint naming the portable key
 
 ### Removed
 
