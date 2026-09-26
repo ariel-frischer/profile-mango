@@ -108,6 +108,9 @@ func runRouteEdit(output io.Writer, options *routeOptions, edit profilemango.Rou
 	if _, err := io.WriteString(output, install.UnifiedDiff(bindingsPath, "after route "+verb, snapshot.Content, edited)); err != nil {
 		return fmt.Errorf("writing diff: %w", err)
 	}
+	if err := writeEffortWarning(output, edit); err != nil {
+		return err
+	}
 	if options.dryRun {
 		_, err = fmt.Fprintln(output, "Dry run: nothing was written.")
 		return err
@@ -138,4 +141,17 @@ func writeRouteApplyHint(output io.Writer, bindingsPath string, edit profilemang
 		return fmt.Errorf("writing hint: %w", err)
 	}
 	return nil
+}
+
+// knownEfforts are the effort values at least one supported agent installs. Effort
+// stays free-form (each agent checks its own set at install), so others only warn.
+var knownEfforts = []string{"none", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", "auto"}
+
+func writeEffortWarning(output io.Writer, edit profilemango.RouteEdit) error {
+	effort, ok := edit.Set["effort"]
+	if !ok || slices.Contains(knownEfforts, effort) {
+		return nil
+	}
+	_, err := fmt.Fprintf(output, "warning: no supported agent uses effort %q (known: %s); install will skip or block it\n", effort, strings.Join(knownEfforts, ", "))
+	return err
 }

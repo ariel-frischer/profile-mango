@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - globalInstructions.home writes ~/AGENTS.md through the Pi target, the only pinned agent that reads it from every directory under the home directory
 - Profile roles install as native subagent files on default installs: Codex agents/<role>.toml, OpenCode agents/<role>.md, Oh My Pi agents/<role>.md (model from its role slot), and Claude Code agents/<role>.md; named-only installs and other agents list them as skipped
 - Oh My Pi named profiles: install writes a Mango-owned overlay at ~/.omp/agent/profiles/<name>.yml used with omp --config; --default also patches config.yml
+- mango route list/show/set/unset edits routes in the bindings file, keeping comments and order, validating before writing and printing a diff
 
 ### Changed
 

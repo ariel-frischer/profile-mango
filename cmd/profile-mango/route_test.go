@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 const routeTestBindings = `# keep this comment
@@ -143,5 +145,27 @@ func TestRouteListNamesProfilesPerRoute(t *testing.T) {
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	if len(lines) != 3 || !strings.Contains(lines[1], "sol") || !strings.HasSuffix(lines[1], "child, daily") || !strings.HasSuffix(lines[2], "-") {
 		t.Fatalf("route list:\n%s", out)
+	}
+}
+
+func TestRouteEffortWarning(t *testing.T) {
+	tests := map[string]struct {
+		set  map[string]string
+		warn bool
+	}{
+		"unknown effort warns":  {set: map[string]string{"effort": "turbo"}, warn: true},
+		"agent effort is quiet": {set: map[string]string{"effort": "ultra"}},
+		"no effort is quiet":    {set: map[string]string{"model": "gpt-6-sol"}},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var output strings.Builder
+			if err := writeEffortWarning(&output, profilemango.RouteEdit{Route: "sol", Set: test.set}); err != nil {
+				t.Fatal(err)
+			}
+			if got := strings.Contains(output.String(), "warning:"); got != test.warn {
+				t.Fatalf("warning = %q, want warn %v", output.String(), test.warn)
+			}
+		})
 	}
 }
