@@ -225,6 +225,45 @@ func TestUseSwitchesOhMyPiRolesAndReleasesDroppedOnes(t *testing.T) {
 	}
 }
 
+// TestUseOwnsHomeAgentsMDThroughPi installs ~/AGENTS.md with the Pi target, reports it
+// in status, gives the adopted original back on use, and undoes each generation.
+func TestUseOwnsHomeAgentsMDThroughPi(t *testing.T) {
+	env := newUseTestHome(t)
+	homeAgents := filepath.Join(env.home, "AGENTS.md")
+	writeFile(t, homeAgents, "# my home rules\n")
+	if err := os.MkdirAll(filepath.Join(env.home, ".pi", "agent"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(env.root, "global", "work-home.md"), "# work home\n")
+	writeFile(t, filepath.Join(env.options.profiles, "work", "profile.yaml"), "route: route\nglobalInstructions:\n  home:\n    AGENTS.md: global/work-home.md\n")
+	installWork := env.options
+	installWork.targets, installWork.makeDefault = []string{"codex,pi"}, true
+	if output := env.planThenApply(t, "work", installWork); !strings.Contains(output, "~/AGENTS.md") {
+		t.Fatalf("plan does not name ~/AGENTS.md:\n%s", output)
+	}
+	assertFileContent(t, homeAgents, "# work home\n")
+	pi := targetStatus(t, statusForTest(t, env.options), "pi")
+	if pi.Profile != "work" || pi.Source != install.SourceCurrent || fileState(pi, "~/AGENTS.md") != install.FileInSync {
+		t.Fatalf("pi status after install = %#v", pi)
+	}
+	env.planThenApply(t, "personal", env.useOptions())
+	assertFileContent(t, homeAgents, "# my home rules\n")
+	if state := fileState(targetStatus(t, statusForTest(t, env.options), "pi"), "~/AGENTS.md"); state != "" {
+		t.Fatalf("released ~/AGENTS.md still reported as %s", state)
+	}
+	for _, want := range []string{"# work home\n", "# my home rules\n"} {
+		preview, err := runUndoForTest(t, restoreOptions{target: "pi"})
+		planID := regexp.MustCompile(`undo plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(preview)
+		if err != nil || planID == nil {
+			t.Fatalf("undo preview: %v\n%s", err, preview)
+		}
+		if out, err := runUndoForTest(t, restoreOptions{target: "pi", apply: true, yes: true, expectPlan: planID[1]}); err != nil {
+			t.Fatalf("undo apply: %v\n%s", err, out)
+		}
+		assertFileContent(t, homeAgents, want)
+	}
+}
+
 func assertFileContent(t *testing.T, path, want string) {
 	t.Helper()
 	data, err := os.ReadFile(path)

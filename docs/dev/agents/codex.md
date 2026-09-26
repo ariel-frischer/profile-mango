@@ -146,3 +146,7 @@ no personal configuration was installed or changed. See the
 ## Global instruction files (ap-nym, 2026-09-25)
 
 `globalInstructions` may own `AGENTS.md` in `$CODEX_HOME` (source `rust-v0.154.0` `6b9826e`, `codex-rs/codex-home/src/instructions/mod.rs:9-10,26-27`); an existing `AGENTS.override.md` wins over it. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+`~/AGENTS.md` is read only when `$HOME` is the working directory or the nearest project root: `rust-v0.154.0` `6b9826e`, `codex-rs/core/src/agents_md.rs:1-16,187-240` walks up only to the nearest `project_root_markers` directory (`.git` by default). Codex therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

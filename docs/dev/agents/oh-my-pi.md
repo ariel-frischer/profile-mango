@@ -204,3 +204,7 @@ failure-boundary evidence.
 ## Global instruction files (ap-nym, 2026-09-25)
 
 `globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.2.6` `78b7531`, `packages/coding-agent/src/discovery/builtin.ts:393,913`). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+`~/AGENTS.md` is read only when no repository encloses the working directory or the repository root is `$HOME`: `v18.2.6` `78b7531`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:684-711`. Oh My Pi therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

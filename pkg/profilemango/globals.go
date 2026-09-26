@@ -11,14 +11,20 @@ import (
 // globalInstructionFilePattern is a plain Markdown file name such as AGENTS.md or RULES.md.
 var globalInstructionFilePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*\.md$`)
 
-// validateGlobalInstructions checks globalInstructions: known target names, plain
-// Markdown file names, and resource paths that stay beneath the package root.
-// Whether a target reads a given file is decided by the installer's evidence table.
+// HomeInstructions is the target-neutral globalInstructions key for files in the
+// user's home directory, such as ~/AGENTS.md, which agents read as an ancestor of
+// the working directory rather than from their own config folder.
+const HomeInstructions = "home"
+
+// validateGlobalInstructions checks globalInstructions: known target names or the
+// home key, plain Markdown file names, and resource paths that stay beneath the
+// package root. Whether an agent reads a given file is decided by the installer's
+// evidence table.
 func validateGlobalInstructions(globals map[string]map[string]string, diagnostics *Diagnostics) {
 	for _, target := range sortedKeys(globals) {
 		path := "globalInstructions." + target
-		if !knownRouteTarget(target) {
-			message := fmt.Sprintf("unknown target %q; expected one of %s", target, strings.Join(RouteTargets, ", "))
+		if target != HomeInstructions && !knownRouteTarget(target) {
+			message := fmt.Sprintf("unknown target %q; expected %s or one of %s", target, HomeInstructions, strings.Join(RouteTargets, ", "))
 			diagnostics.Add(SeverityError, "profile.global_instructions_target_unknown", path, message, 0, 0)
 		}
 		for _, file := range sortedKeys(globals[target]) {

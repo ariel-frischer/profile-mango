@@ -260,3 +260,7 @@ It remains context, not immutable release evidence.
 ## Global instruction files (ap-nym, 2026-09-25)
 
 `globalInstructions` may own `AGENTS.md` in `${XDG_CONFIG_HOME:-~/.config}/opencode` (`v1.18.31` `a97622c`, `packages/opencode/src/session/instruction.ts:61`, `packages/core/src/global.ts:13`); OpenCode also reads `~/.claude/CLAUDE.md`. Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+`~/AGENTS.md` is read only outside a Git repository: `v1.18.31`, `packages/opencode/src/session/instruction.ts:122-133` runs `findUp` from the working directory to the worktree root, which is `/` only for non-Git directories (`packages/opencode/src/project/project.ts:217`). OpenCode therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

@@ -12,6 +12,7 @@ import (
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
+	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
 	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
@@ -41,6 +42,15 @@ var globalInstructionFiles = map[Target][]string{
 func GlobalInstructionFiles(target Target) []string {
 	return append([]string(nil), globalInstructionFiles[target]...)
 }
+
+// homeInstructionOwner is the one target that installs, owns, and releases home
+// instruction files. Its pinned evidence reads ~/AGENTS.md as an ancestor context file
+// in every directory under the home directory (docs/dev/agents/pi.md); other targets
+// read it only in some directories. A single owner keeps one manifest per file.
+var homeInstructionOwner = Target{Name: pi.TargetName, Version: pi.TargetVersion}
+
+// homeInstructionFiles lists the qualified file names under globalInstructions.home.
+var homeInstructionFiles = []string{"AGENTS.md"}
 
 // globalFile is one loaded globalInstructions entry for a target.
 type globalFile struct {
@@ -96,10 +106,8 @@ func globalPatches(request Request, target TargetRequest, loaded loadedInput, mo
 	}
 	qualified := globalInstructionFiles[target.Target]
 	if reason := globalSkipReason(target, qualified, mode); reason != "" {
-		if request.Strict {
-			return nil, nil, fmt.Sprintf("--strict: %d global instruction files cannot be installed: %s", len(files), reason), "install.strict_requirement_unsupported"
-		}
-		return nil, &SkippedRequirement{Requirement: RequirementGlobalInstructions, Count: len(files), Reason: reason}, "", ""
+		skipped, blocked, code := skipOrBlock(request, len(files), "", reason)
+		return nil, skipped, blocked, code
 	}
 	patches := make([]FilePatch, 0, len(files))
 	for _, file := range files {
@@ -109,6 +117,61 @@ func globalPatches(request Request, target TargetRequest, loaded loadedInput, mo
 		patches = append(patches, FilePatch{Path: file.Name, Content: file.Content, Adoptable: true, Ownership: []string{ownershipGlobalInstruction}})
 	}
 	return patches, nil, "", ""
+}
+
+// skipOrBlock reports count unmet global instruction files as a skipped requirement,
+// or with --strict as a blocking reason and code.
+func skipOrBlock(request Request, count int, value, reason string) (*SkippedRequirement, string, string) {
+	if request.Strict {
+		return nil, fmt.Sprintf("--strict: %d global instruction files cannot be installed: %s", count, reason), "install.strict_requirement_unsupported"
+	}
+	return &SkippedRequirement{Requirement: RequirementGlobalInstructions, Count: count, Value: value, Reason: reason}, "", ""
+}
+
+// homePatches returns the profile's globalInstructions.home files for the owning
+// target. Another target reports them skipped only when the owner is not selected.
+func homePatches(request Request, target TargetRequest, loaded loadedInput, mode *InstallMode) ([]FilePatch, *SkippedRequirement, string, string) {
+	files := loaded.Globals[profilemango.HomeInstructions]
+	if len(files) == 0 || (target.Target != homeInstructionOwner && homeOwnerSelected(request)) {
+		return nil, nil, "", ""
+	}
+	home, reason := homeSkipReason(request, target, mode)
+	if reason != "" {
+		skipped, blocked, code := skipOrBlock(request, len(files), profilemango.HomeInstructions, reason)
+		return nil, skipped, blocked, code
+	}
+	patches := make([]FilePatch, 0, len(files))
+	for _, file := range files {
+		if !slices.Contains(homeInstructionFiles, file.Name) {
+			return nil, nil, fmt.Sprintf("no pinned evidence qualifies ~/%s; qualified home files: %s", file.Name, strings.Join(homeInstructionFiles, ", ")), "install.global_instruction_unqualified"
+		}
+		patches = append(patches, FilePatch{Path: filepath.Join(home, file.Name), Label: "~/" + file.Name, Content: file.Content, Adoptable: true, Ownership: []string{ownershipGlobalInstruction}})
+	}
+	return patches, nil, "", ""
+}
+
+// homeSkipReason returns the user home directory, or why the target writes no home
+// instruction files: it is not the owner, the home is unresolvable, or a global gate.
+func homeSkipReason(request Request, target TargetRequest, mode *InstallMode) (string, string) {
+	if target.Target != homeInstructionOwner {
+		return "", fmt.Sprintf("home instruction files install only with %s, whose pinned evidence reads ~/AGENTS.md in every directory under the home directory; add --target %s", homeInstructionOwner, homeInstructionOwner.Name)
+	}
+	if !request.Env.enabled() {
+		return "", "the user home directory is not resolvable"
+	}
+	home, err := request.Env.home()
+	if err != nil {
+		return "", err.Error()
+	}
+	return home, globalSkipReason(target, homeInstructionFiles, mode)
+}
+
+// homeOwnerSelected reports whether the request plans the home instruction owner.
+func homeOwnerSelected(request Request) bool {
+	if request.All {
+		return true
+	}
+	return slices.ContainsFunc(request.Targets, func(target TargetRequest) bool { return target.Target == homeInstructionOwner })
 }
 
 // globalSkipReason explains why a target receives no global instruction files: no
@@ -126,17 +189,20 @@ func globalSkipReason(target TargetRequest, qualified []string, mode *InstallMod
 	return ""
 }
 
-// extendPatch adds the target's global instruction files and, for mango use, releases
-// of owned files the new plan no longer writes. A non-empty reason blocks the target.
+// extendPatch adds the target's global and home instruction files and, for mango use,
+// releases of owned files the new plan no longer writes. A non-empty reason blocks the target.
 func extendPatch(request Request, target TargetRequest, loaded loadedInput, ownership Manifest, configPath string, patch *Patch, targetPlan *TargetPlan) (string, string) {
-	globals, skipped, reason, code := globalPatches(request, target, loaded, targetPlan.Install)
-	if reason != "" {
-		return reason, code
+	for _, plan := range []func(Request, TargetRequest, loadedInput, *InstallMode) ([]FilePatch, *SkippedRequirement, string, string){globalPatches, homePatches} {
+		files, skipped, reason, code := plan(request, target, loaded, targetPlan.Install)
+		if reason != "" {
+			return reason, code
+		}
+		if skipped != nil {
+			targetPlan.SkippedRequirements = append(targetPlan.SkippedRequirements, *skipped)
+		}
+		patch.Files = append(patch.Files, files...)
 	}
-	if skipped != nil {
-		targetPlan.SkippedRequirements = append(targetPlan.SkippedRequirements, *skipped)
-	}
-	patch.Files = append(patch.Files, globals...)
+	addHomeWarning(patch, targetPlan)
 	if !request.Release || !target.Agent.Empty() {
 		return "", ""
 	}
@@ -149,8 +215,41 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, owne
 		planned[path] = struct{}{}
 	}
 	releases, reason, code := releasePatches(ownership, configPath, planned)
+	for index := range releases {
+		releases[index].Label = homeLabel(request.Env, configPath, releases[index].Path)
+	}
 	patch.Files = append(patch.Files, releases...)
 	return reason, code
+}
+
+// addHomeWarning notes that a planned home instruction file is shared by every agent
+// that reads the home directory as an ancestor of its working directory.
+func addHomeWarning(patch *Patch, targetPlan *TargetPlan) {
+	for _, file := range patch.Files {
+		if file.Label != "" && filepath.IsAbs(file.Path) {
+			targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.home_instruction_shared", "globalInstructions.home", file.Label+" is not owned by one agent: Pi reads it in every directory under the home directory, and other agents read it in some directories, such as outside a Git repository", 0, 0)
+		}
+	}
+}
+
+// homeLabel names an owned file outside the config directory by its path under the home
+// directory, e.g. ~/AGENTS.md, so plans and status do not show a bare base name.
+func homeLabel(env PathEnv, configPath, path string) string {
+	if relative, err := filepath.Rel(filepath.Dir(configPath), path); err == nil && !strings.HasPrefix(relative, "..") {
+		return ""
+	}
+	if !env.enabled() {
+		return ""
+	}
+	home, err := env.home()
+	if err != nil {
+		return ""
+	}
+	relative, err := filepath.Rel(home, path)
+	if err != nil || strings.HasPrefix(relative, "..") {
+		return ""
+	}
+	return "~/" + filepath.ToSlash(relative)
 }
 
 // fileOwnership is the manifest provenance for one planned file: the adapter's tags plus,

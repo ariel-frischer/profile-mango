@@ -148,3 +148,7 @@ Primary sources: [settings][settings], [model configuration][model],
 ## Global instruction files (ap-nym, 2026-09-25)
 
 `globalInstructions` may own `CLAUDE.md` in `~/.claude` (documentation context only: code.claude.com/docs/en/memory retrieved 2026-09-25, SHA-256 `cf73d3a5…192a8f`; not observed in the binary). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+Documentation context only (code.claude.com/docs/en/memory retrieved 2026-09-25, SHA-256 `cf73d3a5…192a8f`, lines 333-360): `2.1.277+` reads `AGENTS.md` in the working directory and above only when no `CLAUDE.md`/`CLAUDE.local.md` exists there. Claude Code therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

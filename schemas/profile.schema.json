@@ -69,9 +69,9 @@
       "properties": {"append": {"$ref": "#/$defs/paths"}}
     },
     "globalInstructions": {
-      "description": "Whole global instruction files per target: file name to resource path beneath the package root. Only files with pinned evidence for the target install; others are skipped or blocked.",
+      "description": "Whole global instruction files per target, or under the target-neutral home key for files in the user's home directory (home: {AGENTS.md: ...} writes ~/AGENTS.md): file name to resource path beneath the package root. Only files with pinned evidence install; others are skipped or blocked.",
       "type": "object",
-      "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+      "propertyNames": {"enum": ["home", "claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
       "additionalProperties": {
         "type": "object",
         "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.md$"},

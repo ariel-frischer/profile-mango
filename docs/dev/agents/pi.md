@@ -111,3 +111,7 @@ checks a no-write inventory. Installation touches only one settings file (explic
 [default config destinations](../target-evidence.md#default-config-destinations-2026-09-22)) and shared transaction paths. See the [dated evidence](../target-evidence.md#bounded-settings-module-installation-2026-09-22)
 for hashes, checks, and the distinction between native module consumption and
 full authenticated runtime behavior.
+
+## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
+
+`globalInstructions.home` owns `~/AGENTS.md` through Pi: source `v0.86.1` `13cbf77`, `packages/coding-agent/src/core/resource-loader.ts:71-72,119-156` walks every ancestor of the working directory to `/`, taking each directory's first of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so `~/AGENTS.md` applies in every directory under `$HOME` unless `~/AGENTS.override.md` exists. Pi is the single owner: its manifest records the file with create-only backup, drift checks, release on `use`, and undo; plans warn that other agents share it. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).

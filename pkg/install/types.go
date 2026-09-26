@@ -140,6 +140,8 @@ type FilePatch struct {
 	// Release gives back a file the previous install owned and this plan no longer writes.
 	Release bool
 	Path    string
+	// Label names the file in plans when its base name would mislead, e.g. ~/AGENTS.md.
+	Label   string
 	Content []byte
 	Fields  []string
 	// Ownership records target-specific provenance needed for safe future cleanup.

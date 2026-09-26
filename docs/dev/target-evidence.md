@@ -1459,3 +1459,35 @@ path each target reads, not observed runtime delivery or precedence.
 Tests: `pkg/install/globals_test.go`, `cmd/profile-mango/use_test.go`
 (`TestUse*`, `TestStatus*`, `TestUndoAfterUseRestoresEachGeneration`), all in a
 synthetic sandbox HOME.
+
+## Home instruction file `~/AGENTS.md`, 2026-09-25 (ap-5mp)
+
+`globalInstructions.home` maps `AGENTS.md` to `$HOME/AGENTS.md`. The file lives
+in no target's config directory, so one target owns it: Pi `0.86.1`, the only
+pinned target whose source reads it in every working directory under `$HOME`.
+Pi's config manifest records it with the same whole-file ownership, create-only
+backup, drift check, consent gate, release on `mango use`, and undo journal as
+the other global instruction files. It is written whenever Pi (which has no named
+profiles) is planned with a resolvable home directory; plans and status label it
+`~/AGENTS.md` and warn (`install.home_instruction_shared`) that other agents read
+the same file. Another target in a plan without Pi lists `globalInstructions`
+(value `home`) in `skippedRequirements`; `--strict` blocks. Any other file name
+blocks with `install.global_instruction_unqualified`. This is source/doc evidence
+of the read path, not observed runtime delivery or precedence.
+
+| Agent | Reads `~/AGENTS.md` when | Evidence |
+| --- | --- | --- |
+| Pi `0.86.1` (owner) | every working directory under `$HOME`: each ancestor directory up to `/` contributes its first candidate of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so a `~/AGENTS.override.md` shadows it | source `v0.86.1` commit `13cbf77df2396303013a41646bcfa77b4271ae56`, `packages/coding-agent/src/core/resource-loader.ts:71-72` (candidates), `:119-156` (ancestor walk); the agent-dir `AGENTS.md` at `:128` is a separate global file |
+| Codex `0.154.0` | only when `$HOME` is the working directory or the nearest project root: discovery walks up to the nearest `project_root_markers` directory (`.git` by default) and reads only the working directory when none is found | source `rust-v0.154.0` commit `6b9826e3aa83b1a5947db50f4332cb9c65f1b340`, `codex-rs/core/src/agents_md.rs:1-16,187-240` |
+| OpenCode `1.18.31` | only outside a Git repository: project instructions use `findUp` from the working directory to the worktree root, and a non-Git worktree is `/` | release `v1.18.31` (tag commit `014614d`, file identical at `a97622c`), `packages/opencode/src/session/instruction.ts:122-133`, `packages/core/src/fs-util.ts:154-166`, `packages/opencode/src/project/project.ts:217` |
+| Oh My Pi `18.2.6` | when no repository encloses the working directory, or the repository root is `$HOME`; a repository nested under `$HOME` excludes the home copy | source `v18.2.6` commit `78b753124d11f8dd3ae73e2524125890ff7c977e`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:684-711` |
+| Claude Code `2.1.278` | documented for `2.1.277+`: `AGENTS.md` in the working directory and above only when no `CLAUDE.md`/`CLAUDE.local.md` exists there (default `claude-md-or-agents-md`) | documentation context only: `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, lines 333-360; not observed in the pinned binary |
+| Jcode fork (experimental) | every session, as the user-home `AGENTS.md` beside the project file; a profile `agents_md_path` replaces it | developer evidence only, see [Jcode](agents/jcode.md); not an install target and not a support claim |
+
+Codex, OpenCode, Oh My Pi and Claude Code read the file only in some directories,
+so none of them owns it; they do not install it on their own because that would
+claim a delivery the evidence does not give inside a Git repository.
+
+Tests: `pkg/install/globals_test.go` (`TestHomeInstructionGates`) and
+`cmd/profile-mango/use_test.go` (`TestUseOwnsHomeAgentsMDThroughPi`: install,
+status, release on `use`, undo of each generation), in a synthetic sandbox HOME.

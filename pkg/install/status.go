@@ -145,13 +145,13 @@ func inspectTarget(registry *Registry, env PathEnv, target TargetRequest) (Targe
 		return TargetStatus{}, fmt.Errorf("inspect %s manifest: %w", target.Target, err)
 	}
 	status.State, status.Profile, status.Generation = StatusManaged, manifest.Profile, manifest.Generation
-	err = addOwnedFiles(&status, manifest)
+	err = addOwnedFiles(&status, manifest, env)
 	return status, err
 }
 
-func addOwnedFiles(status *TargetStatus, manifest Manifest) error {
+func addOwnedFiles(status *TargetStatus, manifest Manifest, env PathEnv) error {
 	for _, file := range manifest.Files {
-		fileStatus, err := inspectOwnedFile(status.ConfigPath, file)
+		fileStatus, err := inspectOwnedFile(status.ConfigPath, file, env)
 		if err != nil {
 			return err
 		}
@@ -162,12 +162,12 @@ func addOwnedFiles(status *TargetStatus, manifest Manifest) error {
 	return nil
 }
 
-func inspectOwnedFile(configPath string, file ManifestFile) (FileStatus, error) {
+func inspectOwnedFile(configPath string, file ManifestFile, env PathEnv) (FileStatus, error) {
 	snapshot, err := installfs.SnapshotFile(file.Path)
 	if err != nil {
 		return FileStatus{}, fmt.Errorf("inspect owned file %s: %w", filepath.Base(file.Path), err)
 	}
-	result := FileStatus{Path: relativeOwnedPath(configPath, file.Path), Kind: ownedFileKind(configPath, file), State: FileInSync}
+	result := FileStatus{Path: relativeOwnedPath(configPath, file.Path, env), Kind: ownedFileKind(configPath, file), State: FileInSync}
 	switch {
 	case !snapshot.Exists:
 		result.State = FileMissing
@@ -182,7 +182,12 @@ func inspectOwnedFile(configPath string, file ManifestFile) (FileStatus, error) 
 	return result, nil
 }
 
-func relativeOwnedPath(configPath, path string) string {
+// relativeOwnedPath names an owned file relative to the config directory, as
+// ~/<path> when it lives elsewhere under the home directory, else by base name.
+func relativeOwnedPath(configPath, path string, env PathEnv) string {
+	if label := homeLabel(env, configPath, path); label != "" {
+		return label
+	}
 	relative, err := filepath.Rel(filepath.Dir(configPath), path)
 	if err != nil || strings.HasPrefix(relative, "..") {
 		return filepath.Base(path)
