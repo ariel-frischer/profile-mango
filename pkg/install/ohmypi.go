@@ -27,7 +27,7 @@ func (ohMyPiAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: ohmypi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles selectors (default plus the slots of portable roles, each with its own :effort suffix) and task.maxEffort; authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged",
+		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles selectors (default plus the slots of portable roles, each with its own :effort suffix) and task.maxEffort; install writes them to a Mango-owned overlay used with omp --config <path> by default, and to config.yml only with --default; authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged",
 	}
 }
 
@@ -37,10 +37,56 @@ func (ohMyPiAdapter) SupportedRequirements(AgentDestination, bool) []string {
 	return []string{RequirementRoles, RequirementSubagentMaxEffort}
 }
 
+// Plan writes the route to a Mango-owned whole-file overlay used with
+// `omp --config <path>` (native --profile relocates auth and sessions, so it is not
+// used), and additionally patches config.yml when --default is set. A named agent
+// destination, which carries no install mode, patches config.yml directly.
 func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 	if err := validateOhMyPiProfile(input); err != nil {
 		return Patch{}, err
 	}
+	if input.Install.Mode != InstallModeNamedProfile {
+		return planOhMyPiConfig(input)
+	}
+	patch, err := planOhMyPiOverlay(input.Install.ProfileName, input.Route)
+	if err != nil || !input.Install.SetsDefault {
+		return patch, err
+	}
+	configPatch, err := planOhMyPiConfig(input)
+	if err != nil {
+		return Patch{}, err
+	}
+	patch.Files = append(patch.Files, configPatch.Files...)
+	patch.Fields = append(patch.Fields, configPatch.Fields...)
+	patch.Diagnostics = append(patch.Diagnostics, configPatch.Diagnostics...)
+	return patch, nil
+}
+
+// planOhMyPiOverlay renders the named overlay from scratch: the same modelRoles
+// selectors and task.maxEffort the default install writes, and nothing else.
+func planOhMyPiOverlay(name string, route profilemango.RouteBinding) (Patch, error) {
+	overlay, err := ohmypi.PatchConfig(nil, route)
+	if err != nil {
+		return Patch{}, err
+	}
+	file := FilePatch{Path: ohmypi.ProfileFileName(name), Content: overlay.Content}
+	patch := Patch{OverrideAllowed: true}
+	for _, role := range overlay.Roles {
+		file.Fields = append(file.Fields, "profile.modelRoles."+role.Role)
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.modelRoles." + role.Role, After: role.After})
+	}
+	for _, setting := range overlay.Settings {
+		file.Fields = append(file.Fields, "profile."+setting.Path)
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile." + setting.Path, After: setting.After})
+	}
+	patch.Files = []FilePatch{file}
+	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.named_profile_overlay_only", "target.profile", "only modelRoles selectors and task.maxEffort are written to the emulated profile overlay, used with omp --config <path>; role slots it does not set still come from config.yml; authentication, provider options, permissions, tools, instructions, skills, role definitions, and runtime enforcement remain unmanaged", 0, 0)
+	return patch, nil
+}
+
+// planOhMyPiConfig patches modelRoles selectors and task.maxEffort in config.yml,
+// giving back role slots and settings a previous route owned but this one drops.
+func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	configPatch, err := ohmypi.PatchConfig(input.Config.Content, input.Route)
 	if err != nil {
 		return Patch{}, err
@@ -62,6 +108,24 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.route_fields_only", "target.config", "only modelRoles selectors and task.maxEffort are applied; their :effort suffixes, non-default role slots, and task.maxEffort are source-reviewed, not natively observed; defaultThinkingLevel, authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged", 0, 0)
 	return patch, nil
 }
+
+// NamedProfileFile is the Mango-owned emulated profile overlay. Oh My Pi loads any
+// --config file, so the location is a profile-mango convention, not target behavior.
+func (ohMyPiAdapter) NamedProfileFile(name string) (string, error) {
+	if !ohmypi.ValidProfileName(name) {
+		return "", fmt.Errorf("oh my pi profile names may use only letters, digits, '_' or '-'")
+	}
+	return ohmypi.ProfileFileName(name), nil
+}
+
+// NamedProfileUse shows the default overlay location; it receives only the name.
+func (ohMyPiAdapter) NamedProfileUse(name string) string {
+	return "omp --config ~/.omp/agent/" + ohmypi.ProfileFileName(name)
+}
+
+// NamedProfileUseFile starts Oh My Pi with the resolved overlay path, already
+// shell-ready.
+func (ohMyPiAdapter) NamedProfileUseFile(path string) string { return "omp --config " + path }
 
 // ohMyPiRoleFields records owned modelRoles fields and prior markers on file and
 // returns every planned and released role change.

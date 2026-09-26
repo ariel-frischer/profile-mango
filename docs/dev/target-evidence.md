@@ -921,6 +921,23 @@ with its own manifest field and prior marker, and skipped as
 `subagentMaxEffort` elsewhere. File hashes are recorded in the
 [target reference](agents/oh-my-pi.md#portable-roles-and-taskmaxeffort-2026-09-25).
 
+### Oh My Pi named profile overlay
+
+Oh My Pi's native `--profile` relocates auth and sessions, so named installs
+write a Mango-owned overlay `profiles/<name>.yml` beside `config.yml` instead,
+with the same `modelRoles` selectors and `task.maxEffort` the default install
+writes, and print `use it: omp --config <path>`. `config.yml` is left
+byte-identical unless `--default` is given. Pinned source `78b7531`
+(`cli/flag-tables.ts:117-119`, `main.ts:1735`, `config/settings.ts:603-605,
+1957-1998, 3131-3135`) loads repeatable `--config` files strictly (a missing
+file is a startup error) and deep-merges them after global and project config,
+before runtime flags. An isolated, network-less run of the installed
+`omp/18.3.2` binary (not the pinned version) took the overlay's
+`modelRoles.default` model and `:high` suffix over `config.yml`'s. Hashes and
+the probe are in the [target reference](agents/oh-my-pi.md#named-profile-overlay).
+Sandbox tests cover side-by-side overlays, an unchanged `config.yml`,
+`--default` writing both, and byte-restoring undo.
+
 ### Role subagent files, 2026-09-25 (ap-6lp)
 
 Each declared profile role (`roles.<role>: {description, instructions?}`)

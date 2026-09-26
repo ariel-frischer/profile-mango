@@ -147,7 +147,7 @@ instead. Real delivery of those is on the [roadmap](ROADMAP.md).
 | Codex | Provider, model, effort, as a named profile; `AGENTS.md`; role subagents | [agents](docs/public/agents.md#codex) |
 | OpenCode | Model, effort variant, and instructions, as a named agent; `AGENTS.md`; role subagents | [agents](docs/public/agents.md#opencode) |
 | Pi | Provider, model, thinking level; `~/AGENTS.md` | [agents](docs/public/agents.md#pi) |
-| Oh My Pi | Model roles with per-role effort, subagent effort cap; `AGENTS.md`, `RULES.md`; role subagents | [agents](docs/public/agents.md#oh-my-pi) |
+| Oh My Pi | Model roles with per-role effort, subagent effort cap, as an `omp --config` profile file; `AGENTS.md`, `RULES.md`; role subagents | [agents](docs/public/agents.md#oh-my-pi) |
 | OpenClaw | Model, thinking level, as a named profile | [agents](docs/public/agents.md#openclaw) |
 | Hermes | Provider, model, effort, as a named profile | [agents](docs/public/agents.md#hermes) |
 
