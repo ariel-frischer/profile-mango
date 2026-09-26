@@ -193,7 +193,7 @@ func validateRestoreManifest(snapshot installfs.Snapshot, target Target) (Manife
 	if err := requireGeneratedJSON(snapshot.Content, manifest, "ownership manifest"); err != nil {
 		return Manifest{}, err
 	}
-	if manifest.Owner != "profile-mango" || manifest.Target != target || manifest.PlanID != "" {
+	if manifest.Owner != "profile-mango" || manifest.Target.Name != target.Name || manifest.PlanID != "" {
 		return Manifest{}, fmt.Errorf("ownership manifest does not belong to a profile-mango %s install", target.String())
 	}
 	return manifest, nil
