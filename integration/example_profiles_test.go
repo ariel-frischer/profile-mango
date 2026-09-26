@@ -66,8 +66,9 @@ func assertExampleInstallGate(t *testing.T, binary, repoRoot string, env []strin
 	}
 	for _, target := range plan.Targets {
 		installed := target.Target.Name == "claude-code" || target.Target.Name == "codex"
-		if installed && (target.Status != "ready" || len(target.SkippedRequirements) != 4) {
-			t.Fatalf("%s must plan ready with four skipped requirements: %#v", target.Target.Name, target)
+		// permissions, tools, instructions, skills, and role-definitions (named-only install).
+		if installed && (target.Status != "ready" || len(target.SkippedRequirements) != 5) {
+			t.Fatalf("%s must plan ready with five skipped requirements: %#v", target.Target.Name, target)
 		}
 		if !installed && target.Status != "skipped" {
 			t.Fatalf("%s must be skipped as not installed: %#v", target.Target.Name, target)

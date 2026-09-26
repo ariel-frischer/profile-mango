@@ -264,3 +264,14 @@ It remains context, not immutable release evidence.
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
 `~/AGENTS.md` is read only outside a Git repository: `v1.18.31`, `packages/opencode/src/session/instruction.ts:122-133` runs `findUp` from the working directory to the worktree root, which is `/` only for non-Git directories (`packages/opencode/src/project/project.ts:217`). OpenCode therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+
+## Role subagent files (ap-6lp, 2026-09-25)
+
+Each declared profile role becomes `${XDG_CONFIG_HOME:-~/.config}/opencode/agents/<role>.md`, written only when the profile is the default (`install --default`, `mango use`). Source review of `v1.18.31` (`a97622c801f4ca571530ddc51076af659a9c32cd`):
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| Agents load from `{agent,agents}/**/*.md` in each config dir, named by relative path; frontmatter is the config and the trimmed body is `prompt` | `packages/opencode/src/config/agent.ts` (`4844d4dfa48a516f5b134b0e310c3b0fc11292d0180b0b12ab8d96a43775efa7`), lines 11-31 |
+| `model` (line 14), `variant` (line 15), `description` (line 25), and `mode` (`subagent`, `primary`, or `all`; line 26) are agent keys | `packages/core/src/v1/config/agent.ts` (`4f2d7bc8283ff0c8cd922c614a74f74abb1abe9d5fc2a6dba3dd03d2dca5c624`) |
+
+The file carries `description`, `mode: subagent`, and, when the route binds the role, `model` as `provider/model` (the same form as named agents) and `variant` from its effort (the [variant rules](#effort-as-agent-variant) apply). The body is the role's `instructions` resource, else its description. Ownership (adopt with create-only backup, drift, release on `mango use`, undo, `role-definition` in `mango status`) and the named-only `role-definitions` skip match Codex. Evidence level: source review plus a built-binary sandbox smoke (install, status, use, undo); OpenCode was not run against the generated files, so runtime delegation to these subagents stays unobserved.

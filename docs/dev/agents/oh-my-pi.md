@@ -152,8 +152,7 @@ purpose. Source review of the same checkout
 keeps its own manifest field (`config.modelRoles.<slot>`) and
 `ohmypi-role-prior:<slot>=<value>` marker, so `mango use` gives back every
 slot of a role the new route drops. Profile role definitions (description,
-instructions) have no model-slot surface; they are skipped as
-`role-definitions`, and `--strict` blocks.
+instructions) install as agent files; see the next section.
 
 `task.maxEffort` is a cap on subagent effort, so bindings model it as the
 optional route field `subagentMaxEffort`:
@@ -174,6 +173,27 @@ effort, nor role slot efforts. Other targets skip it as `subagentMaxEffort`.
 
 Evidence level: source review only; no native probe of slot consumers or of
 `task.maxEffort` was run.
+
+## Role subagent files (ap-6lp, 2026-09-25)
+
+Each declared profile role becomes `~/.omp/agent/agents/<role>.md`, written
+only when the profile is the default (`install --default`, `mango use`).
+Source review of `78b753124d11f8dd3ae73e2524125890ff7c977e`:
+
+| Claim | Pinned source (file SHA-256) |
+| --- | --- |
+| Agent frontmatter requires `name` and `description` (else the file is ignored); `model` is parsed as a model list | `packages/coding-agent/src/discovery/helpers.ts` (`ce3ad96706c22f49c11c8047a94d87d0cb48210d34237bb802355a6dde7a4206`), lines 279, 305-364 |
+| `*.md` files load from the user `agents` config dir; precedence is project, user, extensions, plugins, bundled | `packages/coding-agent/src/task/discovery.ts` (`524de1af7e9c58ac34991a998cf6f3d60b823493cd503bbcc74b1aadd8035353`), lines 51-105 |
+| An `@<role>` model resolves through `modelRoles.<role>`, keeping its `:effort` suffix | `packages/coding-agent/src/config/model-resolver.ts` (`68b229552ea292ddf11a3c7076110dd530de425f93d113224e03028ab0574225`), lines 984-1010, 1225-1246 |
+
+The file carries `name`, `description`, the role's `instructions` (else its
+description) as the body, and, when the route binds the role, `model: "@<slot>"`
+naming the role's first slot (`worker` -> `@task`, `planner` -> `@plan`,
+`research` -> `@smol`, `tiny` -> `@tiny`). The same install writes that slot's
+`provider/model:effort` selector, so model and effort come from one place; the
+agent file never repeats them. Ownership and the named-only `role-definitions`
+skip match Codex and OpenCode. Evidence level: source review plus sandbox
+install tests; no native probe of agent discovery was run.
 
 ## Preview adapter boundary
 
