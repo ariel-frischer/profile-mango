@@ -591,8 +591,10 @@ func decodeManifest(data []byte, target Target) (Manifest, error) {
 	if manifest.APIVersion != ManifestAPIVersion || manifest.Kind != ManifestKind {
 		return Manifest{}, fmt.Errorf("ownership manifest version or kind is unsupported")
 	}
-	if manifest.Target.Name != "" && manifest.Target != target {
-		return Manifest{}, fmt.Errorf("ownership manifest target does not match %s", target.String())
+	// A manifest recorded by an earlier qualified version of the same target stays
+	// valid; the next apply rewrites it at the current version.
+	if manifest.Target.Name != "" && manifest.Target.Name != target.Name {
+		return Manifest{}, fmt.Errorf("ownership manifest target %s does not match %s", manifest.Target.String(), target.String())
 	}
 	return manifest, nil
 }

@@ -22,6 +22,8 @@ const (
 	SourceCurrent = "current"
 	SourceChanged = "changed"
 	SourceUnknown = "unknown"
+
+	DriftDiffers = "differs"
 )
 
 // StatusRequest selects the targets and profile inputs status inspects. It never writes.
@@ -44,16 +46,31 @@ type StatusReport struct {
 
 // TargetStatus is one target's ownership state. Paths are relative to its config directory.
 type TargetStatus struct {
-	Target       Target       `json:"target"`
-	State        string       `json:"state"`
-	Reason       string       `json:"reason,omitempty"`
-	Profile      string       `json:"profile,omitempty"`
-	Generation   uint64       `json:"generation,omitempty"`
-	Source       string       `json:"source,omitempty"`
-	SourceReason string       `json:"sourceReason,omitempty"`
-	Files        []FileStatus `json:"files,omitempty"`
-	ConfigPath   string       `json:"-"`
-	ownsConfig   bool
+	Target Target `json:"target"`
+	// RecordedVersion is the target version the ownership manifest was written at, when
+	// it differs from the qualified adapter version; the next apply rewrites it.
+	RecordedVersion string       `json:"recordedVersion,omitempty"`
+	State           string       `json:"state"`
+	Reason          string       `json:"reason,omitempty"`
+	Profile         string       `json:"profile,omitempty"`
+	Generation      uint64       `json:"generation,omitempty"`
+	Source          string       `json:"source,omitempty"`
+	SourceReason    string       `json:"sourceReason,omitempty"`
+	Files           []FileStatus `json:"files,omitempty"`
+	// Drift lists each owned setting, or whole owned file, whose live state differs
+	// from what the current profile sources would install.
+	Drift      []FieldDrift `json:"drift,omitempty"`
+	ConfigPath string       `json:"-"`
+	ownsConfig bool
+}
+
+// FieldDrift is one owned setting whose live value differs from the profile's value
+// (absent values are empty), or, with State set, a whole owned file that differs.
+type FieldDrift struct {
+	Path    string `json:"path"`
+	Live    string `json:"live,omitempty"`
+	Profile string `json:"profile,omitempty"`
+	State   string `json:"state,omitempty"`
 }
 
 // FileStatus is one owned file: its kind, current state, and the owned field names.
@@ -104,7 +121,7 @@ func InspectStatus(request StatusRequest) (StatusReport, error) {
 			return StatusReport{}, err
 		}
 		if status.State == StatusManaged {
-			status.Source, status.SourceReason = sourceState(request, registry, status)
+			sourceState(request, registry, &status)
 		}
 		report.Targets = append(report.Targets, status)
 	}
@@ -144,6 +161,9 @@ func inspectTarget(registry *Registry, env PathEnv, target TargetRequest) (Targe
 		return TargetStatus{}, fmt.Errorf("inspect %s manifest: %w", target.Target, err)
 	}
 	status.State, status.Profile, status.Generation = StatusManaged, manifest.Profile, manifest.Generation
+	if manifest.Target.Version != "" && manifest.Target.Version != target.Target.Version {
+		status.RecordedVersion = manifest.Target.Version
+	}
 	err = addOwnedFiles(&status, manifest, env)
 	return status, err
 }
@@ -205,32 +225,142 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 }
 
 func isOwnershipMarker(field string) bool {
-	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix)
+	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix) ||
+		strings.HasPrefix(field, ohMyPiSettingPriorPrefix)
 }
 
-// sourceState plans the recorded profile again without writing: a no-op plan means the
-// installed files match the current profile sources and bindings.
-func sourceState(request StatusRequest, registry *Registry, status TargetStatus) (string, string) {
+// sourceState plans the recorded profile again without writing. Override lets the plan
+// see past live edits of owned files, so a no-op plan means the installed files match
+// the current profile sources and bindings, and any difference is named as drift.
+func sourceState(request StatusRequest, registry *Registry, status *TargetStatus) {
 	if request.ProfilesRoot == "" || status.Profile == "" {
-		return SourceUnknown, "no profile home to compare against"
+		status.Source, status.SourceReason = SourceUnknown, "no profile home to compare against"
+		return
 	}
 	plan, err := BuildPlan(Request{
 		ProfileName: status.Profile, ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot,
-		BindingsPath: request.BindingsPath, Registry: registry, Env: request.Env, Backup: true,
+		BindingsPath: request.BindingsPath, Registry: registry, Env: request.Env, Backup: true, Override: true,
 		Default: status.ownsConfig, Release: true,
 		Targets: []TargetRequest{{Target: status.Target, ConfigPath: status.ConfigPath}},
 	})
 	if err != nil {
-		return SourceUnknown, err.Error()
+		status.Source, status.SourceReason = SourceUnknown, err.Error()
+		return
 	}
+	if len(plan.Targets) > 0 {
+		status.Drift = targetDrift(plan.Targets[0], *status, request.Env)
+	}
+	status.Source, status.SourceReason = sourceVerdict(plan, *status)
+}
+
+// sourceVerdict says whether the plan would change anything and how to apply it; live
+// edits of owned files need --override, since install otherwise refuses them.
+func sourceVerdict(plan Plan, status TargetStatus) (string, string) {
 	switch plan.Status {
 	case StatusNoop:
 		return SourceCurrent, ""
 	case StatusReady:
+		if liveEdits(plan.Targets[0]) {
+			return SourceChanged, "owned files were edited; run mango use " + status.Profile + " --override to replace the edits with the profile"
+		}
+		if len(status.Drift) == 0 {
+			return SourceChanged, "only the ownership manifest would change; run mango use " + status.Profile + " to rewrite it" + recordedSuffix(status)
+		}
 		return SourceChanged, "run mango use " + status.Profile + " to apply the changed sources"
 	}
 	if len(plan.Targets) > 0 && plan.Targets[0].Reason != "" {
 		return SourceUnknown, plan.Targets[0].Reason
 	}
 	return SourceUnknown, "the recorded profile cannot be planned"
+}
+
+func recordedSuffix(status TargetStatus) string {
+	if status.RecordedVersion == "" {
+		return ""
+	}
+	return " at " + status.Target.String()
+}
+
+func liveEdits(target TargetPlan) bool {
+	for _, file := range target.Files {
+		if file.Owned && file.Action == ActionOverride {
+			return true
+		}
+	}
+	return false
+}
+
+// targetDrift names every planned file the apply would change: by its owned fields
+// when their live values were read, else as a whole file with its state.
+func targetDrift(target TargetPlan, status TargetStatus, env PathEnv) []FieldDrift {
+	fields := make(map[string]FieldChange, len(target.Fields))
+	for _, field := range target.Fields {
+		fields[field.Path] = field
+	}
+	if len(target.Files) == 0 {
+		return blockedDrift(target, status)
+	}
+	var drift []FieldDrift
+	for _, file := range target.Files {
+		if file.Action == ActionNoop || file.targetPath == "" || file.targetPath == target.ManifestPath {
+			continue
+		}
+		changed, liveRead := fileFieldDrift(file, fields)
+		if len(changed) > 0 && (liveRead || file.targetPath == status.ConfigPath) {
+			drift = append(drift, changed...)
+			continue
+		}
+		path := relativeOwnedPath(status.ConfigPath, file.targetPath, env)
+		drift = append(drift, FieldDrift{Path: path, State: fileDriftState(status, path, file)})
+	}
+	return drift
+}
+
+// blockedDrift names drift when planning stopped before it compared files: owned
+// fields whose live value was read and differs, and whole owned files not in sync.
+func blockedDrift(target TargetPlan, status TargetStatus) []FieldDrift {
+	configFields := map[string]bool{}
+	var drift []FieldDrift
+	for _, file := range status.Files {
+		for _, name := range file.Fields {
+			configFields[name] = configFields[name] || file.Kind == "config"
+		}
+		if file.State != FileInSync && wholeFileKind([]string{file.Kind}) != "" {
+			drift = append(drift, FieldDrift{Path: file.Path, State: file.State})
+		}
+	}
+	for _, field := range target.Fields {
+		if field.Before != field.After && (field.Before != "" || configFields[field.Path]) {
+			drift = append(drift, FieldDrift{Path: field.Path, Live: field.Before, Profile: field.After})
+		}
+	}
+	return drift
+}
+
+// fileFieldDrift returns the file's owned fields whose live and profile values differ,
+// and whether any live value was read (whole-file renders carry none).
+func fileFieldDrift(file FilePlan, fields map[string]FieldChange) ([]FieldDrift, bool) {
+	var changed []FieldDrift
+	liveRead := false
+	for _, name := range file.Fields {
+		field, found := fields[name.Path]
+		if !found || field.Before == field.After {
+			continue
+		}
+		liveRead = liveRead || field.Before != ""
+		changed = append(changed, FieldDrift{Path: field.Path, Live: field.Before, Profile: field.After})
+	}
+	return changed, liveRead
+}
+
+func fileDriftState(status TargetStatus, path string, file FilePlan) string {
+	if file.Action == ActionCreate {
+		return FileMissing
+	}
+	for _, owned := range status.Files {
+		if owned.Path == path && owned.State != FileInSync {
+			return owned.State
+		}
+	}
+	return DriftDiffers
 }
