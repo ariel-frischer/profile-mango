@@ -109,7 +109,7 @@ CHANGELOG.md          # generated changelog output
 
 ## Release And Changelog
 
-- Release flow is `make prep-release VERSION=vX.Y.Z`, which runs `scripts/release.sh`; the pushed `v*` tag triggers `.github/workflows/release.yml` (GoReleaser GitHub release).
+- Release flow is `make prep-release VERSION=vX.Y.Z`, which runs `scripts/release.sh`; the pushed `v*` tag triggers `.github/workflows/release.yml` (GoReleaser GitHub release). Set `RELEASE_REMOTE=<name>` when the GitHub remote is not `origin`.
 - `BUILD_VERSION`, `COMMIT`, and `BUILD_DATE` are injected through Makefile ldflags.
 - Changelog source is `CHANGELOG.yaml`; regenerate `CHANGELOG.md` with `chlog sync`.
 - Use `chlog add <category> "message"` for unreleased entries when possible.

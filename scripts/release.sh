@@ -18,6 +18,8 @@ fi
 BARE_VERSION="${VERSION#v}"
 # Ensure tag has v prefix
 TAG="v${BARE_VERSION}"
+# Remote that hosts the GitHub repository; its tag push triggers the release workflow.
+REMOTE="${RELEASE_REMOTE:-origin}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -37,7 +39,7 @@ if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null 2>&1; then
   exit 1
 fi
 
-if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+if git ls-remote --exit-code --tags "${REMOTE}" "refs/tags/${TAG}" >/dev/null 2>&1; then
   echo "Error: remote tag already exists: ${TAG}"
   exit 1
 fi
@@ -92,9 +94,9 @@ goreleaser release --snapshot --clean --skip=publish
 echo "==> Tagging ${TAG}..."
 git tag -a "${TAG}" -m "Release ${TAG}"
 
-echo "==> Pushing to origin..."
-git push origin main
-git push origin "${TAG}"
+echo "==> Pushing to ${REMOTE}..."
+git push "${REMOTE}" main
+git push "${REMOTE}" "${TAG}"
 
 echo ""
 echo "Done! ${TAG} tagged and pushed."
