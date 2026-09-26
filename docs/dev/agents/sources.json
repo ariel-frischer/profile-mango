@@ -101,13 +101,13 @@
       "supported_capability": "inert_preview_rendering_only",
       "version_context": {
         "kind": "release_pin_with_immutable_source_and_package_review",
-        "version": "v0.86.1",
-        "commit": "13cbf77df2396303013a41646bcfa77b4271ae56",
-        "source_archive_sha256": "16d65ce53bfab1ae24d625538d434c341c4789d34b352d8c6ef699cf1d1d567d",
-        "commit_archive_sha256": "016d83312289ca9b8d3a9d2a5ad804b265277c659472833cfd602cdceecf3818",
+        "version": "v0.87.1",
+        "commit": "f07218c4d4bbc12bef056a7058c3dd49dfe41abe",
+        "source_archive_sha256": "c3902f45689af9ed9c8ee225554d31a649a993b06f04ab2022bb91ed75e808dc",
+        "commit_archive_sha256": "f6ba24ed7e1e6dbda1844ca55c61e20e3ef21e5cc66f9eb2e0611318f6c46c15",
         "package_name": "@earendil-works/pi-coding-agent",
-        "package_tarball_sha256": "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a",
-        "package_integrity": "sha512-vZBuNfJnruxZyemZ3O05V0S/Ylze08ahFTIQ1Mik++gVdOevPl89gt/Uv0U97BPAJaj9cj6Vf9rcIgKtUrd0BA==",
+        "package_tarball_sha256": "1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f",
+        "package_integrity": "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==",
         "entrypoint": "dist/bundle/cli.js",
         "entrypoint_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
         "platform": "Linux 7.2.5-3-omarchy x86_64",
@@ -115,15 +115,15 @@
         "native_execution": "not run; startup, auth, model, project, extension, package, session, subprocess, network, and write effects were not proven bounded"
       },
       "sources": [
-        { "url": "https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent", "kind": "commit_pinned_source_entrypoint" },
-        { "url": "https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1", "kind": "immutable_registry_package_metadata" },
-        { "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.86.1.tgz", "kind": "immutable_registry_package_tarball" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/README.md", "kind": "release_pinned_documentation" }
+        { "url": "https://github.com/earendil-works/pi/tree/f07218c4d4bbc12bef056a7058c3dd49dfe41abe/packages/coding-agent", "kind": "commit_pinned_source_entrypoint" },
+        { "url": "https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.87.1", "kind": "immutable_registry_package_metadata" },
+        { "url": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.87.1.tgz", "kind": "immutable_registry_package_tarball" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/settings.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/security.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/skills.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/README.md", "kind": "release_pinned_documentation" }
       ]
     },
     {
@@ -137,22 +137,23 @@
       "supported_capability": "inert_preview_rendering_only",
       "version_context": {
         "kind": "release_pin_with_source_observation",
-        "version": "v18.2.6",
-        "commit": "78b753124d11f8dd3ae73e2524125890ff7c977e",
+        "version": "v18.3.2",
+        "commit": "7853b4e499936f9dcc13c9b64adb55f6b342aabf",
+        "release_binary_sha256": "8cbbcd4bea7a7b86116a13352f31e3778fd4d93df931036bb1771738b0702534",
         "bun_version": "1.3.14",
         "bun_sha256": "9fd36f87e4b90b07632b987a2e4ec81ca15a62c81bf983190cea6d715be2ad74",
-        "package_manifest_sha256": "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e",
-        "lockfile_sha256": "b74fbff79c5acbacc6bc46f4180e070cb5edb9853c8c5a00ff97d9c8734d4a70",
-        "note": "The exact standalone binary was not produced because the pinned linux-x64 native addon was unavailable."
+        "package_manifest_sha256": "2d07016b28d5d866c4947b4aa273ae31dbd29655513c508d9c658d024a721830",
+        "lockfile_sha256": "aa191001b0daac1cc4b21a4a6be4fd613234e19958308657b56313708d9fafb1",
+        "note": "Requalified 2026-09-26 from v18.2.6 by source diff plus an isolated config read with the release binary; the Bun runtime above is from the original v18.2.6 source observation, where the standalone binary was not produced because the linux-x64 native addon was unavailable."
       },
       "sources": [
-        { "url": "https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent", "kind": "release_pinned_source_entrypoint" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/providers.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/context-files.md", "kind": "release_pinned_documentation" },
-        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/skills.md", "kind": "release_pinned_documentation" }
+        { "url": "https://github.com/can1357/oh-my-pi/tree/v18.3.2/packages/coding-agent", "kind": "release_pinned_source_entrypoint" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/settings.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/providers.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/models.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/approval-mode.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/context-files.md", "kind": "release_pinned_documentation" },
+        { "url": "https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/skills.md", "kind": "release_pinned_documentation" }
       ]
     },
     {

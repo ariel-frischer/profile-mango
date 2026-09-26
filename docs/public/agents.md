@@ -37,8 +37,8 @@ another agent is billed. A successful reply still does not prove its billing rou
 | Claude Code | `2.1.278` | `>=2.1.278 <2.2.0` | `~/.claude/profiles/<profile>.json` next to `~/.claude/settings.json` |
 | Codex | `0.157.1` | `>=0.157.1 <0.158.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
-| Pi | `0.86.1` | `>=0.86.1 <0.87.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
-| Oh My Pi | `18.2.6` | `>=18.2.6 <18.3.0` | `~/.omp/agent/config.yml` |
+| Pi | `0.87.1` | `>=0.87.1 <0.88.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
+| Oh My Pi | `18.3.2` | `>=18.3.2 <18.4.0` | `~/.omp/agent/config.yml` |
 | OpenClaw | `2026.9.5` | `>=2026.9.5 <2026.10.0` | `~/.openclaw/openclaw.json` (or `$OPENCLAW_CONFIG_PATH`) |
 | Hermes | `0.21.3` | `>=0.21.3 <0.22.0` | `~/.hermes/config.yaml` (or `$HERMES_HOME`) |
 
@@ -170,8 +170,11 @@ The evidence behind every row is in the developer
 - **Caveats:** the overlay wins over global and project config; slots it does
   not set still come from them, and command-line `--model`/`--thinking` still
   win. Omp refuses to start if the `--config` file is missing, so undoing the
-  profile breaks aliases that point at it. Unbound model slots and provider
-  options are left alone. In `config.yml`, a slot or `task.maxEffort` a later
+  profile breaks aliases that point at it. Unbound model slots (such as
+  `memory`, `image`, `web`, `speech`, `dictation`, and `judge`) and provider
+  options are left alone; an unset `memory` slot falls back to `tiny`. A legacy
+  `providers.tinyModel` in the same file is put in front of the `tiny` slot
+  when Oh My Pi loads it. In `config.yml`, a slot or `task.maxEffort` a later
   profile no longer sets gets its pre-install value back, or is removed if
   profile-mango added it.
 - [Reference](../dev/agents/oh-my-pi.md)

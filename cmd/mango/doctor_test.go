@@ -218,7 +218,7 @@ func TestDoctorJSONReportsVersionRange(t *testing.T) {
 	doctorFakeBinaries(t, map[string]string{
 		"codex":  "echo 'codex-cli " + codex.TargetVersion + "'",
 		"claude": "echo '9.9.9 (Claude Code)'",
-		"pi":     "echo '0.86.4'",
+		"pi":     "echo '0.87.4'",
 	})
 	t.Setenv("HOME", filepath.Join(t.TempDir(), "home"))
 

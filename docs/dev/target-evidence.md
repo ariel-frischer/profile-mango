@@ -69,11 +69,11 @@ reproducible fixtures, and evidence independent of the developer's machine.
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.157.1` (requalified from `0.154.0`) | Isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields (and project/session `medium`/`minimal` effort overrides) on both builds; exact-source resolver test on `0.154.0`; `ReasoningEffort` parser and profile-v2 loader source unchanged `rust-v0.154.0..rust-v0.157.1`; isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml` on both builds; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `none`/`minimal`/`low`/`medium`/`high`/`xhigh` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project, runtime, and (since 0.157.1) managed `requirements.toml` provider overrides can shadow them. OAuth identity, model availability and per-model effort support, delivery and full-profile applicability remain unverified |
-| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; per-role `:effort` selectors, portable-role slot mapping, and `task.maxEffort` source-reviewed only | `modelRoles` selectors (default natively qualified; portable-role slots and effort suffixes source-reviewed) and `task.maxEffort` installable; role definitions, standalone startup, authentication, precedence, delivery and enforcement remain blocked |
+| Oh My Pi | source `omp/18.3.2` at `7853b4e499936f9dcc13c9b64adb55f6b342aabf` (release ELF `8cbbcd4b…`) | Original `18.2.6` exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; `18.3.2` source diff of every cited file plus an isolated installed-release `config list` read of all installed slots and `task.maxEffort` from a Mango overlay; slot consumers and effort clamping source-reviewed only | `modelRoles` selectors (default natively qualified; portable-role slots and effort suffixes source-reviewed) and `task.maxEffort` installable; role definitions, standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `<hermes-home>/profiles/<name>/config.yaml` profile that `hermes -p <name>` reads (main config must be `<hermes-home>/config.yaml`), and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
-| Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
+| Pi | source tag `v0.87.1` at `f07218c4d4bbc12bef056a7058c3dd49dfe41abe`, package `@earendil-works/pi-coding-agent@0.87.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
 | Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
 The observations are version-qualified snapshots, not compatibility ranges.
@@ -109,9 +109,35 @@ supports the wider range.
 - A tested range is a stated claim, not new evidence. Qualification evidence
   still belongs to the exact version recorded above.
 
-## Pi v0.86.1 evidence
+## Pi evidence
 
-### Immutable artifact, release, and platform
+### Requalification to v0.87.1, 2026-09-26
+
+`git ls-remote https://github.com/earendil-works/pi.git refs/tags/v0.87.1`
+resolved to commit `f07218c4d4bbc12bef056a7058c3dd49dfe41abe`. The tag archive
+has SHA-256 `c3902f45689af9ed9c8ee225554d31a649a993b06f04ab2022bb91ed75e808dc`
+and the commit-pinned archive
+`f6ba24ed7e1e6dbda1844ca55c61e20e3ef21e5cc66f9eb2e0611318f6c46c15`. The npm
+package `@earendil-works/pi-coding-agent@0.87.1` has registry metadata SHA-256
+`3af72c075603c57bd832b538a0c08ae3ff191025ff5ec8edecffea496b42e117`, tarball
+SHA-256 `1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f`
+(the new `EvidenceSHA256`), and integrity
+`sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==`,
+recomputed from the tarball. It still declares Node.js `>=22.19.0` and
+`bin.pi` `dist/bundle/cli.js`; that entrypoint and
+`dist/core/settings-manager.js` keep the hashes recorded below.
+
+Source diff `v0.86.1..v0.87.1`: `src/core/settings-manager.ts` and
+`src/config.ts` are identical; `src/core/resource-loader.ts` changed only
+prompt-template diagnostics (context-file lines 71-72 and 119-156 identical);
+`docs/settings.md` was restructured but still lists the three managed keys and
+project-over-agent-directory precedence. No behavioral difference was found for
+the fields Mango writes or for `~/AGENTS.md`. The opt-in
+`TestNativeSettingsModuleQualification` passed against the extracted `0.87.1`
+tarball (with `PROFILE_MANGO_PI_NATIVE_TARBALL` hash-checked). File hashes are in
+the [target reference](agents/pi.md#requalification-to-v0871-2026-09-26).
+
+### Immutable artifact, release, and platform (original v0.86.1)
 
 The immutable Git tag `v0.86.1` for `earendil-works/pi` resolved with
 `git ls-remote https://github.com/earendil-works/pi.git refs/tags/v0.86.1` to
@@ -859,12 +885,13 @@ installed-binary observations. OAuth identity, model availability, per-model
 effort support, runtime delivery and managed-requirement precedence remain
 unverified. No provider call was made and no personal Codex home was read.
 
-## Oh My Pi v18.2.6 source and preview-renderer evidence
+## Oh My Pi source and preview-renderer evidence
 
-The following records the initial preview qualification. The later installer
+The following records the initial preview qualification at `v18.2.6`; the
+[v18.3.2 requalification](#oh-my-pi-requalification-to-v1832-2026-09-26) updates the pin. The later installer
 qualification below supersedes the missing-addon blocker only for two fields.
 
-The task-owned source checkout is pinned to tag `v18.2.6` and commit
+The task-owned source checkout was pinned to tag `v18.2.6` and commit
 `78b753124d11f8dd3ae73e2524125890ff7c977e`. Frozen dependency installation used
 Bun `1.3.14` and the pinned `bun.lock`. The direct source entrypoint
 `packages/coding-agent/src/cli.ts --version` printed `omp/18.2.6` with an
@@ -1031,6 +1058,50 @@ before runtime flags. An isolated, network-less run of the installed
 the probe are in the [target reference](agents/oh-my-pi.md#named-profile-overlay).
 Sandbox tests cover side-by-side overlays, an unchanged `config.yml`,
 `--default` writing both, and byte-restoring undo.
+
+### Oh My Pi requalification to v18.3.2, 2026-09-26
+
+`git ls-remote https://github.com/can1357/oh-my-pi.git refs/tags/v18.3.2`
+resolved to `7853b4e499936f9dcc13c9b64adb55f6b342aabf`.
+`packages/coding-agent/package.json` at that tag has SHA-256
+`2d07016b28d5d866c4947b4aa273ae31dbd29655513c508d9c658d024a721830`, the new
+`EvidenceSHA256` (same `source-entrypoint-version` level). The installed `omp`
+ELF `8cbbcd4bea7a7b86116a13352f31e3778fd4d93df931036bb1771738b0702534` equals
+the `v18.3.2` GitHub release asset `omp-linux-x64` digest; the release is not
+marked immutable.
+
+Every source file cited for Oh My Pi was diffed from `v18.2.6`. Behavioral
+differences relevant to Mango:
+
+- `MODEL_ROLES` (`config/model-roles.ts`) adds `memory`, `image`, `web`,
+  `speech`, `dictation`, and `judge`. Mango writes none of them. An unset
+  `memory` slot now falls back to a configured `tiny` (`model-resolver.ts`
+  1091-1109), so the portable `tiny` role also drives memory work.
+- `#migrateRawSettings` (`config/settings.ts` 3171-3185) moves a legacy
+  `providers.tinyModel`/`memoryModel` into the same layer's `tiny`/`memory`
+  slot as a leading `local/<model>` candidate. Mango does not write those keys.
+- A bare selector exactly naming a retired wire-tier id now implies its level
+  (`inferWireRouteThinkingLevel`, `model-resolver.ts` 852-866); suffixed
+  selectors are unaffected.
+- The `task.maxEffort` ceiling is also carried into the child session
+  (`task/executor.ts` 3841), so retry fallback cannot raise effort past it.
+- `settings-schema.ts` was replaced by per-domain registrations; `modelRoles`
+  (`config/model-settings.ts:97`) and `task.maxEffort` (`task/settings.ts`
+  343-356) keep their types, values and default, and declare no environment
+  variable, the one layer newly documented above overlays.
+
+Unchanged: suffix parsing, `@<role>` resolution, `pickInitialThinkingLevel`,
+slot consumers, `--config` overlay loading and merge order
+(`settings.ts` 610-612, 2243-2287, 3614-3618), `setByPath`, agent discovery,
+native `--profile` relocation, and the global/home instruction paths.
+
+Native observation: the worktree's compiled `mango install ... --apply` wrote
+an overlay with seven suffixed slots and `task.maxEffort: "medium"` in a
+disposable `HOME`, leaving `config.yml` byte-identical. The release ELF, run with
+`unshare -rn` and `env -i`, returned those values from `omp config list --json`
+with `PI_CONFIG_FILES=<overlay>` and `config.yml`'s values without it; both
+config files were unchanged afterwards. File hashes and line references are in
+the [target reference](agents/oh-my-pi.md#requalification-to-v1832-2026-09-26).
 
 ### Role subagent files, 2026-09-25 (ap-6lp)
 
@@ -1325,8 +1396,8 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 - Reproducible harness: [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
   and its opt-in integration test `TestAgentConfigProbe`.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
-- Pi v0.86.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
-- Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
+- Pi v0.87.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/f07218c4d4bbc12bef056a7058c3dd49dfe41abe/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.87.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
+- Oh My Pi v18.3.2 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.3.2/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/approval-mode.md). The original `v18.2.6` source review did not execute config inspection because initialization effects were not bounded; the `v18.3.2` requalification ran the release binary's `config list` only in a disposable, network-less sandbox.
 - OpenClaw v2026.9.5 source and documentation: [`openclaw.mjs`](https://github.com/openclaw/openclaw/blob/v2026.9.5/openclaw.mjs), [`config-cli.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/cli/config-cli.ts), [`io.snapshot.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/io.snapshot.ts), [`configuration.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md), and [`config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md). The exact source review did not execute config inspection because plugin/state/include and migration effects were not bounded.
 - Bundled Jcode fork documentation for source snapshot `ed9b93b89`:
   `README.md` named-session-profile section and `docs/WRAPPERS.md` profile
@@ -1344,7 +1415,7 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code's v2.1.278 package and Pi's v0.86.1 source/package release are
+- Claude Code's v2.1.278 package and Pi's v0.87.1 source/package release are
   qualified for inert preview boundaries, but native acceptance, effective-state
   inspection, and enforcement remain blocked pending safe exact-artifact
   inspection paths. OpenClaw and Hermes retain their source-qualified inert
@@ -1563,8 +1634,8 @@ providers. Relative relocation values block with a reason.
 | Claude Code `2.1.278` | `~/.claude/settings.json`; emulated named profiles go to `profiles/<name>.json` in the same folder | none | [claude-code.md](agents/claude-code.md#emulated-named-profiles) |
 | Codex `0.157.1` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml`; named profiles go to `<name>.config.toml` in the same folder | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
 | OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
-| Pi `0.86.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
-| Oh My Pi `18.2.6` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |
+| Pi `0.87.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
+| Oh My Pi `18.3.2` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |
 | OpenClaw `2026.9.5` | `~/.openclaw/openclaw.json`; named profiles go to `~/.openclaw-<name>/openclaw.json`, and a relocated main config blocks named install | `OPENCLAW_CONFIG_PATH` | [openclaw.md](agents/openclaw.md#configuration-and-precedence) |
 | Hermes `0.21.3` | `~/.hermes/config.yaml`; named profiles go to `<config-dir>/profiles/<name>/config.yaml` | `HERMES_HOME` | [hermes.md](agents/hermes.md#configuration-and-precedence) |
 
@@ -1592,7 +1663,7 @@ path each target reads, not observed runtime delivery or precedence.
 
 | Target | Files (directory) | Evidence |
 | --- | --- | --- |
-| Oh My Pi `18.2.6` | `AGENTS.md`, `RULES.md` (`~/.omp/agent`, `getAgentDir()`) | source tag `v18.2.6` commit `78b753124d11f8dd3ae73e2524125890ff7c977e`, `packages/coding-agent/src/discovery/builtin.ts:393` (`RULES.md`) and `:913` (`AGENTS.md`) |
+| Oh My Pi `18.3.2` | `AGENTS.md`, `RULES.md` (`~/.omp/agent`, `getAgentDir()`) | source tag `v18.3.2` commit `7853b4e499936f9dcc13c9b64adb55f6b342aabf`, `packages/coding-agent/src/discovery/builtin.ts:397` (`RULES.md`) and `:917` (`AGENTS.md`); same at `v18.2.6` `78b7531` lines 393, 913 |
 | Codex `0.157.1` | `AGENTS.md` (`$CODEX_HOME`) | source `rust-v0.157.1` commit `3665039`, `codex-rs/codex-home/src/instructions/mod.rs:12-13,43-44`; an existing `AGENTS.override.md` is read instead, so the plan's file can be shadowed |
 | OpenCode `1.18.31` | `AGENTS.md` (`${XDG_CONFIG_HOME:-~/.config}/opencode`) | release `v1.18.31` commit `a97622c801f4ca571530ddc51076af659a9c32cd`, `packages/opencode/src/session/instruction.ts:61` (`path.join(Global.Path.config, "AGENTS.md")`; line 62 also reads `~/.claude/CLAUDE.md`), `packages/core/src/global.ts:13` |
 | Claude Code `2.1.278` | `CLAUDE.md` (`~/.claude`) | documentation context only: mutable `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, row "User instructions `~/.claude/CLAUDE.md`"; not observed in the pinned binary |
@@ -1604,7 +1675,7 @@ synthetic sandbox HOME.
 ## Home instruction file `~/AGENTS.md`, 2026-09-25 (ap-5mp)
 
 `globalInstructions.home` maps `AGENTS.md` to `$HOME/AGENTS.md`. The file lives
-in no target's config directory, so one target owns it: Pi `0.86.1`, the only
+in no target's config directory, so one target owns it: Pi `0.87.1`, the only
 pinned target whose source reads it in every working directory under `$HOME`.
 Pi's config manifest records it with the same whole-file ownership, create-only
 backup, drift check, consent gate, release on `mango use`, and undo journal as
@@ -1618,10 +1689,10 @@ of the read path, not observed runtime delivery or precedence.
 
 | Agent | Reads `~/AGENTS.md` when | Evidence |
 | --- | --- | --- |
-| Pi `0.86.1` (owner) | every working directory under `$HOME`: each ancestor directory up to `/` contributes its first candidate of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so a `~/AGENTS.override.md` shadows it | source `v0.86.1` commit `13cbf77df2396303013a41646bcfa77b4271ae56`, `packages/coding-agent/src/core/resource-loader.ts:71-72` (candidates), `:119-156` (ancestor walk); the agent-dir `AGENTS.md` at `:128` is a separate global file |
+| Pi `0.87.1` (owner) | every working directory under `$HOME`: each ancestor directory up to `/` contributes its first candidate of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so a `~/AGENTS.override.md` shadows it | source `v0.87.1` commit `f07218c4d4bbc12bef056a7058c3dd49dfe41abe` (lines identical at `v0.86.1` `13cbf77`), `packages/coding-agent/src/core/resource-loader.ts:71-72` (candidates), `:119-156` (ancestor walk); the agent-dir `AGENTS.md` at `:128` is a separate global file |
 | Codex `0.157.1` | only when `$HOME` is the working directory or the nearest project root: discovery walks up to the nearest `project_root_markers` directory (`.git` by default) and reads only the working directory when none is found | source `rust-v0.157.1` commit `36650394c5b38c2990ccf2a3457165ca3e9d9726`, `codex-rs/core/src/agents_md.rs:1-18,192-245` |
 | OpenCode `1.18.31` | only outside a Git repository: project instructions use `findUp` from the working directory to the worktree root, and a non-Git worktree is `/` | release `v1.18.31` (tag commit `014614d`, file identical at `a97622c`), `packages/opencode/src/session/instruction.ts:122-133`, `packages/core/src/fs-util.ts:154-166`, `packages/opencode/src/project/project.ts:217` |
-| Oh My Pi `18.2.6` | when no repository encloses the working directory, or the repository root is `$HOME`; a repository nested under `$HOME` excludes the home copy | source `v18.2.6` commit `78b753124d11f8dd3ae73e2524125890ff7c977e`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:684-711` |
+| Oh My Pi `18.3.2` | when no repository encloses the working directory, or the repository root is `$HOME`; a repository nested under `$HOME` excludes the home copy | source `v18.3.2` commit `7853b4e499936f9dcc13c9b64adb55f6b342aabf`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:687-714` (`v18.2.6` `78b7531`: `helpers.ts:684-711`) |
 | Claude Code `2.1.278` | documented for `2.1.277+`: `AGENTS.md` in the working directory and above only when no `CLAUDE.md`/`CLAUDE.local.md` exists there (default `claude-md-or-agents-md`) | documentation context only: `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, lines 333-360; not observed in the pinned binary |
 | Jcode fork (experimental) | every session, as the user-home `AGENTS.md` beside the project file; a profile `agents_md_path` replaces it | developer evidence only, see [Jcode](agents/jcode.md); not an install target and not a support claim |
 

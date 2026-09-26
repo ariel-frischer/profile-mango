@@ -27,7 +27,7 @@ func (ohMyPiAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: ohmypi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Oh My Pi 18.2.6 source-native Settings.loadReadOnly evidence qualifies only modelRoles selectors (default plus the slots of portable roles, each with its own :effort suffix) and task.maxEffort; install writes them to a Mango-owned overlay used with omp --config <path> by default, and to config.yml only with --default; authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged",
+		Reason:         "exact Oh My Pi 18.3.2 source review and native settings reads (release-binary config list of a Mango overlay; 18.2.6 Settings.loadReadOnly getters) qualify only modelRoles selectors (default plus the slots of portable roles, each with its own :effort suffix) and task.maxEffort; install writes them to a Mango-owned overlay used with omp --config <path> by default, and to config.yml only with --default; authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged",
 	}
 }
 

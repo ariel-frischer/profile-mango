@@ -180,7 +180,7 @@ the detected binary to the tested range (tested version up to the next minor):
 ```text
 TARGET               BINARY  DETECTED               IN RANGE  CONFIG                                   PLAN
 claude-code@2.1.278  claude  2.1.281 (Claude Code)  yes       /home/u/.claude/settings.json (exists)   ready
-oh-my-pi@18.2.6      omp     omp/18.2.11            yes       /home/u/.omp/agent/config.yml (exists)   ready
+oh-my-pi@18.3.2      omp     omp/18.3.4             yes       /home/u/.omp/agent/config.yml (exists)   ready
 next: mango install default --target claude-code
 ```
 

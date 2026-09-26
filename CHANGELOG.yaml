@@ -75,6 +75,7 @@ versions:
             - 'Moved to GitHub: Go module is github.com/ariel-frischer/profile-mango, CI and tag releases run on GitHub Actions with GoReleaser, and security reports go through GitHub private vulnerability reporting'
             - go install now uses github.com/ariel-frischer/profile-mango/cmd/mango@latest to install a mango binary; version info falls back to Go build metadata without ldflags
             - Codex target requalified from 0.154.0 to 0.157.1 (tested range >=0.157.1 <0.158.0) with source-diff and isolated installed-binary evidence
+            - Requalify Pi to 0.87.1 and Oh My Pi to 18.3.2 (tested ranges >=0.87.1 <0.88.0 and >=18.3.2 <18.4.0)
         removed:
             - Removed the unused private-prototype user configuration commands and root `--config` override
         fixed:

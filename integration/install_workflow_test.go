@@ -29,7 +29,7 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
 		"hermes@0.21.3":       {"openai", "gpt-5.6", "# keep\nmodel:\n  provider: old\n  default: old\nagent:\n  reasoning_effort: low\nunknown: true\n", "# keep\nmodel:\n  provider: \"openai\"\n  default: \"gpt-5.6\"\nagent:\n  reasoning_effort: \"high\"\nunknown: true\n"},
 		"openclaw@2026.9.5":   {"openai", "gpt-5.6", "// keep\n{agents:{defaults:{model:{primary:\"old\"},thinkingDefault:\"low\"}},unknown:true}\n", "// keep\n{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}},unknown:true}\n"},
-		"pi@0.86.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
+		"pi@0.87.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
 	}
 	for target, test := range tests {
 		t.Run(target, func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	if err := os.WriteFile(piPath, before, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	w.args = append(w.args, "--target", "pi@0.86.1", "--config", "pi="+piPath)
+	w.args = append(w.args, "--target", "pi@0.87.1", "--config", "pi="+piPath)
 	plan := w.plan(t)
 	if len(plan.Targets) != 2 {
 		t.Fatalf("expected two targets, got %#v", plan.Targets)

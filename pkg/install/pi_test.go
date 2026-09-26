@@ -120,7 +120,7 @@ func TestPiInstallBlocksMalformedSettingsAndUnverifiedRequirements(t *testing.T)
 	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "adapter planning failed") {
 		t.Fatalf("malformed Pi settings were not blocked: %#v", plan)
 	}
-	input := AdapterInput{Target: Target{Name: "pi", Version: "0.86.1"}, Profile: requestProfile(), Route: piTestRoute()}
+	input := AdapterInput{Target: Target{Name: "pi", Version: "0.87.1"}, Profile: requestProfile(), Route: piTestRoute()}
 	input.Profile.Instructions = []string{"instructions/system.md"}
 	if _, err := (piAdapter{}).Plan(input); err == nil || !strings.Contains(err.Error(), "delivery") {
 		t.Fatalf("Pi resource delivery was not blocked: %v", err)
@@ -253,7 +253,7 @@ func piInstallTestRequest(t *testing.T) (Request, string) {
 	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	request.Targets = []TargetRequest{{Target: Target{Name: "pi", Version: "0.86.1"}, ConfigPath: config}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "pi", Version: "0.87.1"}, ConfigPath: config}}
 	return request, root
 }
 
@@ -279,7 +279,7 @@ func piTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
 	request, root := testRequest(t, NewRegistry(piAdapter{}))
 	writeInstallTestFile(t, request.BindingsPath, piBindings("gpt-5.6"))
-	request.Targets[0].Target = Target{Name: "pi", Version: "0.86.1"}
+	request.Targets[0].Target = Target{Name: "pi", Version: "0.87.1"}
 	return request, root
 }
 

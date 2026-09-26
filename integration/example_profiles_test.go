@@ -110,9 +110,9 @@ func publicTargetVersions() map[string]string {
 		"claude-code": "2.1.278",
 		"codex":       "0.157.1",
 		"hermes":      "0.21.3",
-		"oh-my-pi":    "18.2.6",
+		"oh-my-pi":    "18.3.2",
 		"openclaw":    "2026.9.5",
 		"opencode":    "1.18.31",
-		"pi":          "0.86.1",
+		"pi":          "0.87.1",
 	}
 }

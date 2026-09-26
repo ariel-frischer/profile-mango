@@ -63,7 +63,7 @@ canonical digest before they are staged.
 
 ## Current target boundary
 
-Claude Code `2.1.278`, Codex `0.157.1`, Pi `0.86.1`, Oh My Pi `18.2.6`,
+Claude Code `2.1.278`, Codex `0.157.1`, Pi `0.87.1`, Oh My Pi `18.3.2`,
 OpenClaw `2026.9.5`, Hermes Agent `0.21.3`, and OpenCode `1.18.31` each have deterministic inert
 preview renderers. the Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
 also has a deterministic inert TOML renderer under the explicit target identity
@@ -90,7 +90,7 @@ unowned or externally edited replacement even when config override is approved.
 Directory-wide native skill discovery is not an exclusive allowlist.
 Claude Code `2.1.278` additionally supports only strict-JSON top-level `model`
 replacement at one explicit path, backed by isolated exact-ELF model consumption
-and disposable built-binary application. Pi `0.86.1` applies only its three route
+and disposable built-binary application. Pi `0.87.1` applies only its three route
 defaults, qualified through native settings-module getters and project override
 tests. Hermes `0.21.3` applies model provider/default and agent reasoning effort,
 qualified through an exact source-native read-only config merge. Other targets
@@ -139,7 +139,7 @@ plugin, gateway, and session state before or during inspection, so no native
 Hermes command was accepted as a safe M0 probe. See [target evidence](target-evidence.md)
 and the [Hermes reference](agents/hermes.md).
 
-Pi's exact `v0.86.1` source commit, npm package tarball, registry integrity, and
+Pi's exact `v0.87.1` source commit, npm package tarball, registry integrity, and
 bundled `dist/bundle/cli.js` entrypoint hashes are pinned. Static review found
 startup settings/auth/model/session paths, project and extension discovery,
 migrations, package/update subprocesses, network-capable model/catalog paths, and
