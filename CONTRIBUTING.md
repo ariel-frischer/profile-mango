@@ -5,7 +5,7 @@ Thanks for your interest in contributing!
 ## Getting Started
 
 ```bash
-git clone https://gitlab.com/ariel-frischer/profile-mango.git
+git clone https://github.com/ariel-frischer/profile-mango.git
 cd profile-mango
 make deps      # Download dependencies
 make install   # Install mango (+ profile-mango alias) to ~/.local/bin
@@ -22,6 +22,10 @@ make lint      # Run linters
 make format    # Format code
 ```
 
+To make your global agent skill follow this checkout while you edit it, run
+`make link-skill`. It symlinks `~/.agents/skills/profile-mango/SKILL.md` to the
+primary checkout and backs up any existing file first.
+
 ## Pull Requests
 
 1. Fork the repo and create your branch from `main`
@@ -31,7 +35,7 @@ make format    # Format code
 
 ## Reporting Issues
 
-Use [GitLab issues](https://gitlab.com/ariel-frischer/profile-mango/issues). Include:
+Use [GitHub issues](https://github.com/ariel-frischer/profile-mango/issues). Include:
 - What you expected vs what happened
 - Steps to reproduce
 - `mango version` output

@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BurntSushi/toml"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 const maxConfigBytes = 8 << 20

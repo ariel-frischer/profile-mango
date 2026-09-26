@@ -8,16 +8,16 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/jcodefork"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/pi"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 type acceptanceTarget struct {

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/agentcheck"
+	"github.com/ariel-frischer/profile-mango/internal/agentcheck"
 )
 
 func TestAgentsCheckShowsProgressWithoutPollutingJSON(t *testing.T) {

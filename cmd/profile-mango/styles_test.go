@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/agentcheck"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/agentcheck"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestOutputStylesColorModes(t *testing.T) {

@@ -13,11 +13,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type installOptions struct {

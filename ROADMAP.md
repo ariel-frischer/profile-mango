@@ -60,7 +60,6 @@ Target profile models are not equivalent:
 | Pi and Oh My Pi | Global and project configuration layers |
 | OpenClaw | Cross-agent defaults with per-agent entries and overrides |
 | Hermes | Named profiles implemented as isolated agent homes |
-| Jcode fork | Fork-specific named profiles; experimental comparison evidence only |
 
 ### 4. Keep adapters profile-scoped
 

@@ -3,8 +3,8 @@ package install
 import (
 	"fmt"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type codexAdapter struct{}

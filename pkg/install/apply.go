@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 func ApplyPlan(plan Plan, options ApplyOptions) (ApplyReport, error) {

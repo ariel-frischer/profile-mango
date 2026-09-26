@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/internal/profilehome"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 const expectedReadmeLogo = `🥭 █▀█ █▀█ █▀█ █▀▀ █ █   █▀▀   ─   █▀▄▀█ ▄▀█ █▄ █ █▀▀ █▀█

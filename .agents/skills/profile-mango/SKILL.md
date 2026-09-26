@@ -14,7 +14,7 @@ compatibility:
   - VS Code
 metadata:
   author: Ariel Frischer
-  version: 0.0.3
+  version: 0.0.4
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
@@ -26,13 +26,14 @@ identity: author/validate profiles, render inert previews, and plan only the
 version-qualified installs below. Install the CLI first if not on PATH:
 
 ```bash
-git clone git@gitlab.com:ariel-frischer/profile-mango.git
-cd profile-mango && make deps && make install && mango version
+go install github.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
+# or a checksum-verified release binary:
+curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/install.sh | sh
+mango version
 ```
 
-From a source checkout, `make link-skill` links the global
-`~/.agents/skills/profile-mango/SKILL.md` to this tracked skill in the primary
-checkout. It backs up any existing global entry and is safe to run again.
+Install or update this skill with
+`npx skills add ariel-frischer/profile-mango --skill profile-mango -g`.
 
 ## Scaffold a package
 

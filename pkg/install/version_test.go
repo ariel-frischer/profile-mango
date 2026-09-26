@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 )
 
 func TestTildeRangeTable(t *testing.T) {

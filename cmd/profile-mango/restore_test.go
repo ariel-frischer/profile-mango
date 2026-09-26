@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 func TestCodexRestorePlanAndApply(t *testing.T) {

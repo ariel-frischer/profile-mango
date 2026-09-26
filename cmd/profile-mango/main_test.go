@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/testenv"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/internal/testenv"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 // TestMain isolates every test from the real user home and refuses to run if any

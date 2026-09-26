@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 const useTestHandRules = "# my own omp rules\n"

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 // withAgentDetection restores the real PATH-based detector for one test. It

@@ -5,7 +5,7 @@
 profile-mango: Define portable coding-agent behavior once and compile it into deterministic, capability-aware target artifacts.
 
 - **Language:** Go
-- **Module:** `gitlab.com/ariel-frischer/profile-mango`
+- **Module:** `github.com/ariel-frischer/profile-mango`
 - **Layout:** CLI + library
 - **Env prefix:** `PROFILE_MANGO`
 
@@ -72,7 +72,8 @@ schemas/               # versioned profile, binding, plan, and manifest contract
 docs/dev/              # target evidence and support boundaries
 docs/public/           # user-facing documentation
 assets/                # demo content (GIFs, screenshots)
-.gitlab-ci.yml         # GitLab CI + release
+.github/workflows/     # GitHub Actions CI (ci.yml) + tag release (release.yml)
+.goreleaser.yaml       # GitHub release build config
 CHANGELOG.yaml        # changelog source
 CHANGELOG.md          # generated changelog output
 .chlog.yaml           # changelog config
@@ -108,7 +109,7 @@ CHANGELOG.md          # generated changelog output
 
 ## Release And Changelog
 
-- Release flow is `make prep-release VERSION=vX.Y.Z`, which runs `scripts/release.sh`.
+- Release flow is `make prep-release VERSION=vX.Y.Z`, which runs `scripts/release.sh`; the pushed `v*` tag triggers `.github/workflows/release.yml` (GoReleaser GitHub release).
 - `BUILD_VERSION`, `COMMIT`, and `BUILD_DATE` are injected through Makefile ldflags.
 - Changelog source is `CHANGELOG.yaml`; regenerate `CHANGELOG.md` with `chlog sync`.
 - Use `chlog add <category> "message"` for unreleased entries when possible.

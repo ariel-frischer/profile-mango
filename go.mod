@@ -1,4 +1,4 @@
-module gitlab.com/ariel-frischer/profile-mango
+module github.com/ariel-frischer/profile-mango
 
 go 1.25.5
 

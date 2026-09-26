@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/claudecode"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/opencode"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // Codex rust-v0.154.0 discovers <config dir>/agents/**/*.toml role files

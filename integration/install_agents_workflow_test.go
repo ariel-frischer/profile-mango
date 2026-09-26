@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 func TestInstalledBinaryNamedOpenCodeAgent(t *testing.T) {

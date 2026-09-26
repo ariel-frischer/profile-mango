@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/ariel-frischer/profile-mango/internal/version"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/version"
 )
 
 var versionPlain bool

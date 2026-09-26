@@ -11,11 +11,10 @@
 ## Install
 
 ```bash
-go install gitlab.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
+go install github.com/ariel-frischer/profile-mango/cmd/profile-mango@latest
 ```
 
-Once the first release is tagged, you can also install a checksum-verified binary
-from GitHub releases:
+Or install a checksum-verified binary from GitHub releases:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/install.sh | sh

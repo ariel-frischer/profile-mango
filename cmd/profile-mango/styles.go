@@ -4,10 +4,10 @@ import (
 	"io"
 	"os"
 
+	"github.com/ariel-frischer/profile-mango/internal/agentcheck"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
-	"gitlab.com/ariel-frischer/profile-mango/internal/agentcheck"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type outputStyles struct {

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 const (
@@ -41,7 +41,7 @@ type Capability = render.Capability
 type Artifact = render.Artifact
 type Result = render.Result
 
-// DefaultTarget returns the exact tested Ariel custom-fork build identity.
+// DefaultTarget returns the exact tested custom-fork build identity.
 func DefaultTarget() TargetBuild {
 	return TargetBuild{Name: TargetName, Version: TargetVersion, EvidenceSHA256: EvidenceSHA256}
 }
@@ -74,8 +74,8 @@ func Render(input Input) Result {
 
 	resourceArtifacts, resourceDiagnostics := render.ResourceArtifacts(input.Profile, input.Resources, render.ResourceArtifactOptions{
 		CodePrefix:         "jcodefork",
-		InstructionMessage: "Ariel custom Jcode fork instruction delivery and precedence are unverified",
-		SkillMessage:       "Ariel custom Jcode fork skill discovery and delivery precedence are unverified",
+		InstructionMessage: "Custom Jcode fork instruction delivery and precedence are unverified",
+		SkillMessage:       "Custom Jcode fork skill discovery and delivery precedence are unverified",
 	})
 	result.Diagnostics = append(result.Diagnostics, resourceDiagnostics...)
 	if !render.HasCodePrefix(resourceDiagnostics, "jcodefork.resource.") {
@@ -101,7 +101,7 @@ func addTargetCapabilities(result *Result, target TargetBuild) {
 		result.AddCapability("target.version", StatusBlocking, "the exact tested custom-fork build, commit, and SHA-256 are not qualified")
 		return
 	}
-	result.AddCapability("target.version", StatusSupported, "exact Ariel custom-fork build, commit, and SHA-256 are pinned")
+	result.AddCapability("target.version", StatusSupported, "exact custom-fork build, commit, and SHA-256 are pinned")
 }
 
 func addRouteCapabilities(result *Result) {
@@ -202,7 +202,7 @@ func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
 		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.unsupported", "target", fmt.Sprintf("renderer only accepts the %q target for the %s", TargetName, ExperimentalLabel), 0, 0)
 	}
 	if target.Version == "" {
-		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.version_required", "targetVersion", "an exact tested Ariel custom-fork version and commit are required", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.version_required", "targetVersion", "an exact tested custom-fork version and commit are required", 0, 0)
 	} else if target.Version != TargetVersion {
 		diagnostics.Add(profilemango.SeverityError, "jcodefork.target.version_unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
 		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.unsupported", "targetVersion", fmt.Sprintf("only %s is evidenced", BuildIdentity), 0, 0)
@@ -210,7 +210,7 @@ func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
 	if target.EvidenceSHA256 == "" {
 		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.evidence_required", "targetVersion", "the exact tested custom-fork SHA-256 is required", 0, 0)
 	} else if target.EvidenceSHA256 != EvidenceSHA256 {
-		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.evidence_mismatch", "targetVersion", "target evidence hash does not match the pinned Ariel custom-fork build", 0, 0)
+		diagnostics.Add(profilemango.SeverityError, "jcodefork.version.evidence_mismatch", "targetVersion", "target evidence hash does not match the pinned custom-fork build", 0, 0)
 	}
 	return diagnostics
 }
@@ -249,7 +249,7 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 	}
 	var builder strings.Builder
 	builder.WriteString("# profile-mango: INERT PREVIEW ONLY\n")
-	builder.WriteString("# TARGET: Ariel custom Jcode fork (experimental-only)\n")
+	builder.WriteString("# TARGET: Custom Jcode fork (experimental-only)\n")
 	builder.WriteString("# This is a candidate profile, not an active target configuration.\n")
 	builder.WriteString("# Route identity, discovery, delivery, precedence, child overrides, hooks, extensions, MCP, and enforcement remain unverified.\n\n")
 	fmt.Fprintf(&builder, "[profiles.%s]\n", profile.Metadata.Name)

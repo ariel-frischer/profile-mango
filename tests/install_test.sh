@@ -45,15 +45,6 @@ assert_file_contains() {
     fi
 }
 
-assert_file_not_contains() {
-    file=$1
-    needle=$2
-    description=$3
-    if grep -F "$needle" "$file" >/dev/null 2>&1; then
-        fail "${description}: unexpected '${needle}' found in ${file}"
-    fi
-}
-
 assert_file_equals() {
     expected_file=$1
     actual_file=$2
@@ -250,9 +241,6 @@ assert_file_contains "$ROOT_DIR/.goreleaser.yaml" \
 assert_file_contains "$ROOT_DIR/.goreleaser.yaml" \
     'name_template: checksums.txt' \
     'GoReleaser checksum naming contract'
-assert_file_not_contains "$ROOT_DIR/install.sh" \
-    'curl -fsSL https://gitlab.com' \
-    'private-safe installer header'
 
 run_platform_case() {
     platform_name=$1

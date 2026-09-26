@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/ariel-frischer/profile-mango/internal/profilehome"
+	"github.com/ariel-frischer/profile-mango/internal/version"
 	"github.com/spf13/cobra"
-	"gitlab.com/ariel-frischer/profile-mango/internal/profilehome"
-	"gitlab.com/ariel-frischer/profile-mango/internal/version"
 )
 
 var rootCmd = &cobra.Command{

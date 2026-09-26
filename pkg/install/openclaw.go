@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type openClawAdapter struct{}
