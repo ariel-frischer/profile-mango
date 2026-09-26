@@ -58,6 +58,9 @@ routes:
 Bindings name a route. They never contain API keys, tokens, or account IDs.
 Sign-in stays with each agent.
 
+`mango route set` and `mango route unset` change a route's fields in place,
+keeping comments; see [Editing routes](profile-reference.md#editing-routes).
+
 ## What install does
 
 `mango install <profile>` works in two steps:

@@ -193,7 +193,7 @@ func TestUndoWithoutJournalExplainsNothingToUndo(t *testing.T) {
 }
 
 func TestUnifiedDiffRedactsSensitiveLines(t *testing.T) {
-	diff := unifiedDiff("/x/config", []byte("a\napi_key = \"SECRET\"\nz\n"), []byte("a\nmodel = \"m\"\nz\n"))
+	diff := UnifiedDiff("/x/config", "after undo", []byte("a\napi_key = \"SECRET\"\nz\n"), []byte("a\nmodel = \"m\"\nz\n"))
 	if strings.Contains(diff, "SECRET") || !strings.Contains(diff, "+model = \"m\"") || !strings.Contains(diff, "--- /x/config") {
 		t.Fatalf("diff = %q", diff)
 	}

@@ -162,6 +162,15 @@ func WriteSidecar(path string, data []byte) error {
 	return writeAtomicUnconditional(path, data, 0o600)
 }
 
+// ReplaceFile atomically replaces an existing file, through a temporary file in
+// the same directory, if it still matches expected; the file keeps its mode.
+func ReplaceFile(path string, data []byte, expected Snapshot) error {
+	if !expected.Exists {
+		return fmt.Errorf("replace %s: file does not exist", path)
+	}
+	return atomicReplace(path, data, expected, expected.Mode)
+}
+
 func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	changes, err := normalizeChanges(changes)
 	if err != nil {

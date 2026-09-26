@@ -13,9 +13,10 @@ const maxDiffLines = 200
 // sensitiveLine matches config lines that may carry credentials; their content never reaches a diff.
 var sensitiveLine = regexp.MustCompile(`(?i)(key|token|secret|password|passwd|credential|auth|bearer|cookie)`)
 
-// unifiedDiff renders one hunk covering the changed middle of before and after, after trimming
-// the common leading and trailing lines. It is a bounded, redacted preview, not a minimal diff.
-func unifiedDiff(path string, before, after []byte) string {
+// UnifiedDiff renders one hunk covering the changed middle of before and after, after trimming
+// the common leading and trailing lines; afterLabel names the right side, e.g. "after undo".
+// It is a bounded, redacted preview, not a minimal diff.
+func UnifiedDiff(path, afterLabel string, before, after []byte) string {
 	old, updated := diffLines(before), diffLines(after)
 	prefix := 0
 	for prefix < len(old) && prefix < len(updated) && old[prefix] == updated[prefix] {
@@ -31,7 +32,7 @@ func unifiedDiff(path string, before, after []byte) string {
 	if strings.IndexFunc(label, unicode.IsControl) >= 0 {
 		label = strconv.Quote(label)
 	}
-	fmt.Fprintf(&builder, "--- %s (current)\n+++ %s (after undo)\n", label, label)
+	fmt.Fprintf(&builder, "--- %s (current)\n+++ %s (%s)\n", label, label, afterLabel)
 	if len(removed) == 0 && len(added) == 0 {
 		builder.WriteString("  (no content change)\n")
 		return builder.String()

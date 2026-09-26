@@ -243,6 +243,27 @@ cap. It does not raise the effort of spawns that pass none, and it does not
 change the role models. Other agents list it under "not installed for this
 agent"; `install --strict` blocks it. `targets` overrides never change it.
 
+### Editing routes
+
+`mango route` edits existing routes without hand-editing YAML:
+
+```bash
+mango route list                                   # routes and the profiles using each
+mango route show sol --target oh-my-pi             # as written, and what that agent gets
+mango route set sol --target oh-my-pi --effort medium [--dry-run]
+mango route set opus55 --role research --model gpt-6-luna
+mango route set opus55 --subagent-max-effort high  # whole route only
+mango route unset sol --target oh-my-pi effort     # fields: provider, model, effort, subagent-max-effort
+```
+
+`set` changes only the affected lines and adds a missing `targets.<agent>` or
+`roles.<role>` entry. `unset` removes an entry, and then its `targets` or
+`roles` map, once it is empty. Both check the edited file the way `install`
+does and write nothing if it is invalid or unchanged; `--target` and `--role`
+cannot be combined. They print the diff, then the profiles to apply with
+`mango use` or `mango install`; agent config never changes until you do.
+New routes are still added by hand.
+
 ## Checking a profile
 
 ```bash

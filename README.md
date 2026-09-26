@@ -37,6 +37,8 @@ mango undo --target codex       # preview reversing that install
 mango undo --target codex --apply --yes --expect-plan <undo-plan-id>
 mango use <profile>             # switch managed agents to another profile (same plan/apply)
 mango status                    # which profile each agent runs, and edited or stale files
+mango route list                # routes, their models, and the profiles using them
+mango route set sol --effort medium   # change a route in bindings/local.yaml
 ```
 
 The plan ends with the exact apply command, including its plan ID. On a terminal,
@@ -68,7 +70,10 @@ installed alongside it. If you already use MangoWC's unrelated `mango`
 compositor CLI, keep invoking `profile-mango` (or adjust `PATH` ordering) to
 avoid the name collision.
 
-To change the model, edit `~/.profile-mango/bindings/local.yaml`. See the
+To change the model, run `mango route set <route> --model <m>` (add
+`--target <agent>` or `--role <role>` to change one agent or role). It edits
+`~/.profile-mango/bindings/local.yaml` in place, keeps comments, checks the
+result, and prints the diff; then run `mango use <profile>` to apply it. See the
 [profile reference](docs/public/profile-reference.md).
 
 ## Check an installed profile

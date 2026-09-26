@@ -279,7 +279,7 @@ func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current i
 		change.Content, change.Mode = original.Content, original.Mode
 	}
 	if !isManifest {
-		file.Diff = unifiedDiff(entry.Path, current.Content, change.Content)
+		file.Diff = UnifiedDiff(entry.Path, "after undo", current.Content, change.Content)
 	}
 	if file.Action != ActionNoop {
 		plan.changes = append(plan.changes, change)

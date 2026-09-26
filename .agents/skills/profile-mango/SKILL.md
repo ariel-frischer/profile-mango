@@ -106,6 +106,20 @@ tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
       research: {provider: opencode-go, model: gpt-6-luna, effort: high}
 ```
 
+To change an existing route, use `mango route set` instead of hand-editing the
+bindings file: it edits only the affected lines (comments survive), creates a
+missing `targets.<agent>`/`roles.<role>` entry, validates like install, and
+writes nothing when invalid or unchanged. `mango route unset` removes fields and
+prunes emptied entries. Then apply with `mango use <profile>`.
+
+```bash
+mango route list                                   # routes + profiles using each
+mango route show sol --target oh-my-pi [--json]    # as written + effective route
+mango route set sol --target oh-my-pi --effort medium --dry-run
+mango route set opus55 --role research --model gpt-6-luna
+mango route unset sol --target oh-my-pi effort     # provider|model|effort|subagent-max-effort
+```
+
 `targets` overrides never change roles, and agents filter role providers:
 Claude Code role files take only `anthropic` models and Codex only its OpenAI
 provider; another provider leaves that role file without a model (the agent

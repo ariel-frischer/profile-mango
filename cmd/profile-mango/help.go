@@ -31,6 +31,9 @@ func printHelpDetails(writer io.Writer, cmd *cobra.Command, styles outputStyles)
 	if len(cmd.Aliases) > 0 {
 		_, _ = fmt.Fprintf(writer, "\n%s\n  %s\n", styles.heading("Aliases:"), strings.Join(cmd.Aliases, ", "))
 	}
+	if cmd.Example != "" {
+		_, _ = fmt.Fprintf(writer, "\n%s\n%s\n", styles.heading("Examples:"), cmd.Example)
+	}
 }
 
 func printHelpCommands(writer io.Writer, cmd *cobra.Command, styles outputStyles) {
