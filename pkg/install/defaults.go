@@ -15,7 +15,8 @@ const (
 )
 
 // ConfigDestination reports the resolved main config path and whether it came from --config or the target default.
-// Path stays out of plan JSON, which never carries absolute paths; human plans display it for consent.
+// Path stays out of plan JSON, which carries no raw config paths (only a named profile's
+// use command may name its file); human plans display it for consent.
 type ConfigDestination struct {
 	Path   string `json:"-"`
 	Source string `json:"source"`

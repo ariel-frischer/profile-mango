@@ -90,11 +90,14 @@ func (claudeCodeAdapter) NamedProfileFile(name string) (string, error) {
 	return claudecode.ProfileFileName(name), nil
 }
 
-// NamedProfileUse shows the documented default profile location. It receives only
-// the profile name, not the resolved config path, so an install with an explicit
-// --config still prints this default-location form.
+// NamedProfileUse shows the default profile location until planning resolves the file.
 func (claudeCodeAdapter) NamedProfileUse(name string) string {
 	return "claude --settings ~/.claude/" + claudecode.ProfileFileName(name)
+}
+
+// NamedProfileUseFile starts Claude Code with the resolved profile file.
+func (claudeCodeAdapter) NamedProfileUseFile(path string) string {
+	return "claude --settings " + path
 }
 
 func validateClaudeCodeProfile(input AdapterInput) error {

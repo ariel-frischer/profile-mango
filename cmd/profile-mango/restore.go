@@ -252,7 +252,7 @@ func writeUndoHint(output io.Writer, plan install.RestorePlan, options restoreOp
 	}
 	args = append(args, "--apply", "--yes", "--expect-plan", plan.PlanID)
 	for index := range args {
-		args[index] = shellQuote(args[index])
+		args[index] = install.ShellQuote(args[index])
 	}
 	_, err := fmt.Fprintf(output, "Nothing was written. Apply this undo plan with:\n  %s\n", strings.Join(args, " "))
 	return err

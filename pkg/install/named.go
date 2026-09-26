@@ -3,6 +3,8 @@ package install
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
+	"unicode"
 
 	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
 )
@@ -27,8 +29,16 @@ type InstallMode struct {
 
 // namedProfileUser is implemented by adapters whose agent has native named profiles.
 type namedProfileUser interface {
-	// NamedProfileUse is the command that starts the agent with the named profile.
+	// NamedProfileUse is the command that starts the agent with the named profile, before
+	// its file is resolved.
 	NamedProfileUse(name string) string
+}
+
+// namedProfileFileUser is implemented by adapters whose agent is started with the profile
+// file's path, so the use command must name the file actually planned.
+type namedProfileFileUser interface {
+	// NamedProfileUseFile is the use command for a resolved, shell-ready profile file path.
+	NamedProfileUseFile(path string) string
 }
 
 // namedProfileInstaller locates a named profile's file from its name alone.
@@ -93,6 +103,40 @@ func namedProfileFile(adapter Adapter, profile, configPath string) (string, erro
 		return path, err
 	}
 	return adapter.(namedProfileInstaller).NamedProfileFile(profile)
+}
+
+// useNamedProfileFile points the use command at the resolved named profile file, so an
+// explicit --config prints the file actually written.
+func useNamedProfileFile(adapter Adapter, mode *InstallMode, path string, env PathEnv) {
+	user, found := adapter.(namedProfileFileUser)
+	if !found || mode == nil || mode.Mode != InstallModeNamedProfile || path == "" {
+		return
+	}
+	mode.UseCommand = user.NamedProfileUseFile(shellPath(path, env))
+}
+
+// shellPath shell-quotes path, showing a path below the user's home as ~/... so plan JSON
+// carries no home directory.
+func shellPath(path string, env PathEnv) string {
+	if env.enabled() {
+		if home, err := env.home(); err == nil {
+			if rel, err := filepath.Rel(home, path); err == nil && rel != "." && filepath.IsLocal(rel) {
+				return "~/" + ShellQuote(filepath.ToSlash(rel))
+			}
+		}
+	}
+	return ShellQuote(path)
+}
+
+// ShellQuote leaves plain words alone and single-quotes anything a POSIX shell would reinterpret.
+func ShellQuote(value string) string {
+	plain := value != "" && strings.IndexFunc(value, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune("@%+=:,./_-", r)
+	}) < 0
+	if plain {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
 
 // guardUnchangedConfig makes apply refuse a plan whose main config changed after it was

@@ -50,7 +50,8 @@ The evidence behind every row is in the developer
 - **Installs:** the top-level `model` and, for `low`, `medium`, `high`, or
   `xhigh` effort, `effortLevel` in an emulated named profile:
   `profiles/<profile>.json` next to `settings.json`. Start it with
-  `claude --settings <path>`, printed by the plan as `use it:`. `settings.json`
+  `claude --settings <path>`, printed by the plan as `use it:` (the file
+  actually written, also beside an explicit `--config`). `settings.json`
   is not changed unless you pass `--default`, which also writes these there
   so plain `claude` uses them. Claude Code has no native named profiles; this is
   a profile-mango file-placement convention over the qualified `--settings`
