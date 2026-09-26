@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -66,19 +67,24 @@ func (registry *Registry) ResolveTarget(value string) (Target, error) {
 	if err != nil || selector.Version != "" {
 		return selector, err
 	}
-	var qualified []string
+	var qualified, names []string
 	var result Target
 	for _, target := range registry.Targets() {
+		if !slices.Contains(names, target.Name) {
+			names = append(names, target.Name)
+		}
 		adapter, _ := registry.Lookup(target)
 		if target.Name == selector.Name && adapter.Metadata().Installable {
 			qualified = append(qualified, target.String())
 			result = target
 		}
 	}
-	switch len(qualified) {
-	case 1:
+	switch {
+	case !slices.Contains(names, selector.Name):
+		return Target{}, fmt.Errorf("unknown target %q; valid targets: %s", selector.Name, strings.Join(names, ", "))
+	case len(qualified) == 1:
 		return result, nil
-	case 0:
+	case len(qualified) == 0:
 		return Target{}, fmt.Errorf("target %s has no qualified version; use %s@<version>", selector.Name, selector.Name)
 	default:
 		return Target{}, fmt.Errorf("target %s has several qualified versions (%s); use target@version", selector.Name, strings.Join(qualified, ", "))

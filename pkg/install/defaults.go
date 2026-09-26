@@ -169,37 +169,40 @@ func (openCodeAdapter) DefaultConfigPath(env PathEnv) (string, error) {
 const noAgentsFound = "no supported agents found; run mango doctor"
 
 // missingAgentFolder handles a default config path whose folder does not exist. With
-// SkipNotInstalled, an agent whose command is also absent is skipped; otherwise the
-// target is blocked with the fix. It reports false when the folder exists or cannot
-// be classified, leaving other failures to the normal path inspection.
+// SkipNotInstalled (install --all) the target is skipped whether or not its command is
+// on PATH, so the rest of the plan stays ready; an explicit target is blocked with the
+// fix. It reports false when the folder exists or cannot be classified, leaving other
+// failures to the normal path inspection.
 func missingAgentFolder(request Request, targetPlan TargetPlan) (TargetPlan, bool) {
 	dir := filepath.Dir(targetPlan.ConfigPath)
 	if _, err := os.Stat(dir); !errors.Is(err, fs.ErrNotExist) {
 		return targetPlan, false
 	}
-	name := targetPlan.Target.Name
 	if request.SkipNotInstalled {
-		if binary, found := detectBinary(request.DetectVersion, targetPlan.Target); !found {
-			targetPlan.Status = StatusSkipped
-			targetPlan.Reason = "not installed: no config folder"
-			if binary != "" {
-				targetPlan.Reason = "not installed: no " + binary + " on PATH and no config folder"
-			}
-			return targetPlan, true
-		}
+		targetPlan.Status = StatusSkipped
+		targetPlan.Reason = "config folder " + tildePath(request.Env, dir) + " not found"
+		return targetPlan, true
 	}
+	name := targetPlan.Target.Name
 	reason := fmt.Sprintf("%s config folder %s not found — is %s installed? Pass --config %s=<path> to choose a file.", name, dir, name, name)
 	return blockedTargetPlan(targetPlan, reason, "install.config_folder_missing"), true
 }
 
-// detectBinary reports the agent command name and whether it is on PATH; without a
-// detector nothing was checked, so the name is empty.
-func detectBinary(detect VersionDetector, target Target) (string, bool) {
-	if detect == nil {
-		return "", false
+// tildePath shows a path beneath the user home as ~/relative so plan output and JSON
+// stay free of absolute home paths; other paths are returned unchanged.
+func tildePath(env PathEnv, path string) string {
+	if !env.enabled() {
+		return path
 	}
-	detection := detect(target)
-	return detection.Binary, detection.Found
+	home, err := env.home()
+	if err != nil {
+		return path
+	}
+	relative, err := filepath.Rel(home, path)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, "../") {
+		return path
+	}
+	return "~/" + filepath.ToSlash(relative)
 }
 
 func allSkipped(targets []TargetPlan) bool {

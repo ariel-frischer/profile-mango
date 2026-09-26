@@ -107,6 +107,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Codex installs no longer block on configs Codex itself writes: quoted table names such as [projects."/home/u"] and repeated [[skills.config]] entries are parsed and preserved byte-for-byte
 - The use-it command for Claude Code and Oh My Pi named profiles names the file actually written, including beside an explicit --config
 - Hermes named profiles block when the config is not in the Hermes home, and undo removes the profile directories install created
+- install/use --all skip agents whose config folder is missing even when their command is on PATH, so the plan stays ready for the rest
+- doctor shows and range-checks the --version line install parses instead of a leading warning
+- an unknown --target name errors as unknown and lists the valid targets
+- README quickstart route example uses the local route that mango init scaffolds
 
 ## [0.0.1] - 2026-01-01
 

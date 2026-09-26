@@ -27,7 +27,7 @@ func TestRegistryResolveTargetTable(t *testing.T) {
 		"explicit unregistered kept":   {value: "one@9.9.9", want: Target{Name: "one", Version: "9.9.9"}},
 		"bare several qualified":       {value: "two", wantErr: "several qualified versions (two@1.0.0, two@2.0.0)"},
 		"bare only unqualified":        {value: "blocked", wantErr: "blocked has no qualified version"},
-		"bare unknown":                 {value: "missing", wantErr: "missing has no qualified version"},
+		"bare unknown":                 {value: "missing", wantErr: `unknown target "missing"; valid targets: blocked, one, two`},
 		"empty":                        {value: "", wantErr: "target or target@version"},
 		"empty version":                {value: "one@", wantErr: "target or target@version"},
 		"path name":                    {value: "../one", wantErr: "simple name"},
