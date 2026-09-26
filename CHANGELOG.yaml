@@ -40,6 +40,7 @@ versions:
             - 'Portable roles: profiles declare worker, planner, research, and tiny roles, and bindings give each a provider, model, and effort; Oh My Pi maps them to task, plan/slow, smol, and tiny/commit model slots, and the optional subagentMaxEffort route field sets Oh My Pi task.maxEffort'
             - globalInstructions.home writes ~/AGENTS.md through the Pi target, the only pinned agent that reads it from every directory under the home directory
             - 'Profile roles install as native subagent files on default installs: Codex agents/<role>.toml, OpenCode agents/<role>.md, Oh My Pi agents/<role>.md (model from its role slot), and Claude Code agents/<role>.md; named-only installs and other agents list them as skipped'
+            - 'Oh My Pi named profiles: install writes a Mango-owned overlay at ~/.omp/agent/profiles/<name>.yml used with omp --config; --default also patches config.yml'
         changed:
             - Successful profile-mango init output now shows the ANSI README logo
             - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together
@@ -91,6 +92,8 @@ versions:
             - Profile type errors name the field and expected shape (for example labels must be a map), doctor plans readiness with the same request as install, render --preview reports blockers as warnings and exits 0 once staged, and Claude Code settings.json keys are inserted on their own line with the file's indentation
             - 'Route effort now installs on Codex (model_reasoning_effort none through xhigh, including medium), Claude Code (settings effortLevel low/medium/high/xhigh), and OpenCode (named agent variant); an effort an agent cannot take is shown as ''effort <v>: NOT APPLIED (<reason>)'' in the plan and in JSON skippedRequirements, and --strict blocks on it'
             - 'Codex installs no longer block on configs Codex itself writes: quoted table names such as [projects."/home/u"] and repeated [[skills.config]] entries are parsed and preserved byte-for-byte'
+            - The use-it command for Claude Code and Oh My Pi named profiles names the file actually written, including beside an explicit --config
+            - Hermes named profiles block when the config is not in the Hermes home, and undo removes the profile directories install created
     0.0.1:
         date: 2026-01-01
         added:

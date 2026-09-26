@@ -34,7 +34,7 @@ func TestOhMyPiNamedProfilesWriteOverlaysAndKeepConfig(t *testing.T) {
 	request, config := ohMyPiNamedRequest(t, "coding", "review")
 	writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
 	plan := applyNamed(t, request, "coding")
-	want := InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding", UseCommand: "omp --config ~/.omp/agent/profiles/coding.yml"}
+	want := InstallMode{Mode: InstallModeNamedProfile, ProfileName: "coding", UseCommand: "omp --config " + ShellQuote(ohMyPiOverlay(config, "coding"))}
 	if got := plan.Targets[0].Install; got == nil || *got != want {
 		t.Fatalf("install mode = %#v, want %#v", got, want)
 	}
