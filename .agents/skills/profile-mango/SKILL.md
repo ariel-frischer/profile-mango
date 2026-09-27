@@ -147,7 +147,8 @@ with a backup and replaced whole, so native-only fields such as Codex
 `sandbox_mode` are lost: check the plan's `adopt` rows first.
 
 Optional `globalInstructions` owns whole global instruction files per agent
-(file name to package resource). Qualified files only: Claude Code `CLAUDE.md`,
+(file name to package resource, or a non-empty list of resources joined in
+order with one blank line, e.g. shared core plus a per-agent part). Qualified files only: Claude Code `CLAUDE.md`,
 Codex `AGENTS.md`, Oh My Pi `AGENTS.md`/`RULES.md`, OpenCode `AGENTS.md`;
 another name blocks, other agents skip (`--strict` blocks). They are written
 beside the config only by `use`, `install --default`, or agents without named
@@ -155,7 +156,7 @@ profiles:
 
 ```yaml
 globalInstructions:
-  oh-my-pi: {AGENTS.md: instructions/work/AGENTS.md, RULES.md: instructions/work/RULES.md}
+  oh-my-pi: {AGENTS.md: [instructions/shared/core.md, instructions/work/omp.md], RULES.md: instructions/work/RULES.md}
   home: {AGENTS.md: instructions/work/home-AGENTS.md}   # ~/AGENTS.md, owned via Pi
 ```
 
