@@ -336,6 +336,23 @@ profile no agent records gets the adopt form
 changed-sources fix the same way, for that one agent; when the profile dropped a
 file the agent still owns, it suggests `mango use <profile> --target <agent>`,
 which gives the file back.
+
+When a change replaces a provider or model value, `set` and `unset` (dry runs
+included) also list where the profiles using the route still spell the old
+value: their `profile.yaml` files and every resource they deliver, as
+`file:line` relative to the package root (`--resource-root`, default the profile
+home). Text inside `{{route.…}}` placeholders is ignored, and a longer name that
+starts with the old value, such as `gpt-6-sol-mini` for `gpt-6-sol`, does not
+count:
+
+```text
+Still names gpt-6-sol:
+  instructions/daily.md:2
+  profiles/daily/profile.yaml:2
+```
+
+Replace those with [route placeholders](#route-placeholders) so the next change
+needs no hand edits.
 New routes are still added by hand.
 
 ## Checking a profile

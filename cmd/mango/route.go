@@ -17,6 +17,7 @@ import (
 
 type routeOptions struct {
 	bindings, profiles string
+	resourceRoot       string
 	target, role       string
 	dryRun, jsonOutput bool
 }
@@ -42,6 +43,7 @@ func newRouteCmd() *cobra.Command {
 	flags := cmd.PersistentFlags()
 	flags.StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	flags.StringVar(&options.profiles, "profiles", "", "profile repository root, to find profiles that use a route (defaults to <home>/profiles)")
+	flags.StringVar(&options.resourceRoot, "resource-root", "", "resource package root, searched for the old value route set replaces (defaults to <home>)")
 	cmd.AddCommand(newRouteListCmd(options), newRouteShowCmd(options), newRouteSetCmd(options), newRouteUnsetCmd(options))
 	return cmd
 }

@@ -112,6 +112,10 @@ func runRouteEdit(output io.Writer, options *routeOptions, edit profilemango.Rou
 	if err := writeEffortWarning(output, edit); err != nil {
 		return err
 	}
+	users := profilesByRoute(profilesRoot)[edit.Route]
+	if err := writeRouteStaleReferences(output, options, snapshot.Content, edited, edit, profilesRoot, users); err != nil {
+		return err
+	}
 	if options.dryRun {
 		_, err = fmt.Fprintln(output, "Dry run: nothing was written.")
 		return err
@@ -119,7 +123,7 @@ func runRouteEdit(output io.Writer, options *routeOptions, edit profilemango.Rou
 	if err := installfs.ReplaceFile(bindingsPath, edited, snapshot); err != nil {
 		return fmt.Errorf("write bindings %s: %w", bindingsPath, err)
 	}
-	return writeRouteApplyHint(output, bindingsPath, edit, profilesByRoute(profilesRoot)[edit.Route])
+	return writeRouteApplyHint(output, bindingsPath, edit, users)
 }
 
 func writeRouteApplyHint(output io.Writer, bindingsPath string, edit profilemango.RouteEdit, profiles []string) error {

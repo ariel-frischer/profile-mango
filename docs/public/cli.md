@@ -55,8 +55,10 @@ mango doctor -t codex -t opencode
 result, and prints the diff. Add `--target <agent>` or `--role <role>` to change
 one agent or role; `mango route unset` removes fields. It then prints, per
 profile using the route, the `mango install <profile> --target <agent>...`
-command that re-applies it only to agents already recorded on that profile. See
-[editing routes](profile-reference.md#editing-routes).
+command that re-applies it only to agents already recorded on that profile. A
+changed provider or model also lists, under `Still names <old>:`, each
+`file:line` in those profiles and their resources that still spells the old
+value. See [editing routes](profile-reference.md#editing-routes).
 
 ## Output
 
