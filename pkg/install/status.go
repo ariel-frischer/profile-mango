@@ -38,6 +38,8 @@ type StatusRequest struct {
 	Env          PathEnv
 	// Targets limits the report; empty inspects every registered target's default path.
 	Targets []TargetRequest
+	// DetectVersion, when set, reports each qualified target's installed agent version.
+	DetectVersion VersionDetector
 }
 
 // StatusReport is the deterministic state of every inspected target.
@@ -62,9 +64,12 @@ type TargetStatus struct {
 	Files           []FileStatus `json:"files,omitempty"`
 	// Drift lists each owned setting, or whole owned file, whose live state differs
 	// from what the current profile sources would install.
-	Drift      []FieldDrift `json:"drift,omitempty"`
-	ConfigPath string       `json:"-"`
-	ownsConfig bool
+	Drift []FieldDrift `json:"drift,omitempty"`
+	// VersionCheck compares the installed agent version with the adapter's tested
+	// version, detected the same way install plans detect it.
+	VersionCheck *VersionCheck `json:"versionCheck,omitempty"`
+	ConfigPath   string        `json:"-"`
+	ownsConfig   bool
 }
 
 // FieldDrift is one owned setting whose live value differs from the profile's value
@@ -123,6 +128,9 @@ func InspectStatus(request StatusRequest) (StatusReport, error) {
 		if err != nil {
 			return StatusReport{}, err
 		}
+		if status.VersionCheck, err = statusVersionCheck(registry, request.DetectVersion, target.Target); err != nil {
+			return StatusReport{}, err
+		}
 		if status.State == StatusManaged {
 			sourceState(request, registry, &status)
 		}
@@ -130,6 +138,20 @@ func InspectStatus(request StatusRequest) (StatusReport, error) {
 	}
 	sort.Slice(report.Targets, func(i, j int) bool { return report.Targets[i].Target.String() < report.Targets[j].Target.String() })
 	return report, nil
+}
+
+// statusVersionCheck detects a qualified target's installed version; it is nil
+// without a detector or a qualified adapter.
+func statusVersionCheck(registry *Registry, detect VersionDetector, target Target) (*VersionCheck, error) {
+	adapter, found := registry.Lookup(target)
+	if detect == nil || !found || !adapter.Metadata().Installable {
+		return nil, nil
+	}
+	check, err := CheckVersion(adapter.Metadata(), detect(target))
+	if err != nil {
+		return nil, fmt.Errorf("check %s version: %w", target, err)
+	}
+	return &check, nil
 }
 
 func inspectTarget(registry *Registry, env PathEnv, target TargetRequest) (TargetStatus, error) {

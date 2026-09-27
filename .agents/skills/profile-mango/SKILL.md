@@ -248,6 +248,10 @@ released: deleted if profile-mango created them, restored from the backup if
 adopted. `mango status [--json]` is read-only: per agent the recorded profile,
 each owned file `in-sync`/`edited`/`missing`, and `sources:
 current`/`changed`/`unknown` against the current profile files and bindings.
+Each agent is labeled at its installed version (same `--version` probe as
+install plans), e.g. `codex@0.155.1 (tested 0.157.1)` when it differs from the
+tested adapter version; `--json` adds `versionCheck`
+(`binary`, `qualified`, `range`, `detected`, `status`).
 
 ```bash
 mango status --json
