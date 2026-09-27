@@ -119,10 +119,13 @@ mango route list                                   # routes + profiles using eac
 mango route show sol --target oh-my-pi [--json]    # as written + effective route
 mango route set sol --target oh-my-pi --effort medium --dry-run
 mango route set opus55 --role research --model gpt-6-luna
+mango route set luna --target codex --role research --provider openai  # targets.codex.roles.research
 mango route unset sol --target oh-my-pi effort     # provider|model|effort|subagent-max-effort
 ```
 
-`targets` overrides never change roles, and agents filter role providers:
+`targets.<agent>.roles.<role>: {provider?, model?, effort?}` changes a role the
+base `roles` already binds for one agent (e.g. ChatGPT OAuth is `openai-codex`
+on Oh My Pi but `openai` on Codex); an unbound role fails. Agents filter role providers:
 Claude Code role files take only `anthropic` models and Codex only its OpenAI
 provider; another provider leaves that role file without a model (the agent
 default) and the plan says why.

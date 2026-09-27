@@ -33,6 +33,21 @@ routes:
 # trailing note
 `
 
+// targetRoleFixture has a base role and a target override without roles.
+const targetRoleFixture = `routes:
+  tr:
+    provider: openai-codex
+    model: gpt-6-sol
+    effort: high
+    roles:
+      research:
+        provider: openai-codex # ChatGPT OAuth on Oh My Pi
+        model: gpt-6-luna
+    targets:
+      codex:
+        provider: openai
+`
+
 func replaced(old, updated string) string {
 	if !strings.Contains(editFixture, old) {
 		panic("fixture lacks " + old)
@@ -44,6 +59,7 @@ func TestEditBindingsChangesOnlyTheEditedLines(t *testing.T) {
 	tests := map[string]struct {
 		edit RouteEdit
 		want string
+		from string
 	}{
 		"base field keeps its comment": {
 			edit: RouteEdit{Route: "sol", Set: map[string]string{"effort": "medium"}},
@@ -89,6 +105,19 @@ func TestEditBindingsChangesOnlyTheEditedLines(t *testing.T) {
 			edit: RouteEdit{Route: "plain", Role: "planner", Set: map[string]string{"provider": "openai", "model": "gpt-6"}},
 			want: replaced("effort: low\n", "effort: low\n    roles:\n      planner:\n        provider: openai\n        model: gpt-6\n"),
 		},
+		"new target role entry": {
+			edit: RouteEdit{Route: "opus55", Target: "codex", Role: "tiny", Set: map[string]string{"provider": "openai"}},
+			want: replaced("model: gpt-6-luna}\n", "model: gpt-6-luna}\n    targets:\n      codex:\n        roles:\n          tiny:\n            provider: openai\n"),
+		},
+		"new role under an existing target": {
+			edit: RouteEdit{Route: "tr", Target: "codex", Role: "research", Set: map[string]string{"effort": "low"}},
+			want: targetRoleFixture + "        roles:\n          research:\n            effort: low\n",
+		},
+		"unset last target role field prunes roles but keeps the target": {
+			edit: RouteEdit{Route: "tr", Target: "codex", Role: "research", Unset: []string{"provider"}},
+			want: targetRoleFixture,
+			from: targetRoleFixture + "        roles:\n          research:\n            provider: openai\n",
+		},
 		"unset target field": {
 			edit: RouteEdit{Route: "sol", Target: "claude-code", Unset: []string{"model"}},
 			want: replaced("        provider: anthropic\n        model: claude-opus-5-5\n", "        provider: anthropic\n"),
@@ -124,7 +153,14 @@ func TestEditBindingsChangesOnlyTheEditedLines(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := EditBindings([]byte(editFixture), test.edit)
+			from := test.from
+			if from == "" {
+				from = editFixture
+				if test.edit.Route == "tr" {
+					from = targetRoleFixture
+				}
+			}
+			got, err := EditBindings([]byte(from), test.edit)
 			if err != nil {
 				t.Fatalf("EditBindings: %v", err)
 			}
@@ -140,17 +176,17 @@ func TestEditBindingsRejectsInvalidEdits(t *testing.T) {
 		edit RouteEdit
 		want string
 	}{
-		"invalid subagent effort":   {edit: RouteEdit{Route: "sol", Set: map[string]string{"subagentMaxEffort": "ultra"}}, want: "binding.subagent_max_effort_invalid"},
-		"removing a required field": {edit: RouteEdit{Route: "sol", Unset: []string{"provider"}}, want: "binding.route_incomplete"},
-		"role without a model":      {edit: RouteEdit{Route: "opus55", Role: "research", Set: map[string]string{"provider": "openai"}}, want: "binding.role_incomplete"},
-		"unknown route":             {edit: RouteEdit{Route: "missing", Set: map[string]string{"effort": "low"}}, want: `route "missing" is not in the bindings file`},
-		"unknown target":            {edit: RouteEdit{Route: "sol", Target: "vim", Set: map[string]string{"effort": "low"}}, want: `unknown target "vim"`},
-		"unknown role":              {edit: RouteEdit{Route: "sol", Role: "boss", Set: map[string]string{"model": "x"}}, want: `unknown role "boss"`},
-		"target and role":           {edit: RouteEdit{Route: "sol", Target: "codex", Role: "tiny", Set: map[string]string{"model": "x"}}, want: "not both"},
-		"subagent cap per target":   {edit: RouteEdit{Route: "sol", Target: "codex", Set: map[string]string{"subagentMaxEffort": "high"}}, want: "applies to the whole route"},
-		"empty value":               {edit: RouteEdit{Route: "sol", Set: map[string]string{"model": " "}}, want: "use route unset"},
-		"multi-line value":          {edit: RouteEdit{Route: "sol", Set: map[string]string{"model": "a\nb"}}, want: "single line"},
-		"nothing to change":         {edit: RouteEdit{Route: "sol"}, want: "nothing to change"},
+		"invalid subagent effort":    {edit: RouteEdit{Route: "sol", Set: map[string]string{"subagentMaxEffort": "ultra"}}, want: "binding.subagent_max_effort_invalid"},
+		"removing a required field":  {edit: RouteEdit{Route: "sol", Unset: []string{"provider"}}, want: "binding.route_incomplete"},
+		"role without a model":       {edit: RouteEdit{Route: "opus55", Role: "research", Set: map[string]string{"provider": "openai"}}, want: "binding.role_incomplete"},
+		"unknown route":              {edit: RouteEdit{Route: "missing", Set: map[string]string{"effort": "low"}}, want: `route "missing" is not in the bindings file`},
+		"unknown target":             {edit: RouteEdit{Route: "sol", Target: "vim", Set: map[string]string{"effort": "low"}}, want: `unknown target "vim"`},
+		"unknown role":               {edit: RouteEdit{Route: "sol", Role: "boss", Set: map[string]string{"model": "x"}}, want: `unknown role "boss"`},
+		"target role the base lacks": {edit: RouteEdit{Route: "sol", Target: "codex", Role: "tiny", Set: map[string]string{"model": "x"}}, want: "binding.target_role_unbound"},
+		"subagent cap per target":    {edit: RouteEdit{Route: "sol", Target: "codex", Set: map[string]string{"subagentMaxEffort": "high"}}, want: "applies to the whole route"},
+		"empty value":                {edit: RouteEdit{Route: "sol", Set: map[string]string{"model": " "}}, want: "use route unset"},
+		"multi-line value":           {edit: RouteEdit{Route: "sol", Set: map[string]string{"model": "a\nb"}}, want: "single line"},
+		"nothing to change":          {edit: RouteEdit{Route: "sol"}, want: "nothing to change"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -169,6 +205,7 @@ func TestEditBindingsSetThenUnsetRestoresBytes(t *testing.T) {
 	}{
 		"new target":          {data: editFixture, set: RouteEdit{Route: "sol", Target: "oh-my-pi", Set: map[string]string{"effort": "medium"}}},
 		"new targets map":     {data: editFixture, set: RouteEdit{Route: "plain", Target: "codex", Set: map[string]string{"model": "x"}}},
+		"new target role":     {data: editFixture, set: RouteEdit{Route: "opus55", Target: "codex", Role: "tiny", Set: map[string]string{"provider": "openai", "effort": "low"}}},
 		"new flow role field": {data: editFixture, set: RouteEdit{Route: "opus55", Role: "tiny", Set: map[string]string{"effort": "low"}}},
 		"CRLF new target":     {data: strings.ReplaceAll(editFixture, "\n", "\r\n"), set: RouteEdit{Route: "sol", Target: "pi", Set: map[string]string{"model": "x"}}},
 	}

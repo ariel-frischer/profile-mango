@@ -70,6 +70,20 @@
         "transport": {"$ref": "#/$defs/field"},
         "authentication": {"$ref": "#/$defs/field"},
         "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"},
+        "roles": {
+          "description": "Per-target changes to roles the base route binds under roles; non-empty fields replace the base role's.",
+          "type": "object", "minProperties": 1,
+          "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+          "additionalProperties": {"$ref": "#/$defs/roleOverride"}
+        }
+      }
+    },
+    "roleOverride": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
         "effort": {"$ref": "#/$defs/field"}
       }
     }

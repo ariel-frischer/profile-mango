@@ -80,11 +80,11 @@ func newRouteSetCmd(options *routeOptions) *cobra.Command {
 	values := make(map[string]*string, len(routeFieldFlags))
 	cmd := &cobra.Command{
 		Use:   "set <route>",
-		Short: "Change fields of an existing route, for the whole route, one agent (--target), or one role (--role)",
-		Long: "Changes only the lines it needs, adding the targets.<agent> or roles.<role> entry when missing, " +
+		Short: "Change fields of an existing route, for the whole route, one agent (--target), one role (--role), or one role for one agent (both)",
+		Long: "Changes only the lines it needs, adding the targets.<agent>, roles.<role>, or targets.<agent>.roles.<role> entry when missing, " +
 			"then checks the whole file the same way install does and prints the change. Nothing is written if the " +
 			"result is invalid or unchanged. To add a new route, edit the file by hand.",
-		Example:      "  mango route set sol --effort medium\n  mango route set sol --target oh-my-pi --model gpt-6-sol\n  mango route set opus55 --role research --effort high --dry-run",
+		Example:      "  mango route set sol --effort medium\n  mango route set sol --target oh-my-pi --model gpt-6-sol\n  mango route set opus55 --role research --effort high --dry-run\n  mango route set luna --target codex --role research --provider openai",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -110,9 +110,9 @@ func newRouteSetCmd(options *routeOptions) *cobra.Command {
 func newRouteUnsetCmd(options *routeOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unset <route> <field>...",
-		Short: "Remove fields from a route, one agent (--target), or one role (--role)",
-		Long: "Fields are provider, model, effort, and subagent-max-effort. A targets.<agent> or roles.<role> entry left " +
-			"empty is removed, and so is an empty targets or roles map. The file is checked before writing, so fields " +
+		Short: "Remove fields from a route, one agent (--target), one role (--role), or one role for one agent (both)",
+		Long: "Fields are provider, model, effort, and subagent-max-effort. A targets.<agent>, roles.<role>, or " +
+			"targets.<agent>.roles.<role> entry left empty is removed, and so is each enclosing map left empty. The file is checked before writing, so fields " +
 			"a route needs, such as its base model, cannot be removed.",
 		Example:      "  mango route unset sol --target oh-my-pi effort\n  mango route unset opus55 subagent-max-effort",
 		Args:         cobra.MinimumNArgs(2),
@@ -136,9 +136,8 @@ func newRouteUnsetCmd(options *routeOptions) *cobra.Command {
 func addRouteScopeFlags(cmd *cobra.Command, options *routeOptions) {
 	flags := cmd.Flags()
 	flags.StringVarP(&options.target, "target", "t", "", "change only this agent's override, e.g. oh-my-pi")
-	flags.StringVar(&options.role, "role", "", "change only this subagent role: worker, planner, research, or tiny")
+	flags.StringVar(&options.role, "role", "", "change only this subagent role: worker, planner, research, or tiny; with --target, only that agent's role")
 	flags.BoolVar(&options.dryRun, "dry-run", false, "print the change without writing it")
-	cmd.MarkFlagsMutuallyExclusive("target", "role")
 }
 
 func routeField(name string) (string, error) {

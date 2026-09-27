@@ -213,9 +213,33 @@ routes:
 
 `targets` maps an agent name (`claude-code`, `codex`, `hermes`, `oh-my-pi`,
 `openclaw`, `opencode`, `pi`) to one or more of `provider`, `model`, `effort`,
-`transport`, and `authentication`. That agent gets the base route with only
+`transport`, `authentication`, and `roles`. That agent gets the base route with only
 those fields replaced, and other agents use the base route. This is how one
 profile drives several agents with different providers.
+
+`targets.<agent>.roles.<role>` sets one or more of `provider`, `model`, and
+`effort` for a role the route already binds under [`roles`](#roles); that
+agent's role keeps the other base fields. A role missing from the base `roles`
+fails with its path. For example, the same ChatGPT subscription is provider
+`openai-codex` in Oh My Pi but `openai` in Codex:
+
+```yaml
+routes:
+  luna:
+    provider: openai-codex
+    model: gpt-6-sol
+    effort: high
+    roles:
+      research:
+        provider: openai-codex
+        model: gpt-6-luna
+    targets:
+      codex:
+        provider: openai
+        roles:
+          research:
+            provider: openai
+```
 
 Some agents need specific route values. For example, Claude Code installs only
 with an `anthropic` provider, and Codex only with `openai`, native transport,
@@ -225,7 +249,8 @@ OAuth, and an effort from `none` to `xhigh`. The plan says why when a route does
 
 `roles` gives portable roles (`worker`, `planner`, `research`, `tiny`) their
 own `provider`, `model`, and optional `effort`. The route's own fields are the
-default model, and `targets` overrides never change roles. Any other role name
+default model, and `targets.<agent>.roles` changes a role for one agent (see
+[`targets` overrides](#targets-overrides)). Any other role name
 fails with its path. The older Oh My Pi slot names fail with a hint:
 `task` becomes `worker`, `plan` and `slow` become `planner`, `smol` becomes
 `research`, and `commit` becomes `tiny`. `advisor` and `vision` have no
@@ -284,15 +309,17 @@ mango route list                                   # routes and the profiles usi
 mango route show sol --target oh-my-pi             # as written, and what that agent gets
 mango route set sol --target oh-my-pi --effort medium [--dry-run]
 mango route set opus55 --role research --model gpt-6-luna
+mango route set luna --target codex --role research --provider openai
 mango route set opus55 --subagent-max-effort high  # whole route only
 mango route unset sol --target oh-my-pi effort     # fields: provider, model, effort, subagent-max-effort
 ```
 
-`set` changes only the affected lines and adds a missing `targets.<agent>` or
-`roles.<role>` entry. `unset` removes an entry, and then its `targets` or
-`roles` map, once it is empty. Both check the edited file the way `install`
-does and write nothing if it is invalid or unchanged; `--target` and `--role`
-cannot be combined. An effort no supported agent uses prints a warning, since
+`set` changes only the affected lines and adds a missing `targets.<agent>`,
+`roles.<role>`, or, with both `--target` and `--role`,
+`targets.<agent>.roles.<role>` entry. `unset` removes an entry, and then each
+enclosing `roles`, target, or `targets` map, once it is empty. Both check the
+edited file the way `install` does and write nothing if it is invalid or
+unchanged. An effort no supported agent uses prints a warning, since
 each agent checks its own efforts at install. They print the diff, then the profiles to apply with
 `mango use` or `mango install`; agent config never changes until you do.
 New routes are still added by hand.
