@@ -30,6 +30,18 @@ also shows its redacted file diff and a per-target apply command.
 - `--strict` blocks instead of skipping requirements an agent cannot install.
 - `--json` is the stable machine-readable contract.
 
+## Status
+
+`mango status [--json]` is read-only. Per agent it shows the recorded profile,
+each owned file's state, and whether the profile's sources changed since the
+install. Each agent is labeled at its installed version, found the same way as
+the plan's version warnings. When that differs from the version profile-mango
+was tested with, the label names both, such as `codex@0.155.1 (tested
+0.157.1)`. An agent not on `PATH` shows `codex (tested 0.157.1; codex not found
+on PATH)`. `--json` adds a `versionCheck` object per agent with `binary`,
+`qualified`, `range`, `detected`, and `status` (`in-range`, `out-of-range`,
+`not-found`, or `unknown`).
+
 ## Selecting agents
 
 `-t` is short for `--target`. `install`, `undo`, `doctor`, and `agents check`

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
 )
@@ -212,4 +213,63 @@ func TestStatusAcceptsManifestRecordedAtOlderTargetVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+// fakeStatusVersion makes every status version probe report output, or a missing
+// binary when output is empty, so tests never run real agent commands.
+func fakeStatusVersion(t *testing.T, output string) {
+	t.Helper()
+	original := installVersionDetector
+	installVersionDetector = func(target install.Target) install.VersionDetection {
+		return install.VersionDetection{Binary: target.Name, Found: output != "", Output: output}
+	}
+	t.Cleanup(func() { installVersionDetector = original })
+}
+
+// TestStatusLabelsInstalledVersion labels a target with its detected installed
+// version and names the tested version when they differ, without writing anything.
+func TestStatusLabelsInstalledVersion(t *testing.T) {
+	tested := ohmypi.TargetVersion
+	cases := map[string]struct {
+		output   string
+		label    string
+		detected string
+		status   string
+	}{
+		"older installed": {output: "omp 18.0.9", label: "oh-my-pi@18.0.9 (tested " + tested + ")  profile work", detected: "18.0.9", status: install.VersionOutOfRange},
+		"same as tested":  {output: "omp " + tested, label: "oh-my-pi@" + tested + "  profile work", detected: tested, status: install.VersionInRange},
+		"not on PATH":     {label: "oh-my-pi (tested " + tested + "; oh-my-pi not found on PATH)  profile work", status: install.VersionNotFound},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			env, config := newDriftTestHome(t)
+			manifest := config + ".profile-mango.manifest.json"
+			before := readTestFiles(t, config, manifest)
+			fakeStatusVersion(t, tc.output)
+			omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
+			check := omp.VersionCheck
+			if check == nil || check.Qualified != tested || check.Detected != tc.detected || check.Status != tc.status || omp.Target.Version != tested {
+				t.Fatalf("status version = %#v, target %s", check, omp.Target)
+			}
+			if human := humanStatusForTest(t, env.options); !strings.Contains(human, tc.label) {
+				t.Fatalf("human status lacks %q:\n%s", tc.label, human)
+			}
+			if after := readTestFiles(t, config, manifest); !reflect.DeepEqual(before, after) {
+				t.Fatal("status changed a config or manifest file")
+			}
+		})
+	}
+}
+
+func readTestFiles(t *testing.T, paths ...string) []string {
+	t.Helper()
+	contents := make([]string, 0, len(paths))
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		contents = append(contents, string(data))
+	}
+	return contents
 }
