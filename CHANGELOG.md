@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Instruction, skill, global-instruction, and agent-file resources can use {{route.<name>.<field>}} and {{route.<name>.roles.<role>.<field>}} placeholders, filled per agent from its effective route at render time; unknown placeholders fail validation
 - mango route set/unset list each profile file and resource line that still names a replaced provider or model
 - globalInstructions files accept a list of resource fragments composed in order (one blank line between fragments); each fragment resolves route placeholders and counts as a source for mango status, and the single-path form is unchanged
-- Profile skills install as whole skill folders (every file, execute bits kept) into Claude Code, Codex (~/.agents/skills), Oh My Pi, and OpenCode skill directories with mango use or --default, with ownership, backups, release on switch, and undo; vendored skills can pin source repo, commit, and tree-digest sha256
+- Profile skills install as whole skill folders (every file, execute bits kept) into Claude Code, Codex (~/.agents/skills), Oh My Pi, and OpenCode skill directories with mango use or --default, with ownership, backups, release on switch, and undo; vendored skills can pin source repo, commit, and tree-digest sha256; route placeholders render per agent in the folder's text files
 - OpenClaw installs profile skills into the skills folder beside every config it writes (named profiles included), and --agent openclaw=<id> sets that agent's agents.entries.<id>.skills allowlist, kept by later installs and given back on switch or undo
 
 ### Fixed
@@ -21,7 +21,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Field-owned configs (e.g. Oh My Pi config.yml) conflict only when a mango-owned value was edited, not when the agent re-serialized the file or unrelated keys changed; manifests from earlier versions keep the whole-file check until their next install
 - mango status labels each agent with its installed version and shows the tested version when they differ
 - Plans no longer show unchanged named-profile fields as "" -> value: Oh My Pi and Claude Code profile files report their current values, and fields of an unchanged whole file are shown as unchanged; mango status names changed profile-file fields individually
-- Route placeholders ({{route.…}}) in a skill folder's text files render per target when the skill installs, and tree digests still cover the vendored source bytes
 
 ### Changed
 
