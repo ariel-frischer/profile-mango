@@ -166,3 +166,45 @@ func TestRoleFileGates(t *testing.T) {
 		})
 	}
 }
+
+// TestRoleFilesTargetRoleOverride installs one binding into Oh My Pi and Codex: the
+// research role keeps the base ChatGPT OAuth provider openai-codex on Oh My Pi, and
+// targets.codex.roles.research switches it to Codex's built-in openai provider.
+func TestRoleFilesTargetRoleOverride(t *testing.T) {
+	bindings := "routes:\n  primary:\n    provider: openai-codex\n    model: gpt-6-sol\n    effort: high\n" +
+		"    roles:\n      research:\n        provider: openai-codex\n        model: gpt-6-luna\n" +
+		"    targets:\n      codex:\n        provider: openai\n        roles:\n          research:\n            provider: openai\n"
+	cases := roleTargetCases()
+	tests := map[string]struct {
+		test roleTargetCase
+		file string
+		want string
+	}{
+		"oh-my-pi modelRoles keep openai-codex": {test: cases["oh-my-pi"], file: "config", want: "smol: \"openai-codex/gpt-6-luna\"\n"},
+		"codex role file gets openai":           {test: cases["codex"], file: "agents/research.toml", want: "model_provider = \"openai\"\nmodel = \"gpt-6-luna\"\n"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			test.test.bindings = bindings
+			request, config, _ := roleInstallRequest(t, test.test)
+			writeInstallTestFile(t, filepath.Join(request.ProfilesRoot, request.ProfileName, "profile.yaml"), "route: primary\nroles:\n  research: {description: Explores read-only}\n")
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			target := plan.Targets[0]
+			if target.Status != StatusReady || len(target.SkippedRequirements) != 0 {
+				t.Fatalf("status = %s (%s), skipped = %#v", target.Status, target.Reason, target.SkippedRequirements)
+			}
+			applySwitchTestPlan(t, request)
+			path := config
+			if test.file != "config" {
+				path = filepath.Join(filepath.Dir(config), test.file)
+			}
+			data, err := os.ReadFile(path)
+			if err != nil || !strings.Contains(string(data), test.want) {
+				t.Fatalf("%s lacks %q (%v):\n%s", path, test.want, err, data)
+			}
+		})
+	}
+}

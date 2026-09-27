@@ -12,7 +12,8 @@ import (
 var RouteTargets = []string{"claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"}
 
 // RouteFor returns the effective route for one target: the named base route
-// with any non-empty fields from routes.<name>.targets.<target> applied.
+// with any non-empty fields from routes.<name>.targets.<target> applied,
+// including its per-role fields.
 func (bindings Bindings) RouteFor(name, target string) (RouteBinding, bool) {
 	route, found := bindings.Routes[name]
 	if !found {
@@ -30,7 +31,26 @@ func (route RouteBinding) For(target string) RouteBinding {
 	route.Authentication = overrideField(route.Authentication, override.Authentication)
 	route.Model = overrideField(route.Model, override.Model)
 	route.Effort = overrideField(route.Effort, override.Effort)
+	route.Roles = overrideRoles(route.Roles, override.Roles)
 	return route
+}
+
+// overrideRoles returns a copy of base with each role override's non-empty
+// fields applied. Overrides for roles base does not bind are ignored; parsing
+// rejects them.
+func overrideRoles(base map[string]RoleRoute, overrides map[string]RoleOverride) map[string]RoleRoute {
+	if len(overrides) == 0 {
+		return base
+	}
+	result := make(map[string]RoleRoute, len(base))
+	for name, role := range base {
+		override := overrides[name]
+		role.Provider = overrideField(role.Provider, override.Provider)
+		role.Model = overrideField(role.Model, override.Model)
+		role.Effort = overrideField(role.Effort, override.Effort)
+		result[name] = role
+	}
+	return result
 }
 
 func overrideField(base, override string) string {
@@ -55,10 +75,39 @@ func validateRouteTargets(path string, route RouteBinding, diagnostics *Diagnost
 			message := fmt.Sprintf("unknown target %q; expected one of %s", name, strings.Join(RouteTargets, ", "))
 			diagnostics.Add(SeverityError, "binding.target_unknown", targetPath, message, 0, 0)
 		}
-		if route.Targets[name] == (RouteOverride{}) {
+		override := route.Targets[name]
+		if override.empty() {
 			diagnostics.Add(SeverityError, "binding.target_override_empty", targetPath, "target override must set at least one route field", 0, 0)
 		}
+		validateTargetRoles(targetPath, route.Roles, override.Roles, diagnostics)
 	}
+}
+
+// validateTargetRoles checks targets.<agent>.roles: each entry must name a
+// portable role the base route binds and change at least one field.
+func validateTargetRoles(path string, base map[string]RoleRoute, overrides map[string]RoleOverride, diagnostics *Diagnostics) {
+	if overrides != nil && len(overrides) == 0 {
+		diagnostics.Add(SeverityError, "binding.roles_empty", path+".roles", "roles must define at least one role", 0, 0)
+	}
+	for _, name := range sortedKeys(overrides) {
+		rolePath := path + ".roles." + name
+		switch _, bound := base[name]; {
+		case !PortableRole(name):
+			diagnostics.Add(SeverityError, "binding.role_unknown", rolePath, unknownRoleMessage(name), 0, 0)
+		case !bound:
+			diagnostics.Add(SeverityError, "binding.target_role_unbound", rolePath, fmt.Sprintf("role %q is not in the route's base roles; add roles.%s first", name, name), 0, 0)
+		}
+		if overrides[name] == (RoleOverride{}) {
+			diagnostics.Add(SeverityError, "binding.target_role_override_empty", rolePath, "role override must set at least one of provider, model, or effort", 0, 0)
+		}
+	}
+}
+
+// empty reports whether the override sets no field; an empty roles map counts
+// as set so its own diagnostic reports it.
+func (override RouteOverride) empty() bool {
+	return override.Provider == "" && override.Transport == "" && override.Authentication == "" &&
+		override.Model == "" && override.Effort == "" && override.Roles == nil
 }
 
 func knownRouteTarget(name string) bool {

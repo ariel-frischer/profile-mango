@@ -78,7 +78,8 @@ type Bindings struct {
 // DefaultAuthentication. Roles maps portable roles (worker, planner, research,
 // tiny) to their own route; the base route is the default role.
 // SubagentMaxEffort caps the effort a caller may request for one subagent spawn.
-// Target overrides never change Roles or SubagentMaxEffort.
+// A target override may change bound Roles through targets.<agent>.roles but
+// never SubagentMaxEffort.
 type RouteBinding struct {
 	Provider          string                   `yaml:"provider" json:"provider"`
 	Transport         string                   `yaml:"transport" json:"transport"`
@@ -90,13 +91,22 @@ type RouteBinding struct {
 	Roles             map[string]RoleRoute     `yaml:"roles,omitempty" json:"roles,omitempty"`
 }
 
-// RouteOverride replaces any non-empty base route field for one target.
+// RouteOverride replaces any non-empty base route field for one target. Roles
+// replaces non-empty fields of roles the base route already binds.
 type RouteOverride struct {
-	Provider       string `yaml:"provider,omitempty" json:"provider,omitempty"`
-	Transport      string `yaml:"transport,omitempty" json:"transport,omitempty"`
-	Authentication string `yaml:"authentication,omitempty" json:"authentication,omitempty"`
-	Model          string `yaml:"model,omitempty" json:"model,omitempty"`
-	Effort         string `yaml:"effort,omitempty" json:"effort,omitempty"`
+	Provider       string                  `yaml:"provider,omitempty" json:"provider,omitempty"`
+	Transport      string                  `yaml:"transport,omitempty" json:"transport,omitempty"`
+	Authentication string                  `yaml:"authentication,omitempty" json:"authentication,omitempty"`
+	Model          string                  `yaml:"model,omitempty" json:"model,omitempty"`
+	Effort         string                  `yaml:"effort,omitempty" json:"effort,omitempty"`
+	Roles          map[string]RoleOverride `yaml:"roles,omitempty" json:"roles,omitempty"`
+}
+
+// RoleOverride replaces any non-empty field of one base role route for one target.
+type RoleOverride struct {
+	Provider string `yaml:"provider,omitempty" json:"provider,omitempty"`
+	Model    string `yaml:"model,omitempty" json:"model,omitempty"`
+	Effort   string `yaml:"effort,omitempty" json:"effort,omitempty"`
 }
 
 // RoleRoute is the provider, model, and optional effort for one portable role.

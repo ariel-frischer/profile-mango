@@ -13,8 +13,8 @@ import (
 )
 
 // RouteEdit is one in-place change to an existing route in a bindings file.
-// Target or Role, at most one, selects the edited entry; neither selects the
-// base route. Set and Unset use YAML field names such as effort and
+// Target selects targets.<agent>, Role selects roles.<role>, both select
+// targets.<agent>.roles.<role>, and neither selects the base route. Set and Unset use YAML field names such as effort and
 // subagentMaxEffort.
 type RouteEdit struct {
 	Route  string
@@ -34,8 +34,8 @@ func (edit RouteEdit) Fields() []string {
 
 // EditBindings applies edit to the bindings bytes by changing only the
 // affected lines, so comments, key order, and unrelated bytes survive. Unset
-// drops a target or role entry, and then its targets or roles map, once it is
-// empty. The result must pass ParseBindings; an unchanged result returns data.
+// drops a target or role entry, and then each enclosing roles, target, or
+// targets map, once it is empty. The result must pass ParseBindings; an unchanged result returns data.
 func EditBindings(data []byte, edit RouteEdit) ([]byte, error) {
 	if err := edit.check(); err != nil {
 		return nil, err
@@ -82,9 +82,6 @@ func RouteSource(data []byte, name string) (string, error) {
 }
 
 func (edit RouteEdit) check() error {
-	if edit.Target != "" && edit.Role != "" {
-		return errors.New("choose a target or a role, not both")
-	}
 	if edit.Target != "" && !knownRouteTarget(edit.Target) {
 		return fmt.Errorf("unknown target %q; expected one of %s", edit.Target, strings.Join(RouteTargets, ", "))
 	}
@@ -131,13 +128,14 @@ func checkRouteValue(field, value string) error {
 }
 
 func (edit RouteEdit) scopePath() []string {
-	switch {
-	case edit.Target != "":
-		return []string{"targets", edit.Target}
-	case edit.Role != "":
-		return []string{"roles", edit.Role}
+	var path []string
+	if edit.Target != "" {
+		path = append(path, "targets", edit.Target)
 	}
-	return nil
+	if edit.Role != "" {
+		path = append(path, "roles", edit.Role)
+	}
+	return path
 }
 
 // bindingsDocument is the bindings file as lines plus the layout facts needed
@@ -254,8 +252,8 @@ func (doc *bindingsDocument) setField(route *yaml.Node, path []string, field, va
 	return doc.replaceScalar(existing, value)
 }
 
-// unsetField removes the field, or the nearest enclosing target, role, or
-// targets/roles map that holds nothing else.
+// unsetField removes the field, or the outermost enclosing target, role, or
+// targets/roles map that would hold nothing else.
 func (doc *bindingsDocument) unsetField(route *yaml.Node, path []string, field string) error {
 	chain := []*yaml.Node{route}
 	for _, key := range path {

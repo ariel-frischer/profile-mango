@@ -24,6 +24,10 @@ routes:
     provider: openai
     model: gpt-6
     effort: low
+    roles:
+      research:
+        provider: openai-codex # ChatGPT OAuth on Oh My Pi
+        model: gpt-6-luna
 `
 
 // routeTestHome writes a sandbox profile home whose bindings file has mode 0640.
@@ -88,11 +92,16 @@ func TestRouteSetAndUnsetEditTheBindingsFile(t *testing.T) {
 			wantFile:  routeTestBindings,
 			wantError: "binding.subagent_max_effort_invalid",
 		},
-		"unknown route":       {args: []string{"route", "set", "nope", "--effort", "low"}, wantFile: routeTestBindings, wantError: `route "nope" is not in the bindings file`},
-		"unknown target":      {args: []string{"route", "set", "sol", "--target", "vim", "--effort", "low"}, wantFile: routeTestBindings, wantError: `unknown target "vim"`},
-		"target and role":     {args: []string{"route", "set", "sol", "--target", "codex", "--role", "tiny", "--model", "x"}, wantFile: routeTestBindings, wantError: "none of the others can be"},
-		"no field flags":      {args: []string{"route", "set", "sol", "--target", "codex"}, wantFile: routeTestBindings, wantError: "pass at least one of"},
-		"unknown unset field": {args: []string{"route", "unset", "sol", "colour"}, wantFile: routeTestBindings, wantError: `unknown route field "colour"`},
+		"unknown route":  {args: []string{"route", "set", "nope", "--effort", "low"}, wantFile: routeTestBindings, wantError: `route "nope" is not in the bindings file`},
+		"unknown target": {args: []string{"route", "set", "sol", "--target", "vim", "--effort", "low"}, wantFile: routeTestBindings, wantError: `unknown target "vim"`},
+		"set target role": {
+			args:     []string{"route", "set", "spare", "--target", "codex", "--role", "research", "--provider", "openai"},
+			wantFile: routeTestBindings + "    targets:\n      codex:\n        roles:\n          research:\n            provider: openai\n",
+			wantOut:  []string{"+    targets:", "+          research:", "+            provider: openai", "No profile uses route spare yet"},
+		},
+		"target role the base lacks": {args: []string{"route", "set", "sol", "--target", "codex", "--role", "tiny", "--model", "x"}, wantFile: routeTestBindings, wantError: "binding.target_role_unbound"},
+		"no field flags":             {args: []string{"route", "set", "sol", "--target", "codex"}, wantFile: routeTestBindings, wantError: "pass at least one of"},
+		"unknown unset field":        {args: []string{"route", "unset", "sol", "colour"}, wantFile: routeTestBindings, wantError: `unknown route field "colour"`},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -115,6 +124,20 @@ func TestRouteSetAndUnsetEditTheBindingsFile(t *testing.T) {
 				t.Fatalf("bindings (mode %v, errors %v %v):\n%s\nwant:\n%s", info.Mode(), readErr, statErr, data, test.wantFile)
 			}
 		})
+	}
+}
+
+func TestRouteUnsetTargetRolePrunesEmptyMaps(t *testing.T) {
+	home, bindings := routeTestHome(t)
+	if out, err := executeCommandResult(t, "route", "set", "spare", "--target", "codex", "--role", "research", "--provider", "openai", "--home", home); err != nil {
+		t.Fatalf("route set: %v\n%s", err, out)
+	}
+	out, err := executeCommandResult(t, "route", "unset", "spare", "--target", "codex", "--role", "research", "provider", "--home", home)
+	if err != nil || !strings.Contains(out, "-    targets:") || !strings.Contains(out, "-            provider: openai") {
+		t.Fatalf("route unset: %v\n%s", err, out)
+	}
+	if data, err := os.ReadFile(bindings); err != nil || string(data) != routeTestBindings {
+		t.Fatalf("bindings after unset (%v):\n%s", err, data)
 	}
 }
 

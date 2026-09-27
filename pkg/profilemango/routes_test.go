@@ -102,6 +102,13 @@ func TestParseBindingsRoles(t *testing.T) {
 		"null subagent effort":  {yaml: flatBindingsYAML + "    subagentMaxEffort:\n", code: "yaml.null", path: "routes.main.subagentMaxEffort"},
 		"unknown subagent cap":  {yaml: flatBindingsYAML + "    subagentMaxEffort: ultra\n", code: "binding.subagent_max_effort_invalid", path: "routes.main.subagentMaxEffort", message: "expected one of minimal, low, medium, high, xhigh, max"},
 		"override subagent cap": {yaml: flatBindingsYAML + "    targets:\n      oh-my-pi:\n        subagentMaxEffort: high\n", code: "yaml.strict", path: "document"},
+		"target role override":  {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          research:\n            provider: openai\n"},
+		"target role unbound":   {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          worker:\n            provider: openai\n", code: "binding.target_role_unbound", path: "routes.main.targets.codex.roles.worker", message: "add roles.worker first"},
+		"target role unknown":   {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          smol:\n            provider: openai\n", code: "binding.role_unknown", path: "routes.main.targets.codex.roles.smol", message: `use the portable role "research"`},
+		"target role empty":     {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          research: {}\n", code: "binding.target_role_override_empty", path: "routes.main.targets.codex.roles.research"},
+		"target roles empty":    {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles: {}\n", code: "binding.roles_empty", path: "routes.main.targets.codex.roles"},
+		"target role field":     {yaml: rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          research:\n            transport: native\n", code: "yaml.strict", path: "document"},
+		"target role no base":   {yaml: flatBindingsYAML + "    targets:\n      codex:\n        roles:\n          research:\n            model: m\n", code: "binding.target_role_unbound", path: "routes.main.targets.codex.roles.research"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -136,6 +143,41 @@ func TestRouteForKeepsRolesAcrossTargetOverrides(t *testing.T) {
 	}
 	if route.Model != "gpt-5.7" || route.SubagentMaxEffort != "high" || !reflect.DeepEqual(route.Roles, want) {
 		t.Fatalf("route = %#v", route)
+	}
+}
+
+func TestRouteForMergesTargetRoleOverrides(t *testing.T) {
+	t.Parallel()
+	bindings, diagnostics := ParseBindings([]byte(rolesBindingsYAML + "    targets:\n      codex:\n        roles:\n          research:\n            provider: openai\n          tiny:\n            model: glm-5.4\n            effort: low\n"))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	base := map[string]RoleRoute{
+		"research": {Provider: "opencode-go", Model: "gpt-6-luna", Effort: "high"},
+		"tiny":     {Provider: "opencode-go", Model: "glm-5.3-flash"},
+	}
+	cases := map[string]struct {
+		target string
+		want   map[string]RoleRoute
+	}{
+		"overridden target": {target: "codex", want: map[string]RoleRoute{
+			"research": {Provider: "openai", Model: "gpt-6-luna", Effort: "high"},
+			"tiny":     {Provider: "opencode-go", Model: "glm-5.4", Effort: "low"},
+		}},
+		"other target": {target: "oh-my-pi", want: base},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			route, _ := bindings.RouteFor("main", test.target)
+			if !reflect.DeepEqual(route.Roles, test.want) {
+				t.Fatalf("roles = %#v; want %#v", route.Roles, test.want)
+			}
+		})
+	}
+	bindings.RouteFor("main", "codex")
+	if !reflect.DeepEqual(bindings.Routes["main"].Roles, base) {
+		t.Fatalf("RouteFor mutated the base roles: %#v", bindings.Routes["main"].Roles)
 	}
 }
 
