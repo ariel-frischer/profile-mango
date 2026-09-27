@@ -273,6 +273,10 @@ agent under a profile, first run `mango install <profile> --default --target
 copy each skill folder whole into their skills folder (Codex:
 `~/.agents/skills`); named profiles list skills as not installed, and switching
 to a profile without a skill removes its files or restores the replaced ones.
+OpenClaw copies skills beside every config it writes, named profiles included
+(`~/.openclaw-<name>/skills`); `mango install <p> --target openclaw --agent
+openclaw=<id>` also sets that existing agent's `agents.entries.<id>.skills`
+allowlist, which later installs keep and a switch gives back.
 
 ## Safety boundary
 

@@ -77,3 +77,31 @@ func ownedBaseline(file FilePatch, ownership Manifest, path string, before insta
 	}
 	return entry.SHA256, true
 }
+
+// fieldPriors reads the recorded pre-install value of every owned key whose
+// manifest marker starts with prefix.
+func fieldPriors(ownership Manifest, configPath, prefix string) map[string]string {
+	priors := map[string]string{}
+	for _, file := range ownership.Files {
+		if file.Path != configPath {
+			continue
+		}
+		for _, field := range file.Fields {
+			marker, found := strings.CutPrefix(field, prefix)
+			if key, prior, ok := strings.Cut(marker, "="); found && ok {
+				priors[key] = prior
+			}
+		}
+	}
+	return priors
+}
+
+// fieldPriorMarker records a key's pre-install value, keeping the first recorded
+// value while the key stays owned.
+func fieldPriorMarker(prefix string, priors map[string]string, key, before string) string {
+	prior, recorded := priors[key]
+	if !recorded {
+		prior = before
+	}
+	return prefix + key + "=" + prior
+}

@@ -124,6 +124,10 @@ type AdapterInput struct {
 	// Install says where the profile goes; for a named profile, NamedFile is its current file.
 	Install   InstallMode
 	NamedFile Snapshot
+	// Skills names the skill folders this install writes, sorted.
+	Skills []string
+	// SkillAgent is the OpenClaw agent whose skill allowlist this install sets, or "".
+	SkillAgent string
 }
 
 type Adapter interface {
@@ -187,6 +191,9 @@ type TargetRequest struct {
 	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
+	// SkillAgent selects the OpenClaw agent (agents.entries key) whose skill allowlist
+	// lists the profile's skills; the manifest keeps it for later installs.
+	SkillAgent string
 }
 
 // AgentDestination selects a native named OpenCode definition, not the default config.

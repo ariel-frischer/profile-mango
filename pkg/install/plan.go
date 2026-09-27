@@ -248,6 +248,9 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err := validateAgentDestination(targetRequest); err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
 	}
+	if err := validateSkillAgent(adapter, targetRequest.SkillAgent); err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
+	}
 	targetPlan.Install = installModeFor(adapter, request, targetRequest)
 	loaded, err := loaded.forTarget(targetRequest.Target.Name)
 	if err != nil {
@@ -313,7 +316,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")
 	}
 	targetPlan.SkippedRequirements = skipped
-	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile)}
+	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile), Skills: installedSkillNames(adapter, targetRequest, request.Default, loaded.Skills), SkillAgent: targetRequest.SkillAgent}
 	if targetPlan.Install != nil {
 		input.Install = *targetPlan.Install
 	}
@@ -330,7 +333,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if reason, code := extendPatch(request, targetRequest, loaded, roles, ownership, config.Path, &patch, &targetPlan); reason != "" {
 		return blockedTargetPlan(targetPlan, reason, code)
 	}
-	skillReleaseDirs(adapter, config.Path, request.Env, patch.Files)
+	skillReleaseDirs(adapter, config.Path, request.Env, ownership, patch.Files)
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
 	if blocked {
 		targetPlan.Status = StatusConflict

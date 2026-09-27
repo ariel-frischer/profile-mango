@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - mango route set/unset list each profile file and resource line that still names a replaced provider or model
 - globalInstructions files accept a list of resource fragments composed in order (one blank line between fragments); each fragment resolves route placeholders and counts as a source for mango status, and the single-path form is unchanged
 - Profile skills install as whole skill folders (every file, execute bits kept) into Claude Code, Codex (~/.agents/skills), Oh My Pi, and OpenCode skill directories with mango use or --default, with ownership, backups, release on switch, and undo; vendored skills can pin source repo, commit, and tree-digest sha256
+- OpenClaw installs profile skills into the skills folder beside every config it writes (named profiles included), and --agent openclaw=<id> sets that agent's agents.entries.<id>.skills allowlist, kept by later installs and given back on switch or undo
 
 ### Fixed
 

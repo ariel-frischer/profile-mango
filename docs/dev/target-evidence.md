@@ -45,7 +45,9 @@ agent definition (model, effort variant, and instructions) written by default as
 `subagent:<name>`; only with `--default` does it also patch the top-level
 `model` field of `opencode.json`. Claude Code, Codex, Oh My Pi, and OpenCode
 install the profile's `skills` as whole owned skill folders when the profile is
-the default (see [Skill folders](#skill-folders-2026-09-27-ap-794)).
+the default; OpenClaw installs them into every state directory the install
+writes, named profiles included, and with `--agent openclaw=<id>` also sets that
+agent's skill allowlist (see [Skill folders](#skill-folders-2026-09-27-ap-794)).
 OpenClaw permits model-primary plus thinking-default settings. Other target gates
 remain blocked unless explicitly qualified below. By default `install` applies
 only a target's qualified subset and lists every known profile requirement it
@@ -413,7 +415,7 @@ was run, and the repository probe harness was not broadened.
 | Config/runtime precedence | Documented layers and overrides were not observed in an exact isolated run | Blocking unknown |
 | Route and authentication | `provider/model` and thinking candidate fields are source-grounded; auth profile identity and route selection are unverified | Authentication-required mappings remain non-applicable |
 | Permissions and tools | Tool policy, plugins, sender rules, and sandbox gates are documented; enforcement and bypass surfaces were not observed | Blocking unknown |
-| Instructions and skills | Workspace and project/state/bundled sources are documented; delivery and precedence were not observed | Blocking unknown when requested |
+| Instructions and skills | Workspace and project/state/bundled sources are documented; skill folders and the per-agent allowlist are installed from source evidence (see [Skill folders](#skill-folders-2026-09-27-ap-794)); instruction delivery and skill execution were not observed | Instructions blocking unknown when requested |
 | Runtime enforcement | No gateway/session/runtime observation was authorized or performed | Blocking unknown |
 
 The adapter emits an inert JSON5 candidate at
@@ -1737,7 +1739,7 @@ the default. Vendored entries pin `source.sha256`, the tree digest of the folder
 | Codex `0.157.1` | `$HOME/.agents/skills` (never `CODEX_HOME`) | [`rust-v0.157.1` loader](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/lib.rs) and [parser](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/parser.rs) | Installed with default; skipped for named profiles and agents |
 | Oh My Pi `18.3.2` | `<config dir>/skills` (`~/.omp/agent/skills`) | [`v18.3.2` native loader](https://github.com/can1357/oh-my-pi/blob/v18.3.2/packages/coding-agent/src/discovery/builtin.ts) | Installed with default; skipped for named profiles and agents |
 | OpenCode `1.18.31` | `<config dir>/skills` (`~/.config/opencode/skills`) | [`a97622c` skill scan](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/skill/index.ts) over [`Config.directories()`](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/config/paths.ts) | Installed with `--default`/`use`; blocks a skill whose frontmatter omits `name`; legacy `SKILL.md` and marked `skills.paths` are released |
-| OpenClaw `2026.9.5` | Not yet installed | See the OpenClaw reference | Skipped |
+| OpenClaw `2026.9.5` | `<state dir>/skills` beside each written config (`~/.openclaw/skills`; `~/.openclaw-<name>/skills` for `openclaw --profile <name>`) | [`docs/tools/skills.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills.md) precedence and allowlist rules, [`skills-config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills-config.md), [managed root `CONFIG_DIR/skills`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/workspace-skill-loader.ts), [`resolveConfigDir`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/utils.ts), [loader](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/local-loader.ts), [`agents.entries` schema](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/zod-schema.agents.ts) | Installed for every install mode into each written state directory; `--agent openclaw=<id>` sets `agents.entries.<id>.skills` to the sorted skill names in each written config defining that agent (never `agents.defaults.skills` or a new entry); a set `OPENCLAW_STATE_DIR` elsewhere is warned |
 
 Discovery and precedence were read from source or documentation; no agent was
 run to list the installed skills, and skill execution remains unobserved.

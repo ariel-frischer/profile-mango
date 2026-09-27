@@ -2,7 +2,6 @@ package install
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -101,12 +100,12 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	if err != nil {
 		return Patch{}, err
 	}
-	rolePriors := ohMyPiPriors(input.Ownership, input.ConfigPath, ohMyPiRolePriorPrefix)
+	rolePriors := fieldPriors(input.Ownership, input.ConfigPath, ohMyPiRolePriorPrefix)
 	content, released, err := ohmypi.ReleaseRoles(configPatch.Content, withoutKeys(rolePriors, roleKeys(configPatch.Roles)))
 	if err != nil {
 		return Patch{}, err
 	}
-	settingPriors := ohMyPiPriors(input.Ownership, input.ConfigPath, ohMyPiSettingPriorPrefix)
+	settingPriors := fieldPriors(input.Ownership, input.ConfigPath, ohMyPiSettingPriorPrefix)
 	content, releasedSettings, err := ohmypi.ReleaseSettings(content, withoutKeys(settingPriors, settingKeys(configPatch.Settings)))
 	if err != nil {
 		return Patch{}, err
@@ -146,7 +145,7 @@ func ohMyPiRoleFields(file *FilePatch, priors map[string]string, planned, releas
 		file.Fields = append(file.Fields, path)
 		fields = append(fields, FieldChange{Path: path, Before: role.Before, After: role.After})
 		if role.Role != profilemango.ReservedRoleDefault {
-			file.Ownership = append(file.Ownership, ohMyPiPriorMarker(ohMyPiRolePriorPrefix, priors, role.Role, role.Before))
+			file.Ownership = append(file.Ownership, fieldPriorMarker(ohMyPiRolePriorPrefix, priors, role.Role, role.Before))
 		}
 	}
 	for _, role := range released {
@@ -163,30 +162,12 @@ func ohMyPiSettingFields(file *FilePatch, priors map[string]string, planned, rel
 		path := "config." + setting.Path
 		file.Fields = append(file.Fields, path)
 		fields = append(fields, FieldChange{Path: path, Before: setting.Before, After: setting.After})
-		file.Ownership = append(file.Ownership, ohMyPiPriorMarker(ohMyPiSettingPriorPrefix, priors, setting.Path, setting.Before))
+		file.Ownership = append(file.Ownership, fieldPriorMarker(ohMyPiSettingPriorPrefix, priors, setting.Path, setting.Before))
 	}
 	for _, setting := range released {
 		fields = append(fields, FieldChange{Path: "config." + setting.Path, Before: setting.Before, After: setting.After})
 	}
 	return fields
-}
-
-// ohMyPiPriors reads the recorded pre-install value of every owned key whose
-// manifest marker starts with prefix.
-func ohMyPiPriors(ownership Manifest, configPath, prefix string) map[string]string {
-	priors := map[string]string{}
-	for _, file := range ownership.Files {
-		if file.Path != configPath {
-			continue
-		}
-		for _, field := range file.Fields {
-			marker, found := strings.CutPrefix(field, prefix)
-			if key, prior, ok := strings.Cut(marker, "="); found && ok {
-				priors[key] = prior
-			}
-		}
-	}
-	return priors
 }
 
 // withoutKeys keeps the priors of recorded keys the new route no longer sets.
@@ -215,16 +196,6 @@ func settingKeys(changes []ohmypi.SettingChange) []string {
 		keys = append(keys, change.Path)
 	}
 	return keys
-}
-
-// ohMyPiPriorMarker records a key's pre-install value, keeping the first recorded
-// value while the key stays owned.
-func ohMyPiPriorMarker(prefix string, priors map[string]string, key, before string) string {
-	prior, recorded := priors[key]
-	if !recorded {
-		prior = before
-	}
-	return prefix + key + "=" + prior
 }
 
 func validateOhMyPiProfile(input AdapterInput) error {

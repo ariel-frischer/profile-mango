@@ -19,10 +19,12 @@ const (
 	skillCommit   = "0123456789abcdef0123456789abcdef01234567"
 )
 
-// skillTarget builds one target's install request and names its skill root.
+// skillTarget builds one target's install request and names its skill root. namedWrites
+// marks targets that also write skills for a named profile, into that profile's own root.
 type skillTarget struct {
-	request func(*testing.T) (Request, string)
-	root    func(request Request, home string) string
+	request     func(*testing.T) (Request, string)
+	root        func(request Request, home string) string
+	namedWrites bool
 }
 
 func skillTargets() map[string]skillTarget {
@@ -37,6 +39,10 @@ func skillTargets() map[string]skillTarget {
 			return request, root
 		}, root: func(_ Request, home string) string { return filepath.Join(home, ".agents", "skills") }},
 		"oh-my-pi": {request: ohMyPiTestRequest, root: beside},
+		"openclaw": {request: func(t *testing.T) (Request, string) {
+			request, config := openClawInstallRequest(t)
+			return request, filepath.Dir(filepath.Dir(filepath.Dir(config)))
+		}, root: beside, namedWrites: true},
 		"opencode": {request: openCodeTestRequest, root: beside},
 	}
 }
@@ -298,6 +304,9 @@ func TestSkillProvenanceMismatchNamesActualDigest(t *testing.T) {
 
 func TestSkillsSkippedForNamedProfiles(t *testing.T) {
 	for name, target := range skillTargets() {
+		if target.namedWrites {
+			continue
+		}
 		t.Run(name, func(t *testing.T) {
 			request, _, _ := skillRequest(t, target)
 			request.Default = false

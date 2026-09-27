@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/mattn/go-isatty"
@@ -61,7 +62,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; a bare name selects its single qualified version")
-	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name; requires --config ending agents/name.md")
+	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name (requires --config ending agents/name.md), or openclaw=<agent id> to set that agent's skill allowlist")
 	cmd.Flags().StringArrayVar(&options.configs, "config", nil, "target[@version]=explicit config path; selects the target; repeat for multiple targets")
 	cmd.Flags().StringArrayVar(&options.legacyConfigs, "config-path", nil, "deprecated alias for --config")
 	_ = cmd.Flags().MarkDeprecated("config-path", "use --config target[@version]=path instead")
@@ -275,7 +276,11 @@ func installTargets(options installOptions, registry *install.Registry) ([]insta
 	result := make([]install.TargetRequest, 0, len(targets))
 	for _, target := range targets {
 		request := install.TargetRequest{Target: target, ConfigPath: bindingValue(configs, target), ManifestPath: bindingValue(manifests, target)}
-		if spec := bindingValue(agents, target); spec != "" {
+		switch spec := bindingValue(agents, target); {
+		case spec == "":
+		case target.Name == openclaw.TargetName:
+			request.SkillAgent = spec
+		default:
 			request.Agent, _ = parseAgentSpec(spec)
 		}
 		result = append(result, request)
@@ -359,12 +364,20 @@ func parseTargetBindings(flag string, values []string) ([]targetBinding, error) 
 	return result, nil
 }
 
+// parseAgentSelections reads --agent values: an OpenCode destination (mode:name), or for
+// OpenClaw the agents.entries id whose skill allowlist the install sets.
 func parseAgentSelections(values []string) ([]targetBinding, error) {
 	bindings, err := parseTargetBindings("--agent", values)
 	if err != nil {
-		return nil, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name: %w", err)
+		return nil, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name, or openclaw=<agent id>: %w", err)
 	}
 	for _, binding := range bindings {
+		if binding.key.Name == openclaw.TargetName {
+			if !openclaw.ValidAgentID(binding.value) {
+				return nil, fmt.Errorf("--agent openclaw=<agent id> requires an agents.entries id of lowercase letters, digits, '_' or '-': %q", binding.value)
+			}
+			continue
+		}
 		if _, err := parseAgentSpec(binding.value); err != nil {
 			return nil, err
 		}

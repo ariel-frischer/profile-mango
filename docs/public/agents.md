@@ -226,6 +226,17 @@ The evidence behind every row is in the developer
   unless you pass `--default`, which also writes the same two settings there.
   A profile named `default` is OpenClaw's default config, so it is written in
   place.
+- **Skills:** each `skills` folder is copied whole to the `skills` folder of
+  every config written: `~/.openclaw-<profile>/skills/<name>/`, and
+  `~/.openclaw/skills/<name>/` with `--default` or `mango use`. Removing a
+  skill later deletes the files profile-mango wrote, or restores a file it
+  replaced.
+- **Agent allowlist:** `--agent openclaw=<id>` also sets
+  `agents.entries.<id>.skills` to the profile's skill names, which replaces
+  `agents.defaults.skills` for that agent. The agent must already be defined
+  in a config the install writes (the main config needs `--default`).
+  Later installs keep that allowlist in step; `--agent` with another id, or a
+  profile without skills, puts the previous list back.
 - **Blocks:** named installs when the main config isn't at
   `<home>/.openclaw/openclaw.json` (a relocated `--config` or
   `OPENCLAW_CONFIG_PATH`). The profile location follows OpenClaw's home, not
@@ -234,8 +245,9 @@ The evidence behind every row is in the developer
 - **Caveats:** a new profile has its own state folder, with no sign-in,
   sessions, or plugins from your default profile. profile-mango doesn't copy
   them. An exported `OPENCLAW_CONFIG_PATH` or `OPENCLAW_STATE_DIR` still wins
-  over `--profile`. Fallbacks, per-agent overrides, and provider options are
-  left alone. A per-agent model setting can still win over the default.
+  over `--profile`, and skills are then read from that state folder. Fallbacks,
+  other per-agent overrides, and provider options are left alone. A per-agent
+  model setting can still win over the default.
 - [Reference](../dev/agents/openclaw.md)
 
 ## Hermes

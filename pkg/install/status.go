@@ -251,7 +251,7 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 
 func isOwnershipMarker(field string) bool {
 	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix) ||
-		strings.HasPrefix(field, ohMyPiSettingPriorPrefix) || strings.HasPrefix(field, writtenSHA256Prefix)
+		strings.HasPrefix(field, ohMyPiSettingPriorPrefix) || strings.HasPrefix(field, openClawSkillsPriorPrefix) || strings.HasPrefix(field, writtenSHA256Prefix)
 }
 
 // sourceState plans the recorded profile again without writing. Override lets the plan

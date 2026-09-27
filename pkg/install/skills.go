@@ -62,6 +62,43 @@ type skillRootWarner interface {
 	SkillRootWarning(configPath, root string, env PathEnv) string
 }
 
+// perConfigSkillRoots marks targets whose skill root lies beside each config the install
+// writes, such as OpenClaw state directories: SkillRoot then maps every written config.
+type perConfigSkillRoots interface {
+	skillRootPerConfig()
+}
+
+// skillAllowlister is implemented by targets with a per-agent skill allowlist that an
+// install may set for one agent (TargetRequest.SkillAgent).
+type skillAllowlister interface {
+	ValidSkillAgent(agent string) error
+}
+
+// validateSkillAgent rejects a skill allowlist agent the target cannot take.
+func validateSkillAgent(adapter Adapter, agent string) error {
+	if agent == "" {
+		return nil
+	}
+	allowlister, ok := adapter.(skillAllowlister)
+	if !ok {
+		return fmt.Errorf("%s has no per-agent skill allowlist", adapter.Metadata().Target)
+	}
+	return allowlister.ValidSkillAgent(agent)
+}
+
+// installedSkillNames names the skill folders this install writes, in folder order.
+func installedSkillNames(adapter Adapter, target TargetRequest, setsDefault bool, bundles []skillBundle) []string {
+	if skipped, _ := skillSkip(adapter, target.Agent, setsDefault); skipped {
+		return nil
+	}
+	names := make([]string, 0, len(bundles))
+	for _, bundle := range bundles {
+		names = append(names, bundle.Name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 // defaultSkillSkipReason is the gate shared by agents whose user skill folder is read by
 // every profile, like roleFileSkipReason: a named agent destination, or a named profile
 // not made the default, writes no skill folders.
@@ -208,8 +245,8 @@ func skillFolderFiles(dir string) ([]string, error) {
 	return names, err
 }
 
-// addSkillPatches writes every loaded skill folder as owned whole files under the
-// target's skill root. A symlink or non-directory in a destination folder is a conflict
+// addSkillPatches writes every loaded skill folder as owned whole files under each of the
+// target's skill roots. A symlink or non-directory in a destination folder is a conflict
 // naming its path; unowned files already in an adopted folder are listed in a warning.
 // A non-empty reason blocks the target.
 func addSkillPatches(adapter Adapter, request Request, target TargetRequest, loaded loadedInput, ownership Manifest, configPath string, patch *Patch, targetPlan *TargetPlan) (string, string) {
@@ -219,14 +256,9 @@ func addSkillPatches(adapter Adapter, request Request, target TargetRequest, loa
 	if skipped, _ := skillSkip(adapter, target.Agent, request.Default); skipped {
 		return "", ""
 	}
-	root, err := adapter.(skillInstaller).SkillRoot(configPath, request.Env)
+	roots, err := skillRoots(adapter, configPath, patch.Files, request.Env)
 	if err != nil {
 		return fmt.Sprintf("resolve skill folder: %v", err), "install.skill_root_unresolved"
-	}
-	if warner, ok := adapter.(skillRootWarner); ok {
-		if warning := warner.SkillRootWarning(configPath, root, request.Env); warning != "" {
-			targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.skill_root_undiscovered", "skills", warning, 0, 0)
-		}
 	}
 	for _, bundle := range loaded.Skills {
 		if checker, ok := adapter.(skillChecker); ok {
@@ -234,19 +266,67 @@ func addSkillPatches(adapter Adapter, request Request, target TargetRequest, loa
 				return err.Error(), "install.skill_unsupported"
 			}
 		}
-		folder := filepath.Join(root, bundle.Name)
-		label := func(path string) string { return relativeOwnedPath(configPath, path, request.Env) }
-		if blocked := skillDestinationConflicts(root, bundle, label, targetPlan); blocked {
-			continue
-		}
-		warnUnmanagedSkillFiles(folder, bundle, ownership, label, targetPlan)
-		for _, file := range bundle.Files {
-			path := filepath.Join(folder, filepath.FromSlash(file.Path))
-			patch.Files = append(patch.Files, FilePatch{Path: path, Label: label(path), Content: file.Content, Mode: file.Mode, Adoptable: true, Ownership: []string{ownershipSkill}})
-		}
 		targetPlan.Skills = append(targetPlan.Skills, bundle.Name)
 	}
+	label := func(path string) string { return relativeOwnedPath(configPath, path, request.Env) }
+	for _, root := range roots {
+		if warner, ok := adapter.(skillRootWarner); ok {
+			if warning := warner.SkillRootWarning(configPath, root, request.Env); warning != "" {
+				targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.skill_root_undiscovered", "skills", warning, 0, 0)
+			}
+		}
+		for _, bundle := range loaded.Skills {
+			if blocked := skillDestinationConflicts(root, bundle, label, targetPlan); !blocked {
+				warnUnmanagedSkillFiles(filepath.Join(root, bundle.Name), bundle, ownership, label, targetPlan)
+				patch.Files = append(patch.Files, skillFilePatches(root, bundle, label)...)
+			}
+		}
+	}
 	return "", ""
+}
+
+// skillFilePatches writes one skill folder's files below root.
+func skillFilePatches(root string, bundle skillBundle, label func(string) string) []FilePatch {
+	files := make([]FilePatch, 0, len(bundle.Files))
+	for _, file := range bundle.Files {
+		path := filepath.Join(root, bundle.Name, filepath.FromSlash(file.Path))
+		files = append(files, FilePatch{Path: path, Label: label(path), Content: file.Content, Mode: file.Mode, Adoptable: true, Ownership: []string{ownershipSkill}})
+	}
+	return files
+}
+
+// skillRoots is the target's skill root, or for a per-config target the root beside each
+// config the adapter's patch writes, in patch order without duplicates.
+func skillRoots(adapter Adapter, configPath string, files []FilePatch, env PathEnv) ([]string, error) {
+	configs := []string{configPath}
+	if _, perConfig := adapter.(perConfigSkillRoots); perConfig {
+		configs = configs[:0]
+		for _, file := range files {
+			if !file.LiveFields || file.Release || file.Delete {
+				continue
+			}
+			path, err := patchPath(configPath, file.Path)
+			if err != nil {
+				return nil, err
+			}
+			configs = append(configs, path)
+		}
+	}
+	return rootsFor(adapter.(skillInstaller), configs, env)
+}
+
+func rootsFor(installer skillInstaller, configs []string, env PathEnv) ([]string, error) {
+	var roots []string
+	for _, config := range configs {
+		root, err := installer.SkillRoot(config, env)
+		if err != nil {
+			return nil, err
+		}
+		if !slices.Contains(roots, root) {
+			roots = append(roots, root)
+		}
+	}
+	return roots, nil
 }
 
 // skillDestinationConflicts reports every symlink or non-directory on the way to a
@@ -324,27 +404,50 @@ func warnUnmanagedSkillFiles(folder string, bundle skillBundle, ownership Manife
 
 // skillReleaseDirs sets, for each released skill file profile-mango created, the folders
 // its delete removes afterwards while they are empty: from its directory up to its skill
-// folder directly below the target's skill root.
-func skillReleaseDirs(adapter Adapter, configPath string, env PathEnv, files []FilePatch) {
+// folder directly below the skill root it was written under.
+func skillReleaseDirs(adapter Adapter, configPath string, env PathEnv, ownership Manifest, files []FilePatch) {
 	installer, ok := adapter.(skillInstaller)
 	if !ok || !slices.ContainsFunc(files, func(file FilePatch) bool { return file.Release && file.Delete }) {
 		return
 	}
-	root, err := installer.SkillRoot(configPath, env)
+	roots, err := rootsFor(installer, ownedSkillConfigs(adapter, configPath, ownership), env)
 	if err != nil {
 		return
 	}
 	for index := range files {
 		file := &files[index]
-		if !file.Release || !file.Delete {
-			continue
-		}
-		relative, err := filepath.Rel(root, filepath.Dir(file.Path))
-		if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		root, found := skillRootOf(roots, filepath.Dir(file.Path))
+		if !file.Release || !file.Delete || !found {
 			continue
 		}
 		for dir := filepath.Dir(file.Path); dir != root; dir = filepath.Dir(dir) {
 			file.RemoveEmptyDirs = append(file.RemoveEmptyDirs, dir)
 		}
 	}
+}
+
+// ownedSkillConfigs lists the configs whose skill roots may hold released skill files:
+// the main config, plus for a per-config target every config the manifest owns.
+func ownedSkillConfigs(adapter Adapter, configPath string, ownership Manifest) []string {
+	configs := []string{configPath}
+	if _, perConfig := adapter.(perConfigSkillRoots); !perConfig {
+		return configs
+	}
+	for _, entry := range ownership.Files {
+		if wholeFileKind(entry.Fields) == "" {
+			configs = append(configs, entry.Path)
+		}
+	}
+	return configs
+}
+
+// skillRootOf returns the root dir lies strictly below.
+func skillRootOf(roots []string, dir string) (string, bool) {
+	for _, root := range roots {
+		relative, err := filepath.Rel(root, dir)
+		if err == nil && relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			return root, true
+		}
+	}
+	return "", false
 }
