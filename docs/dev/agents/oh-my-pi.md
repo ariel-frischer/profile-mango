@@ -154,7 +154,12 @@ purpose. Source review of the same checkout
 `advisor` and `vision` have no portable role and are never written. Each slot
 keeps its own manifest field (`config.modelRoles.<slot>`) and
 `ohmypi-role-prior:<slot>=<value>` marker, so `mango use` gives back every
-slot of a role the new route drops. Profile role definitions (description,
+slot of a role the new route drops. It also records
+`written-sha256:config.modelRoles.<slot>=<hex>` (and the same for
+`config.task.maxEffort`), the hash of the value it wrote: when Oh My Pi
+re-serializes `config.yml` or other keys change, install compares each owned
+value with that hash instead of the whole-file hash, so only an edited owned
+value needs `--override`. Profile role definitions (description,
 instructions) install as agent files; see the next section.
 
 `task.maxEffort` is a cap on subagent effort, so bindings model it as the

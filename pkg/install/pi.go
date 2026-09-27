@@ -37,7 +37,7 @@ func (piAdapter) Plan(input AdapterInput) (Patch, error) {
 		fileFields = append(fileFields, path)
 	}
 	patch := Patch{
-		Files:           []FilePatch{{Content: settings.Content, Fields: fileFields}},
+		Files:           []FilePatch{{Content: settings.Content, Fields: fileFields, LiveFields: true}},
 		Fields:          fields,
 		OverrideAllowed: true,
 	}

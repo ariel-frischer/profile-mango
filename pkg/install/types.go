@@ -137,6 +137,10 @@ type FilePatch struct {
 	// Adoptable lets this whole file adopt or override an unowned or edited file even
 	// when the adapter's other files do not allow it.
 	Adoptable bool
+	// LiveFields says Content rewrites only Fields within the live file's bytes and
+	// each field's FieldChange.Before is its live value, so edits to other bytes are
+	// judged per owned field instead of by the whole-file hash.
+	LiveFields bool
 	// Release gives back a file the previous install owned and this plan no longer writes.
 	Release bool
 	Path    string

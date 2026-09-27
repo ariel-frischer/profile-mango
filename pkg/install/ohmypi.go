@@ -101,7 +101,7 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	if err != nil {
 		return Patch{}, err
 	}
-	file := FilePatch{Content: content}
+	file := FilePatch{Content: content, LiveFields: true}
 	fields := ohMyPiRoleFields(&file, rolePriors, configPatch.Roles, released)
 	fields = append(fields, ohMyPiSettingFields(&file, settingPriors, configPatch.Settings, releasedSettings)...)
 	patch := Patch{Files: []FilePatch{file}, Fields: fields, OverrideAllowed: true}

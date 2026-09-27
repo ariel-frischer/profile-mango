@@ -130,7 +130,7 @@ func planOpenCodeMainConfig(input AdapterInput) (Patch, error) {
 		return Patch{}, err
 	}
 	fields := []FieldChange{{Path: "config.model", Before: configPatch.ModelBefore, After: configPatch.ModelAfter}}
-	configFile := FilePatch{Content: configPatch.Content, Fields: []string{"config.model"}}
+	configFile := FilePatch{Content: configPatch.Content, Fields: []string{"config.model"}, LiveFields: true}
 	files := []FilePatch{configFile}
 	patch := Patch{Files: files, Fields: fields, OverrideAllowed: true}
 	if skill != nil {

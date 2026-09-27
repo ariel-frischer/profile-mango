@@ -249,14 +249,7 @@ func TestOhMyPiMetadataReportsNarrowNativeApplicability(t *testing.T) {
 func ohMyPiTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
 	request, root := testRequest(t, NewRegistry(ohMyPiAdapter{}))
-	writeInstallTestFile(t, request.BindingsPath, `routes:
-  primary:
-    provider: openai
-    transport: native
-    authentication: oauth
-    model: gpt-5.6
-    effort: high
-`)
+	writeInstallTestFile(t, request.BindingsPath, ohMyPiTestBindings)
 	// Most tests here cover the config.yml patch, which only --default writes.
 	request.Override, request.Default = true, true
 	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.3.2"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}

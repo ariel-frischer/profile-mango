@@ -110,6 +110,16 @@ mandatory, so `--no-backup` blocks adoption. A file you edited after a
 profile-mango install is protected; `--override` replaces it only where that
 agent allows it.
 
+**Shared configs:** in a config profile-mango patches field by field (such as
+Oh My Pi `config.yml` or Codex `config.toml`), the manifest records a hash of
+each value it wrote. Only a changed owned value counts as your edit. Other
+keys, comments, or the agent re-serializing the file (for example `omp config
+set` unquoting values) do not, so a changed profile applies without
+`--override` and keeps those edits; `mango status` shows the file as
+`other-edits`. A manifest from an earlier mango release has no per-field
+hashes, so after such a file is edited any profile change still needs
+`--override` once; every install that writes the file records the hashes.
+
 **What it never touches:** credentials and auth stores, sessions, plugins, MCP
 servers, providers, and the network. Installing a model does not sign you in
 or check that the model is available to your account.

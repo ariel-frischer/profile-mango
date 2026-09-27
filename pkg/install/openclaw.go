@@ -90,7 +90,7 @@ func addOpenClawFile(patch *Patch, file openClawFile, route profilemango.RouteBi
 		{Path: file.prefix + "agents.defaults.model.primary", Before: configPatch.BeforeModel, After: configPatch.AfterModel},
 		{Path: file.prefix + "agents.defaults.thinkingDefault", Before: configPatch.BeforeThinking, After: configPatch.AfterThinking},
 	}
-	patch.Files = append(patch.Files, FilePatch{Path: file.path, Content: configPatch.Content, Fields: fieldNames(fields)})
+	patch.Files = append(patch.Files, FilePatch{Path: file.path, Content: configPatch.Content, Fields: fieldNames(fields), LiveFields: true})
 	patch.Fields = append(patch.Fields, fields...)
 	return nil
 }
