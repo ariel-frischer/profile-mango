@@ -535,3 +535,23 @@ func TestRenderStagedPreviewWarnsAndSummarizesInHumanOutput(t *testing.T) {
 	}
 	assertRenderFile(t, out, "render.json")
 }
+
+// TestRenderResolvesRoutePlaceholders pins that render resolves {{route.…}} in
+// resources for the selected target and fails closed on an unknown route.
+func TestRenderResolvesRoutePlaceholders(t *testing.T) {
+	profiles, resources, bindings := writeRenderFixture(t, false)
+	system := filepath.Join(resources, "instructions", "system.md")
+	writeFile(t, system, "model {{route.codex-oauth.model}} at {{route.codex-oauth.effort}}\n")
+	out := filepath.Join(t.TempDir(), "candidate")
+	args := []string{"route-only", "--profiles", profiles, "--resource-root", resources, "--bindings", bindings, "--target", codex.TargetName, "--target-version", codex.TargetVersion}
+	if _, stderr, err := executeRenderForTest(t, append(args, "--out", out, "--preview")); err != nil {
+		t.Fatalf("render: %v\n%s", err, stderr)
+	}
+	assertFileContent(t, filepath.Join(out, "resources", "instructions", "system.md"), "model gpt-5.6 at high\n")
+
+	writeFile(t, system, "{{route.nope.model}}\n")
+	stdout, stderr, err := executeRenderForTest(t, append(args, "--out", filepath.Join(t.TempDir(), "failed")))
+	if err == nil || !strings.Contains(stdout+stderr, render.RouteRefInvalidCode) || !strings.Contains(stdout+stderr, `route "nope" is not in the bindings file`) {
+		t.Fatalf("unknown placeholder: %v\n%s%s", err, stdout, stderr)
+	}
+}

@@ -233,6 +233,9 @@ func runRender(cmd *cobra.Command, name string, options renderOptions) error {
 			diagnostics = append(diagnostics, resourceDiagnostics...)
 			if !diagnostics.HasErrors() {
 				resources, diagnostics = readResourceContents(options.resourceRoot, resourceDigests, diagnostics)
+				var refDiagnostics profilemango.Diagnostics
+				resources, refDiagnostics = render.RenderRouteRefs(resources, bindings, options.target)
+				diagnostics = append(diagnostics, refDiagnostics...)
 			}
 		}
 	}

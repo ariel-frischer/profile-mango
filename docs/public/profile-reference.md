@@ -146,8 +146,9 @@ skip them. `install --strict` blocks skipped roles.
 
 `agentFiles` ships agent definitions in an agent's own format, including
 frontmatter mango does not model. Each entry maps a file name to a resource
-relative to the package root; the installer copies the bytes unchanged into the
-folder that holds the agent's role files:
+relative to the package root; the installer copies the bytes unchanged, apart
+from [route placeholders](#route-placeholders), into the folder that holds the
+agent's role files:
 
 ```yaml
 agentFiles:
@@ -172,6 +173,36 @@ file deletes it or restores the original, and `mango undo` reverses each step.
 Agent files are global, so a named-only install lists them as `agentFiles`
 under "not installed for this agent"; Pi, Hermes, OpenClaw, and the jcode fork
 always skip them, and `install --strict` blocks instead.
+
+### Route placeholders
+
+Resources mango delivers (`instructions`, `skills`, `globalInstructions`,
+`agentFiles`, and role `instructions`) may name a route field instead of
+repeating a provider or model:
+
+```markdown
+Delegate reviews to {{route.opus55.roles.research.model}}.
+You run on {{route.opus55.provider}}/{{route.opus55.model}}.
+```
+
+`{{route.<name>.<field>}}` and `{{route.<name>.roles.<role>.<field>}}` take a
+field from `provider`, `model`, `effort`, `transport`, and `authentication`.
+Each agent gets the value from its own effective route, so a `targets` override
+for Codex changes only the Codex copy. A role sets only `provider`, `model`, and
+optionally `effort`; naming another role field, or an effort the role does not
+set, is an error. Any route in the bindings file may be named, not only the
+profile's own.
+
+Only text starting `{{route.` is read, and a placeholder must close with `}}` on
+the same line. Everything else, including other `{{…}}`, stays literal; there
+are no conditionals, loops, or escapes. An unknown route, role, or field, or a
+malformed placeholder, stops `install`, `use`, `doctor`, and `render` with the
+resource path, line, and reason (`resource.route_placeholder_invalid`).
+`mango validate` does not open resources, so it does not check them.
+
+Hashes, plans, and `mango status` drift compare the rendered bytes, so an
+unchanged install stays clean, and changing a route field a placeholder names
+shows the file as drift until you apply it again.
 
 ### Older wrapped format
 

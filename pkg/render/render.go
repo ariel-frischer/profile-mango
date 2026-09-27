@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -292,3 +293,27 @@ func ValidName(value string) bool {
 	}
 	return utf8.ValidString(value)
 }
+
+// RenderRouteRefs resolves {{route.…}} placeholders in each resource for target and
+// rehashes the rendered bytes, so digests, plans, and drift describe what is written.
+// A placeholder that does not resolve is an error diagnostic on its resource path.
+func RenderRouteRefs(resources []Resource, bindings profilemango.Bindings, target string) ([]Resource, profilemango.Diagnostics) {
+	var diagnostics profilemango.Diagnostics
+	rendered := make([]Resource, 0, len(resources))
+	for _, resource := range resources {
+		content, err := profilemango.RenderRouteRefs(resource.Content, bindings, target)
+		if err != nil {
+			diagnostics.Add(profilemango.SeverityError, RouteRefInvalidCode, resource.Digest.Path, err.Error(), 0, 0)
+			continue
+		}
+		if !bytes.Equal(content, resource.Content) {
+			resource = ResourceFromContent(resource.Digest.Path, resource.Digest.Kind, content)
+		}
+		rendered = append(rendered, resource)
+	}
+	return rendered, diagnostics
+}
+
+// RouteRefInvalidCode marks a {{route.…}} placeholder that names an unknown route,
+// role, or field, or is malformed.
+const RouteRefInvalidCode = "resource.route_placeholder_invalid"
