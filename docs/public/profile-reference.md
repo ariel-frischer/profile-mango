@@ -324,8 +324,18 @@ mango route unset sol --target oh-my-pi effort     # fields: provider, model, ef
 `roles` map, once it is empty. Both check the edited file the way `install`
 does and write nothing if it is invalid or unchanged; `--target` and `--role`
 cannot be combined. An effort no supported agent uses prints a warning, since
-each agent checks its own efforts at install. They print the diff, then the profiles to apply with
-`mango use` or `mango install`; agent config never changes until you do.
+each agent checks its own efforts at install. They print the diff and the
+profiles using the route; agent config never changes until you apply one. After
+writing, they read the ownership manifests at the default config paths (read-only,
+as `mango status` does) and print, for each profile, one
+`mango install <profile> --target <a> --target <b>` naming only the agents whose
+recorded profile is that one, with `--default` where it is their default. Agents
+on other profiles are never listed, so following the hint cannot switch them. A
+profile no agent records gets the adopt form
+`mango install <profile> --target <target>` instead. `mango status` names its
+changed-sources fix the same way, for that one agent; when the profile dropped a
+file the agent still owns, it suggests `mango use <profile> --target <agent>`,
+which gives the file back.
 New routes are still added by hand.
 
 ## Checking a profile

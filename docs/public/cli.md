@@ -53,8 +53,10 @@ mango doctor -t codex -t opencode
 `mango route set <route> --model <m> --effort <e>` edits
 `~/.profile-mango/bindings/local.yaml` in place, keeps comments, validates the
 result, and prints the diff. Add `--target <agent>` or `--role <role>` to change
-one agent or role; `mango route unset` removes fields. Then apply with
-`mango use <profile>`. See [editing routes](profile-reference.md#editing-routes).
+one agent or role; `mango route unset` removes fields. It then prints, per
+profile using the route, the `mango install <profile> --target <agent>...`
+command that re-applies it only to agents already recorded on that profile. See
+[editing routes](profile-reference.md#editing-routes).
 
 ## Output
 
