@@ -26,7 +26,11 @@
         "properties": {
           "path": {"type": "string"},
           "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-          "fields": {"type": "array", "items": {"type": "string"}}
+          "fields": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Owned field paths plus ownership markers. On a config patched field by field, written-sha256:<field>=<hex> records the SHA-256 of the value profile-mango wrote to that field; install treats the file as unedited while every recorded field still holds its written value. Entries without these markers fall back to the whole-file sha256."
+          }
         }
       }
     },

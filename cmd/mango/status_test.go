@@ -48,10 +48,11 @@ func humanStatusForTest(t *testing.T, options installOptions) string {
 
 func TestStatusNamesDriftFromProfile(t *testing.T) {
 	cases := map[string]struct {
-		edit       func(t *testing.T, env useTestHome, config string)
-		wantDrift  []install.FieldDrift
-		wantSource string
-		wantLines  []string
+		edit         func(t *testing.T, env useTestHome, config string)
+		wantDrift    []install.FieldDrift
+		wantSource   string
+		wantOverride bool
+		wantLines    []string
 	}{
 		"clean install has no drift": {
 			edit:       func(*testing.T, useTestHome, string) {},
@@ -66,24 +67,27 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 				{Path: "config.modelRoles.plan", Live: "user/other:low", Profile: "anthropic/opus:high"},
 				{Path: "config.task.maxEffort", Live: "max", Profile: "high"},
 			},
-			wantSource: install.SourceChanged,
-			wantLines:  []string{"  drift:\n", "    config.modelRoles.plan  live user/other:low  profile anthropic/opus:high\n", "    config.task.maxEffort  live max  profile high\n"},
+			wantSource:   install.SourceChanged,
+			wantOverride: true,
+			wantLines:    []string{"  drift:\n", "    config.modelRoles.plan  live user/other:low  profile anthropic/opus:high\n", "    config.task.maxEffort  live max  profile high\n"},
 		},
 		"removed owned config key reads as absent": {
 			edit: func(t *testing.T, _ useTestHome, config string) {
 				replaceInFile(t, config, "task:\n  maxEffort: \"high\"\n", "")
 			},
-			wantDrift:  []install.FieldDrift{{Path: "config.task.maxEffort", Profile: "high"}},
-			wantSource: install.SourceChanged,
-			wantLines:  []string{"    config.task.maxEffort  live (absent)  profile high\n"},
+			wantDrift:    []install.FieldDrift{{Path: "config.task.maxEffort", Profile: "high"}},
+			wantSource:   install.SourceChanged,
+			wantOverride: true,
+			wantLines:    []string{"    config.task.maxEffort  live (absent)  profile high\n"},
 		},
 		"edited global instruction is named by path": {
 			edit: func(t *testing.T, env useTestHome, _ string) {
 				writeFile(t, filepath.Join(env.ompDir, "AGENTS.md"), "# edited by hand\n")
 			},
-			wantDrift:  []install.FieldDrift{{Path: "AGENTS.md", State: install.FileEdited}},
-			wantSource: install.SourceChanged,
-			wantLines:  []string{"    AGENTS.md  edited\n"},
+			wantDrift:    []install.FieldDrift{{Path: "AGENTS.md", State: install.FileEdited}},
+			wantSource:   install.SourceChanged,
+			wantOverride: true,
+			wantLines:    []string{"    AGENTS.md  edited\n"},
 		},
 		"re-serialized config with equal owned values is not drift": {
 			edit: func(t *testing.T, _ useTestHome, config string) {
@@ -95,6 +99,21 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			wantSource: install.SourceCurrent,
 			wantLines:  []string{"  other-edits config             config.yml"},
 		},
+		"re-serialized config with a changed profile value needs no override": {
+			edit: func(t *testing.T, env useTestHome, config string) {
+				replaceInFile(t, config, `plan: "anthropic/opus:high"`, "plan: anthropic/opus:high")
+				data, _ := os.ReadFile(config)
+				writeFile(t, config, string(data)+"theme: dark\n")
+				replaceInFile(t, env.options.bindings, "planner: {provider: anthropic, model: opus, effort: high}", "planner: {provider: anthropic, model: opus, effort: low}")
+			},
+			wantDrift: []install.FieldDrift{
+				{Path: "config.modelRoles.plan", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
+				{Path: "config.modelRoles.slow", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
+				{Path: "profiles/work.yml", State: install.DriftDiffers},
+			},
+			wantSource: install.SourceChanged,
+			wantLines:  []string{"  other-edits config             config.yml"},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -104,8 +123,8 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			if omp.Source != tc.wantSource || !reflect.DeepEqual(omp.Drift, tc.wantDrift) {
 				t.Fatalf("source %s (%s), drift %#v; want %s, %#v", omp.Source, omp.SourceReason, omp.Drift, tc.wantSource, tc.wantDrift)
 			}
-			if len(tc.wantDrift) > 0 && !strings.Contains(omp.SourceReason, "--override") {
-				t.Fatalf("live-edit source reason lacks --override: %s", omp.SourceReason)
+			if strings.Contains(omp.SourceReason, "--override") != tc.wantOverride {
+				t.Fatalf("source reason %q: want --override %v", omp.SourceReason, tc.wantOverride)
 			}
 			human := humanStatusForTest(t, env.options)
 			if len(tc.wantDrift) == 0 && strings.Contains(human, "drift:") {

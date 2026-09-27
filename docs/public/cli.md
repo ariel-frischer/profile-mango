@@ -24,7 +24,9 @@ also shows its redacted file diff and a per-target apply command.
 - `--all` selects every supported agent and skips those whose config folder
   does not exist.
 - An existing config is adopted with a backup. A Mango-installed value you
-  edited later needs `--override`.
+  edited later needs `--override`. In a shared config, edits outside the
+  Mango-owned fields (other keys, or the agent re-serializing the file) do
+  not; see [concepts](concepts.md#what-install-does).
 - `--strict` blocks instead of skipping requirements an agent cannot install.
 - `--json` is the stable machine-readable contract.
 

@@ -229,7 +229,7 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 
 func isOwnershipMarker(field string) bool {
 	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix) ||
-		strings.HasPrefix(field, ohMyPiSettingPriorPrefix)
+		strings.HasPrefix(field, ohMyPiSettingPriorPrefix) || strings.HasPrefix(field, writtenSHA256Prefix)
 }
 
 // sourceState plans the recorded profile again without writing. Override lets the plan
@@ -257,12 +257,14 @@ func sourceState(request StatusRequest, registry *Registry, status *TargetStatus
 	status.Source, status.SourceReason = sourceVerdict(plan, *status)
 }
 
-// markOtherEdits relabels edited field-owned files the plan leaves unchanged: their
-// owned values already match the profile, so only unrelated content differs.
+// markOtherEdits relabels edited field-owned files whose owned values the plan found
+// intact: it leaves them unchanged, or updates them without an override because every
+// owned field still holds its recorded written value. Only unrelated content differs.
 func markOtherEdits(status *TargetStatus, target TargetPlan, env PathEnv) {
 	unchanged := map[string]bool{}
 	for _, file := range target.Files {
-		if file.Action == ActionNoop && file.targetPath != "" {
+		intact := file.Action == ActionNoop || (file.Action == ActionUpdate && target.Status == StatusReady)
+		if intact && file.targetPath != "" {
 			unchanged[relativeOwnedPath(status.ConfigPath, file.targetPath, env)] = true
 		}
 	}

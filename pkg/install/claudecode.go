@@ -64,7 +64,7 @@ func planClaudeCodeConfig(source []byte, route profilemango.RouteBinding) (Patch
 	if err != nil {
 		return Patch{}, err
 	}
-	file := FilePatch{Content: settings.Content, Fields: []string{"config.model"}}
+	file := FilePatch{Content: settings.Content, Fields: []string{"config.model"}, LiveFields: true}
 	patch := Patch{Fields: []FieldChange{{Path: "config.model", Before: settings.ModelBefore, After: settings.ModelAfter}}, OverrideAllowed: true}
 	if settings.EffortAfter != "" {
 		file.Fields = append(file.Fields, "config.effortLevel")

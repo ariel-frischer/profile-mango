@@ -57,7 +57,7 @@ func (codexAdapter) NamedProfileFile(name string) (string, error) {
 func (codexAdapter) NamedProfileUse(name string) string { return "codex --profile " + name }
 
 func addCodexFile(patch *Patch, path, prefix string, configPatch codex.ConfigPatch) {
-	file := FilePatch{Path: path, Content: configPatch.Content}
+	file := FilePatch{Path: path, Content: configPatch.Content, LiveFields: true}
 	for _, field := range configPatch.Fields {
 		file.Fields = append(file.Fields, prefix+field.Key)
 		patch.Fields = append(patch.Fields, FieldChange{Path: prefix + field.Key, Before: field.Before, After: field.After})

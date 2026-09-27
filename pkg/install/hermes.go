@@ -126,7 +126,7 @@ func addHermesFile(patch *Patch, file hermesFile, route profilemango.RouteBindin
 		{Path: file.prefix + "model.default", Before: result.Before["model.default"], After: route.Model},
 		{Path: file.prefix + "agent.reasoning_effort", Before: result.Before["agent.reasoning_effort"], After: route.Effort},
 	}
-	patch.Files = append(patch.Files, FilePatch{Path: file.path, Content: result.Content, Fields: fieldNames(fields)})
+	patch.Files = append(patch.Files, FilePatch{Path: file.path, Content: result.Content, Fields: fieldNames(fields), LiveFields: true})
 	patch.Fields = append(patch.Fields, fields...)
 	return nil
 }

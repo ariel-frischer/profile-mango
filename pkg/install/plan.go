@@ -350,6 +350,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 func planFiles(request Request, target TargetRequest, patch Patch, ownership Manifest, config installfs.Snapshot, targetPlan *TargetPlan) ([]installfs.Change, bool) {
 	changes := make([]installfs.Change, 0, len(patch.Files))
 	seen := make(map[string]struct{}, len(patch.Files))
+	planned := fieldsByPath(patch.Fields)
 	for _, file := range patch.Files {
 		path, err := patchPath(target.ConfigPath, file.Path)
 		if err != nil {
@@ -384,13 +385,14 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		if !file.Delete {
 			afterHash = installfs.Hash(file.Content)
 		}
-		ownedHash, owned := ownershipHash(ownership, path)
+		ownedHash, owned := ownedBaseline(file, ownership, path, before, planned)
 		action, conflict := fileAction(request, (patch.OverrideAllowed || file.Adoptable) && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
 		if file.Release && action == ActionUpdate && !conflict {
 			action = ActionRestore
 		}
 		fields := fieldsForNames(file.Fields)
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: fileOwnership(file, ownership, path, config.Path, before), release: file.Release})
+		ownedTags := append(fileOwnership(file, ownership, path, config.Path, before), writtenMarkers(file, planned)...)
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: ownedTags, release: file.Release})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
 		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
