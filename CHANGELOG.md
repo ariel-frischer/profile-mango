@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Bindings accept per-agent role overrides under routes.<route>.targets.<agent>.roles.<role>, so one route can send a role to openai-codex on Oh My Pi and openai on Codex; mango route set --target X --role Y edits them
 - Instruction, skill, global-instruction, and agent-file resources can use {{route.<name>.<field>}} and {{route.<name>.roles.<role>.<field>}} placeholders, filled per agent from its effective route at render time; unknown placeholders fail validation
 - mango route set/unset list each profile file and resource line that still names a replaced provider or model
+- globalInstructions files accept a list of resource fragments composed in order (one blank line between fragments); each fragment resolves route placeholders and counts as a source for mango status, and the single-path form is unchanged
 
 ### Fixed
 

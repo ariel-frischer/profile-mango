@@ -70,13 +70,18 @@
       "properties": {"append": {"$ref": "#/$defs/paths"}}
     },
     "globalInstructions": {
-      "description": "Whole global instruction files per target, or under the target-neutral home key for files in the user's home directory (home: {AGENTS.md: ...} writes ~/AGENTS.md): file name to resource path beneath the package root. Only files with pinned evidence install; others are skipped or blocked.",
+      "description": "Whole global instruction files per target, or under the target-neutral home key for files in the user's home directory (home: {AGENTS.md: ...} writes ~/AGENTS.md): file name to a resource path beneath the package root, or a non-empty list of such paths composed in order (each fragment but the last loses its trailing newlines and is followed by one blank line). Only files with pinned evidence install; others are skipped or blocked.",
       "type": "object",
       "propertyNames": {"enum": ["home", "claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
       "additionalProperties": {
         "type": "object",
         "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.md$"},
-        "additionalProperties": {"type": "string", "minLength": 1}
+        "additionalProperties": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          ]
+        }
       }
     },
     "agentFiles": {

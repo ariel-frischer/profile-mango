@@ -1,6 +1,7 @@
 package install
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -67,14 +68,45 @@ var homeInstructionOwner = Target{Name: pi.TargetName, Version: pi.TargetVersion
 // homeInstructionFiles lists the qualified file names under globalInstructions.home.
 var homeInstructionFiles = []string{"AGENTS.md"}
 
-// globalFile is one loaded globalInstructions entry for a target.
+// globalFile is one loaded whole file for a target (a globalInstructions or agentFiles
+// entry): its package fragments in order and the installed bytes composed from them.
 type globalFile struct {
-	Name    string
-	Content []byte
-	Digest  profilemango.ResourceDigest
+	Name      string
+	Content   []byte
+	Fragments []fileFragment
 }
 
-// loadGlobalInstructions reads every globalInstructions resource beneath root.
+// fileFragment is one package resource of a whole file.
+type fileFragment struct {
+	Path    string
+	Content []byte
+}
+
+// composedFile returns the whole file name built from fragments.
+func composedFile(name string, fragments ...fileFragment) globalFile {
+	return globalFile{Name: name, Content: composeFragments(fragments), Fragments: fragments}
+}
+
+// composeFragments joins fragments in order: each fragment but the last loses its
+// trailing newlines and is followed by one blank line; the last is kept verbatim,
+// so a single fragment is installed byte for byte.
+func composeFragments(fragments []fileFragment) []byte {
+	if len(fragments) == 1 {
+		return fragments[0].Content
+	}
+	var content []byte
+	for index, fragment := range fragments {
+		if index == len(fragments)-1 {
+			return append(content, fragment.Content...)
+		}
+		content = append(content, bytes.TrimRight(fragment.Content, "\r\n")...)
+		content = append(content, "\n\n"...)
+	}
+	return content
+}
+
+// loadGlobalInstructions reads every globalInstructions fragment beneath root. Each
+// fragment is its own digest and source check, so editing one changes the sources.
 func loadGlobalInstructions(root string, profile profilemango.ResolvedProfile) (map[string][]globalFile, []profilemango.ResourceDigest, profilemango.Diagnostics, []sourceCheck) {
 	result := make(map[string][]globalFile, len(profile.GlobalInstructions))
 	var digests []profilemango.ResourceDigest
@@ -83,33 +115,39 @@ func loadGlobalInstructions(root string, profile profilemango.ResolvedProfile) (
 	for _, target := range sortedNames(profile.GlobalInstructions) {
 		files := profile.GlobalInstructions[target]
 		for _, name := range sortedNames(files) {
-			file, source, err := loadGlobalFile(root, name, files[name])
-			if err != nil {
-				diagnostics.Add(profilemango.SeverityError, "resource.read", "globalInstructions."+target+"."+name, err.Error(), 0, 0)
-				continue
+			fragments := make([]fileFragment, 0, len(files[name]))
+			for _, resource := range files[name] {
+				fragment, digest, source, err := loadResource(root, resource, ownershipGlobalInstruction)
+				if err != nil {
+					diagnostics.Add(profilemango.SeverityError, "resource.read", "globalInstructions."+target+"."+name, err.Error(), 0, 0)
+					continue
+				}
+				fragments, digests, sources = append(fragments, fragment), append(digests, digest), append(sources, source)
 			}
-			result[target] = append(result[target], file)
-			digests = append(digests, file.Digest)
-			sources = append(sources, source)
+			if len(fragments) == len(files[name]) {
+				result[target] = append(result[target], composedFile(name, fragments...))
+			}
 		}
 	}
 	return result, digests, diagnostics.Sorted(), sources
 }
 
-func loadGlobalFile(root, name, resource string) (globalFile, sourceCheck, error) {
+// loadResource reads one package resource beneath root as a fragment with its
+// digest of kind and its source check.
+func loadResource(root, resource, kind string) (fileFragment, profilemango.ResourceDigest, sourceCheck, error) {
 	clean, err := safeResourcePath(resource)
 	if err != nil {
-		return globalFile{}, sourceCheck{}, err
+		return fileFragment{}, profilemango.ResourceDigest{}, sourceCheck{}, err
 	}
 	snapshot, err := installfs.SnapshotFile(filepath.Join(root, filepath.FromSlash(clean)))
 	if err != nil {
-		return globalFile{}, sourceCheck{}, fmt.Errorf("read %s: %w", clean, err)
+		return fileFragment{}, profilemango.ResourceDigest{}, sourceCheck{}, fmt.Errorf("read %s: %w", clean, err)
 	}
 	if !snapshot.Exists {
-		return globalFile{}, sourceCheck{}, fmt.Errorf("resource %s does not exist", clean)
+		return fileFragment{}, profilemango.ResourceDigest{}, sourceCheck{}, fmt.Errorf("resource %s does not exist", clean)
 	}
-	digest := profilemango.ResourceDigest{Path: clean, Kind: "global-instruction", SHA256: snapshot.SHA256, Size: snapshot.Size}
-	return globalFile{Name: name, Content: snapshot.Content, Digest: digest}, sourceCheck{Path: snapshot.Path, Snapshot: snapshot}, nil
+	digest := profilemango.ResourceDigest{Path: clean, Kind: kind, SHA256: snapshot.SHA256, Size: snapshot.Size}
+	return fileFragment{Path: clean, Content: snapshot.Content}, digest, sourceCheck{Path: snapshot.Path, Snapshot: snapshot}, nil
 }
 
 // globalPatches returns whole-file patches for the target's globalInstructions, or the

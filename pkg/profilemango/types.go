@@ -28,8 +28,9 @@ type PolicyProfile struct {
 	Instructions InstructionsSpec  `yaml:"instructions,omitempty" json:"instructions,omitempty"`
 	Skills       *[]string         `yaml:"skills,omitempty" json:"skills,omitempty"`
 	// GlobalInstructions maps a target name to whole global instruction files
-	// (file name -> resource path), e.g. codex: {AGENTS.md: instructions/codex.md}.
-	GlobalInstructions map[string]map[string]string `yaml:"globalInstructions,omitempty" json:"globalInstructions,omitempty"`
+	// (file name -> resource path, or a list of fragment paths composed in order),
+	// e.g. codex: {AGENTS.md: instructions/codex.md}.
+	GlobalInstructions map[string]map[string]ResourceList `yaml:"globalInstructions,omitempty" json:"globalInstructions,omitempty"`
 	// AgentFiles maps a target name to whole native subagent files installed verbatim
 	// in its subagent directory (file name -> resource path), e.g. oh-my-pi: {scout.md: agents/scout.md}.
 	AgentFiles map[string]map[string]string `yaml:"agentFiles,omitempty" json:"agentFiles,omitempty"`
@@ -130,7 +131,7 @@ type ResolvedProfile struct {
 	Instructions []string          `json:"instructions,omitempty"`
 	Skills       []string          `json:"skills,omitempty"`
 	// GlobalInstructions maps a target name to whole global instruction files it owns.
-	GlobalInstructions map[string]map[string]string `json:"globalInstructions,omitempty"`
+	GlobalInstructions map[string]map[string]ResourceList `json:"globalInstructions,omitempty"`
 	// AgentFiles maps a target name to whole native subagent files it owns.
 	AgentFiles map[string]map[string]string `json:"agentFiles,omitempty"`
 	// Roles is the resolved portable role definitions.

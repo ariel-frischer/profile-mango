@@ -19,14 +19,13 @@ func loadAgentFiles(root string, profile profilemango.ResolvedProfile) (map[stri
 	for _, target := range sortedNames(profile.AgentFiles) {
 		files := profile.AgentFiles[target]
 		for _, name := range sortedNames(files) {
-			file, source, err := loadGlobalFile(root, name, files[name])
+			fragment, digest, source, err := loadResource(root, files[name], ownershipAgentFile)
 			if err != nil {
 				diagnostics.Add(profilemango.SeverityError, "resource.read", "agentFiles."+target+"."+name, err.Error(), 0, 0)
 				continue
 			}
-			file.Digest.Kind = ownershipAgentFile
-			result[target] = append(result[target], file)
-			digests = append(digests, file.Digest)
+			result[target] = append(result[target], composedFile(name, fragment))
+			digests = append(digests, digest)
 			sources = append(sources, source)
 		}
 	}
