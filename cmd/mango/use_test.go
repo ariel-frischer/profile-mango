@@ -313,6 +313,30 @@ func TestUseSwitchesOhMyPiRolesAndReleasesDroppedOnes(t *testing.T) {
 	}
 }
 
+// A default install whose main config already holds the profile's values leaves that
+// file unowned; status still re-checks it as a default install, so the owned global
+// instruction files read as current rather than drifted.
+func TestStatusKeepsDefaultWhenConfigAlreadyMatched(t *testing.T) {
+	first := newUseTestHome(t)
+	installWork := first.options
+	installWork.targets, installWork.makeDefault = []string{"oh-my-pi"}, true
+	first.planThenApply(t, "work", installWork)
+	matched, err := os.ReadFile(filepath.Join(first.ompDir, "config.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	env := newUseTestHome(t)
+	writeFile(t, filepath.Join(env.ompDir, "config.yml"), string(matched))
+	useWork := env.useOptions()
+	useWork.targets = []string{"oh-my-pi"}
+	env.planThenApply(t, "work", useWork)
+	omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
+	if fileState(omp, "config.yml") != "" || omp.Source != install.SourceCurrent || len(omp.Drift) != 0 {
+		t.Fatalf("status after use over a matching config = %s (%s), drift %v", omp.Source, omp.SourceReason, omp.Drift)
+	}
+}
+
 // TestUseOwnsHomeAgentsMDThroughPi installs ~/AGENTS.md with the Pi target, reports it
 // in status, gives the adopted original back on use, and undoes each generation.
 func TestUseOwnsHomeAgentsMDThroughPi(t *testing.T) {

@@ -62,10 +62,12 @@ func preflightApplyReport(plan Plan, cause error, failedTarget string) ApplyRepo
 func applyTargetChanges(plan Plan) (ApplyReport, error) {
 	targets := sortedTargetPlans(plan.Targets)
 	var changes []installfs.Change
+	var anchors []string
 	for _, target := range targets {
 		changes = append(changes, target.changes...)
+		anchors = append(anchors, target.ConfigPath)
 	}
-	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup})
+	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors})
 	status := applied.Status
 	if status == "noop" {
 		status = "committed"

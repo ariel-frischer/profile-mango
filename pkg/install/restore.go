@@ -172,10 +172,12 @@ func journalOriginalOwnership(journal installfs.Journal, manifestPath string, ta
 
 // requireChangedFilesJournaled checks that the journal covers every file whose owned hash the
 // install changed, so a journal that dropped or renamed an entry cannot undo only part of an install.
+// A file the install newly claimed as is, already holding the profile's bytes, changed nothing.
 func requireChangedFilesJournaled(state undoState) error {
 	for _, file := range state.ownership.Files {
-		priorHash, _ := ownershipHash(state.before, file.Path)
-		if priorHash != file.SHA256 && entryFor(state.journal, file.Path) == nil {
+		priorHash, owned := ownershipHash(state.before, file.Path)
+		claimedAsIs := !owned && entryPrior(file) == priorSHA256Prefix+file.SHA256
+		if priorHash != file.SHA256 && !claimedAsIs && entryFor(state.journal, file.Path) == nil {
 			return fmt.Errorf("install journal %s does not describe every file the install changed", state.journal.PlanID)
 		}
 	}
@@ -301,7 +303,10 @@ func installedDrift(entry installfs.JournalEntry, current installfs.Snapshot, is
 		return current.Exists, nil
 	}
 	expectedMode := uint32(0o600)
-	if entry.BeforeExists {
+	switch {
+	case entry.AfterMode != 0:
+		expectedMode = entry.AfterMode
+	case entry.BeforeExists:
 		expectedMode = entry.BeforeMode
 	}
 	unchanged := current.Exists && current.SHA256 == entry.AfterSHA256 && uint32(current.Mode) == expectedMode

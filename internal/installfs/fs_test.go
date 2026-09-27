@@ -86,6 +86,39 @@ func TestApplyRollsBackAppliedDeleteAfterFault(t *testing.T) {
 	assertTestFile(t, updated, "old-update")
 }
 
+// A preferred anchor holds the lock and journal even when another changed file sorts
+// first, so they stay out of content folders such as an agent's skill folder.
+func TestApplyAnchorsJournalAtPreferredPath(t *testing.T) {
+	root := t.TempDir()
+	skill := filepath.Join(root, "a-skills", "review", "SKILL.md")
+	config := filepath.Join(root, "b-config", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(skill), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(config), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, config, "old")
+	before, err := SnapshotFile(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Apply([]Change{
+		{Path: skill, Content: []byte("skill"), Mode: 0o644},
+		{Path: config, Before: before, Content: []byte("new")},
+	}, ApplyOptions{PlanID: "anchor-plan", Anchors: []string{config}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := JournalPath(config, "anchor-plan"); result.JournalPath != want {
+		t.Fatalf("journal = %s, want %s", result.JournalPath, want)
+	}
+	journal, err := readJournal(result.JournalPath)
+	if err != nil || journal.Entries[0].AfterMode != 0o644 || journal.Entries[1].AfterMode != 0 {
+		t.Fatalf("journal entries = %#v, %v", journal.Entries, err)
+	}
+}
+
 func TestRecoverRestoresIncompleteJournal(t *testing.T) {
 	root := t.TempDir()
 	first := filepath.Join(root, "first")

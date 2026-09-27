@@ -142,6 +142,34 @@ func TestSkillInstallLifecycle(t *testing.T) {
 			}
 			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
 			assertSkillFile(t, filepath.Join(skills, "review", "scripts", "check.sh"), reviewScript, 0o755)
+			// Undoing the first install removes the skill files it created at their source modes.
+			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
+			for _, folder := range []string{"review", "vendored"} {
+				if _, err := os.Lstat(filepath.Join(skills, folder)); !os.IsNotExist(err) {
+					t.Fatalf("created skill folder %s survived undo: %v", folder, err)
+				}
+			}
+		})
+	}
+}
+
+// A skill file that already holds the profile's bytes is claimed without a write; undo
+// releases it untouched and removes only what the install created.
+func TestSkillUndoKeepsFileClaimedAsIs(t *testing.T) {
+	for name, target := range skillTargets() {
+		t.Run(name, func(t *testing.T) {
+			request, _, skills := skillRequest(t, target)
+			existing := filepath.Join(skills, "vendored", "SKILL.md")
+			writeInstallTestFile(t, existing, vendoredSkill)
+			if err := os.Chmod(existing, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			applySkillPlan(t, request)
+			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
+			assertSkillFile(t, existing, vendoredSkill, 0o644)
+			if _, err := os.Lstat(filepath.Join(skills, "review")); !os.IsNotExist(err) {
+				t.Fatalf("created skill folder survived undo: %v", err)
+			}
 		})
 	}
 }

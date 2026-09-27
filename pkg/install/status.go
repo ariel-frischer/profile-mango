@@ -199,12 +199,16 @@ func addOwnedFiles(status *TargetStatus, manifest Manifest, env PathEnv) error {
 		if err != nil {
 			return err
 		}
-		status.ownsConfig = status.ownsConfig || fileStatus.Kind == "config"
+		status.ownsConfig = status.ownsConfig || defaultOnlyKinds[fileStatus.Kind]
 		status.Files = append(status.Files, fileStatus)
 	}
 	sort.Slice(status.Files, func(i, j int) bool { return status.Files[i].Path < status.Files[j].Path })
 	return nil
 }
+
+// defaultOnlyKinds are owned file kinds a named profile writes only when it is also made
+// the default, so owning one records a default install.
+var defaultOnlyKinds = map[string]bool{"config": true, "global-instruction": true, "role-definition": true, "skill": true}
 
 func inspectOwnedFile(configPath string, file ManifestFile, env PathEnv) (FileStatus, error) {
 	snapshot, err := installfs.SnapshotFile(file.Path)
@@ -345,8 +349,9 @@ func ReapplyCommand(profile string, targets []string, makeDefault bool) string {
 	return command.String()
 }
 
-// OwnsConfig reports that the manifest owns the target's main config file, which
-// status reads as the recorded profile being the agent's default.
+// OwnsConfig reports that the recorded profile is the agent's default: the manifest owns
+// the main config file or a file only a default install writes. A default install whose
+// main config already held the profile's values leaves it unowned.
 func (status TargetStatus) OwnsConfig() bool { return status.ownsConfig }
 
 func recordedSuffix(status TargetStatus) string {

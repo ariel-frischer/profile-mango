@@ -59,9 +59,12 @@ type Change struct {
 }
 
 type ApplyOptions struct {
-	PlanID       string
-	Backup       bool
-	Checks       []Change // read-only source snapshots checked while holding the transaction lock
+	PlanID string
+	Backup bool
+	Checks []Change // read-only source snapshots checked while holding the transaction lock
+	// Anchors are changed paths preferred, in order, for the lock and journal, such as
+	// target configs, so they do not land inside a content folder like a skill.
+	Anchors      []string
 	JournalPath  string
 	LockPath     string
 	FaultAfter   int
@@ -89,8 +92,11 @@ type JournalEntry struct {
 	BeforeSHA256 string `json:"beforeSHA256,omitempty"`
 	BeforeMode   uint32 `json:"beforeMode,omitempty"`
 	AfterSHA256  string `json:"afterSHA256"`
-	BackupPath   string `json:"backupPath,omitempty"`
-	Delete       bool   `json:"delete,omitempty"`
+	// AfterMode is the mode the change wrote explicitly; zero means the file kept its
+	// prior mode, or the private default when the change created it.
+	AfterMode  uint32 `json:"afterMode,omitempty"`
+	BackupPath string `json:"backupPath,omitempty"`
+	Delete     bool   `json:"delete,omitempty"`
 	// CreatedDirs lists, deepest first, the parent directories that were missing when this
 	// transaction created Path; rollback and undo remove them again while they are empty.
 	CreatedDirs []string `json:"createdDirs,omitempty"`
@@ -182,7 +188,7 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	if options.PlanID == "" {
 		options.PlanID = Hash(changeIdentity(changes))
 	}
-	anchor, err := journalAnchor(changes)
+	anchor, err := journalAnchor(changes, options.Anchors)
 	if err != nil {
 		return ApplyResult{}, err
 	}
@@ -231,21 +237,34 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	return ApplyResult{Status: "committed", JournalPath: options.JournalPath, Backups: backups, Changed: changePaths(changes)}, nil
 }
 
-// journalAnchor is the first changed path whose directory already exists, so the lock and
-// journal never need directories that apply has yet to create. It prefers a file whose
-// directory the transaction does not try to remove, so the lock cannot keep it non-empty.
-func journalAnchor(changes []Change) (string, error) {
+// journalAnchor is the first preferred changed path, else the first changed path, whose
+// directory already exists, so the lock and journal never need directories that apply
+// has yet to create. It prefers a file whose directory the transaction does not try to
+// remove, so the lock cannot keep it non-empty.
+func journalAnchor(changes []Change, preferred []string) (string, error) {
+	for _, path := range preferred {
+		for _, change := range changes {
+			if change.Path == filepath.Clean(path) && len(change.RemoveEmptyDirs) == 0 && dirExists(filepath.Dir(change.Path)) {
+				return change.Path, nil
+			}
+		}
+	}
 	for _, removable := range []bool{false, true} {
 		for _, change := range changes {
 			if len(change.RemoveEmptyDirs) > 0 != removable {
 				continue
 			}
-			if info, err := os.Lstat(filepath.Dir(change.Path)); err == nil && info.IsDir() {
+			if dirExists(filepath.Dir(change.Path)) {
 				return change.Path, nil
 			}
 		}
 	}
 	return "", fmt.Errorf("no changed file has an existing directory for the install journal")
+}
+
+func dirExists(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && info.IsDir()
 }
 
 func changePaths(changes []Change) []string {
@@ -333,7 +352,7 @@ func prepareBackups(changes []Change, options ApplyOptions) ([]JournalEntry, []s
 	backups := make([]string, 0, len(changes))
 	owned := make([]preparedBackup, 0, len(changes))
 	for index, change := range changes {
-		entry := JournalEntry{Path: change.Path, BeforeExists: change.Before.Exists, BeforeSHA256: change.Before.SHA256, BeforeMode: uint32(change.Before.Mode), AfterSHA256: Hash(change.Content), Delete: change.Delete}
+		entry := JournalEntry{Path: change.Path, BeforeExists: change.Before.Exists, BeforeSHA256: change.Before.SHA256, BeforeMode: uint32(change.Before.Mode), AfterSHA256: Hash(change.Content), AfterMode: uint32(change.Mode), Delete: change.Delete}
 		if !change.Before.Exists && !change.Delete {
 			entry.CreatedDirs = missingParentDirs(change.Path)
 		}
