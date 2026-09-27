@@ -81,7 +81,9 @@ tree digest is the SHA-256 of one line per file, sorted by path:
 newline. Every `mango install` and `mango use` plan recomputes it and fails if
 a file changed, naming the digest it found, so the quickest way to pin a new
 copy is to set any 64-hex placeholder and copy the digest from the error
-(`mango validate` checks only the entry's shape, not the files). To compute
+(`mango validate` checks only the entry's shape, not the files). The digest
+covers the files as vendored; `{{route.…}}` placeholders are rendered only in
+the installed copies. To compute
 it yourself, from inside the skill folder:
 
 ```sh
@@ -237,9 +239,9 @@ always skip them, and `install --strict` blocks instead.
 
 ### Route placeholders
 
-Resources mango delivers (`instructions`, `globalInstructions`, `agentFiles`,
-and role `instructions`) may name a route field instead of repeating a provider
-or model; skill folders are copied verbatim:
+Resources mango delivers (`instructions`, the text files in each `skills`
+folder, `globalInstructions`, `agentFiles`, and role `instructions`) may name a
+route field instead of repeating a provider or model:
 
 ```markdown
 Delegate reviews to {{route.opus55.roles.research.model}}.

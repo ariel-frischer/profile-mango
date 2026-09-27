@@ -1727,7 +1727,7 @@ status, release on `use`, undo of each generation), in a synthetic sandbox HOME.
 ## Skill folders (2026-09-27, ap-794)
 
 A profile's `skills` entries install as whole folders: every regular file beside
-each `SKILL.md` is copied verbatim (no symlinks, at most 256 files, modes `0755`
+each `SKILL.md` is copied, with `{{route.…}}` placeholders rendered in UTF-8 text files (no symlinks, at most 256 files, modes `0755`
 or `0644`), owned per file (kind `skill`), and written only when the profile is
 the default. Vendored entries pin `source.sha256`, the tree digest of the folder.
 

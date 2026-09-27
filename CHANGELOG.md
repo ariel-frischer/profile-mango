@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Field-owned configs (e.g. Oh My Pi config.yml) conflict only when a mango-owned value was edited, not when the agent re-serialized the file or unrelated keys changed; manifests from earlier versions keep the whole-file check until their next install
 - mango status labels each agent with its installed version and shows the tested version when they differ
 - Plans no longer show unchanged named-profile fields as "" -> value: Oh My Pi and Claude Code profile files report their current values, and fields of an unchanged whole file are shown as unchanged; mango status names changed profile-file fields individually
+- Route placeholders ({{route.…}}) in a skill folder's text files render per target when the skill installs, and tree digests still cover the vendored source bytes
 
 ### Changed
 

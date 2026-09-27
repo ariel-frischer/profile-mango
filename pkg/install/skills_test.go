@@ -140,6 +140,43 @@ func TestSkillInstallLifecycle(t *testing.T) {
 	}
 }
 
+// TestSkillPlaceholdersRenderPerTarget renders {{route.…}} in a skill's text files from
+// each target's own route, copies non-UTF-8 files verbatim, and reports the rendered
+// install in-sync.
+func TestSkillPlaceholdersRenderPerTarget(t *testing.T) {
+	binary := "\xff\xfe{{route.primary.provider}}"
+	tests := map[string]string{"claude-code": "anthropic", "codex": "openai"}
+	for name, provider := range tests {
+		t.Run(name, func(t *testing.T) {
+			target := skillTargets()[name]
+			request, root, skills := skillRequest(t, target)
+			writeInstallTestFile(t, filepath.Join(root, "skills", "review", "SKILL.md"), reviewSkill+"Route: {{route.primary.provider}}\n")
+			writeInstallTestFile(t, filepath.Join(root, "skills", "review", "data.bin"), binary)
+			applySkillPlan(t, request)
+			assertSkillFile(t, filepath.Join(skills, "review", "SKILL.md"), reviewSkill+"Route: "+provider+"\n", 0o644)
+			assertSkillFile(t, filepath.Join(skills, "review", "data.bin"), binary, 0o644)
+			status := skillStatus(t, request)
+			for _, file := range status.Files {
+				if file.State != FileInSync {
+					t.Fatalf("status %s = %s after install, want in-sync", file.Path, file.State)
+				}
+			}
+			if status.Source != SourceCurrent {
+				t.Fatalf("status source = %s (%s)", status.Source, status.SourceReason)
+			}
+		})
+	}
+}
+
+func TestSkillInvalidPlaceholderNamesFile(t *testing.T) {
+	request, root, _ := skillRequest(t, skillTargets()["codex"])
+	writeInstallTestFile(t, filepath.Join(root, "skills", "review", "SKILL.md"), reviewSkill+"\n{{route.nope.model}}\n")
+	_, err := BuildPlan(request)
+	if err == nil || !strings.Contains(err.Error(), "skills/review/SKILL.md") || !strings.Contains(err.Error(), "line 7") {
+		t.Fatalf("invalid placeholder error = %v", err)
+	}
+}
+
 func TestSkillSwitchRestoresAdoptedFolder(t *testing.T) {
 	for name, target := range skillTargets() {
 		t.Run(name, func(t *testing.T) {
