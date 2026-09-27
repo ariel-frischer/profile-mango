@@ -147,6 +147,28 @@ func TestUseSwitchesManagedAgentsAndReleasesGlobalFiles(t *testing.T) {
 	}
 }
 
+// Re-planning an in-sync install after only a global instruction edit lists no route
+// changes: the named overlay and config.yml keep their values, so nothing reads as
+// being written from empty.
+func TestReplanInSyncShowsOnlyInstructionUpdate(t *testing.T) {
+	env := newUseTestHome(t)
+	options := env.options
+	options.targets, options.makeDefault = []string{"oh-my-pi"}, true
+	env.planThenApply(t, "work", options)
+	writeFile(t, filepath.Join(env.root, "global", "work-omp.md"), "# work omp v2\n")
+
+	output := runInstallProfileForTest(t, "work", options)
+	output = regexp.MustCompile(`[0-9a-f]{64}`).ReplaceAllString(strings.ReplaceAll(output, env.home, "~"), "<id>")
+	const golden = "plan <id> (ready)\n" +
+		"  oh-my-pi@18.3.2: ready | destination: ~/.omp/agent/profiles/work.yml | also the default: ~/.omp/agent/config.yml | use it: omp --config ~/.omp/agent/profiles/work.yml\n" +
+		"    route: model openai/gpt-5.6, effort high\n" +
+		"    files: AGENTS.md update, RULES.md noop, config.yml noop, config.yml.profile-mango.manifest.json update, work.yml noop\n" +
+		"Summary: 1 ready, 0 unchanged, 0 blocked, 0 conflict, 0 skipped; files: 0 create, 2 update, 3 unchanged. Unrelated target settings are preserved.\n"
+	if !strings.HasPrefix(output, golden) {
+		t.Fatalf("re-plan golden mismatch:\n%s", output)
+	}
+}
+
 // Without a terminal, --apply succeeds only when the plan writes nothing.
 func TestUseApplyWithoutTerminalNeedsConsentOnlyForChanges(t *testing.T) {
 	env := newUseTestHome(t)

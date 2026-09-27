@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -399,6 +400,9 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		if file.Release && action == ActionUpdate && !conflict {
 			action = ActionRestore
 		}
+		if action == ActionNoop && !file.LiveFields {
+			markFieldsUnchanged(targetPlan.Fields, file.Fields)
+		}
 		fields := fieldsForNames(file.Fields)
 		ownedTags := append(fileOwnership(file, ownership, path, config.Path, before), writtenMarkers(file, planned)...)
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: ownedTags, release: file.Release})
@@ -413,6 +417,16 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 	}
 	sort.Slice(targetPlan.Files, func(i, j int) bool { return targetPlan.Files[i].Path < targetPlan.Files[j].Path })
 	return changes, targetPlan.Diagnostics.HasErrors()
+}
+
+// markFieldsUnchanged records a byte-identical whole file's fields as already holding
+// their planned values; whole-file adapters render from scratch and leave Before empty.
+func markFieldsUnchanged(fields []FieldChange, names []string) {
+	for index := range fields {
+		if fields[index].Before == "" && slices.Contains(names, fields[index].Path) {
+			fields[index].Before = fields[index].After
+		}
+	}
 }
 
 // filePlanName is the plan's name for a patched file: its label, else its base name.
