@@ -70,14 +70,13 @@ func loadRoleInstructions(root string, profile profilemango.ResolvedProfile) (ma
 		if resource == nil {
 			continue
 		}
-		file, source, err := loadGlobalFile(root, name, *resource)
+		fragment, digest, source, err := loadResource(root, *resource, "role-instruction")
 		if err != nil {
 			diagnostics.Add(profilemango.SeverityError, "resource.read", "roles."+name+".instructions", err.Error(), 0, 0)
 			continue
 		}
-		file.Digest.Kind = "role-instruction"
-		result[name] = file.Content
-		digests = append(digests, file.Digest)
+		result[name] = fragment.Content
+		digests = append(digests, digest)
 		sources = append(sources, source)
 	}
 	return result, digests, diagnostics.Sorted(), sources

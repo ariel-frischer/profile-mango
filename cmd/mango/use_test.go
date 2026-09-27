@@ -147,6 +147,35 @@ func TestUseSwitchesManagedAgentsAndReleasesGlobalFiles(t *testing.T) {
 	}
 }
 
+// A list-form global file installs through use as the composed fragments, reads as
+// in sync, and reads as sources changed after an edit to any one fragment.
+func TestUseComposedGlobalFileTracksEveryFragment(t *testing.T) {
+	tests := map[string]struct{ edited string }{
+		"first fragment edited": {edited: "shared-core.md"},
+		"last fragment edited":  {edited: "omp-extra.md"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := newUseTestHome(t)
+			writeFile(t, filepath.Join(env.options.profiles, "composed", "profile.yaml"), "route: route\nglobalInstructions:\n  oh-my-pi:\n    AGENTS.md: [global/shared-core.md, global/omp-extra.md]\n")
+			writeFile(t, filepath.Join(env.root, "global", "shared-core.md"), "# core\n")
+			writeFile(t, filepath.Join(env.root, "global", "omp-extra.md"), "# omp {{route.route.model}}\n")
+			options := env.useOptions()
+			options.targets = []string{"oh-my-pi"}
+			env.planThenApply(t, "composed", options)
+			assertFileContent(t, filepath.Join(env.ompDir, "AGENTS.md"), "# core\n\n# omp gpt-5.6\n")
+			omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
+			if omp.Profile != "composed" || omp.Source != install.SourceCurrent || fileState(omp, "AGENTS.md") != install.FileInSync {
+				t.Fatalf("status after use = %#v", omp)
+			}
+			writeFile(t, filepath.Join(env.root, "global", test.edited), "# edited\n")
+			if source := targetStatus(t, statusForTest(t, env.options), "oh-my-pi").Source; source != install.SourceChanged {
+				t.Fatalf("source after editing %s = %s", test.edited, source)
+			}
+		})
+	}
+}
+
 // Re-planning an in-sync install after only a global instruction edit lists no route
 // changes: the named overlay and config.yml keep their values, so nothing reads as
 // being written from empty.

@@ -1,6 +1,7 @@
 package profilemango
 
 import (
+	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -12,6 +13,10 @@ type fieldShape struct {
 	kind     yaml.Kind
 	expected string
 }
+
+// scalarListItems maps a scalar field's shape key to the item description of the
+// list form it also accepts, e.g. globalInstructions.<target>.<file> fragments.
+var scalarListItems = map[string]string{"globalInstructions.*.*": "a resource path string"}
 
 // profileShapes maps a flat profile path to its required shape. A trailing
 // ".*" entry covers every mapping value and "[]" covers every list item.
@@ -37,7 +42,7 @@ var profileShapes = map[string]fieldShape{
 	"globalInstructions":    {yaml.MappingNode, "a map of target names to file maps (e.g. globalInstructions: {codex: {AGENTS.md: instructions/codex.md}})"},
 	"globalInstructions.*":  {yaml.MappingNode, "a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md})"},
 	// globalInstructions.<target>.<file> is looked up through genericWildcard.
-	"globalInstructions.*.*": {yaml.ScalarNode, "a resource path string"},
+	"globalInstructions.*.*": {yaml.ScalarNode, "a resource path string or a list of them"},
 	"agentFiles":             {yaml.MappingNode, "a map of target names to file maps (e.g. agentFiles: {oh-my-pi: {scout.md: agents/scout.md}})"},
 	"agentFiles.*":           {yaml.MappingNode, "a map of file names to resource paths (e.g. oh-my-pi: {scout.md: agents/scout.md})"},
 	// agentFiles.<target>.<file> is looked up through genericWildcard.
@@ -83,14 +88,21 @@ func checkShapeChildren(node *yaml.Node, path string, diagnostics *Diagnostics) 
 }
 
 func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics) {
-	shape, known := profileShapes[path]
+	key := path
+	shape, known := profileShapes[key]
 	if !known {
-		shape, known = profileShapes[wildcard]
+		key = wildcard
+		shape, known = profileShapes[key]
 	}
 	if !known {
-		shape, known = profileShapes[genericWildcard(wildcard)]
+		key = genericWildcard(wildcard)
+		shape, known = profileShapes[key]
 	}
 	if !known || node.Tag == "!!null" {
+		return
+	}
+	if item, list := scalarListItems[key]; list && node.Kind == yaml.SequenceNode {
+		checkListItems(node, path, item, diagnostics)
 		return
 	}
 	if node.Kind != shape.kind {
@@ -99,6 +111,17 @@ func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics
 		return
 	}
 	checkShapeChildren(node, path, diagnostics)
+}
+
+// checkListItems reports every non-scalar item of a scalar-or-list field, naming
+// the item's index.
+func checkListItems(node *yaml.Node, path, expected string, diagnostics *Diagnostics) {
+	for index, item := range node.Content {
+		if item.Kind != yaml.ScalarNode {
+			message := "expected " + expected + ", got " + describeNodeKind(item.Kind)
+			diagnostics.Add(SeverityError, "yaml.shape", fmt.Sprintf("%s[%d]", path, index), message, item.Line, item.Column)
+		}
+	}
 }
 
 // genericWildcard turns a nested wildcard such as globalInstructions.codex.*,

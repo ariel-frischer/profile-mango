@@ -5,7 +5,6 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
@@ -26,7 +25,9 @@ func (loaded loadedInput) routeRefDiagnostics() profilemango.Diagnostics {
 	}{{"globalInstructions.", loaded.Globals}, {"agentFiles.", loaded.AgentFiles}} {
 		for _, target := range sortedNames(kind.files) {
 			for _, file := range kind.files[target] {
-				check(kind.prefix+target+"."+file.Name, file.Digest.Path, file.Content)
+				for _, fragment := range file.Fragments {
+					check(kind.prefix+target+"."+file.Name, fragment.Path, fragment.Content)
+				}
 			}
 		}
 	}
@@ -61,19 +62,22 @@ func (loaded loadedInput) forTarget(target string) (loadedInput, error) {
 	return loaded, nil
 }
 
-// renderFiles renders placeholders in per-target files without changing the input map.
+// renderFiles renders placeholders in each fragment of per-target files, then
+// recomposes each file, without changing the input map.
 func renderFiles(files map[string][]globalFile, bindings profilemango.Bindings, target string) (map[string][]globalFile, error) {
 	rendered := maps.Clone(files)
 	for key, list := range files {
 		rendered[key] = make([]globalFile, len(list))
 		for index, file := range list {
-			content, err := profilemango.RenderRouteRefs(file.Content, bindings, target)
-			if err != nil {
-				return nil, fmt.Errorf("render route placeholders in %s: %w", file.Digest.Path, err)
+			fragments := make([]fileFragment, len(file.Fragments))
+			for part, fragment := range file.Fragments {
+				content, err := profilemango.RenderRouteRefs(fragment.Content, bindings, target)
+				if err != nil {
+					return nil, fmt.Errorf("render route placeholders in %s: %w", fragment.Path, err)
+				}
+				fragments[part] = fileFragment{Path: fragment.Path, Content: content}
 			}
-			file.Content = content
-			file.Digest.SHA256, file.Digest.Size = installfs.Hash(content), int64(len(content))
-			rendered[key][index] = file
+			rendered[key][index] = composedFile(file.Name, fragments...)
 		}
 	}
 	return rendered, nil

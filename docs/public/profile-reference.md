@@ -40,7 +40,7 @@ skills: [skills/review/SKILL.md]
 | `tools.allow`, `tools.deny` | Tool name lists. A denied name is removed from `allow`. | Each list replaces the parent's if set |
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
 | `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
-| `globalInstructions` | Whole global instruction files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
+| `globalInstructions` | Whole global instruction files per agent, each one resource or a list of fragments, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 | `agentFiles` | Whole native subagent files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 | `roles` | Portable role definitions, see below. | A child's role replaces the parent's same-name role; other parent roles are inherited |
 
@@ -64,6 +64,25 @@ globalInstructions:
   claude-code: {CLAUDE.md: instructions/work/CLAUDE.md}
   opencode: {AGENTS.md: instructions/work/AGENTS.md}
 ```
+
+A file can also be a list of resources, so agents share fragments. The
+installed file is the fragments in order: each one except the last loses its
+trailing newlines and is followed by one blank line, and the last is written as
+is. A one-item list installs the same bytes as the single path.
+
+```yaml
+globalInstructions:
+  oh-my-pi:
+    AGENTS.md: [instructions/shared/core.md, instructions/work/omp.md]
+  codex:
+    AGENTS.md: [instructions/shared/core.md, instructions/work/codex.md]
+```
+
+An empty list, or an empty or null item, fails validation with its path, such
+as `globalInstructions.codex.AGENTS.md[1]`. A missing fragment fails the plan
+with its path. `{{route.…}}` placeholders resolve in each fragment, and
+`mango status` reports the sources changed when any fragment changes. The
+installed file is still one owned file.
 
 Only files an agent is documented to read are accepted: Claude Code
 `CLAUDE.md` (`~/.claude`), Codex `AGENTS.md` (`$CODEX_HOME`), Oh My Pi

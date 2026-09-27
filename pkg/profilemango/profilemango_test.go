@@ -78,7 +78,12 @@ func TestParseProfileNamesFieldPathAndExpectedShape(t *testing.T) {
 		"global resource map": {
 			yaml:    "globalInstructions:\n  codex:\n    AGENTS.md: {path: a.md}\n",
 			path:    "globalInstructions.codex.AGENTS.md",
-			message: "expected a resource path string, got a map",
+			message: "expected a resource path string or a list of them, got a map",
+		},
+		"global fragment list": {
+			yaml:    "globalInstructions:\n  codex:\n    AGENTS.md: [a.md, [b.md]]\n",
+			path:    "globalInstructions.codex.AGENTS.md[1]",
+			message: "expected a resource path string, got a list",
 		},
 	}
 	for name, test := range cases {

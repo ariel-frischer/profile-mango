@@ -105,6 +105,50 @@ func TestGlobalInstructionsReleaseBlocksDriftedFile(t *testing.T) {
 	assertInstallTestFile(t, agents, "# edited by hand\n")
 }
 
+// TestGlobalInstructionsComposeFragments installs a list-form global file: each
+// fragment renders its {{route.…}} placeholders, every fragment but the last loses
+// its trailing newlines and gains one blank line, and the last is kept verbatim.
+func TestGlobalInstructionsComposeFragments(t *testing.T) {
+	tests := map[string]struct {
+		files     string
+		fragments map[string]string
+		want      string
+	}{
+		"one blank line between fragments": {files: "[a.md, b.md]",
+			fragments: map[string]string{"a.md": "# core\n", "b.md": "# omp\n"},
+			want:      "# core\n\n# omp\n"},
+		"trailing newlines trimmed, last verbatim": {files: "[a.md, b.md, c.md]",
+			fragments: map[string]string{"a.md": "# core\n\n\n", "b.md": "no newline", "c.md": "# last\n\n"},
+			want:      "# core\n\nno newline\n\n# last\n\n"},
+		"placeholders render per fragment": {files: "[a.md, b.md]",
+			fragments: map[string]string{"a.md": "model {{route.primary.model}}\n", "b.md": "effort {{route.primary.effort}}"},
+			want:      "model gpt-5.6\n\neffort high"},
+		"one-item list equals scalar": {files: "[a.md]",
+			fragments: map[string]string{"a.md": "# only\n\n"},
+			want:      "# only\n\n"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, root, agents := globalTestRequest(t, "    AGENTS.md: "+test.files+"\n")
+			for file, content := range test.fragments {
+				writeInstallTestFile(t, filepath.Join(root, file), content)
+			}
+			applySwitchTestPlan(t, request)
+			assertInstallTestFile(t, agents, test.want)
+		})
+	}
+}
+
+// TestGlobalInstructionsMissingFragmentFails names the missing fragment's path.
+func TestGlobalInstructionsMissingFragmentFails(t *testing.T) {
+	request, root, _ := globalTestRequest(t, "    AGENTS.md: [a.md, shared/missing.md]\n")
+	writeInstallTestFile(t, filepath.Join(root, "a.md"), "# core\n")
+	_, err := BuildPlan(request)
+	if err == nil || !strings.Contains(err.Error(), "globalInstructions.opencode.AGENTS.md") || !strings.Contains(err.Error(), "resource shared/missing.md does not exist") {
+		t.Fatalf("missing fragment error = %v", err)
+	}
+}
+
 func TestGlobalInstructionsTargetGates(t *testing.T) {
 	tests := map[string]struct {
 		files   string
