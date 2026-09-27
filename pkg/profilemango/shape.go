@@ -18,6 +18,10 @@ type fieldShape struct {
 // list form it also accepts, e.g. globalInstructions.<target>.<file> fragments.
 var scalarListItems = map[string]string{"globalInstructions.*.*": "a resource path string"}
 
+// scalarOrMapping lists scalar fields whose map form is also accepted, e.g. a skills
+// item given as {path, source}.
+var scalarOrMapping = map[string]bool{"skills[]": true}
+
 // profileShapes maps a flat profile path to its required shape. A trailing
 // ".*" entry covers every mapping value and "[]" covers every list item.
 var profileShapes = map[string]fieldShape{
@@ -38,7 +42,10 @@ var profileShapes = map[string]fieldShape{
 	"instructions.append":   {yaml.SequenceNode, "a list of instruction file paths"},
 	"instructions.append[]": {yaml.ScalarNode, "a file path string"},
 	"skills":                {yaml.SequenceNode, "a list of skill paths (e.g. skills: [skills/review/SKILL.md])"},
-	"skills[]":              {yaml.ScalarNode, "a skill path string"},
+	"skills[]":              {yaml.ScalarNode, "a skill path string or a {path, source} map"},
+	"skills[].path":         {yaml.ScalarNode, "a skill path string"},
+	"skills[].source":       {yaml.MappingNode, "a map (e.g. source: {repo: https://github.com/owner/repo, commit: <40 hex>, sha256: <64 hex>})"},
+	"skills[].source.*":     {yaml.ScalarNode, "a string"},
 	"globalInstructions":    {yaml.MappingNode, "a map of target names to file maps (e.g. globalInstructions: {codex: {AGENTS.md: instructions/codex.md}})"},
 	"globalInstructions.*":  {yaml.MappingNode, "a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md})"},
 	// globalInstructions.<target>.<file> is looked up through genericWildcard.
@@ -103,6 +110,10 @@ func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics
 	}
 	if item, list := scalarListItems[key]; list && node.Kind == yaml.SequenceNode {
 		checkListItems(node, path, item, diagnostics)
+		return
+	}
+	if scalarOrMapping[key] && node.Kind == yaml.MappingNode {
+		checkShapeChildren(node, path, diagnostics)
 		return
 	}
 	if node.Kind != shape.kind {

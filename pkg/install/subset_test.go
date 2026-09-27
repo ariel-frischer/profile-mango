@@ -13,13 +13,14 @@ func subsetTestRequest(t *testing.T) Request {
 	t.Helper()
 	request, root := codexTestRequest(t)
 	request.Registry = DefaultRegistry()
-	for path, content := range map[string]string{"instructions/a.md": "a\n", "instructions/b.md": "b\n", "skills/tdd/SKILL.md": "skill\n"} {
+	for path, content := range map[string]string{"instructions/a.md": "a\n", "instructions/b.md": "b\n", "skills/tdd/SKILL.md": "---\ndescription: Use for tests.\n---\n"} {
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
 			t.Fatal(err)
 		}
 		writeInstallTestFile(t, filepath.Join(root, path), content)
 	}
 	request.ResourceRoot = root
+	request.Env = PathEnv{UserHome: func() (string, error) { return filepath.Join(root, "home"), nil }}
 	writeInstallTestFile(t, filepath.Join(request.ProfilesRoot, "route-only", "profile.yaml"), `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
 metadata:
@@ -46,7 +47,7 @@ func TestSubsetInstallSkipsUnsupportedRequirements(t *testing.T) {
 	if plan.Status != StatusReady || target.Status != StatusReady || plan.Strict {
 		t.Fatalf("subset plan = %s target=%s (%s)", plan.Status, target.Status, target.Reason)
 	}
-	want := []SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}, {Requirement: "skills", Count: 1}}
+	want := []SkippedRequirement{{Requirement: "permissions"}, {Requirement: "tools"}, {Requirement: "instructions", Count: 2}}
 	if !reflect.DeepEqual(target.SkippedRequirements, want) {
 		t.Fatalf("skipped = %#v, want %#v", target.SkippedRequirements, want)
 	}
@@ -103,14 +104,8 @@ func TestOpenCodeKeepsSupportedRequirements(t *testing.T) {
 	if _, _, skipped := supportedSubset(openCodeAdapter{}, AgentDestination{}, false, loadedInput{}); len(skipped) != 0 {
 		t.Fatalf("empty profile skipped = %#v", skipped)
 	}
-	if supportsRequirement(openCodeAdapter{}, AgentDestination{}, false, RequirementSkills) || supportsRequirement(codexAdapter{}, AgentDestination{}, false, RequirementSkills) {
-		t.Fatal("opencode must skip skills without --default and codex must always skip them")
-	}
-	if !supportsRequirement(openCodeAdapter{}, AgentDestination{}, true, RequirementSkills) {
-		t.Fatal("opencode must keep skills alongside --default")
-	}
-	if !supportsRequirement(openCodeAdapter{}, named, false, RequirementInstructions) || supportsRequirement(openCodeAdapter{}, named, false, RequirementSkills) || supportsRequirement(openCodeAdapter{}, named, true, RequirementSkills) {
-		t.Fatal("a named opencode agent must keep instructions and always skip skills")
+	if !supportsRequirement(openCodeAdapter{}, named, false, RequirementInstructions) {
+		t.Fatal("a named opencode agent must keep instructions")
 	}
 }
 
@@ -137,12 +132,12 @@ spec:
 	if err := os.MkdirAll(filepath.Join(root, "skills", "research"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	writeInstallTestFile(t, filepath.Join(root, "skills", "research", "SKILL.md"), openCodeTestSkill)
+	writeInstallTestFile(t, filepath.Join(root, "skills", "research", "SKILL.md"), openCodeResearchSkill)
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []SkippedRequirement{{Requirement: RequirementSkills, Count: 1}}
+	want := []SkippedRequirement{{Requirement: RequirementSkills, Count: 1, Reason: skillsNamedOnlyReason}}
 	if plan.Status != StatusReady || !reflect.DeepEqual(plan.Targets[0].SkippedRequirements, want) {
 		t.Fatalf("opencode subset plan = %s %#v", plan.Status, plan.Targets[0].SkippedRequirements)
 	}

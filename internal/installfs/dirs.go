@@ -28,9 +28,21 @@ func missingParentDirs(path string) []string {
 // next to the journal instead, so those directories can become empty.
 func backupPathFor(change Change, options ApplyOptions, index int) string {
 	if change.Delete && len(change.RemoveEmptyDirs) > 0 {
-		return strings.TrimSuffix(options.JournalPath, ".json") + ".bak." + strconv.Itoa(index)
+		return journalBackupPrefix(options.JournalPath) + strconv.Itoa(index)
 	}
 	return BackupPath(change.Path, options.PlanID)
+}
+
+func journalBackupPrefix(journalPath string) string {
+	return strings.TrimSuffix(journalPath, ".json") + ".bak."
+}
+
+// IsJournalBackupPath reports whether backup is a backup the transaction journaled at
+// journalPath kept beside that journal, for a delete that removes its directories.
+func IsJournalBackupPath(journalPath, backup string) bool {
+	suffix, found := strings.CutPrefix(backup, journalBackupPrefix(journalPath))
+	index, err := strconv.Atoi(suffix)
+	return found && err == nil && index >= 0 && strconv.Itoa(index) == suffix
 }
 
 // removeCreatedFile removes a file a transaction created and then its created directories.

@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/ariel-frischer/profile-mango/pkg/adapters/codex"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -85,4 +86,22 @@ func validateCodexProfile(input AdapterInput) error {
 		return fmt.Errorf("codex instruction and skill delivery remains install-blocking")
 	}
 	return nil
+}
+
+// SkillSkipReason gates Codex skill folders like its subagent files.
+func (adapter codexAdapter) SkillSkipReason(agent AgentDestination, setsDefault bool) string {
+	return defaultSkillSkipReason(adapter, agent, setsDefault)
+}
+
+// SkillRoot is $HOME/.agents/skills, the user skills directory Codex reads regardless
+// of CODEX_HOME.
+func (codexAdapter) SkillRoot(_ string, env PathEnv) (string, error) {
+	if env.UserHome == nil {
+		return "", fmt.Errorf("codex skills live in $HOME/.agents/skills, and no user home is available")
+	}
+	home, err := env.home()
+	if err != nil {
+		return "", fmt.Errorf("resolve home for codex skills: %w", err)
+	}
+	return filepath.Join(home, ".agents", "skills"), nil
 }

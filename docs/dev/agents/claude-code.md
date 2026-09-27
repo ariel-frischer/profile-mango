@@ -130,7 +130,7 @@ provider request is qualified. See the [dated evidence](../target-evidence.md#bo
 | Permissions | Documentation describes modes, but equivalence and enforcement are untested | Blocking |
 | Tools | Tool expansion and closed-allowlist enforcement are untested | Blocking |
 | `CLAUDE.md` instructions | Hierarchy and delivery are unverified | Blocking |
-| Skills | Discovery, precedence, and execution are unverified | Blocking |
+| Skills | Personal skill folders under `<config dir>/skills` are documented; precedence and execution remain unobserved | Installed as owned folders (ap-794) |
 | Plugins, hooks, and MCP | Discovery, precedence, and enforcement are unverified | Blocking |
 | Runtime enforcement | No authorized session or provider observation | Blocking |
 
@@ -170,3 +170,7 @@ Each declared profile role becomes `~/.claude/agents/<role>.md`, written only wh
 The file carries `name`, `description`, the role's `instructions` (else its description) as the body, and, when the route binds the role, `model` (anthropic provider only; other providers skip the role's model as `roles` with a reason) and `effort` (`low`..`max`; anything else is `NOT APPLIED`). Ownership and the named-only `role-definitions` skip match Codex. Residual risk: acceptance is inferred from strings of later patch releases in range, not a native probe of `2.1.278`.
 
 Profile `agentFiles.claude-code` copies native `*.md` files verbatim into the same directory (kind `agent-file`, same gates and ownership as role files); mango does not parse them. See [target evidence](../target-evidence.md#profile-agent-files-2026-09-26-ap-8x5).
+
+## Skill folders (ap-794, 2026-09-27)
+
+Documentation context only ([skills][skills], unversioned; retrieved 2026-09-27): personal skills live in `~/.claude/skills/<name>/SKILL.md` (beneath `CLAUDE_CONFIG_DIR` when set **[INFERENCE]**), supporting files such as `scripts/` and `references/` are allowed, symlinked skill folders are followed, `name` defaults to the folder name, and `description` falls back to the first body line. Enterprise skills outrank personal ones, which outrank project ones. Each `skills` entry's whole folder (every regular file beside its `SKILL.md`, at most 256, modes normalized to `0755` when any execute bit is set and `0644` otherwise) is copied verbatim to ``<config dir>/skills` (by default `~/.claude/skills`)/<folder name>/`, written only when the profile is the default (`mango use`, `install --default`) and never for a named agent destination; a named profile lists `skills` as skipped. Files are whole-file owned (ownership kind `skill`) with create-only backups of adopted files, drift checks, release on `use` (released folders are removed once empty; adopted files are restored), and undo. A symlink or non-directory on the destination path is a conflict naming it; files in an adopted folder that profile-mango does not manage are kept and listed in a plan warning. The compact plan prints `skills: a, b` per target. Residual risk: the skills page carries no release pin, so discovery is not tied to `2.1.278` source.

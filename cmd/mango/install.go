@@ -598,6 +598,28 @@ func writeCompactEffects(output io.Writer, target install.TargetPlan, styles out
 		files = append(files, styles.path(humanPath(file.Path))+" "+humanPath(file.Action))
 		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
 	}
+	if err := writeCompactSummary(output, target, effects); err != nil {
+		return err
+	}
+	for _, list := range []struct {
+		label string
+		items []string
+	}{{"files", files}, {"skills", target.Skills}} {
+		if len(list.items) == 0 {
+			continue
+		}
+		if _, err := fmt.Fprintf(output, "    %s: %s\n", list.label, strings.Join(list.items, ", ")); err != nil {
+			return err
+		}
+	}
+	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
+		return err
+	}
+	return writeCompactWarnings(output, target, styles)
+}
+
+// writeCompactSummary writes the target's route and changed settings on one line.
+func writeCompactSummary(output io.Writer, target install.TargetPlan, effects []string) error {
 	var route strings.Builder
 	if err := writeCompactRoute(&route, target); err != nil {
 		return err
@@ -609,20 +631,11 @@ func writeCompactEffects(output io.Writer, target install.TargetPlan, styles out
 	if len(effects) > 0 {
 		parts = append(parts, "changes: "+strings.Join(effects, ", "))
 	}
-	if len(parts) > 0 {
-		if _, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | ")); err != nil {
-			return err
-		}
+	if len(parts) == 0 {
+		return nil
 	}
-	if len(files) > 0 {
-		if _, err := fmt.Fprintf(output, "    files: %s\n", strings.Join(files, ", ")); err != nil {
-			return err
-		}
-	}
-	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
-		return err
-	}
-	return writeCompactWarnings(output, target, styles)
+	_, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | "))
+	return err
 }
 
 func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement, styles outputStyles) error {
@@ -685,6 +698,9 @@ func semanticFieldLabel(path string) string {
 	return name
 }
 
+// compactWarningCodes are the warnings the compact plan shows; the rest stay in --json.
+var compactWarningCodes = []string{"install.version_not_found", "install.version_unknown", "install.adopt_backup", "install.skill_unmanaged_files", "install.skill_root_undiscovered"}
+
 func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles outputStyles) error {
 	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {
 		if _, err := fmt.Fprintf(output, "    %s: installed version %s is outside tested range %s; check agent compatibility before applying\n", styles.warning("warning"), humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
@@ -705,7 +721,7 @@ func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles ou
 			}
 			continue
 		}
-		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && (diagnostic.Code == "install.version_not_found" || diagnostic.Code == "install.version_unknown" || diagnostic.Code == "install.adopt_backup") {
+		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && slices.Contains(compactWarningCodes, diagnostic.Code) {
 			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), humanPath(diagnostic.Message)); err != nil {
 				return err
 			}

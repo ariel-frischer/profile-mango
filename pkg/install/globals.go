@@ -32,7 +32,7 @@ const (
 )
 
 // wholeFileKinds are the ownership tags of separately owned whole files.
-var wholeFileKinds = []string{ownershipGlobalInstruction, ownershipRoleDefinition, ownershipAgentFile}
+var wholeFileKinds = []string{ownershipGlobalInstruction, ownershipRoleDefinition, ownershipAgentFile, ownershipSkill}
 
 // wholeFileKind returns the whole-file ownership tag among fields, or "".
 func wholeFileKind(fields []string) string {
@@ -255,8 +255,8 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, role
 			targetPlan.SkippedRequirements = append(targetPlan.SkippedRequirements, *skipped)
 		}
 		patch.Files = append(patch.Files, files...)
+		addHomeWarning(files, targetPlan)
 	}
-	addHomeWarning(patch, targetPlan)
 	if reason, code := addAgentFilePatches(request, roles, patch, targetPlan); reason != "" {
 		return reason, code
 	}
@@ -284,8 +284,8 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, role
 
 // addHomeWarning notes that a planned home instruction file is shared by every agent
 // that reads the home directory as an ancestor of its working directory.
-func addHomeWarning(patch *Patch, targetPlan *TargetPlan) {
-	for _, file := range patch.Files {
+func addHomeWarning(files []FilePatch, targetPlan *TargetPlan) {
+	for _, file := range files {
 		if file.Label != "" && filepath.IsAbs(file.Path) {
 			targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.home_instruction_shared", "globalInstructions.home", file.Label+" is not owned by one agent: Pi reads it in every directory under the home directory, and other agents read it in some directories, such as outside a Git repository", 0, 0)
 		}
@@ -373,7 +373,7 @@ func releasePatches(ownership Manifest, configPath string, planned map[string]st
 			if err != nil {
 				return nil, err.Error(), "install.release_backup_missing"
 			}
-			patches = append(patches, FilePatch{Path: entry.Path, Content: backup.Content, NoOverride: true, Release: true})
+			patches = append(patches, FilePatch{Path: entry.Path, Content: backup.Content, Mode: backup.Mode, NoOverride: true, Release: true})
 		default:
 			return nil, fmt.Sprintf("owned file %s has no recorded pre-install state; run mango undo for its install instead", filepath.Base(entry.Path)), "install.release_state_unknown"
 		}

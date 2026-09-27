@@ -26,7 +26,9 @@ type PolicyProfile struct {
 	Permissions  *PermissionPolicy `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 	Tools        *AccessRules      `yaml:"tools,omitempty" json:"tools,omitempty"`
 	Instructions InstructionsSpec  `yaml:"instructions,omitempty" json:"instructions,omitempty"`
-	Skills       *[]string         `yaml:"skills,omitempty" json:"skills,omitempty"`
+	// Skills lists skill folders by their SKILL.md path, each optionally with the
+	// provenance of a skill vendored from another repository.
+	Skills *[]SkillRef `yaml:"skills,omitempty" json:"skills,omitempty"`
 	// GlobalInstructions maps a target name to whole global instruction files
 	// (file name -> resource path, or a list of fragment paths composed in order),
 	// e.g. codex: {AGENTS.md: instructions/codex.md}.
@@ -129,7 +131,7 @@ type ResolvedProfile struct {
 	Permissions  *PermissionPolicy `json:"permissions,omitempty"`
 	Tools        *ResolvedRules    `json:"tools,omitempty"`
 	Instructions []string          `json:"instructions,omitempty"`
-	Skills       []string          `json:"skills,omitempty"`
+	Skills       []SkillRef        `json:"skills,omitempty"`
 	// GlobalInstructions maps a target name to whole global instruction files it owns.
 	GlobalInstructions map[string]map[string]ResourceList `json:"globalInstructions,omitempty"`
 	// AgentFiles maps a target name to whole native subagent files it owns.

@@ -30,7 +30,7 @@ func DigestResources(root string, profile ResolvedProfile) ([]ResourceDigest, Di
 	for _, path := range profile.Instructions {
 		refs = append(refs, resourceRef{path, "instruction"})
 	}
-	for _, path := range profile.Skills {
+	for _, path := range SkillPaths(profile.Skills) {
 		refs = append(refs, resourceRef{path, "skill"})
 	}
 

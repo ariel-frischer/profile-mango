@@ -59,18 +59,6 @@ type requirementSupporter interface {
 	SupportedRequirements(agent AgentDestination, setsDefault bool) []string
 }
 
-// skillLimiter lets an adapter cap how many skills it installs.
-type skillLimiter interface{ MaxSkills() int }
-
-// skillLimitReason explains why count skills exceed the adapter's limit, or "".
-func skillLimitReason(adapter Adapter, count int) string {
-	limiter, ok := adapter.(skillLimiter)
-	if !ok || count <= limiter.MaxSkills() {
-		return ""
-	}
-	return fmt.Sprintf("installs at most %d skill; this profile has %d", limiter.MaxSkills(), count)
-}
-
 func supportsRequirement(adapter Adapter, agent AgentDestination, setsDefault bool, name string) bool {
 	supporter, ok := adapter.(requirementSupporter)
 	return ok && slices.Contains(supporter.SupportedRequirements(agent, setsDefault), name)
@@ -95,11 +83,7 @@ func supportedSubset(adapter Adapter, agent AgentDestination, setsDefault bool, 
 		skipped = append(skipped, SkippedRequirement{Requirement: RequirementInstructions, Count: count})
 	}
 	if count := len(profile.Skills); count > 0 {
-		supported := supportsRequirement(adapter, agent, setsDefault, RequirementSkills)
-		reason := skillLimitReason(adapter, count)
-		if !supported || reason != "" {
-			profile.Skills = nil
-			resources = withoutResourceKind(resources, "skill")
+		if skip, reason := skillSkip(adapter, agent, setsDefault); skip {
 			skipped = append(skipped, SkippedRequirement{Requirement: RequirementSkills, Count: count, Reason: reason})
 		}
 	}
@@ -182,7 +166,11 @@ func targetSubset(adapter Adapter, request Request, target TargetRequest, loaded
 	var skipped []SkippedRequirement
 	if !request.Strict {
 		profile, resources, skipped = supportedSubset(adapter, target.Agent, request.Default, loaded)
+	} else if skip, reason := skillSkip(adapter, target.Agent, request.Default); skip && len(profile.Skills) > 0 {
+		return profile, resources, profilemango.RouteBinding{}, nil, fmt.Sprintf("--strict: %d skills cannot be installed: %s", len(profile.Skills), orNoEvidence(reason))
 	}
+	// Skill folders are written by addSkillPatches, never by an adapter's own config patch.
+	profile.Skills = nil
 	profile, skippedDefinitions, strictReason := roleDefinitionSubset(adapter, target.Agent, request.Default, request.Strict, profile)
 	if strictReason != "" {
 		return profile, resources, profilemango.RouteBinding{}, nil, strictReason
@@ -220,6 +208,14 @@ func effortSubset(adapter Adapter, strict bool, effort string) (*SkippedRequirem
 		return nil, fmt.Sprintf("--strict: effort %s cannot be applied: %s", effort, reason)
 	}
 	return &SkippedRequirement{Requirement: RequirementEffort, Value: effort, Reason: reason}, ""
+}
+
+// orNoEvidence names the missing evidence when a skip carries no reason of its own.
+func orNoEvidence(reason string) string {
+	if reason == "" {
+		return "no pinned evidence qualifies a user skill folder for this target"
+	}
+	return reason
 }
 
 func withoutResourceKind(resources []render.Resource, kind string) []render.Resource {

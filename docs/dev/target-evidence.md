@@ -43,8 +43,9 @@ agent definition (model, effort variant, and instructions) written by default as
 `agents/<profile>.md` next to `opencode.json` and selected with
 `opencode --agent <profile>`, or explicitly as `primary:<name>`/
 `subagent:<name>`; only with `--default` does it also patch the top-level
-`model` field and one qualified skill resource into `opencode.json`, since
-OpenCode skills are a directory-wide `skills.paths` setting, not per-agent.
+`model` field of `opencode.json`. Claude Code, Codex, Oh My Pi, and OpenCode
+install the profile's `skills` as whole owned skill folders when the profile is
+the default (see [Skill folders](#skill-folders-2026-09-27-ap-794)).
 OpenClaw permits model-primary plus thinking-default settings. Other target gates
 remain blocked unless explicitly qualified below. By default `install` applies
 only a target's qualified subset and lists every known profile requirement it
@@ -67,7 +68,7 @@ reproducible fixtures, and evidence independent of the developer's machine.
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model, skill folders under `<config dir>/skills`, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Full auth, precedence, runtime delegation and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.157.1` (requalified from `0.154.0`) | Isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields (and project/session `medium`/`minimal` effort overrides) on both builds; exact-source resolver test on `0.154.0`; `ReasoningEffort` parser and profile-v2 loader source unchanged `rust-v0.154.0..rust-v0.157.1`; isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml` on both builds; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `none`/`minimal`/`low`/`medium`/`high`/`xhigh` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project, runtime, and (since 0.157.1) managed `requirements.toml` provider overrides can shadow them. OAuth identity, model availability and per-model effort support, delivery and full-profile applicability remain unverified |
 | Oh My Pi | source `omp/18.3.2` at `7853b4e499936f9dcc13c9b64adb55f6b342aabf` (release ELF `8cbbcd4b…`) | Original `18.2.6` exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output; `18.3.2` source diff of every cited file plus an isolated installed-release `config list` read of all installed slots and `task.maxEffort` from a Mango overlay; slot consumers and effort clamping source-reviewed only | `modelRoles` selectors (default natively qualified; portable-role slots and effort suffixes source-reviewed) and `task.maxEffort` installable; role definitions, standalone startup, authentication, precedence, delivery and enforcement remain blocked |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
@@ -1722,3 +1723,21 @@ claim a delivery the evidence does not give inside a Git repository.
 Tests: `pkg/install/globals_test.go` (`TestHomeInstructionGates`) and
 `cmd/mango/use_test.go` (`TestUseOwnsHomeAgentsMDThroughPi`: install,
 status, release on `use`, undo of each generation), in a synthetic sandbox HOME.
+
+## Skill folders (2026-09-27, ap-794)
+
+A profile's `skills` entries install as whole folders: every regular file beside
+each `SKILL.md` is copied verbatim (no symlinks, at most 256 files, modes `0755`
+or `0644`), owned per file (kind `skill`), and written only when the profile is
+the default. Vendored entries pin `source.sha256`, the tree digest of the folder.
+
+| Target | Skill root | Evidence | Subset |
+| --- | --- | --- | --- |
+| Claude Code `2.1.278` | `<config dir>/skills` (`~/.claude/skills`) | Official [skills docs](https://code.claude.com/docs/en/skills), unversioned | Installed with default; skipped for named profiles and agents |
+| Codex `0.157.1` | `$HOME/.agents/skills` (never `CODEX_HOME`) | [`rust-v0.157.1` loader](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/lib.rs) and [parser](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/parser.rs) | Installed with default; skipped for named profiles and agents |
+| Oh My Pi `18.3.2` | `<config dir>/skills` (`~/.omp/agent/skills`) | [`v18.3.2` native loader](https://github.com/can1357/oh-my-pi/blob/v18.3.2/packages/coding-agent/src/discovery/builtin.ts) | Installed with default; skipped for named profiles and agents |
+| OpenCode `1.18.31` | `<config dir>/skills` (`~/.config/opencode/skills`) | [`a97622c` skill scan](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/skill/index.ts) over [`Config.directories()`](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/config/paths.ts) | Installed with `--default`/`use`; blocks a skill whose frontmatter omits `name`; legacy `SKILL.md` and marked `skills.paths` are released |
+| OpenClaw `2026.9.5` | Not yet installed | See the OpenClaw reference | Skipped |
+
+Discovery and precedence were read from source or documentation; no agent was
+run to list the installed skills, and skill execution remains unobserved.

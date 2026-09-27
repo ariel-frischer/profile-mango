@@ -148,7 +148,7 @@ func profileDiagnostics(result *Result, profile profilemango.ResolvedProfile) {
 	if len(profile.Skills) > 0 {
 		result.AddCapability("skills.selectors", StatusPartial, "canonical resource paths are emitted as candidate selectors; discovery and enforcement are unverified")
 	}
-	for _, item := range append(append([]string{}, profile.Instructions...), profile.Skills...) {
+	for _, item := range append(append([]string{}, profile.Instructions...), profilemango.SkillPaths(profile.Skills)...) {
 		if !render.SafePath(item) {
 			result.Diagnostics.Add(profilemango.SeverityError, "jcodefork.resource.path_unsupported", item, "canonical resource references must be relative and cannot escape the resource root", 0, 0)
 		}
@@ -294,7 +294,7 @@ func candidateFieldsFor(profile profilemango.ResolvedProfile) (candidateFields, 
 		diagnostics = append(diagnostics, selectorDiagnostics("spec.tools.allow", profile.Tools.Allow)...)
 		diagnostics = append(diagnostics, selectorDiagnostics("spec.tools.deny", profile.Tools.Deny)...)
 	}
-	fields.skills = sortedCopy(profile.Skills)
+	fields.skills = sortedCopy(profilemango.SkillPaths(profile.Skills))
 	fields.skillsNone = len(fields.skills) == 0 && profile.Skills != nil
 	return fields, diagnostics
 }

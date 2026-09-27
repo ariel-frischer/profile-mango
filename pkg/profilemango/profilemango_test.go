@@ -177,7 +177,7 @@ func TestDigestResourcesDeterministicAndSafe(t *testing.T) {
 	root := t.TempDir()
 	mustWrite(t, filepath.Join(root, "instructions", "system.md"), "system\n")
 	mustWrite(t, filepath.Join(root, "skills", "research", "SKILL.md"), "skill\n")
-	profile := ResolvedProfile{Instructions: []string{"instructions/system.md"}, Skills: []string{"skills/research/SKILL.md"}}
+	profile := ResolvedProfile{Instructions: []string{"instructions/system.md"}, Skills: []SkillRef{{Path: "skills/research/SKILL.md"}}}
 	first, diagnostics := DigestResources(root, profile)
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)

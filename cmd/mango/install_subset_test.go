@@ -12,7 +12,7 @@ func subsetSandbox(t *testing.T) installOptions {
 	t.Helper()
 	options, _ := allSkipSandbox(t)
 	root := options.resourceRoot
-	for path, content := range map[string]string{"instructions/a.md": "a\n", "instructions/b.md": "b\n", "skills/tdd/SKILL.md": "skill\n"} {
+	for path, content := range map[string]string{"instructions/a.md": "a\n", "instructions/b.md": "b\n", "skills/tdd/SKILL.md": "---\ndescription: Use for tests.\n---\n"} {
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
 			t.Fatal(err)
 		}

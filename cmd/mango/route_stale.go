@@ -82,7 +82,7 @@ func routeReferenceFiles(profilesRoot, resourceRoot string, names []string) []st
 }
 
 func profileResources(profile profilemango.ResolvedProfile) []string {
-	resources := append(slices.Clone(profile.Instructions), profile.Skills...)
+	resources := append(slices.Clone(profile.Instructions), profilemango.SkillPaths(profile.Skills)...)
 	for _, files := range profile.GlobalInstructions {
 		for _, fragments := range files {
 			resources = append(resources, fragments...)

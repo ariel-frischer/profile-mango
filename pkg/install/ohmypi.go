@@ -242,3 +242,13 @@ func validateOhMyPiProfile(input AdapterInput) error {
 	}
 	return nil
 }
+
+// SkillSkipReason gates Oh My Pi skill folders like its subagent files.
+func (adapter ohMyPiAdapter) SkillSkipReason(agent AgentDestination, setsDefault bool) string {
+	return defaultSkillSkipReason(adapter, agent, setsDefault)
+}
+
+// SkillRoot is <config dir>/skills, the user skills directory Oh My Pi reads.
+func (ohMyPiAdapter) SkillRoot(configPath string, _ PathEnv) (string, error) {
+	return configSkillRoot(configPath)
+}

@@ -68,6 +68,6 @@ func (legacy legacyProfile) flat() PolicyProfile {
 		Permissions:  legacy.Spec.Permissions,
 		Tools:        legacy.Spec.Tools,
 		Instructions: legacy.Spec.Instructions,
-		Skills:       legacy.Spec.Skills,
+		Skills:       skillRefsFromPaths(legacy.Spec.Skills),
 	}
 }

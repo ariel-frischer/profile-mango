@@ -11,12 +11,12 @@ import (
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
-const workflowSkill = "---\nname: synthetic-profile\ndescription: Use only for disposable installation tests.\n---\n\nSynthetic skill body.\n"
+const workflowSkill = "---\nname: research\ndescription: Use only for disposable installation tests.\n---\n\nSynthetic skill body.\n"
 
 func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 	w, source := newSkillWorkflow(t)
 	plan := w.plan(t)
-	if plan.Status != install.StatusReady || len(plan.Targets[0].Files) != 4 {
+	if plan.Status != install.StatusReady || len(plan.Targets[0].Skills) != 1 || plan.Targets[0].Skills[0] != "research" {
 		t.Fatalf("unexpected skill plan: %#v", plan)
 	}
 	result := w.run(t, "--apply", "--yes", "--expect-plan", plan.PlanID)
@@ -24,7 +24,8 @@ func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 	if err := json.Unmarshal([]byte(result.stdout), &report); result.err != nil || err != nil || report.Status != "committed" {
 		t.Fatalf("apply failed: %v %v %s %s", result.err, err, result.stdout, result.stderr)
 	}
-	assertWorkflowBytes(t, filepath.Join(w.root, "SKILL.md"), []byte(workflowSkill))
+	installed := workflowInstalledSkill(w)
+	assertWorkflowBytes(t, installed, []byte(workflowSkill))
 	assertWorkflowBytes(t, installfs.BackupPath(w.config, plan.PlanID), []byte(w.original))
 	assertInstalledSkillConfig(t, w)
 	noop := w.plan(t)
@@ -37,11 +38,13 @@ func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 	if result := w.run(t, "--apply", "--yes", "--expect-plan", noop.PlanID); result.err == nil {
 		t.Fatal("stale source consent was accepted")
 	}
-	assertWorkflowBytes(t, filepath.Join(w.root, "SKILL.md"), []byte(workflowSkill))
+	assertWorkflowBytes(t, installed, []byte(workflowSkill))
 }
 
 func TestInstalledBinaryOpenCodeSkillOmissionReconciles(t *testing.T) {
 	w, _ := newSkillWorkflow(t)
+	w.args[1] = "use"
+	w.args = withoutWorkflowArg(w.args, "--default")
 	initial := w.plan(t)
 	result := w.run(t, "--apply", "--yes", "--expect-plan", initial.PlanID)
 	if result.err != nil {
@@ -60,60 +63,77 @@ func TestInstalledBinaryOpenCodeSkillOmissionReconciles(t *testing.T) {
 	if result.err != nil {
 		t.Fatalf("cleanup apply failed: %v\n%s", result.err, result.stderr)
 	}
-	if _, err := os.Stat(filepath.Join(w.root, "SKILL.md")); !os.IsNotExist(err) {
-		t.Fatalf("omitted skill remains after built-binary cleanup: %v", err)
-	}
-	var config struct {
-		Skills struct {
-			Paths []string `json:"paths"`
-		} `json:"skills"`
-	}
-	if err := json.Unmarshal(readWorkflowFile(t, w.config), &config); err != nil {
-		t.Fatal(err)
-	}
-	if len(config.Skills.Paths) != 0 {
-		t.Fatalf("managed skills path remains after cleanup: %#v", config.Skills.Paths)
+	if _, err := os.Stat(filepath.Dir(workflowInstalledSkill(w))); !os.IsNotExist(err) {
+		t.Fatalf("omitted skill folder remains after built-binary cleanup: %v", err)
 	}
 }
 
 func assertInstalledSkillConfig(t *testing.T, w installWorkflow) {
 	t.Helper()
-	var config struct {
-		Model  string `json:"model"`
-		Theme  string `json:"theme"`
-		Skills struct {
-			Paths []string `json:"paths"`
-		} `json:"skills"`
-	}
+	var config map[string]any
 	if err := json.Unmarshal(readWorkflowFile(t, w.config), &config); err != nil {
 		t.Fatal(err)
 	}
-	if config.Model != "openai/gpt-5.6" || config.Theme != "system" || len(config.Skills.Paths) != 1 || config.Skills.Paths[0] != filepath.ToSlash(w.root) {
+	if config["model"] != "openai/gpt-5.6" || config["theme"] != "system" || config["skills"] != nil {
 		t.Fatalf("unexpected config: %#v", config)
 	}
 }
 
-func TestInstalledBinarySkillDoesNotOverrideUnownedResource(t *testing.T) {
+func TestInstalledBinarySkillAdoptionRequiresBackup(t *testing.T) {
 	w, _ := newSkillWorkflow(t)
-	target := filepath.Join(w.root, "SKILL.md")
+	target := workflowInstalledSkill(w)
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(target, []byte("user-owned"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	result := w.run(t)
+	w.args = withoutWorkflowArg(w.args, "--override")
+	result := w.run(t, "--no-backup")
 	var plan install.Plan
 	if err := json.Unmarshal([]byte(result.stdout), &plan); err != nil {
-		t.Fatal(err)
+		t.Fatalf("decode plan: %v\n%s\n%s", err, result.stdout, result.stderr)
 	}
 	if result.err == nil || plan.Status != install.StatusBlocked {
-		t.Fatalf("unowned skill was not blocked: %#v %v", plan, result.err)
+		t.Fatalf("unowned skill adoption without a backup was not blocked: %#v %v", plan, result.err)
 	}
 	assertWorkflowBytes(t, target, []byte("user-owned"))
 	assertWorkflowBytes(t, w.config, []byte(w.original))
 }
 
+func withoutWorkflowArg(args []string, drop string) []string {
+	kept := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg != drop {
+			kept = append(kept, arg)
+		}
+	}
+	return kept
+}
+
+// workflowInstalledSkill is where OpenCode reads the research skill: skills/ beside its config.
+func workflowInstalledSkill(w installWorkflow) string {
+	return filepath.Join(filepath.Dir(w.config), "skills", "research", "SKILL.md")
+}
+
+// newSkillWorkflow installs a one-skill profile into an OpenCode config kept in its own
+// directory, apart from the package's skills/ folder.
 func newSkillWorkflow(t *testing.T) (installWorkflow, string) {
 	t.Helper()
 	w := newInstallWorkflow(t, "opencode@1.18.31", "openai", "gpt-5.6", "{\"model\":\"openai/old\",\"theme\":\"system\"}\n", "")
+	config := filepath.Join(w.root, "opencode", "opencode.json")
+	if err := os.MkdirAll(filepath.Dir(config), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(w.config, config); err != nil {
+		t.Fatal(err)
+	}
+	for index, arg := range w.args {
+		if arg == "opencode@1.18.31="+w.config {
+			w.args[index] = "opencode@1.18.31=" + config
+		}
+	}
+	w.config = config
 	w.args = append(w.args, "--default")
 	profile := filepath.Join(w.root, "profiles", "minimal", "profile.yaml")
 	content := append(readWorkflowFile(t, profile), []byte("skills:\n  - skills/research/SKILL.md\n")...)

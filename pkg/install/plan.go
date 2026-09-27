@@ -29,6 +29,8 @@ type loadedInput struct {
 	Globals map[string][]globalFile
 	// AgentFiles holds each target's loaded agentFiles.
 	AgentFiles map[string][]globalFile
+	// Skills holds each skills entry's loaded folder, installed verbatim.
+	Skills []skillBundle
 	// RoleInstructions holds each role's loaded instructions resource.
 	RoleInstructions map[string][]byte
 	// Bindings resolves {{route.…}} placeholders in the resources per target.
@@ -136,7 +138,9 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	diagnostics, sources = append(diagnostics, roleDiagnostics...), append(sources, roleSources...)
 	agentFiles, agentDigests, agentDiagnostics, agentSources := loadAgentFiles(request.ResourceRoot, resolved)
 	diagnostics, sources = append(diagnostics, agentDiagnostics...), append(sources, agentSources...)
-	loaded := loadedInput{Resources: resources, Globals: globals, AgentFiles: agentFiles, RoleInstructions: roles, Bindings: bindings}
+	skills, skillDigests, skillDiagnostics, skillSources := loadSkills(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, skillDiagnostics...), append(sources, skillSources...)
+	loaded := loadedInput{Resources: resources, Globals: globals, AgentFiles: agentFiles, Skills: skills, RoleInstructions: roles, Bindings: bindings}
 	diagnostics = append(diagnostics, loaded.routeRefDiagnostics()...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
@@ -150,7 +154,7 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		Route     profilemango.RouteBinding
 		Resources []profilemango.ResourceDigest
 		Globals   []profilemango.ResourceDigest `json:",omitempty"`
-	}{Profile: resolved, Route: route, Resources: digest, Globals: append(append(globalDigests, roleDigests...), agentDigests...)})
+	}{Profile: resolved, Route: route, Resources: digest, Globals: append(append(append(globalDigests, roleDigests...), agentDigests...), skillDigests...)})
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
@@ -196,12 +200,9 @@ func loadProfileChain(root, name string, profiles map[string]profilemango.Policy
 
 func loadResources(root string, profile profilemango.ResolvedProfile) ([]render.Resource, profilemango.Diagnostics, []sourceCheck) {
 	type reference struct{ path, kind string }
-	refs := make([]reference, 0, len(profile.Instructions)+len(profile.Skills))
+	refs := make([]reference, 0, len(profile.Instructions))
 	for _, path := range profile.Instructions {
 		refs = append(refs, reference{path: path, kind: "instruction"})
-	}
-	for _, path := range profile.Skills {
-		refs = append(refs, reference{path: path, kind: "skill"})
 	}
 	seen := make(map[string]struct{}, len(refs))
 	resources := make([]render.Resource, 0, len(refs))
@@ -323,9 +324,13 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)
 	targetPlan.Fields = publicFields(patch.Fields)
 	roles := newRoleInput(adapter, request, targetRequest, profile, loaded)
+	if reason, code := addSkillPatches(adapter, request, targetRequest, loaded, ownership, config.Path, &patch, &targetPlan); reason != "" {
+		return blockedTargetPlan(targetPlan, reason, code)
+	}
 	if reason, code := extendPatch(request, targetRequest, loaded, roles, ownership, config.Path, &patch, &targetPlan); reason != "" {
 		return blockedTargetPlan(targetPlan, reason, code)
 	}
+	skillReleaseDirs(adapter, config.Path, request.Env, patch.Files)
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
 	if blocked {
 		targetPlan.Status = StatusConflict
@@ -400,19 +405,23 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		if file.Release && action == ActionUpdate && !conflict {
 			action = ActionRestore
 		}
+		if action == ActionNoop && file.Mode != 0 && before.Mode.Perm() != file.Mode {
+			action = ActionUpdate
+		}
 		if action == ActionNoop && !file.LiveFields {
 			markFieldsUnchanged(targetPlan.Fields, file.Fields)
 		}
 		fields := fieldsForNames(file.Fields)
 		ownedTags := append(fileOwnership(file, ownership, path, config.Path, before), writtenMarkers(file, planned)...)
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: ownedTags, release: file.Release})
-		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
+		change := installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete, Mode: file.Mode, RemoveEmptyDirs: file.RemoveEmptyDirs}
+		targetPlan.checks = append(targetPlan.checks, change)
 		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
 			continue
 		}
 		if action != ActionNoop && (!file.Delete || before.Exists) {
-			changes = append(changes, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
+			changes = append(changes, change)
 		}
 	}
 	sort.Slice(targetPlan.Files, func(i, j int) bool { return targetPlan.Files[i].Path < targetPlan.Files[j].Path })

@@ -122,3 +122,13 @@ func validateClaudeCodeProfile(input AdapterInput) error {
 	}
 	return nil
 }
+
+// SkillSkipReason gates Claude Code skill folders like its subagent files.
+func (adapter claudeCodeAdapter) SkillSkipReason(agent AgentDestination, setsDefault bool) string {
+	return defaultSkillSkipReason(adapter, agent, setsDefault)
+}
+
+// SkillRoot is <config dir>/skills, the personal skills directory Claude Code reads.
+func (claudeCodeAdapter) SkillRoot(configPath string, _ PathEnv) (string, error) {
+	return configSkillRoot(configPath)
+}

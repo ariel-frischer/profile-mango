@@ -56,6 +56,22 @@ func TestCompactInstallGolden(t *testing.T) {
 	}
 }
 
+func TestCompactInstallGoldenListsSkills(t *testing.T) {
+	plan := install.Plan{PlanID: "skills-id", Status: install.StatusReady, Targets: []install.TargetPlan{{
+		Target: install.Target{Name: "claude-code", Version: "2.1.143"}, Status: install.StatusReady,
+		Files:  []install.FilePlan{{Path: "skills/review/SKILL.md", Action: install.ActionCreate}, {Path: "skills/review/scripts/check.sh", Action: install.ActionCreate}},
+		Skills: []string{"review", "vendored"},
+	}}}
+	var output bytes.Buffer
+	if err := writeInstallPlan(commandOutput(&output), plan, false, false); err != nil {
+		t.Fatal(err)
+	}
+	const golden = "plan skills-id (ready)\n  claude-code@2.1.143: ready\n    files: skills/review/SKILL.md create, skills/review/scripts/check.sh create\n    skills: review, vendored\nSummary: 1 ready, 0 unchanged, 0 blocked, 0 conflict, 0 skipped; files: 2 create, 0 update, 0 unchanged. Unrelated target settings are preserved.\n"
+	if output.String() != golden {
+		t.Fatalf("compact skills golden mismatch:\n%q", output.String())
+	}
+}
+
 func TestCompactUndoGoldenAndVerbose(t *testing.T) {
 	plan := install.RestorePlan{PlanID: "undo-id", OriginalPlanID: "install-id", Target: "codex@0.157.1", Status: "ready", Files: []install.RestoreFile{{Path: "/sandbox/config.toml", Action: "update", BeforeSHA256: "old", AfterSHA256: "new", Diff: "--- before\n+++ after\n@@ -1 +1 @@\n-old\n+new\n"}}}
 	var output bytes.Buffer
