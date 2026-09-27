@@ -413,7 +413,8 @@ func blockedDrift(target TargetPlan, status TargetStatus) []FieldDrift {
 }
 
 // fileFieldDrift returns the file's owned fields whose live and profile values differ,
-// and whether any live value was read (whole-file renders carry none).
+// and whether any live value was read (a whole-file render whose current file its
+// adapter could not parse carries none).
 func fileFieldDrift(file FilePlan, fields map[string]FieldChange) ([]FieldDrift, bool) {
 	var changed []FieldDrift
 	liveRead := false

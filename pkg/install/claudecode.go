@@ -36,11 +36,15 @@ func (claudeCodeAdapter) Plan(input AdapterInput) (Patch, error) {
 	if err != nil {
 		return Patch{}, err
 	}
+	var prior claudecode.SettingsPatch
+	if current, err := claudecode.PatchSettings(input.NamedFile.Content, input.Route); err == nil {
+		prior = current
+	}
 	file := FilePatch{Path: claudecode.ProfileFileName(input.Install.ProfileName), Content: profilePatch.Content, Fields: []string{"profile.model"}}
-	patch := Patch{Fields: []FieldChange{{Path: "profile.model", After: profilePatch.ModelAfter}}, OverrideAllowed: true}
+	patch := Patch{Fields: []FieldChange{{Path: "profile.model", Before: prior.ModelBefore, After: profilePatch.ModelAfter}}, OverrideAllowed: true}
 	if profilePatch.EffortAfter != "" {
 		file.Fields = append(file.Fields, "profile.effortLevel")
-		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.effortLevel", After: profilePatch.EffortAfter})
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.effortLevel", Before: prior.EffortBefore, After: profilePatch.EffortAfter})
 	}
 	patch.Files = []FilePatch{file}
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "claudecode.install.named_profile_settings_only", "target.profile", "only model and a supported effortLevel are written to the emulated profile file, used with claude --settings <path>; provider, transport, authentication, permissions, tools, instructions, skills, plugins, hooks, MCP, delivery, and runtime enforcement remain unmanaged", 0, 0)

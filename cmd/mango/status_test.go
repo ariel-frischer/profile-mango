@@ -110,7 +110,8 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			wantDrift: []install.FieldDrift{
 				{Path: "config.modelRoles.plan", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
 				{Path: "config.modelRoles.slow", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
-				{Path: "profiles/work.yml", State: install.DriftDiffers},
+				{Path: "profile.modelRoles.plan", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
+				{Path: "profile.modelRoles.slow", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
 			},
 			wantSource: install.SourceChanged,
 			wantLines:  []string{"  other-edits config             config.yml"},

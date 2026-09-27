@@ -48,7 +48,7 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 	if input.Install.Mode != InstallModeNamedProfile {
 		return planOhMyPiConfig(input)
 	}
-	patch, err := planOhMyPiOverlay(input.Install.ProfileName, input.Route)
+	patch, err := planOhMyPiOverlay(input.Install.ProfileName, input.Route, input.NamedFile.Content)
 	if err != nil || !input.Install.SetsDefault {
 		return patch, err
 	}
@@ -63,21 +63,31 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 }
 
 // planOhMyPiOverlay renders the named overlay from scratch: the same modelRoles
-// selectors and task.maxEffort the default install writes, and nothing else.
-func planOhMyPiOverlay(name string, route profilemango.RouteBinding) (Patch, error) {
+// selectors and task.maxEffort the default install writes, and nothing else. Each
+// field's Before is its value in the current overlay, when that file parses.
+func planOhMyPiOverlay(name string, route profilemango.RouteBinding, current []byte) (Patch, error) {
 	overlay, err := ohmypi.PatchConfig(nil, route)
 	if err != nil {
 		return Patch{}, err
+	}
+	befores := make(map[string]string)
+	if prior, err := ohmypi.PatchConfig(current, route); err == nil {
+		for _, role := range prior.Roles {
+			befores["modelRoles."+role.Role] = role.Before
+		}
+		for _, setting := range prior.Settings {
+			befores[setting.Path] = setting.Before
+		}
 	}
 	file := FilePatch{Path: ohmypi.ProfileFileName(name), Content: overlay.Content}
 	patch := Patch{OverrideAllowed: true}
 	for _, role := range overlay.Roles {
 		file.Fields = append(file.Fields, "profile.modelRoles."+role.Role)
-		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.modelRoles." + role.Role, After: role.After})
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile.modelRoles." + role.Role, Before: befores["modelRoles."+role.Role], After: role.After})
 	}
 	for _, setting := range overlay.Settings {
 		file.Fields = append(file.Fields, "profile."+setting.Path)
-		patch.Fields = append(patch.Fields, FieldChange{Path: "profile." + setting.Path, After: setting.After})
+		patch.Fields = append(patch.Fields, FieldChange{Path: "profile." + setting.Path, Before: befores[setting.Path], After: setting.After})
 	}
 	patch.Files = []FilePatch{file}
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.named_profile_overlay_only", "target.profile", "only modelRoles selectors and task.maxEffort are written to the emulated profile overlay, used with omp --config <path>; role slots it does not set still come from config.yml; authentication, provider options, permissions, tools, instructions, skills, role definitions, and runtime enforcement remain unmanaged", 0, 0)
