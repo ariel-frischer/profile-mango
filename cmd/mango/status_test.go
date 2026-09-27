@@ -104,7 +104,7 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			if omp.Source != tc.wantSource || !reflect.DeepEqual(omp.Drift, tc.wantDrift) {
 				t.Fatalf("source %s (%s), drift %#v; want %s, %#v", omp.Source, omp.SourceReason, omp.Drift, tc.wantSource, tc.wantDrift)
 			}
-			if len(tc.wantDrift) > 0 && !strings.Contains(omp.SourceReason, "--override") {
+			if len(tc.wantDrift) > 0 && !strings.Contains(omp.SourceReason, "run mango install work --target oh-my-pi --default --override") {
 				t.Fatalf("live-edit source reason lacks --override: %s", omp.SourceReason)
 			}
 			human := humanStatusForTest(t, env.options)
@@ -192,5 +192,17 @@ func TestStatusAcceptsManifestRecordedAtOlderTargetVersion(t *testing.T) {
 				t.Fatalf("status after re-apply = %#v", omp)
 			}
 		})
+	}
+}
+
+// TestStatusHintReleasesDroppedFilesForThatAgentOnly pins that a profile dropping a
+// global file is re-applied with a targeted mango use, which releases it, and never
+// with a bare mango use that would switch every managed agent.
+func TestStatusHintReleasesDroppedFilesForThatAgentOnly(t *testing.T) {
+	env, _ := newDriftTestHome(t)
+	replaceInFile(t, filepath.Join(env.options.profiles, "work", "profile.yaml"), "    RULES.md: global/work-rules.md\n", "")
+	omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
+	if omp.Source != install.SourceChanged || omp.SourceReason != "run mango use work --target oh-my-pi to apply the changed sources" {
+		t.Fatalf("source %s: %s", omp.Source, omp.SourceReason)
 	}
 }

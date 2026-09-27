@@ -36,7 +36,7 @@ func newRouteCmd() *cobra.Command {
 		Short: "List, show, and change the routes in your bindings file",
 		Long: "A route is the provider, model, and effort a profile runs on. Routes live in <home>/bindings/local.yaml " +
 			"and a profile picks one with route:. route set and route unset change that file in place, keep its comments " +
-			"and layout, and check it before writing. They never touch agent config: run mango use or mango install after.",
+			"and layout, and check it before writing. They never touch agent config: run the mango install command they print after.",
 		Args: cobra.NoArgs,
 	}
 	flags := cmd.PersistentFlags()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"io"
 	"slices"
@@ -127,20 +128,56 @@ func writeRouteApplyHint(output io.Writer, bindingsPath string, edit profilemang
 	if len(profiles) == 0 {
 		fmt.Fprintf(&text, "No profile uses route %s yet; set route: %s in a profile to use it.\n", edit.Route, edit.Route)
 	} else {
-		profile, target := "<profile>", "<target>"
-		if len(profiles) == 1 {
-			profile = profiles[0]
-		}
-		if edit.Target != "" {
-			target = edit.Target
-		}
 		fmt.Fprintf(&text, "Profiles using route %s: %s\n", edit.Route, strings.Join(profiles, ", "))
-		fmt.Fprintf(&text, "apply with: mango use %s\n        or: mango install %s --target %s\n", profile, profile, target)
+		writeRouteReapply(&text, edit, profiles)
 	}
 	if _, err := io.WriteString(output, text.String()); err != nil {
 		return fmt.Errorf("writing hint: %w", err)
 	}
 	return nil
+}
+
+// writeRouteReapply names, per profile using the route, the install that re-applies it
+// to exactly the agents whose ownership manifest records that profile, so no agent on
+// another profile is switched. Manifests are read read-only at their default paths.
+func writeRouteReapply(text *strings.Builder, edit profilemango.RouteEdit, profiles []string) {
+	report, err := install.InspectStatus(install.StatusRequest{Registry: install.DefaultRegistry(), Env: install.OSPathEnv()})
+	if err != nil {
+		fmt.Fprintf(text, "Could not read ownership manifests (%v); see mango status.\n", err)
+	}
+	recorded := recordedTargets(report, edit.Target)
+	for _, profile := range profiles {
+		groups := recorded[profile]
+		if len(groups[false]) == 0 && len(groups[true]) == 0 {
+			target := cmp.Or(edit.Target, "<target>")
+			fmt.Fprintf(text, "No agent records profile %s; to adopt one: %s\n", profile, install.ReapplyCommand(profile, []string{target}, false))
+			continue
+		}
+		for _, makeDefault := range []bool{false, true} {
+			if targets := groups[makeDefault]; len(targets) > 0 {
+				fmt.Fprintf(text, "apply with: %s\n", install.ReapplyCommand(profile, targets, makeDefault))
+			}
+		}
+	}
+}
+
+// recordedTargets groups managed agent names by recorded profile, then by whether the
+// profile is the agent's default. A non-empty only keeps that agent.
+func recordedTargets(report install.StatusReport, only string) map[string]map[bool][]string {
+	result := map[string]map[bool][]string{}
+	for _, status := range report.Targets {
+		if status.State != install.StatusManaged || (only != "" && status.Target.Name != only) {
+			continue
+		}
+		if result[status.Profile] == nil {
+			result[status.Profile] = map[bool][]string{}
+		}
+		groups := result[status.Profile]
+		if !slices.Contains(groups[status.OwnsConfig()], status.Target.Name) {
+			groups[status.OwnsConfig()] = append(groups[status.OwnsConfig()], status.Target.Name)
+		}
+	}
+	return result
 }
 
 // knownEfforts are the effort values at least one supported agent installs. Effort
