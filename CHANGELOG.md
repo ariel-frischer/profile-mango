@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Bindings accept per-agent role overrides under routes.<route>.targets.<agent>.roles.<role>, so one route can send a role to openai-codex on Oh My Pi and openai on Codex; mango route set --target X --role Y edits them
+- Instruction, skill, global-instruction, and agent-file resources can use {{route.<name>.<field>}} and {{route.<name>.roles.<role>.<field>}} placeholders, filled per agent from its effective route at render time; unknown placeholders fail validation
+- mango route set/unset list each profile file and resource line that still names a replaced provider or model
+
+### Fixed
+
+- mango route set no longer suggests a bare mango use that would switch agents on other profiles; it prints one mango install --target command per profile naming only agents already recorded on it
+- Field-owned configs (e.g. Oh My Pi config.yml) conflict only when a mango-owned value was edited, not when the agent re-serialized the file or unrelated keys changed; manifests from earlier versions keep the whole-file check until their next install
+- mango status labels each agent with its installed version and shows the tested version when they differ
+
 ## [0.1.2] - 2026-09-26
 
 ### Added
