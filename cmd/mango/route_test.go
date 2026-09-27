@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
@@ -30,10 +32,16 @@ routes:
         model: gpt-6-luna
 `
 
-// routeTestHome writes a sandbox profile home whose bindings file has mode 0640.
+// routeTestHome writes a sandbox profile home whose bindings file has mode 0640, and
+// points HOME and the agent relocation variables at an empty sandbox so route set
+// reads no real ownership manifest.
 func routeTestHome(t *testing.T) (string, string) {
 	t.Helper()
 	home := t.TempDir()
+	t.Setenv("HOME", filepath.Join(home, "user"))
+	for _, variable := range []string{"CODEX_HOME", "HERMES_HOME", "PI_CODING_AGENT_DIR", "XDG_CONFIG_HOME", "OPENCLAW_CONFIG_PATH", "CLAUDE_CONFIG_DIR"} {
+		t.Setenv(variable, "")
+	}
 	bindings := filepath.Join(home, "bindings", "local.yaml")
 	for path, content := range map[string]string{
 		bindings: routeTestBindings,
@@ -60,7 +68,7 @@ func TestRouteSetAndUnsetEditTheBindingsFile(t *testing.T) {
 		"set base field": {
 			args:     []string{"route", "set", "sol", "--effort", "medium"},
 			wantFile: strings.Replace(routeTestBindings, "effort: high # daily", "effort: medium # daily", 1),
-			wantOut:  []string{"-    effort: high # daily", "+    effort: medium # daily", "Profiles using route sol: child, daily", "apply with: mango use <profile>", "mango install <profile> --target <target>"},
+			wantOut:  []string{"-    effort: high # daily", "+    effort: medium # daily", "Profiles using route sol: child, daily", "No agent records profile daily; to adopt one: mango install daily --target <target>"},
 		},
 		"set new target entry": {
 			args:     []string{"route", "set", "sol", "--target", "oh-my-pi", "--effort", "medium"},
@@ -190,5 +198,51 @@ func TestRouteEffortWarning(t *testing.T) {
 				t.Fatalf("warning = %q, want warn %v", output.String(), test.warn)
 			}
 		})
+	}
+}
+
+// TestRouteSetHintReappliesOnlyAgentsOnItsProfiles pins that the route set hint
+// re-applies the route's profile only to agents whose manifest records it: Codex runs
+// daily as its default, Oh My Pi runs other, and following the hint leaves Oh My Pi alone.
+func TestRouteSetHintReappliesOnlyAgentsOnItsProfiles(t *testing.T) {
+	home, bindings := routeTestHome(t)
+	writeFile(t, filepath.Join(home, "profiles", "other", "profile.yaml"), "route: spare\n")
+	for _, dir := range []string{".codex", filepath.Join(".omp", "agent")} {
+		if err := os.MkdirAll(filepath.Join(os.Getenv("HOME"), dir), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	options := installOptions{profiles: filepath.Join(home, "profiles"), resourceRoot: home, bindings: bindings}
+	daily, other := options, options
+	daily.targets, daily.makeDefault = []string{"codex"}, true
+	other.targets = []string{"oh-my-pi"}
+	useTestHome{}.planThenApply(t, "daily", daily)
+	useTestHome{}.planThenApply(t, "other", other)
+
+	out, err := executeCommandResult(t, "route", "set", "sol", "--effort", "medium", "--home", home)
+	if err != nil {
+		t.Fatalf("route set: %v\n%s", err, out)
+	}
+	for _, want := range []string{"apply with: mango install daily --target codex --default\n", "No agent records profile child; to adopt one: mango install child --target <target>\n"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("hint lacks %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "oh-my-pi") || strings.Contains(out, "mango use") {
+		t.Fatalf("hint names an agent on another profile or mango use:\n%s", out)
+	}
+
+	hint := strings.Fields(strings.TrimPrefix(regexp.MustCompile(`apply with: mango (.*)`).FindString(out), "apply with: mango "))
+	plan, err := executeCommandResult(t, append(hint, "--home", home)...)
+	planID := regexp.MustCompile(`plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(plan)
+	if err != nil || planID == nil {
+		t.Fatalf("hint %q plan: %v\n%s", hint, err, plan)
+	}
+	if applied, err := executeCommandResult(t, append(hint, "--home", home, "--apply", "--yes", "--expect-plan", planID[1])...); err != nil {
+		t.Fatalf("hint apply: %v\n%s", err, applied)
+	}
+	report := statusForTest(t, options)
+	if codex, omp := targetStatus(t, report, "codex"), targetStatus(t, report, "oh-my-pi"); codex.Profile != "daily" || codex.Source != install.SourceCurrent || omp.Profile != "other" {
+		t.Fatalf("after the hint: codex %s (%s), oh-my-pi %s", codex.Profile, codex.Source, omp.Profile)
 	}
 }

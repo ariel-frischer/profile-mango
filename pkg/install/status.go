@@ -304,19 +304,50 @@ func sourceVerdict(plan Plan, status TargetStatus) (string, string) {
 	case StatusNoop:
 		return SourceCurrent, ""
 	case StatusReady:
+		apply := statusApplyCommand(plan.Targets[0], status)
 		if liveEdits(plan.Targets[0]) {
-			return SourceChanged, "owned files were edited; run mango use " + status.Profile + " --override to replace the edits with the profile"
+			return SourceChanged, "owned files were edited; run " + apply + " --override to replace the edits with the profile"
 		}
 		if len(status.Drift) == 0 {
-			return SourceChanged, "only the ownership manifest would change; run mango use " + status.Profile + " to rewrite it" + recordedSuffix(status)
+			return SourceChanged, "only the ownership manifest would change; run " + apply + " to rewrite it" + recordedSuffix(status)
 		}
-		return SourceChanged, "run mango use " + status.Profile + " to apply the changed sources"
+		return SourceChanged, "run " + apply + " to apply the changed sources"
 	}
 	if len(plan.Targets) > 0 && plan.Targets[0].Reason != "" {
 		return SourceUnknown, plan.Targets[0].Reason
 	}
 	return SourceUnknown, "the recorded profile cannot be planned"
 }
+
+// statusApplyCommand re-applies the recorded profile to this target only, so no other
+// agent is switched. Releasing files the profile dropped needs mango use; otherwise the
+// install form reproduces what status planned.
+func statusApplyCommand(target TargetPlan, status TargetStatus) string {
+	for _, file := range target.Files {
+		if file.release && file.Action != ActionNoop {
+			return "mango use " + status.Profile + " --target " + status.Target.Name
+		}
+	}
+	return ReapplyCommand(status.Profile, []string{status.Target.Name}, status.ownsConfig)
+}
+
+// ReapplyCommand is the mango install command that re-applies a profile to exactly
+// these targets in one plan, with --default when the profile is their default.
+func ReapplyCommand(profile string, targets []string, makeDefault bool) string {
+	var command strings.Builder
+	command.WriteString("mango install " + profile)
+	for _, target := range targets {
+		command.WriteString(" --target " + target)
+	}
+	if makeDefault {
+		command.WriteString(" --default")
+	}
+	return command.String()
+}
+
+// OwnsConfig reports that the manifest owns the target's main config file, which
+// status reads as the recorded profile being the agent's default.
+func (status TargetStatus) OwnsConfig() bool { return status.ownsConfig }
 
 func recordedSuffix(status TargetStatus) string {
 	if status.RecordedVersion == "" {

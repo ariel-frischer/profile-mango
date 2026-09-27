@@ -17,6 +17,7 @@ import (
 
 type routeOptions struct {
 	bindings, profiles string
+	resourceRoot       string
 	target, role       string
 	dryRun, jsonOutput bool
 }
@@ -36,12 +37,13 @@ func newRouteCmd() *cobra.Command {
 		Short: "List, show, and change the routes in your bindings file",
 		Long: "A route is the provider, model, and effort a profile runs on. Routes live in <home>/bindings/local.yaml " +
 			"and a profile picks one with route:. route set and route unset change that file in place, keep its comments " +
-			"and layout, and check it before writing. They never touch agent config: run mango use or mango install after.",
+			"and layout, and check it before writing. They never touch agent config: run the mango install command they print after.",
 		Args: cobra.NoArgs,
 	}
 	flags := cmd.PersistentFlags()
 	flags.StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	flags.StringVar(&options.profiles, "profiles", "", "profile repository root, to find profiles that use a route (defaults to <home>/profiles)")
+	flags.StringVar(&options.resourceRoot, "resource-root", "", "resource package root, searched for the old value route set replaces (defaults to <home>)")
 	cmd.AddCommand(newRouteListCmd(options), newRouteShowCmd(options), newRouteSetCmd(options), newRouteUnsetCmd(options))
 	return cmd
 }

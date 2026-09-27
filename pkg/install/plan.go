@@ -30,6 +30,8 @@ type loadedInput struct {
 	AgentFiles map[string][]globalFile
 	// RoleInstructions holds each role's loaded instructions resource.
 	RoleInstructions map[string][]byte
+	// Bindings resolves {{route.…}} placeholders in the resources per target.
+	Bindings profilemango.Bindings
 }
 
 func BuildPlan(request Request) (Plan, error) {
@@ -133,6 +135,8 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	diagnostics, sources = append(diagnostics, roleDiagnostics...), append(sources, roleSources...)
 	agentFiles, agentDigests, agentDiagnostics, agentSources := loadAgentFiles(request.ResourceRoot, resolved)
 	diagnostics, sources = append(diagnostics, agentDiagnostics...), append(sources, agentSources...)
+	loaded := loadedInput{Resources: resources, Globals: globals, AgentFiles: agentFiles, RoleInstructions: roles, Bindings: bindings}
+	diagnostics = append(diagnostics, loaded.routeRefDiagnostics()...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
 	}
@@ -149,7 +153,8 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
-	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources, Globals: globals, AgentFiles: agentFiles, RoleInstructions: roles}, diagnostics.Sorted(), nil
+	loaded.Profile, loaded.Route, loaded.InputSHA256, loaded.Sources = resolved, route, inputHash, sources
+	return loaded, diagnostics.Sorted(), nil
 }
 
 // missingBindingsError names the exact fix for a missing local bindings file:
@@ -242,6 +247,10 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
 	}
 	targetPlan.Install = installModeFor(adapter, request, targetRequest)
+	loaded, err := loaded.forTarget(targetRequest.Target.Name)
+	if err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), render.RouteRefInvalidCode)
+	}
 	if !metadata.Installable {
 		return blockedTargetPlan(targetPlan, metadata.Reason, "install.target.blocked")
 	}

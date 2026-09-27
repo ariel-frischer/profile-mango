@@ -146,8 +146,9 @@ skip them. `install --strict` blocks skipped roles.
 
 `agentFiles` ships agent definitions in an agent's own format, including
 frontmatter mango does not model. Each entry maps a file name to a resource
-relative to the package root; the installer copies the bytes unchanged into the
-folder that holds the agent's role files:
+relative to the package root; the installer copies the bytes unchanged, apart
+from [route placeholders](#route-placeholders), into the folder that holds the
+agent's role files:
 
 ```yaml
 agentFiles:
@@ -172,6 +173,36 @@ file deletes it or restores the original, and `mango undo` reverses each step.
 Agent files are global, so a named-only install lists them as `agentFiles`
 under "not installed for this agent"; Pi, Hermes, OpenClaw, and the jcode fork
 always skip them, and `install --strict` blocks instead.
+
+### Route placeholders
+
+Resources mango delivers (`instructions`, `skills`, `globalInstructions`,
+`agentFiles`, and role `instructions`) may name a route field instead of
+repeating a provider or model:
+
+```markdown
+Delegate reviews to {{route.opus55.roles.research.model}}.
+You run on {{route.opus55.provider}}/{{route.opus55.model}}.
+```
+
+`{{route.<name>.<field>}}` and `{{route.<name>.roles.<role>.<field>}}` take a
+field from `provider`, `model`, `effort`, `transport`, and `authentication`.
+Each agent gets the value from its own effective route, so a `targets` override
+for Codex changes only the Codex copy. A role sets only `provider`, `model`, and
+optionally `effort`; naming another role field, or an effort the role does not
+set, is an error. Any route in the bindings file may be named, not only the
+profile's own.
+
+Only text starting `{{route.` is read, and a placeholder must close with `}}` on
+the same line. Everything else, including other `{{…}}`, stays literal; there
+are no conditionals, loops, or escapes. An unknown route, role, or field, or a
+malformed placeholder, stops `install`, `use`, `doctor`, and `render` with the
+resource path, line, and reason (`resource.route_placeholder_invalid`).
+`mango validate` does not open resources, so it does not check them.
+
+Hashes, plans, and `mango status` drift compare the rendered bytes, so an
+unchanged install stays clean, and changing a route field a placeholder names
+shows the file as drift until you apply it again.
 
 ### Older wrapped format
 
@@ -320,8 +351,35 @@ mango route unset sol --target oh-my-pi effort     # fields: provider, model, ef
 enclosing `roles`, target, or `targets` map, once it is empty. Both check the
 edited file the way `install` does and write nothing if it is invalid or
 unchanged. An effort no supported agent uses prints a warning, since
-each agent checks its own efforts at install. They print the diff, then the profiles to apply with
-`mango use` or `mango install`; agent config never changes until you do.
+each agent checks its own efforts at install. They print the diff and the
+profiles using the route; agent config never changes until you apply one. After
+writing, they read the ownership manifests at the default config paths (read-only,
+as `mango status` does) and print, for each profile, one
+`mango install <profile> --target <a> --target <b>` naming only the agents whose
+recorded profile is that one, with `--default` where it is their default. Agents
+on other profiles are never listed, so following the hint cannot switch them. A
+profile no agent records gets the adopt form
+`mango install <profile> --target <target>` instead. `mango status` names its
+changed-sources fix the same way, for that one agent; when the profile dropped a
+file the agent still owns, it suggests `mango use <profile> --target <agent>`,
+which gives the file back.
+
+When a change replaces a provider or model value, `set` and `unset` (dry runs
+included) also list where the profiles using the route still spell the old
+value: their `profile.yaml` files and every resource they deliver, as
+`file:line` relative to the package root (`--resource-root`, default the profile
+home). Text inside `{{route.…}}` placeholders is ignored, and a longer name that
+starts with the old value, such as `gpt-6-sol-mini` for `gpt-6-sol`, does not
+count:
+
+```text
+Still names gpt-6-sol:
+  instructions/daily.md:2
+  profiles/daily/profile.yaml:2
+```
+
+Replace those with [route placeholders](#route-placeholders) so the next change
+needs no hand edits.
 New routes are still added by hand.
 
 ## Checking a profile
