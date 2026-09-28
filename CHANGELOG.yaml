@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased:
+    unreleased: {}
+    0.2.0:
+        date: 2026-09-27
         added:
             - Bindings accept per-agent role overrides under routes.<route>.targets.<agent>.roles.<role>, so one route can send a role to openai-codex on Oh My Pi and openai on Codex; mango route set --target X --role Y edits them
             - Instruction, skill, global-instruction, and agent-file resources can use {{route.<name>.<field>}} and {{route.<name>.roles.<role>.<field>}} placeholders, filled per agent from its effective route at render time; unknown placeholders fail validation
