@@ -53,23 +53,29 @@ mango use default                                    # apply to every managed ag
 One YAML file describing how you want your agents set up. It bundles:
 
 - **Model route:** which model and effort to use
-- **Subagent roles:** worker, planner, research, tiny, each with its own model
-- **Global instructions:** files like `AGENTS.md` and `CLAUDE.md`
+- **Subagent roles:** worker, planner, research, tiny, each with its own model,
+  plus native agent files shipped as-is
+- **Global instructions:** whole files like `AGENTS.md` and `CLAUDE.md`
+- **Skills:** skill folders (`SKILL.md` and its files) copied into each agent's
+  skill directory
+- **Permissions and tools:** sandbox, network, shell, and tool allow/deny rules
+  (declared portably; no agent installs these yet)
 
-The actual provider and model names live in a local bindings file, so profiles
-stay shareable and never hold credentials. `mango` writes what each agent
-supports and lists the rest as skipped.
+A profile can inherit a parent's settings with `extends`. The actual provider and
+model names live in a local bindings file, so profiles stay shareable and never
+hold credentials. `mango` writes what each agent supports and lists the rest as
+skipped.
 
 ## Supported agents
 
 | Agent | Installs |
 | --- | --- |
-| Claude Code | Model and effort as a named profile; `CLAUDE.md`; role subagents |
-| Codex | Provider, model, and effort as a named profile; `AGENTS.md`; role subagents |
-| OpenCode | Model, effort, and instructions as a named agent; `AGENTS.md`; role subagents |
+| Claude Code | Model and effort as a named profile; `CLAUDE.md`; role subagents; skills |
+| Codex | Provider, model, and effort as a named profile; `AGENTS.md`; role subagents; skills |
+| OpenCode | Model, effort, and instructions as a named agent; `AGENTS.md`; role subagents; skills |
 | Pi | Provider, model, and thinking level; `~/AGENTS.md` |
-| Oh My Pi | Model roles with per-role effort as a profile file; `AGENTS.md`, `RULES.md`; role subagents |
-| OpenClaw | Model and thinking level as a named profile |
+| Oh My Pi | Model roles with per-role effort as a profile file; `AGENTS.md`, `RULES.md`; role subagents; skills |
+| OpenClaw | Model and thinking level as a named profile; skills and per-agent skill allowlist |
 | Hermes | Provider, model, and effort as a named profile |
 
 Each agent is tested against a specific version; newer versions still install,
