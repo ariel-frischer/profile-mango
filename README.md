@@ -6,6 +6,10 @@ Choose your models and effort in one place. `mango` writes them into each
 agent's own config, usually as a named profile you can switch to. It shows you
 the plan first, backs up what it changes, and can undo it.
 
+
+https://github.com/user-attachments/assets/844c25fc-582e-4c18-9654-4949b437ce3c
+
+
 ## Install
 
 ```bash
