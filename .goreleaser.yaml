@@ -37,8 +37,8 @@ archives:
 checksum:
   name_template: checksums.txt
 
-changelog:
-  disable: true
+# The changelog pipe must stay enabled: it is what loads --release-notes (CHANGELOG.yaml
+# via chlog extract); disabling it publishes releases with an empty body.
 
 release:
   github:
