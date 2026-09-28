@@ -116,6 +116,14 @@ replaces. `agentFiles` also ships native subagent files as-is, for example
 `agentFiles: {oh-my-pi: {scout.md: agents/omp/scout.md}}` replaces Oh My Pi's
 bundled `scout` agent. Full example: [`examples/profiles/daily-driver`](examples/profiles/daily-driver/profile.yaml).
 
+## What it isn't
+
+`mango` is not a unified configuration manager for every agent setting. It
+covers only the portable profile slice: model routes, roles, global
+instructions, and skills. MCP servers, credentials, sessions, plugins, keybindings,
+themes, and other agent-specific settings stay in each agent's own config, and
+`mango` leaves them untouched.
+
 ## Documentation
 
 - [Concepts](docs/public/concepts.md): profiles, bindings, and what install writes, skips, and undoes.
