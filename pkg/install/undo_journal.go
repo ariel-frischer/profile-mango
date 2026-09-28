@@ -200,7 +200,6 @@ func journalRefPath(config, planID string) string {
 // writeJournalRefs records, next to each changed target config, where the committed journal lives
 // when the transaction anchored it next to a different file.
 func writeJournalRefs(targets []TargetPlan, planID string, applied installfs.ApplyResult) error {
-	anchor := applied.Changed[0]
 	data, err := json.MarshalIndent(journalRef{APIVersion: journalRefVersion, PlanID: planID, JournalPath: applied.JournalPath}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode journal reference: %w", err)
@@ -210,7 +209,7 @@ func writeJournalRefs(targets []TargetPlan, planID string, applied installfs.App
 		if err != nil {
 			return fmt.Errorf("resolve %s config: %w", target.Target.String(), err)
 		}
-		if len(target.changes) == 0 || config == anchor {
+		if len(target.changes) == 0 || installfs.JournalPath(config, planID) == applied.JournalPath {
 			continue
 		}
 		if err := installfs.WriteSidecar(journalRefPath(config, planID), append(data, '\n')); err != nil {

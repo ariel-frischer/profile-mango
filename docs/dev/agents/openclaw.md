@@ -66,9 +66,42 @@ an inert preview.
 Tool policy combines general and provider profiles, allow/deny rules, sender
 policy, plugins, and sandbox gates; documentation says deny wins. The agent
 workspace is not itself a sandbox, and instruction files are guidance rather than
-enforcement. Skills can come from project, user/state, and bundled sources. The
-adapter therefore reports route/authentication, delivery, precedence, permission,
-tool, and runtime-enforcement gaps instead of claiming equivalence.
+enforcement. The adapter reports route/authentication, delivery, precedence,
+permission, tool, and runtime-enforcement gaps instead of claiming equivalence.
+
+### Skill installation (ap-794)
+
+Pinned [skills docs][skills] rank skill roots: `<workspace>/skills`,
+`<workspace>/.agents/skills`, `~/.agents/skills` (only with the default state
+directory), `<state dir>/skills`, then bundled and `skills.load.extraDirs`. The
+[loader](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/local-loader.ts)
+requires a non-blank `description` and takes the name from frontmatter `name`,
+else the folder name; the shared bundle check already requires a description,
+so no OpenClaw-specific check exists.
+[`workspace-skill-loader.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/workspace-skill-loader.ts)
+reads managed skills from `CONFIG_DIR/skills`, and
+[`resolveConfigDir`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/utils.ts)
+picks `OPENCLAW_STATE_DIR`, else the directory of `OPENCLAW_CONFIG_PATH`, else
+`~/.openclaw`.
+
+profile-mango therefore copies each skill folder to `<dir of each written
+openclaw.json>/skills/<name>/`: `~/.openclaw-<name>/skills` for a named
+profile, plus `~/.openclaw/skills` with `--default` or `use`. Every install
+writes a config, so skills are never skipped. When `OPENCLAW_STATE_DIR` is set
+to another directory the plan warns that OpenClaw reads skills from there.
+
+`--agent openclaw=<id>` sets `agents.entries.<id>.skills` to the sorted profile
+skill names in each written config that defines the agent. Per
+[`skills-config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills-config.md)
+an entry's `skills` replaces `agents.defaults.skills`, which is never written.
+The [schema](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/zod-schema.agents.ts)
+needs ownership markers once several entries exist, so profile-mango never
+creates an entry: an id no written config defines blocks the plan. The value
+the allowlist had first is kept as an `openclaw-skills-prior:<id>=<json>`
+manifest marker (empty when absent). Later installs without `--agent` keep the
+recorded agents; `--agent` with another id gives the old one its prior back, as
+does a profile without skills. Undo restores the file bytes. Only the allowlist
+value changes; comments, quoting, and other keys stay byte for byte.
 
 ## Candidate inspection and safety boundary
 
@@ -96,7 +129,7 @@ Consequently, the adapter reports these independent evidence levels as blocking:
 - merged effective state and per-field provenance are unverified
 - config and runtime precedence are unverified
 - route authentication identity and credential handling are unverified
-- permissions, tools, plugins, instructions, skills, delivery, and runtime enforcement are unverified
+- permissions, tools, plugins, instructions, skill execution, delivery, and runtime enforcement are unverified
 
 A future probe must re-review the exact source, use a direct exact artifact, isolate
 all config/state/workspace/include paths, sanitize the environment, use synthetic

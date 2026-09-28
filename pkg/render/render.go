@@ -222,7 +222,7 @@ func requestedResources(profile profilemango.ResolvedProfile) map[string]struct{
 	for _, item := range profile.Instructions {
 		requested[path.Clean(item)] = struct{}{}
 	}
-	for _, item := range profile.Skills {
+	for _, item := range profilemango.SkillPaths(profile.Skills) {
 		requested[path.Clean(item)] = struct{}{}
 	}
 	return requested

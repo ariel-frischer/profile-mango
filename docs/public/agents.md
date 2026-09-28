@@ -80,6 +80,10 @@ The evidence behind every row is in the developer
   command-line settings, `--effort`, and `CLAUDE_CODE_EFFORT_LEVEL` can override
   the user file. An existing `settings.json`
   must not be empty.
+- **Skills:** with `mango use` or `--default`, each `skills` folder is
+  copied whole to `~/.claude/skills/<name>/`. A named profile lists skills
+  as not installed. Removing a skill later deletes the files profile-mango
+  wrote, or restores a file it replaced.
 - **Global instructions:** `globalInstructions` can own `~/.claude/CLAUDE.md`
   (documentation-backed only), written with `mango use` or `--default`.
 - **Roles:** with `mango use` or `--default`, each profile role becomes
@@ -111,6 +115,11 @@ The evidence behind every row is in the developer
   treats a `--profile` name with no file as empty, so a mistyped name silently
   runs your default settings. Model availability and effort enforcement haven't
   been verified.
+- **Skills:** with `mango use` or `--default`, each `skills` folder is
+  copied whole to `~/.agents/skills/<name>/` (under your home directory, not
+  `CODEX_HOME`; Oh My Pi and OpenCode read it too). A named profile lists
+  skills as not installed. Removing a skill later deletes the files
+  profile-mango wrote, or restores a file it replaced.
 - **Global instructions:** `globalInstructions` can own `$CODEX_HOME/AGENTS.md`,
   written with `mango use` or `--default`. An existing `AGENTS.override.md`
   is read instead of it.
@@ -130,14 +139,8 @@ The evidence behind every row is in the developer
   built-in prompt. Start it with `opencode --agent <profile>`. `opencode.json`
   is not changed unless you pass `--default`.
 - **`--default` also writes:** the top-level `model` (as `provider/model`)
-  in `opencode.json`, plus, if the profile has exactly one skill, a
-  `SKILL.md` copied next to the config with that folder added to
-  `skills.paths`. A profile with more skills lists them as not installed
-  (`--strict` blocks). Skills are a directory-wide setting in OpenCode, not
-  per-agent, which is why they only install alongside `--default`. Removing
-  the skill from the profile later removes only an unchanged skill file
-  profile-mango created; other skills in that folder can still be found, so
-  this is not an allowlist.
+  in `opencode.json`. It also removes the `SKILL.md` and `skills.paths`
+  entry that older profile-mango versions wrote next to the config.
 - **Explicit agents:** `--agent opencode=primary:<name>` or
   `subagent:<name>`, with `--config opencode=<path>` ending in
   `agents/<name>.md`, writes the same kind of definition at that path
@@ -148,8 +151,13 @@ The evidence behind every row is in the developer
   model defines a variant of that name, and otherwise silently uses the model
   default; the `--default` top-level model carries no effort. Efforts with no
   built-in variant (such as `ultra`) are shown as `effort <value>: NOT APPLIED`.
-  Provider options are not set. Edited or unowned
-  skill and agent files are never overwritten, even with `--override`.
+  Provider options are not set. Edited or unowned agent files are never
+  overwritten, even with `--override`.
+- **Skills:** with `mango use` or `--default`, each `skills` folder is
+  copied whole to `~/.config/opencode/skills/<name>/`; every skill's
+  `SKILL.md` must set `name`. A named profile lists skills as not installed.
+  Removing a skill later deletes the files profile-mango wrote, or restores
+  a file it replaced.
 - **Global instructions:** `globalInstructions` can own
   `~/.config/opencode/AGENTS.md`, written with `mango use` or `--default`.
   OpenCode also reads `~/.claude/CLAUDE.md`.
@@ -191,6 +199,10 @@ The evidence behind every row is in the developer
 - **Agent files:** `agentFiles.oh-my-pi` copies native `.md` agent files
   unchanged to `~/.omp/agent/agents/`, with `mango use` or `--default`. A
   file named like a bundled agent, such as `scout.md`, replaces it.
+- **Skills:** with `mango use` or `--default`, each `skills` folder is
+  copied whole to `~/.omp/agent/skills/<name>/`. A named profile lists
+  skills as not installed. Removing a skill later deletes the files
+  profile-mango wrote, or restores a file it replaced.
 - **Global instructions:** `globalInstructions` can own `AGENTS.md` and
   `RULES.md` in `~/.omp/agent`, written with `mango use` or `--default`.
 - **Caveats:** the overlay wins over global and project config; slots it does
@@ -214,6 +226,17 @@ The evidence behind every row is in the developer
   unless you pass `--default`, which also writes the same two settings there.
   A profile named `default` is OpenClaw's default config, so it is written in
   place.
+- **Skills:** each `skills` folder is copied whole to the `skills` folder of
+  every config written: `~/.openclaw-<profile>/skills/<name>/`, and
+  `~/.openclaw/skills/<name>/` with `--default` or `mango use`. Removing a
+  skill later deletes the files profile-mango wrote, or restores a file it
+  replaced.
+- **Agent allowlist:** `--agent openclaw=<id>` also sets
+  `agents.entries.<id>.skills` to the profile's skill names, which replaces
+  `agents.defaults.skills` for that agent. The agent must already be defined
+  in a config the install writes (the main config needs `--default`).
+  Later installs keep that allowlist in step; `--agent` with another id, or a
+  profile without skills, puts the previous list back.
 - **Blocks:** named installs when the main config isn't at
   `<home>/.openclaw/openclaw.json` (a relocated `--config` or
   `OPENCLAW_CONFIG_PATH`). The profile location follows OpenClaw's home, not
@@ -222,8 +245,9 @@ The evidence behind every row is in the developer
 - **Caveats:** a new profile has its own state folder, with no sign-in,
   sessions, or plugins from your default profile. profile-mango doesn't copy
   them. An exported `OPENCLAW_CONFIG_PATH` or `OPENCLAW_STATE_DIR` still wins
-  over `--profile`. Fallbacks, per-agent overrides, and provider options are
-  left alone. A per-agent model setting can still win over the default.
+  over `--profile`, and skills are then read from that state folder. Fallbacks,
+  other per-agent overrides, and provider options are left alone. A per-agent
+  model setting can still win over the default.
 - [Reference](../dev/agents/openclaw.md)
 
 ## Hermes

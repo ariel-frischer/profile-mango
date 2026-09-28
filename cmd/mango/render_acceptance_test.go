@@ -291,7 +291,7 @@ func acceptanceConstrainedInput(target acceptanceTarget) render.Input {
 			Metadata:     profilemango.Metadata{Name: "read-only"},
 			Permissions:  &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell},
 			Tools:        &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}},
-			Instructions: []string{"instructions/research.md"}, Skills: []string{"skills/research/SKILL.md"},
+			Instructions: []string{"instructions/research.md"}, Skills: []profilemango.SkillRef{{Path: "skills/research/SKILL.md"}},
 		},
 		Route: acceptanceRoute(), Target: render.TargetBuild{Name: target.name, Version: target.version, EvidenceSHA256: target.evidence},
 		Resources: []render.Resource{

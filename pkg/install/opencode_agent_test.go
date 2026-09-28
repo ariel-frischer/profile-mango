@@ -152,25 +152,25 @@ func TestNamedOpenCodeAgentRejectsWrongPathAndTarget(t *testing.T) {
 }
 
 func TestNamedOpenCodeAgentRequiredPolicyBlocksUnderStrict(t *testing.T) {
-	for name, extra := range map[string]string{
-		"permissions": "  permissions:\n    mode: read-only\n    network: deny\n    shell: deny\n",
-		"tools":       "  tools:\n    allow: [read]\n    deny: [write]\n",
-		"skills":      "  skills:\n    - skills/one/SKILL.md\n",
+	for name, test := range map[string]struct{ extra, want string }{
+		"permissions": {extra: "  permissions:\n    mode: read-only\n    network: deny\n    shell: deny\n", want: "unqualified"},
+		"tools":       {extra: "  tools:\n    allow: [read]\n    deny: [write]\n", want: "unqualified"},
+		"skills":      {extra: "  skills:\n    - skills/one/SKILL.md\n", want: skillsAgentReason},
 	} {
 		t.Run(name, func(t *testing.T) {
 			request, root := namedOpenCodeRequest(t, "primary")
 			request.Strict = true
 			profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-			writeInstallTestFile(t, profile, string(mustReadNamedTestFile(t, profile))+extra)
+			writeInstallTestFile(t, profile, string(mustReadNamedTestFile(t, profile))+test.extra)
 			if name == "skills" {
 				path := filepath.Join(root, "skills", "one", "SKILL.md")
 				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 					t.Fatal(err)
 				}
-				writeInstallTestFile(t, path, openCodeTestSkill)
+				writeInstallTestFile(t, path, strings.Replace(openCodeTestSkill, "profile-mango-synthetic", "one", 1))
 			}
 			plan, err := BuildPlan(request)
-			if err != nil || plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "unqualified") {
+			if err != nil || plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, test.want) {
 				t.Fatalf("required %s accepted: %v, %#v", name, err, plan)
 			}
 		})

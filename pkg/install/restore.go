@@ -172,10 +172,12 @@ func journalOriginalOwnership(journal installfs.Journal, manifestPath string, ta
 
 // requireChangedFilesJournaled checks that the journal covers every file whose owned hash the
 // install changed, so a journal that dropped or renamed an entry cannot undo only part of an install.
+// A file the install newly claimed as is, already holding the profile's bytes, changed nothing.
 func requireChangedFilesJournaled(state undoState) error {
 	for _, file := range state.ownership.Files {
-		priorHash, _ := ownershipHash(state.before, file.Path)
-		if priorHash != file.SHA256 && entryFor(state.journal, file.Path) == nil {
+		priorHash, owned := ownershipHash(state.before, file.Path)
+		claimedAsIs := !owned && entryPrior(file) == priorSHA256Prefix+file.SHA256
+		if priorHash != file.SHA256 && !claimedAsIs && entryFor(state.journal, file.Path) == nil {
 			return fmt.Errorf("install journal %s does not describe every file the install changed", state.journal.PlanID)
 		}
 	}
@@ -236,7 +238,7 @@ func appendRestoreEntries(plan *RestorePlan, state undoState) error {
 		if err != nil {
 			return err
 		}
-		if err := planRestoreEntry(plan, entry, current, entry.Path == state.manifest.Path); err != nil {
+		if err := planRestoreEntry(plan, entry, current, state.journalFile.Path, entry.Path == state.manifest.Path); err != nil {
 			return err
 		}
 	}
@@ -257,12 +259,12 @@ func currentSnapshot(path string, state undoState) (installfs.Snapshot, error) {
 	return snapshot, nil
 }
 
-func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current installfs.Snapshot, isManifest bool) error {
+func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current installfs.Snapshot, journalPath string, isManifest bool) error {
 	drifted, err := installedDrift(entry, current, isManifest)
 	if err != nil {
 		return err
 	}
-	original, err := originalContent(entry, plan.OriginalPlanID, plan.request.Target, isManifest)
+	original, err := originalContent(entry, plan.OriginalPlanID, journalPath, plan.request.Target, isManifest)
 	if err != nil {
 		return err
 	}
@@ -301,7 +303,10 @@ func installedDrift(entry installfs.JournalEntry, current installfs.Snapshot, is
 		return current.Exists, nil
 	}
 	expectedMode := uint32(0o600)
-	if entry.BeforeExists {
+	switch {
+	case entry.AfterMode != 0:
+		expectedMode = entry.AfterMode
+	case entry.BeforeExists:
 		expectedMode = entry.BeforeMode
 	}
 	unchanged := current.Exists && current.SHA256 == entry.AfterSHA256 && uint32(current.Mode) == expectedMode
@@ -311,15 +316,18 @@ func installedDrift(entry installfs.JournalEntry, current installfs.Snapshot, is
 	return !unchanged, nil
 }
 
-// originalContent returns the verified pre-install backup, or an absent snapshot when the install created the file.
-func originalContent(entry installfs.JournalEntry, id string, target Target, isManifest bool) (installfs.Snapshot, error) {
+// originalContent returns the verified pre-install backup, or an absent snapshot when the
+// install created the file. The backup is adjacent to the file, or, for a delete that
+// removed its emptied directories (a released skill file), beside the install journal.
+func originalContent(entry installfs.JournalEntry, id, journalPath string, target Target, isManifest bool) (installfs.Snapshot, error) {
 	if !entry.BeforeExists {
 		if entry.BackupPath != "" || entry.BeforeSHA256 != "" || entry.BeforeMode != 0 {
 			return installfs.Snapshot{}, fmt.Errorf("unexpected backup for created file")
 		}
 		return installfs.Snapshot{}, nil
 	}
-	if !restoreID.MatchString(entry.BeforeSHA256) || entry.BackupPath != installfs.BackupPath(entry.Path, id) || entry.BeforeMode == 0 || entry.BeforeMode&^0o777 != 0 {
+	adjacent := entry.BackupPath == installfs.BackupPath(entry.Path, id) || (entry.Delete && !isManifest && installfs.IsJournalBackupPath(journalPath, entry.BackupPath))
+	if !restoreID.MatchString(entry.BeforeSHA256) || !adjacent || entry.BeforeMode == 0 || entry.BeforeMode&^0o777 != 0 {
 		return installfs.Snapshot{}, fmt.Errorf("original %s lacks a valid adjacent backup (was it installed with --no-backup?)", entry.Path)
 	}
 	backup, err := installfs.SnapshotFile(entry.BackupPath)

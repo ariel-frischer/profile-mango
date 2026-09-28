@@ -98,7 +98,7 @@ func emptyResolved(profile PolicyProfile) ResolvedProfile {
 		resolved.Instructions = append([]string(nil), (*profile.Instructions.Append)...)
 	}
 	if profile.Skills != nil {
-		resolved.Skills = append([]string(nil), (*profile.Skills)...)
+		resolved.Skills = append([]SkillRef(nil), (*profile.Skills)...)
 	}
 	resolved.GlobalInstructions = mergeTargetFiles(nil, profile.GlobalInstructions)
 	resolved.AgentFiles = mergeTargetFiles(nil, profile.AgentFiles)
@@ -119,7 +119,7 @@ func mergeProfile(parent ResolvedProfile, child PolicyProfile) ResolvedProfile {
 		result.Instructions = append(append([]string(nil), parent.Instructions...), (*child.Instructions.Append)...)
 	}
 	if child.Skills != nil {
-		result.Skills = append([]string(nil), (*child.Skills)...)
+		result.Skills = append([]SkillRef(nil), (*child.Skills)...)
 	}
 	result.GlobalInstructions = mergeTargetFiles(parent.GlobalInstructions, child.GlobalInstructions)
 	result.AgentFiles = mergeTargetFiles(parent.AgentFiles, child.AgentFiles)

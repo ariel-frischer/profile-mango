@@ -66,7 +66,7 @@ func TestHermesAdapterBlocksUnqualifiedDeliveryRequirements(t *testing.T) {
 			want:    "instruction, skill, and resource delivery",
 		},
 		"skills": {
-			profile: profilemango.ResolvedProfile{Skills: []string{"skill.md"}},
+			profile: profilemango.ResolvedProfile{Skills: []profilemango.SkillRef{{Path: "skill.md"}}},
 			want:    "instruction, skill, and resource delivery",
 		},
 		"resources": {

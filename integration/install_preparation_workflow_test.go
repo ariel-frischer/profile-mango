@@ -18,11 +18,8 @@ func TestInstalledBinaryPreparationFailureRetry(t *testing.T) {
 			return installfs.BackupPath(w.config+".profile-mango.manifest.json", plan.PlanID)
 		}},
 		"initial journal obstruction": {func(w installWorkflow, plan install.Plan) string {
-			// The journal anchors on the first changed file whose directory already
-			// exists; by the second install, that's the agent file's own directory
-			// (agents/), not the main config's, since --default also changes it.
-			agentFile := filepath.Join(filepath.Dir(w.config), "agents", "minimal.md")
-			return installfs.JournalPath(agentFile, plan.PlanID)
+			// The journal anchors on the target's main config, which --default changes.
+			return installfs.JournalPath(w.config, plan.PlanID)
 		}},
 	}
 	for name, test := range tests {

@@ -45,7 +45,7 @@ func TestRenderTable(t *testing.T) {
 				Permissions:  &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell},
 				Tools:        &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}, Deny: []string{"write"}},
 				Instructions: []string{"instructions/research.md"},
-				Skills:       []string{"skills/research/SKILL.md"},
+				Skills:       []profilemango.SkillRef{{Path: "skills/research/SKILL.md"}},
 			},
 			resources: []Resource{
 				ResourceFromContent("instructions/research.md", "instruction", []byte("research\n")),
@@ -194,7 +194,7 @@ func TestRenderDoesNotProjectUnknownCanonicalOrTargetFields(t *testing.T) {
 	profile := testProfile()
 	profile.Metadata.Description = "SENTINEL-DESCRIPTION"
 	profile.Metadata.Labels = map[string]string{"unknown_key": "SENTINEL-UNKNOWN-KEY"}
-	profile.Skills = []string{"sentinel-skill"}
+	profile.Skills = []profilemango.SkillRef{{Path: "sentinel-skill"}}
 	result := Render(Input{Profile: profile, Route: testRoute(), Target: DefaultTarget(), Resources: []Resource{ResourceFromContent("sentinel-skill", "skill", []byte("skill\n"))}})
 	config := string(artifactByPath(result.Artifacts, "preview/route-only.config.toml.preview").Content)
 	for _, forbidden := range []string{

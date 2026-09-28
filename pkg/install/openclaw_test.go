@@ -76,7 +76,7 @@ func TestOpenClawAdapterBlocksUnqualifiedRequirements(t *testing.T) {
 			want:   "instruction",
 		},
 		"skills": {
-			mutate: func(input *AdapterInput) { input.Profile.Skills = []string{"skill/SKILL.md"} },
+			mutate: func(input *AdapterInput) { input.Profile.Skills = []profilemango.SkillRef{{Path: "skill/SKILL.md"}} },
 			want:   "instruction",
 		},
 		"resources": {

@@ -93,6 +93,7 @@ const (
 type json5Value struct {
 	start       int
 	end         int
+	keyStart    int // start of the object key naming this value, for removing the entry
 	kind        valueKind
 	stringValue string
 	object      *json5Object
@@ -206,6 +207,7 @@ func (scanner *json5Scanner) parseObjectEntry(object *json5Object) error {
 	if err != nil {
 		return err
 	}
+	value.keyStart = keyStart
 	object.entries[key] = value
 	if object.firstKey < 0 {
 		object.firstKey = keyStart

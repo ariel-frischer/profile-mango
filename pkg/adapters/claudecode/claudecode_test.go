@@ -26,7 +26,7 @@ func TestRenderTable(t *testing.T) {
 			paths:     []string{"preview/route-only.settings.json.preview", "resources/instructions/system.md"},
 		},
 		"constrained": {
-			profile:   profilemango.ResolvedProfile{Metadata: profilemango.Metadata{Name: "read-only"}, Permissions: &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell}, Tools: &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}}, Instructions: []string{"instructions/research.md"}, Skills: []string{"skills/research/SKILL.md"}},
+			profile:   profilemango.ResolvedProfile{Metadata: profilemango.Metadata{Name: "read-only"}, Permissions: &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell}, Tools: &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}}, Instructions: []string{"instructions/research.md"}, Skills: []profilemango.SkillRef{{Path: "skills/research/SKILL.md"}}},
 			resources: []Resource{ResourceFromContent("instructions/research.md", "instruction", []byte("research\n")), ResourceFromContent("skills/research/SKILL.md", "skill", []byte("skill\n"))},
 			codes:     []string{"claudecode.permissions.mode_unverified", "claudecode.permissions.network_unverified", "claudecode.permissions.shell_unverified", "claudecode.security.permissions_unverified", "claudecode.security.tools_unverified", "claudecode.skills.delivery_unverified", "claudecode.tools.allowlist_unverified"},
 			paths:     []string{"preview/read-only.settings.json.preview", "resources/instructions/research.md", "resources/skills/research/SKILL.md"},

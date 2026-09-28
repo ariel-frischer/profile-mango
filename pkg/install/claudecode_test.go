@@ -65,7 +65,7 @@ func TestClaudeCodeInstallBlocksUnsupportedProfileEffects(t *testing.T) {
 			want:    "instruction and skill delivery",
 		},
 		"skills": {
-			profile: profilemango.ResolvedProfile{Skills: []string{"skills/research/SKILL.md"}},
+			profile: profilemango.ResolvedProfile{Skills: []profilemango.SkillRef{{Path: "skills/research/SKILL.md"}}},
 			want:    "instruction and skill delivery",
 		},
 	}

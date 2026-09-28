@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"github.com/ariel-frischer/profile-mango/pkg/adapters/ohmypi"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/mattn/go-isatty"
@@ -61,7 +62,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.resourceRoot, "resource-root", "", "resource package root (defaults to <home>)")
 	cmd.Flags().StringVar(&options.bindings, "bindings", "", "local route bindings file (defaults to <home>/bindings/local.yaml)")
 	cmd.Flags().StringArrayVarP(&options.targets, "target", "t", nil, "target[@version], comma-separated or repeated; a bare name selects its single qualified version")
-	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name; requires --config ending agents/name.md")
+	cmd.Flags().StringArrayVar(&options.agents, "agent", nil, "target[@version]=primary:name or subagent:name (requires --config ending agents/name.md), or openclaw=<agent id> to set that agent's skill allowlist")
 	cmd.Flags().StringArrayVar(&options.configs, "config", nil, "target[@version]=explicit config path; selects the target; repeat for multiple targets")
 	cmd.Flags().StringArrayVar(&options.legacyConfigs, "config-path", nil, "deprecated alias for --config")
 	_ = cmd.Flags().MarkDeprecated("config-path", "use --config target[@version]=path instead")
@@ -275,7 +276,11 @@ func installTargets(options installOptions, registry *install.Registry) ([]insta
 	result := make([]install.TargetRequest, 0, len(targets))
 	for _, target := range targets {
 		request := install.TargetRequest{Target: target, ConfigPath: bindingValue(configs, target), ManifestPath: bindingValue(manifests, target)}
-		if spec := bindingValue(agents, target); spec != "" {
+		switch spec := bindingValue(agents, target); {
+		case spec == "":
+		case target.Name == openclaw.TargetName:
+			request.SkillAgent = spec
+		default:
 			request.Agent, _ = parseAgentSpec(spec)
 		}
 		result = append(result, request)
@@ -359,12 +364,20 @@ func parseTargetBindings(flag string, values []string) ([]targetBinding, error) 
 	return result, nil
 }
 
+// parseAgentSelections reads --agent values: an OpenCode destination (mode:name), or for
+// OpenClaw the agents.entries id whose skill allowlist the install sets.
 func parseAgentSelections(values []string) ([]targetBinding, error) {
 	bindings, err := parseTargetBindings("--agent", values)
 	if err != nil {
-		return nil, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name: %w", err)
+		return nil, fmt.Errorf("--agent requires target[@version]=primary:name or subagent:name, or openclaw=<agent id>: %w", err)
 	}
 	for _, binding := range bindings {
+		if binding.key.Name == openclaw.TargetName {
+			if !openclaw.ValidAgentID(binding.value) {
+				return nil, fmt.Errorf("--agent openclaw=<agent id> requires an agents.entries id of lowercase letters, digits, '_' or '-': %q", binding.value)
+			}
+			continue
+		}
 		if _, err := parseAgentSpec(binding.value); err != nil {
 			return nil, err
 		}
@@ -598,6 +611,28 @@ func writeCompactEffects(output io.Writer, target install.TargetPlan, styles out
 		files = append(files, styles.path(humanPath(file.Path))+" "+humanPath(file.Action))
 		effects = append(effects, compactFieldEffects(file.Fields, seen, file.Action != install.ActionNoop)...)
 	}
+	if err := writeCompactSummary(output, target, effects); err != nil {
+		return err
+	}
+	for _, list := range []struct {
+		label string
+		items []string
+	}{{"files", files}, {"skills", target.Skills}} {
+		if len(list.items) == 0 {
+			continue
+		}
+		if _, err := fmt.Fprintf(output, "    %s: %s\n", list.label, strings.Join(list.items, ", ")); err != nil {
+			return err
+		}
+	}
+	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
+		return err
+	}
+	return writeCompactWarnings(output, target, styles)
+}
+
+// writeCompactSummary writes the target's route and changed settings on one line.
+func writeCompactSummary(output io.Writer, target install.TargetPlan, effects []string) error {
 	var route strings.Builder
 	if err := writeCompactRoute(&route, target); err != nil {
 		return err
@@ -609,20 +644,11 @@ func writeCompactEffects(output io.Writer, target install.TargetPlan, styles out
 	if len(effects) > 0 {
 		parts = append(parts, "changes: "+strings.Join(effects, ", "))
 	}
-	if len(parts) > 0 {
-		if _, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | ")); err != nil {
-			return err
-		}
+	if len(parts) == 0 {
+		return nil
 	}
-	if len(files) > 0 {
-		if _, err := fmt.Fprintf(output, "    files: %s\n", strings.Join(files, ", ")); err != nil {
-			return err
-		}
-	}
-	if err := writeCompactSkipped(output, target.SkippedRequirements, styles); err != nil {
-		return err
-	}
-	return writeCompactWarnings(output, target, styles)
+	_, err := fmt.Fprintf(output, "    %s\n", strings.Join(parts, " | "))
+	return err
 }
 
 func writeCompactSkipped(output io.Writer, skipped []install.SkippedRequirement, styles outputStyles) error {
@@ -685,6 +711,9 @@ func semanticFieldLabel(path string) string {
 	return name
 }
 
+// compactWarningCodes are the warnings the compact plan shows; the rest stay in --json.
+var compactWarningCodes = []string{"install.version_not_found", "install.version_unknown", "install.adopt_backup", "install.skill_unmanaged_files", "install.skill_root_undiscovered"}
+
 func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles outputStyles) error {
 	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {
 		if _, err := fmt.Fprintf(output, "    %s: installed version %s is outside tested range %s; check agent compatibility before applying\n", styles.warning("warning"), humanPath(target.VersionCheck.Detected), humanPath(target.VersionCheck.Range)); err != nil {
@@ -705,7 +734,7 @@ func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles ou
 			}
 			continue
 		}
-		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && (diagnostic.Code == "install.version_not_found" || diagnostic.Code == "install.version_unknown" || diagnostic.Code == "install.adopt_backup") {
+		if diagnostic.Severity == profilemango.SeverityError || diagnostic.Severity == profilemango.SeverityWarning && slices.Contains(compactWarningCodes, diagnostic.Code) {
 			if _, err := fmt.Fprintf(output, "    %s: %s\n", styles.warning("warning"), humanPath(diagnostic.Message)); err != nil {
 				return err
 			}

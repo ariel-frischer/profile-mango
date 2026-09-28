@@ -39,7 +39,7 @@ skills: [skills/review/SKILL.md]
 | `permissions.network`, `permissions.shell` | `allow`, `deny`, or `unmanaged` | Per field, child wins |
 | `tools.allow`, `tools.deny` | Tool name lists. A denied name is removed from `allow`. | Each list replaces the parent's if set |
 | `instructions.append` | Instruction files, relative to the package root. | Appended after the parent's |
-| `skills` | `SKILL.md` paths, relative to the package root. | Replaces the parent's if set |
+| `skills` | Skill folders, each a `SKILL.md` path relative to the package root, optionally with its `source`, see below. | Replaces the parent's if set |
 | `globalInstructions` | Whole global instruction files per agent, each one resource or a list of fragments, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 | `agentFiles` | Whole native subagent files per agent, see below. | A child's agent entry replaces the parent's; `{}` clears it |
 | `roles` | Portable role definitions, see below. | A child's role replaces the parent's same-name role; other parent roles are inherited |
@@ -48,6 +48,50 @@ Unknown fields are rejected. A field with the wrong YAML shape fails with its
 path and the expected shape, e.g. `labels: expected a map of string keys to
 string values (e.g. labels: {team: core}), got a list`. Most agents can't install permissions, tools,
 instructions, or skills yet. See [agents](agents.md) for what each one takes.
+
+### `skills`
+
+Each `skills` entry names a skill folder's `SKILL.md`, either as a string or,
+for a skill copied from another repository, with its source:
+
+```yaml
+skills:
+  - skills/review/SKILL.md
+  - path: skills/pdf/SKILL.md
+    source:
+      repo: https://github.com/anthropics/skills
+      commit: 0123456789abcdef0123456789abcdef01234567
+      path: skills/pdf            # optional, the folder within repo
+      sha256: <tree digest of skills/pdf>
+```
+
+The folder name is the skill name: 1-64 lowercase letters, digits, or hyphens,
+unique within the profile. `SKILL.md` needs YAML frontmatter with a non-empty
+`description`; a `name`, when set, must equal the folder name. The whole folder
+is installed: every regular file under it, at most 256, with no symlinks, and
+each file keeps execute permission (`0755`) or is written `0644`. Agents that
+take skills install them with `mango use` or `--default`; see
+[agents](agents.md) for where each one puts them.
+
+`source` records where a vendored skill came from; `repo` is a URL and
+`commit` the full 40-character commit. Nothing is downloaded: copy the folder
+into your package yourself, then pin `sha256`, the folder's tree digest. The
+tree digest is the SHA-256 of one line per file, sorted by path:
+`<path relative to the folder>` NUL `<0755 or 0644>` NUL `<file SHA-256 in hex>`
+newline. Every `mango install` and `mango use` plan recomputes it and fails if
+a file changed, naming the digest it found, so the quickest way to pin a new
+copy is to set any 64-hex placeholder and copy the digest from the error
+(`mango validate` checks only the entry's shape, not the files). The digest
+covers the files as vendored; `{{route.…}}` placeholders are rendered only in
+the installed copies. To compute
+it yourself, from inside the skill folder:
+
+```sh
+find . -type f | sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do
+  if [ -x "$f" ]; then m=0755; else m=0644; fi
+  printf '%s\0%s\0%s\n' "$f" "$m" "$(sha256sum < "$f" | cut -d' ' -f1)"
+done | sha256sum | cut -d' ' -f1
+```
 
 ### `globalInstructions`
 
@@ -195,9 +239,9 @@ always skip them, and `install --strict` blocks instead.
 
 ### Route placeholders
 
-Resources mango delivers (`instructions`, `skills`, `globalInstructions`,
-`agentFiles`, and role `instructions`) may name a route field instead of
-repeating a provider or model:
+Resources mango delivers (`instructions`, the text files in each `skills`
+folder, `globalInstructions`, `agentFiles`, and role `instructions`) may name a
+route field instead of repeating a provider or model:
 
 ```markdown
 Delegate reviews to {{route.opus55.roles.research.model}}.

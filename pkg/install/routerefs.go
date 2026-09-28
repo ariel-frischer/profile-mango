@@ -1,9 +1,11 @@
 package install
 
 import (
+	"bytes"
 	"fmt"
 	"maps"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/ariel-frischer/profile-mango/pkg/render"
@@ -34,6 +36,13 @@ func (loaded loadedInput) routeRefDiagnostics() profilemango.Diagnostics {
 	for _, role := range sortedNames(loaded.RoleInstructions) {
 		check("roles."+role+".instructions", "", loaded.RoleInstructions[role])
 	}
+	for _, bundle := range loaded.Skills {
+		for _, file := range bundle.Files {
+			if skillFileRenders(file.Content) {
+				check(bundle.Dir+"/"+file.Path, "", file.Content)
+			}
+		}
+	}
 	return diagnostics
 }
 
@@ -59,6 +68,9 @@ func (loaded loadedInput) forTarget(target string) (loadedInput, error) {
 		}
 	}
 	loaded.RoleInstructions = roles
+	if loaded.Skills, err = renderSkills(loaded.Skills, loaded.Bindings, target); err != nil {
+		return loadedInput{}, err
+	}
 	return loaded, nil
 }
 
@@ -79,6 +91,35 @@ func renderFiles(files map[string][]globalFile, bindings profilemango.Bindings, 
 			}
 			rendered[key][index] = composedFile(file.Name, fragments...)
 		}
+	}
+	return rendered, nil
+}
+
+// skillFileRenders reports whether a skill file is UTF-8 text naming a placeholder;
+// every other file, binary ones included, is copied verbatim.
+func skillFileRenders(content []byte) bool {
+	return utf8.Valid(content) && bytes.Contains(content, []byte("{{route."))
+}
+
+// renderSkills renders placeholders in each skill's text files for target, without
+// changing the input bundles. Provenance was already checked over the source bytes.
+func renderSkills(bundles []skillBundle, bindings profilemango.Bindings, target string) ([]skillBundle, error) {
+	rendered := make([]skillBundle, len(bundles))
+	for index, bundle := range bundles {
+		files := make([]skillBundleFile, len(bundle.Files))
+		for part, file := range bundle.Files {
+			files[part] = file
+			if !skillFileRenders(file.Content) {
+				continue
+			}
+			content, err := profilemango.RenderRouteRefs(file.Content, bindings, target)
+			if err != nil {
+				return nil, fmt.Errorf("render route placeholders in %s/%s: %w", bundle.Dir, file.Path, err)
+			}
+			files[part].Content = content
+		}
+		bundle.Files = files
+		rendered[index] = bundle
 	}
 	return rendered, nil
 }

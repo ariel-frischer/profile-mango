@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -123,6 +124,10 @@ type AdapterInput struct {
 	// Install says where the profile goes; for a named profile, NamedFile is its current file.
 	Install   InstallMode
 	NamedFile Snapshot
+	// Skills names the skill folders this install writes, sorted.
+	Skills []string
+	// SkillAgent is the OpenClaw agent whose skill allowlist this install sets, or "".
+	SkillAgent string
 }
 
 type Adapter interface {
@@ -147,7 +152,13 @@ type FilePatch struct {
 	// Label names the file in plans when its base name would mislead, e.g. ~/AGENTS.md.
 	Label   string
 	Content []byte
-	Fields  []string
+	// Mode is the permission a written file gets; zero keeps the existing file's mode
+	// (0600 for a new file).
+	Mode fs.FileMode
+	// RemoveEmptyDirs lists, deepest first, parent directories a Delete removes
+	// afterwards while they are empty, e.g. a released skill's folders.
+	RemoveEmptyDirs []string
+	Fields          []string
 	// Ownership records target-specific provenance needed for safe future cleanup.
 	Ownership []string `json:"-"`
 }
@@ -180,6 +191,9 @@ type TargetRequest struct {
 	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
+	// SkillAgent selects the OpenClaw agent (agents.entries key) whose skill allowlist
+	// lists the profile's skills; the manifest keeps it for later installs.
+	SkillAgent string
 }
 
 // AgentDestination selects a native named OpenCode definition, not the default config.
@@ -262,10 +276,12 @@ type TargetPlan struct {
 	VersionCheck      *VersionCheck            `json:"versionCheck,omitempty"`
 	// SkippedRequirements lists profile requirements this target does not install.
 	SkippedRequirements []SkippedRequirement `json:"skippedRequirements,omitempty"`
-	ConfigPath          string               `json:"-"`
-	ManifestPath        string               `json:"-"`
-	changes             []installfs.Change   `json:"-"`
-	checks              []installfs.Change   `json:"-"`
+	// Skills names the skill folders this target installs, in profile order.
+	Skills       []string           `json:"skills,omitempty"`
+	ConfigPath   string             `json:"-"`
+	ManifestPath string             `json:"-"`
+	changes      []installfs.Change `json:"-"`
+	checks       []installfs.Change `json:"-"`
 }
 
 type Plan struct {

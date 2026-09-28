@@ -21,7 +21,7 @@
         "permissions": {"$ref": "#/$defs/permissions"},
         "tools": {"$ref": "#/$defs/accessRules"},
         "instructions": {"$ref": "#/$defs/instructions"},
-        "skills": {"$ref": "#/$defs/paths"},
+        "skills": {"$ref": "#/$defs/skills"},
         "globalInstructions": {"$ref": "#/$defs/globalInstructions"},
         "agentFiles": {"$ref": "#/$defs/agentFiles"},
         "roles": {"$ref": "#/$defs/roles"}
@@ -51,7 +51,7 @@
             "permissions": {"$ref": "#/$defs/permissions"},
             "tools": {"$ref": "#/$defs/accessRules"},
             "instructions": {"$ref": "#/$defs/instructions"},
-            "skills": {"$ref": "#/$defs/paths"},
+            "skills": {"$ref": "#/$defs/skills"},
             "globalInstructions": {"$ref": "#/$defs/globalInstructions"}
           }
         }
@@ -108,6 +108,29 @@
       }
     },
     "paths": {"type": "array", "items": {"type": "string"}},
+    "skills": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string", "pattern": "(^|/)SKILL\\.md$"},
+          {
+            "type": "object", "additionalProperties": false, "required": ["path"],
+            "properties": {
+              "path": {"type": "string", "pattern": "(^|/)SKILL\\.md$"},
+              "source": {
+                "type": "object", "additionalProperties": false, "required": ["repo", "commit", "sha256"],
+                "properties": {
+                  "repo": {"type": "string", "minLength": 1},
+                  "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "path": {"type": "string", "minLength": 1},
+                  "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
     "accessRules": {
       "type": "object", "additionalProperties": false,
       "properties": {

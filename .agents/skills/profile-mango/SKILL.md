@@ -67,6 +67,11 @@ instructions: {append: [instructions/AGENTS.md]}
 skills: [skills/review/SKILL.md]
 ```
 
+Each `skills` entry is a skill folder's `SKILL.md` (frontmatter `description`
+required; `name`, if set, equals the folder name). A vendored copy adds
+`source: {repo, commit, path?, sha256}`, where `sha256` is the folder's tree
+digest; a mismatch fails validation and names the actual digest.
+
 `bindings/local.yaml` names a route, never credentials. `provider`/`model`/`effort`
 are required; an optional `targets` map gives named agents (`claude-code`,
 `codex`, `hermes`, `oh-my-pi`, `openclaw`, `opencode`, `pi`) override fields
@@ -264,8 +269,14 @@ mango use <profile-name>            # add --apply --yes --expect-plan <id>
 
 `mango use` only covers agents already managed (see `status`). To bring a new
 agent under a profile, first run `mango install <profile> --default --target
-<name>`. An OpenCode default install copies at most one skill; with more it
-lists skills as not installed.
+<name>`. With `use` or `--default`, Claude Code, Codex, Oh My Pi, and OpenCode
+copy each skill folder whole into their skills folder (Codex:
+`~/.agents/skills`); named profiles list skills as not installed, and switching
+to a profile without a skill removes its files or restores the replaced ones.
+OpenClaw copies skills beside every config it writes, named profiles included
+(`~/.openclaw-<name>/skills`); `mango install <p> --target openclaw --agent
+openclaw=<id>` also sets that existing agent's `agents.entries.<id>.skills`
+allowlist, which later installs keep and a switch gives back.
 
 ## Safety boundary
 

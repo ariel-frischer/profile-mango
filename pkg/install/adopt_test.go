@@ -101,13 +101,6 @@ func TestInstallAdoptionRequiresBackup(t *testing.T) {
 
 func TestInstallAdoptionKeepsWholeFileAndEditedConflicts(t *testing.T) {
 	tests := map[string]func(*testing.T) Request{
-		"unowned opencode skill": func(t *testing.T) Request {
-			request, root := openCodeTestRequest(t)
-			addOpenCodeTestSkill(t, root)
-			request.Default = true
-			writeInstallTestFile(t, filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md"), "user-owned skill")
-			return request
-		},
 		"unowned named agent": func(t *testing.T) Request {
 			request, _ := namedOpenCodeRequest(t, "primary")
 			writeInstallTestFile(t, request.Targets[0].ConfigPath, "user-owned agent\n")
