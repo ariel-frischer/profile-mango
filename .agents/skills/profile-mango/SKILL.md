@@ -1,17 +1,15 @@
 ---
 name: profile-mango
 description: >
-  Use the mango CLI (profile-mango compatibility alias) to scaffold, author,
-  validate, preview, and plan narrow installs of portable agent profiles;
-  preserve its safety boundary.
+  Operates the mango CLI (profile-mango) that installs one portable coding-agent
+  profile — model/provider/effort route, subagent roles, global instruction files,
+  skills — across Claude Code, Codex, OpenCode, Oh My Pi, Pi, Hermes, and OpenClaw.
+  Use when switching agents to another profile, changing model or effort routing or
+  subagent roles across agents, editing profile.yaml or bindings/local.yaml, checking
+  `mango status` drift, or running mango init/validate/render/doctor/install/use/undo/route.
+  Not for editing the instruction text itself (global-agent-instructions).
 license: MIT
-compatibility:
-  - Codex
-  - OpenCode
-  - Pi
-  - Cursor
-  - Gemini CLI
-  - VS Code
+compatibility: Requires the mango CLI on PATH. Usable from any Agent Skills host (Codex, OpenCode, Pi, Cursor, Gemini CLI, VS Code, Claude Code, Oh My Pi).
 metadata:
   author: Ariel Frischer
   version: 0.0.5
@@ -232,6 +230,11 @@ mango install <profile-name> --target <name> --apply --yes --expect-plan <planID
 mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
 ```
 
+Scripts read the ID from `--json` output as `.planID` (install, use, and undo;
+undo also reports `originalPlanID`), or from the text line `plan <id> (ready)`.
+Target names are `claude-code`, `codex`, `hermes`, `oh-my-pi` (not `omp`),
+`openclaw`, `opencode`, `pi`, optionally `@<version>`.
+
 Agents with named profiles, native or emulated, get the profile under its own
 name and leave the agent's default settings alone; the plan prints
 `use it: <command>` (Codex: `codex --profile <profile-name>`, from
@@ -252,9 +255,11 @@ restores the latest committed install, or an explicit `--original-plan <id>`.
 
 `mango use <profile>` switches every managed agent (or `--target`/`--all`) to
 the profile as its default, with the same plan-then-`--apply --yes
---expect-plan <id>` consent. Global files the new profile does not write are
-released: deleted if profile-mango created them, restored from the backup if
-adopted. `mango status [--json]` is read-only: per agent the recorded profile,
+--expect-plan <id>` consent. A `(blocked)` plan with `conflict` rows means an
+owned file was edited outside mango: review the file rows with `-v`, then rerun the
+plan with `--override` (or `--target` the unaffected agents). Global files the
+new profile does not write are released: deleted if profile-mango created them,
+restored from the backup if adopted. `mango status [--json]` is read-only: per agent the recorded profile,
 each owned file `in-sync`/`edited`/`missing`, and `sources:
 current`/`changed`/`unknown` against the current profile files and bindings.
 Each agent is labeled at its installed version (same `--version` probe as

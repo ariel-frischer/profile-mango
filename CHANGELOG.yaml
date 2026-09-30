@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased: {}
+    unreleased:
+        fixed:
+            - 'Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows'
     0.2.0:
         date: 2026-09-27
         added:
