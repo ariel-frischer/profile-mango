@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires the mango CLI on PATH. Usable from any Agent Skills host (Codex, OpenCode, Pi, Cursor, Gemini CLI, VS Code, Claude Code, Oh My Pi).
 metadata:
   author: Ariel Frischer
-  version: 0.0.5
+  version: 0.0.6
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
