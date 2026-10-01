@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows
+- Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
 
 ## [0.2.0] - 2026-09-27
 

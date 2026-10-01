@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -112,6 +113,24 @@ func hermesProfilesRoot(env PathEnv) (string, error) {
 }
 
 func (hermesAdapter) NamedProfileUse(name string) string { return "hermes -p " + name }
+
+func (hermesAdapter) OwnedFieldValues(content []byte, fields []string) (map[string]FieldChange, error) {
+	values, err := hermes.OwnedConfigValues(content)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]FieldChange, len(values))
+	for _, field := range fields {
+		name := strings.TrimPrefix(field, "config.")
+		if _, suffix, found := strings.Cut(field, ".config."); found {
+			name = suffix
+		}
+		if value, found := values[name]; found {
+			result[field] = FieldChange{Path: field, Before: value}
+		}
+	}
+	return result, nil
+}
 
 func addHermesFile(patch *Patch, file hermesFile, route profilemango.RouteBinding) error {
 	result, err := hermes.PatchConfig(file.content, route)

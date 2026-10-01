@@ -3,6 +3,7 @@ versions:
     unreleased:
         fixed:
             - 'Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows'
+            - Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
     0.2.0:
         date: 2026-09-27
         added:
