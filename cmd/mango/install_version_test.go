@@ -111,6 +111,68 @@ func TestInstallHeadersShowInstalledVersion(t *testing.T) {
 	}
 }
 
+func TestInstallApplyRecordsInstalledVersion(t *testing.T) {
+	tests := map[string]struct {
+		scripts map[string]string
+		version string
+	}{
+		"in range":     {map[string]string{"codex": "echo 'codex-cli 0.157.3'"}, "0.157.3"},
+		"out of range": {map[string]string{"codex": "echo 'codex-cli 0.155.1'"}, "0.155.1"},
+		"not found":    {nil, "0.157.1"},
+		"unknown":      {map[string]string{"codex": "echo 'unknown'"}, "0.157.1"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			doctorFakeBinaries(t, test.scripts)
+			withAgentDetection(t)
+			options := codexVersionInstallOptions(t, true)
+			manifestPath := filepath.Join(t.TempDir(), "manifest.json")
+			options.manifests = []string{"codex=" + manifestPath}
+			var plan install.Plan
+			if err := json.Unmarshal([]byte(runInstallCapture(t, options)), &plan); err != nil {
+				t.Fatal(err)
+			}
+			options.jsonOutput, options.apply, options.yes = false, true, true
+			options.expectPlan = plan.PlanID
+			output := runInstallCapture(t, options)
+			if !strings.Contains(output, "applied codex@"+test.version+": committed") {
+				t.Errorf("apply mislabels installed version:\n%s", output)
+			}
+			data, err := os.ReadFile(manifestPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var manifest install.Manifest
+			if err := json.Unmarshal(data, &manifest); err != nil || manifest.Target.Version != test.version {
+				t.Errorf("manifest target = %#v, err=%v; want %s", manifest.Target, err, test.version)
+			}
+			assertVersionReinstallNoop(t, options, test.version)
+		})
+	}
+}
+
+func assertVersionReinstallNoop(t *testing.T, options installOptions, version string) {
+	t.Helper()
+	options.apply, options.yes, options.jsonOutput = false, false, true
+	options.expectPlan = ""
+	var plan install.Plan
+	if err := json.Unmarshal([]byte(runInstallCapture(t, options)), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != install.StatusNoop || plan.Targets[0].Target.Version != "0.157.1" {
+		t.Fatalf("reinstall must retain qualified adapter and be noop: %#v", plan)
+	}
+	options.apply, options.yes = true, true
+	options.expectPlan = plan.PlanID
+	var result install.ApplyReport
+	if err := json.Unmarshal([]byte(runInstallCapture(t, options)), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Targets[0].Target != "codex@"+version || result.Targets[0].Status != install.StatusNoop {
+		t.Fatalf("JSON apply reports wrong installed identity or status: %#v", result)
+	}
+}
+
 func TestInstallShowsVersionProbeProgressWithoutPollutingJSON(t *testing.T) {
 	started := make(chan struct{})
 	release := make(chan struct{})

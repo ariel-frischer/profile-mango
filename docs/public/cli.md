@@ -21,6 +21,12 @@ every skipped requirement, and warnings. It ends with target and file counts.
 `--verbose` adds full version and diagnostic detail (plus undo hashes). `undo`
 also shows its redacted file diff and a per-target apply command.
 
+Install apply results and ownership manifests record the detected installed
+agent version. If the version cannot be detected, they retain the adapter's
+qualified version. The JSON plan's `target` and `metadata` still identify the
+qualified adapter used to generate settings; `versionCheck` records the
+installed version and its relation to the tested range.
+
 - `--all` selects every supported agent and skips those whose config folder
   does not exist.
 - An existing config is adopted with a backup. A Mango-installed value you

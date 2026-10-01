@@ -149,11 +149,11 @@ func CheckVersion(metadata AdapterMetadata, detection VersionDetection) (Version
 	return check, nil
 }
 
-// attachVersionCheck records the installed agent version for a ready or noop
-// target and adds a visible warning when it is missing, unreadable, or outside
-// the tested range. It never changes the target status.
+// attachVersionCheck records the installed agent version after adapter and
+// conflict checks, before manifest serialization. Missing, unreadable, or
+// out-of-range versions add a warning without blocking installation.
 func attachVersionCheck(targetPlan *TargetPlan, detect VersionDetector) {
-	if detect == nil || (targetPlan.Status != StatusReady && targetPlan.Status != StatusNoop) {
+	if detect == nil {
 		return
 	}
 	check, err := CheckVersion(targetPlan.Metadata, detect(targetPlan.Target))
@@ -165,6 +165,16 @@ func attachVersionCheck(targetPlan *TargetPlan, detect VersionDetector) {
 	if message := versionWarning(check); message != "" {
 		targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.version_"+strings.ReplaceAll(check.Status, "-", "_"), "target", message, 0, 0)
 	}
+}
+
+// installedTarget identifies the installed agent without changing the
+// qualified target used to select adapters and generate settings.
+func (targetPlan TargetPlan) installedTarget() Target {
+	target := targetPlan.Target
+	if check := targetPlan.VersionCheck; check != nil && check.Detected != "" {
+		target.Version = check.Detected
+	}
+	return target
 }
 
 func versionWarning(check VersionCheck) string {
