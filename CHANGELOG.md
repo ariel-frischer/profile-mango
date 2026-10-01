@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-10-01
-
 ### Fixed
 
 - Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows
@@ -190,8 +188,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.1...HEAD
-[0.2.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.0...v0.2.1
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...v0.1.1
