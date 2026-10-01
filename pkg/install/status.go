@@ -189,13 +189,13 @@ func inspectTarget(registry *Registry, env PathEnv, target TargetRequest) (Targe
 	if manifest.Target.Version != "" && manifest.Target.Version != target.Target.Version {
 		status.RecordedVersion = manifest.Target.Version
 	}
-	err = addOwnedFiles(&status, manifest, env)
+	err = addOwnedFiles(&status, manifest, env, adapter)
 	return status, err
 }
 
-func addOwnedFiles(status *TargetStatus, manifest Manifest, env PathEnv) error {
+func addOwnedFiles(status *TargetStatus, manifest Manifest, env PathEnv, adapter Adapter) error {
 	for _, file := range manifest.Files {
-		fileStatus, err := inspectOwnedFile(status.ConfigPath, file, env)
+		fileStatus, err := inspectOwnedFile(status.ConfigPath, file, env, adapter)
 		if err != nil {
 			return err
 		}
@@ -210,7 +210,13 @@ func addOwnedFiles(status *TargetStatus, manifest Manifest, env PathEnv) error {
 // the default, so owning one records a default install.
 var defaultOnlyKinds = map[string]bool{"config": true, "global-instruction": true, "role-definition": true, "skill": true}
 
-func inspectOwnedFile(configPath string, file ManifestFile, env PathEnv) (FileStatus, error) {
+// ownedFieldReader reads normalized live values independently of the recorded profile.
+// This also covers named files belonging to a different profile from the default.
+type ownedFieldReader interface {
+	OwnedFieldValues(content []byte, fields []string) (map[string]FieldChange, error)
+}
+
+func inspectOwnedFile(configPath string, file ManifestFile, env PathEnv, adapter Adapter) (FileStatus, error) {
 	snapshot, err := installfs.SnapshotFile(file.Path)
 	if err != nil {
 		return FileStatus{}, fmt.Errorf("inspect owned file %s: %w", filepath.Base(file.Path), err)
@@ -221,6 +227,12 @@ func inspectOwnedFile(configPath string, file ManifestFile, env PathEnv) (FileSt
 		result.State = FileMissing
 	case snapshot.SHA256 != file.SHA256:
 		result.State = FileEdited
+		if reader, ok := adapter.(ownedFieldReader); ok && wholeFileKind(file.Fields) == "" {
+			fields, err := reader.OwnedFieldValues(snapshot.Content, file.Fields)
+			if err == nil && ownedFieldsIntact(FilePatch{LiveFields: true}, file, fields) {
+				result.State = FileOtherEdits
+			}
+		}
 	}
 	for _, field := range file.Fields {
 		if !isOwnershipMarker(field) {
@@ -283,20 +295,26 @@ func sourceState(request StatusRequest, registry *Registry, status *TargetStatus
 	status.Source, status.SourceReason = sourceVerdict(plan, *status)
 }
 
-// markOtherEdits relabels edited field-owned files whose owned values the plan found
-// intact: it leaves them unchanged, or updates them without an override because every
-// owned field still holds its recorded written value. Only unrelated content differs.
+// markOtherEdits reconciles live content with the planned profile. Byte-identical
+// whole files are in sync even when their recorded hash is stale; field-owned files
+// retain their distinct label for changes outside the owned values.
 func markOtherEdits(status *TargetStatus, target TargetPlan, env PathEnv) {
-	unchanged := map[string]bool{}
+	unchanged := map[string]string{}
 	for _, file := range target.Files {
 		intact := file.Action == ActionNoop || (file.Action == ActionUpdate && target.Status == StatusReady)
 		if intact && file.targetPath != "" {
-			unchanged[relativeOwnedPath(status.ConfigPath, file.targetPath, env)] = true
+			state := FileOtherEdits
+			if wholeFileKind(file.ownership) != "" && file.Action == ActionNoop {
+				state = FileInSync
+			}
+			if wholeFileKind(file.ownership) == "" || file.Action == ActionNoop {
+				unchanged[relativeOwnedPath(status.ConfigPath, file.targetPath, env)] = state
+			}
 		}
 	}
 	for index, file := range status.Files {
-		if file.State == FileEdited && wholeFileKind([]string{file.Kind}) == "" && unchanged[file.Path] {
-			status.Files[index].State = FileOtherEdits
+		if state := unchanged[file.Path]; file.State == FileEdited && state != "" {
+			status.Files[index].State = state
 		}
 	}
 }

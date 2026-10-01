@@ -124,6 +124,25 @@ func generatedConfig(values configValues) []byte {
 	return []byte("model:\n  provider: " + yamlString(values.provider) + "\n  default: " + yamlString(values.model) + "\nagent:\n  reasoning_effort: " + yamlString(values.effort) + "\n")
 }
 
+// OwnedConfigValues reads normalized scalars for Hermes' three installable fields.
+// It does not inspect authentication or modify the supplied config.
+func OwnedConfigValues(source []byte) (map[string]string, error) {
+	root, err := parseConfig(source)
+	if err != nil {
+		return nil, err
+	}
+	values := make(map[string]string, 3)
+	for _, path := range []string{"model.provider", "model.default", "agent.reasoning_effort"} {
+		section, key, _ := strings.Cut(path, ".")
+		_, parent := mappingEntry(root, section)
+		_, value := mappingEntry(parent, key)
+		if value != nil && value.Kind == yaml.ScalarNode && value.Tag != "!!null" {
+			values[path] = value.Value
+		}
+	}
+	return values, nil
+}
+
 func parseConfig(source []byte) (*yaml.Node, error) {
 	if bytes.HasPrefix(source, []byte{0xef, 0xbb, 0xbf}) {
 		return nil, fmt.Errorf("hermes config must be UTF-8 without a byte-order mark")

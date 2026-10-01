@@ -340,7 +340,12 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		targetPlan.Reason = conflictReason(targetPlan.Diagnostics)
 		return targetPlan
 	}
-	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, targetRequest, request.ProfileName, patch, targetPlan.Files, changes)
+	recordedProfile := request.ProfileName
+	// A separate named install adds ownership without selecting a new default.
+	if manifestSnapshot.Exists && targetPlan.Install != nil && targetPlan.Install.Mode == InstallModeNamedProfile && !targetPlan.Install.SetsDefault && namedFile.Path != "" {
+		recordedProfile = ownership.Profile
+	}
+	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, targetRequest, recordedProfile, patch, targetPlan.Files, changes)
 	if err != nil {
 		targetPlan.Status = StatusBlocked
 		targetPlan.Reason = err.Error()

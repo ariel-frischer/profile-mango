@@ -27,6 +27,8 @@ also shows its redacted file diff and a per-target apply command.
   edited later needs `--override`. In a shared config, edits outside the
   Mango-owned fields (other keys, or the agent re-serializing the file) do
   not; see [concepts](concepts.md#what-install-does).
+- A named install without `--default` adds the named profile's files without
+  switching an already recorded profile or the agent's default config.
 - `--strict` blocks instead of skipping requirements an agent cannot install.
 - `--json` is the stable machine-readable contract.
 
@@ -41,6 +43,12 @@ was tested with, the label names both, such as `codex@0.155.1 (tested
 on PATH)`. `--json` adds a `versionCheck` object per agent with `binary`,
 `qualified`, `range`, `detected`, and `status` (`in-range`, `out-of-range`,
 `not-found`, or `unknown`).
+
+Whole owned files whose bytes match the profile are `in-sync`, even if an older
+ownership record has a stale hash. For field-owned Hermes configs, including
+separate named profiles, quoting or serialization changes alone are
+`other-edits`: the normalized owned values still match what Mango wrote.
+Changed or missing owned values remain `edited`.
 
 ## Selecting agents
 
