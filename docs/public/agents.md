@@ -55,12 +55,19 @@ apply shows in the plan as `effort <value>: NOT APPLIED`.
 | Codex | `0.157.1` | `>=0.157.1 <0.158.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
 | Pi | `0.87.1` | `>=0.87.1 <0.88.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
-| Oh My Pi | `18.3.2` | `>=18.3.2 <18.4.0` | `~/.omp/agent/config.yml` |
+| Oh My Pi | `18.4.6` | `>=18.4.6 <18.5.0` | `~/.omp/agent/config.yml` |
 | OpenClaw | `2026.9.5` | `>=2026.9.5 <2026.10.0` | `~/.openclaw/openclaw.json` (or `$OPENCLAW_CONFIG_PATH`) |
 | Hermes | `0.21.3` | `>=0.21.3 <0.22.0` | `~/.hermes/config.yaml` (or `$HERMES_HOME`) |
 
 The evidence behind every row is in the developer
 [target evidence ledger](../dev/target-evidence.md).
+
+Plan headers show the installed version when detected. An installed binary outside
+the tested range adds `(tested <range>)` and a warning; the adapter's qualified
+settings contract is unchanged. For edited Mango-owned OpenCode profile agents,
+`--override` lists an `override` file action and preserves edited bytes in a backup
+before replacement (unless backups were explicitly disabled). Unowned collisions
+and explicit `--agent` destinations remain protected.
 
 ## Claude Code
 

@@ -487,8 +487,22 @@ func styledPlanStatus(status string, styles outputStyles) string {
 	}
 }
 
+// planTargetLabel identifies the installed binary, without changing the exact
+// qualified target used by the plan and its ownership contract.
+func planTargetLabel(target install.TargetPlan) string {
+	check := target.VersionCheck
+	if check == nil || check.Detected == "" {
+		return target.Target.String()
+	}
+	label := target.Target.Name + "@" + check.Detected
+	if check.Status == install.VersionOutOfRange {
+		label += " (tested " + check.Range + ")"
+	}
+	return label
+}
+
 func writeCompactTarget(output io.Writer, target install.TargetPlan, styles outputStyles) error {
-	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(target.Target.String())), styledPlanStatus(target.Status, styles)); err != nil {
+	if _, err := fmt.Fprintf(output, "  %s: %s", styles.label(humanPath(planTargetLabel(target))), styledPlanStatus(target.Status, styles)); err != nil {
 		return err
 	}
 	if target.Reason != "" && (target.Status == install.StatusBlocked || target.Status == install.StatusConflict || target.Status == install.StatusSkipped) {
@@ -821,7 +835,7 @@ func writeTargetWarnings(output io.Writer, diagnostics profilemango.Diagnostics)
 }
 
 func writeHumanTarget(output io.Writer, target install.TargetPlan) error {
-	if _, err := fmt.Fprintf(output, "  %s: %s", humanPath(target.Target.String()), humanPath(target.Status)); err != nil {
+	if _, err := fmt.Fprintf(output, "  %s: %s", humanPath(planTargetLabel(target)), humanPath(target.Status)); err != nil {
 		return err
 	}
 	if target.Reason != "" {

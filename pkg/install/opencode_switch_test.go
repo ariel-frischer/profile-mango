@@ -119,6 +119,45 @@ func applySwitchTestPlan(t *testing.T, request Request) {
 	}
 }
 
+func TestOpenCodeOverrideEditedOwnedAgent(t *testing.T) {
+	request, _ := openCodeTestRequest(t)
+	request.Override = false
+	applySwitchTestPlan(t, request)
+	agent := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "agents", "route-only.md")
+	original, err := os.ReadFile(agent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := strings.Replace(string(original), "gpt-5.6", "gpt-6.1-sol", 1)
+	if edited == string(original) {
+		t.Fatal("fixture model was not edited")
+	}
+	writeInstallTestFile(t, agent, edited)
+	blocked, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if blocked.Status != StatusBlocked || blocked.Targets[0].Status != StatusConflict {
+		t.Fatalf("edited agent without override = %s/%s", blocked.Status, blocked.Targets[0].Status)
+	}
+	request.Override = true
+	plan, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != StatusReady {
+		t.Fatalf("override plan = %s: %#v", plan.Status, plan.Targets[0].Diagnostics)
+	}
+	if file := piFilePlan(plan.Targets[0], filepath.Base(agent)); file.Action != ActionOverride {
+		t.Fatalf("override file = %#v", file)
+	}
+	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+		t.Fatal(err)
+	}
+	assertInstallTestFile(t, agent, string(original))
+	assertInstallTestFile(t, installfs.BackupPath(agent, plan.PlanID), edited)
+}
+
 func TestOpenCodeSwitchRejectsEditedLegacySkill(t *testing.T) {
 	request, root := openCodeTestRequest(t)
 	request.Default = true

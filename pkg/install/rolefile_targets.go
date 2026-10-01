@@ -53,7 +53,7 @@ func (openCodeAdapter) renderRoleFile(file roleFile) ([]byte, error) {
 	return markdownAgent([][2]string{{"description", file.Description}, {"mode", "subagent"}, {"model", file.Model}, {"variant", file.Effort}}, file.Instructions), nil
 }
 
-// Oh My Pi 18.3.2 discovers user agents in ~/.omp/agent/agents/*.md with required name
+// Oh My Pi 18.4.6 discovers user agents in ~/.omp/agent/agents/*.md with required name
 // and description (task/discovery.ts, discovery/helpers.ts); see docs/dev/agents/oh-my-pi.md.
 func (ohMyPiAdapter) roleFilePath(role string) string { return "agents/" + role + ".md" }
 

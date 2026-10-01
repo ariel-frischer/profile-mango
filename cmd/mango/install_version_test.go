@@ -84,6 +84,33 @@ func TestInstallReportsInstalledAgentVersion(t *testing.T) {
 	}
 }
 
+func TestInstallHeadersShowInstalledVersion(t *testing.T) {
+	tests := map[string]struct {
+		detected string
+		label    string
+	}{
+		"in range":     {"0.157.3", "codex@0.157.3: ready"},
+		"out of range": {"0.155.1", "codex@0.155.1 (tested >=0.157.1 <0.158.0): ready"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			doctorFakeBinaries(t, map[string]string{"codex": "echo 'codex-cli " + test.detected + "'"})
+			withAgentDetection(t)
+			for _, verbose := range []bool{false, true} {
+				options := codexVersionInstallOptions(t, false)
+				options.verbose = verbose
+				human := runInstallCapture(t, options)
+				if !strings.Contains(human, "  "+test.label) {
+					t.Fatalf("verbose=%v header missing %q:\n%s", verbose, test.label, human)
+				}
+				if strings.Contains(human, "  codex@0.157.1:") {
+					t.Fatalf("header mislabels installed version:\n%s", human)
+				}
+			}
+		})
+	}
+}
+
 func TestInstallShowsVersionProbeProgressWithoutPollutingJSON(t *testing.T) {
 	started := make(chan struct{})
 	release := make(chan struct{})
