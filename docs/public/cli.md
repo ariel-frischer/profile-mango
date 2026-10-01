@@ -50,6 +50,16 @@ separate named profiles, quoting or serialization changes alone are
 `other-edits`: the normalized owned values still match what Mango wrote.
 Changed or missing owned values remain `edited`.
 
+Status also compares each skill of an agent's default profile with its folder
+in the global skills directory (`~/.agents/skills`, or `--global-skills
+<dir>`). The profile's copy is canonical. A folder that differs is listed with
+the differing files and the newer side by file modification time
+(`profile`, `global`, or `unknown`); `--json` puts these rows under `skills`.
+A global copy that matches the profile, or its rendering of `{{route.…}}`
+placeholders for any agent, is not drift, and an absent folder is not listed.
+When the global copy is newer, port its edits into the profile's folder;
+mango never copies an installed skill back into the profile.
+
 ## Selecting agents
 
 `-t` is short for `--target`. `install`, `undo`, `doctor`, and `agents check`

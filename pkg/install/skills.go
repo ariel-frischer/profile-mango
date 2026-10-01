@@ -41,6 +41,8 @@ type skillBundleFile struct {
 	Path    string // slash-separated, relative to the skill folder
 	Mode    fs.FileMode
 	Content []byte
+	// ModTime is the package file's modification time in Unix nanoseconds.
+	ModTime int64
 }
 
 // skillInstaller is implemented by adapters whose pinned evidence qualifies a user skill
@@ -172,7 +174,7 @@ func loadSkillBundle(root string, ref profilemango.SkillRef) (skillBundle, []pro
 			return skillBundle{}, nil, nil, fmt.Errorf("skill %s: read %s: %w", dir, name, errOrMissing(err))
 		}
 		mode := profilemango.SkillMode(snapshot.Mode)
-		bundle.Files = append(bundle.Files, skillBundleFile{Path: name, Mode: mode, Content: snapshot.Content})
+		bundle.Files = append(bundle.Files, skillBundleFile{Path: name, Mode: mode, Content: snapshot.Content, ModTime: snapshot.Identity.ModTime})
 		digests = append(digests, profilemango.ResourceDigest{Path: dir + "/" + name, Kind: ownershipSkill, SHA256: snapshot.SHA256, Size: snapshot.Size})
 		sources = append(sources, sourceCheck{Path: snapshot.Path, Snapshot: snapshot})
 		tree = append(tree, profilemango.SkillTreeFile{Path: name, Mode: mode, SHA256: snapshot.SHA256})
@@ -276,10 +278,11 @@ func addSkillPatches(adapter Adapter, request Request, target TargetRequest, loa
 			}
 		}
 		for _, bundle := range loaded.Skills {
-			if blocked := skillDestinationConflicts(root, bundle, label, targetPlan); !blocked {
-				warnUnmanagedSkillFiles(filepath.Join(root, bundle.Name), bundle, ownership, label, targetPlan)
-				patch.Files = append(patch.Files, skillFilePatches(root, bundle, label)...)
+			if skillDestinationConflicts(root, bundle, label, targetPlan) || newerUnownedSkillFiles(request, root, bundle, ownership, label, targetPlan) {
+				continue
 			}
+			warnUnmanagedSkillFiles(filepath.Join(root, bundle.Name), bundle, ownership, label, targetPlan)
+			patch.Files = append(patch.Files, skillFilePatches(root, bundle, label)...)
 		}
 	}
 	return "", ""
@@ -367,6 +370,31 @@ func destinationProblem(path string, isFile bool) string {
 		return "is not a directory"
 	}
 	return ""
+}
+
+// newerUnownedSkillFiles reports, as a conflict, every existing skill file profile-mango
+// does not own that differs from the profile's copy and was modified after it: adopting
+// it would replace newer edits with an older snapshot. --override replaces it anyway,
+// with the usual backup. Older unowned copies are still adopted.
+func newerUnownedSkillFiles(request Request, root string, bundle skillBundle, ownership Manifest, label func(string) string, targetPlan *TargetPlan) bool {
+	if request.Override {
+		return false
+	}
+	conflict := false
+	for _, file := range bundle.Files {
+		path := filepath.Join(root, bundle.Name, filepath.FromSlash(file.Path))
+		if _, owned := manifestEntry(ownership, path); owned {
+			continue
+		}
+		live, err := installfs.SnapshotFile(path)
+		if err != nil || !live.Exists || live.SHA256 == installfs.Hash(file.Content) || live.Identity.ModTime <= file.ModTime {
+			continue
+		}
+		name := label(path)
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.skill_destination_newer", name, name+" is not managed by profile-mango, differs from the profile's "+bundle.Dir+"/"+file.Path+", and is newer; port its edits into the profile, or pass --override to replace it with a backup", 0, 0)
+		conflict = true
+	}
+	return conflict
 }
 
 // warnUnmanagedSkillFiles lists files in an existing skill folder that neither the

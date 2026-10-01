@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows
 - Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
 - Allow --override to replace edited Mango-owned OpenCode profile agent files with a backup; plan headers now show installed agent versions and the tested range when outside it
+- Installing a skill no longer silently replaces an unmanaged skill file that differs and is newer than the profile's copy; the plan conflicts until you port the edits or pass --override
+
+### Added
+
+- mango status lists each skill of an agent's default profile whose copy in the global skills directory (~/.agents/skills, or --global-skills) differs from the profile's copy, naming the differing files and which side is newer; the profile's copy is canonical
 
 ### Changed
 

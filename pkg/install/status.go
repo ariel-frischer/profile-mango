@@ -40,6 +40,9 @@ type StatusRequest struct {
 	Targets []TargetRequest
 	// DetectVersion, when set, reports each qualified target's installed agent version.
 	DetectVersion VersionDetector
+	// GlobalSkillsRoot is the global skills directory compared with profile-owned
+	// skills; empty means $HOME/.agents/skills.
+	GlobalSkillsRoot string
 }
 
 // StatusReport is the deterministic state of every inspected target.
@@ -47,6 +50,8 @@ type StatusReport struct {
 	APIVersion string         `json:"apiVersion"`
 	Kind       string         `json:"kind"`
 	Targets    []TargetStatus `json:"targets"`
+	// Skills lists profile-owned skills whose global copy differs from the profile.
+	Skills []SkillDrift `json:"skills,omitempty"`
 }
 
 // TargetStatus is one target's ownership state. Paths are relative to its config directory.
@@ -137,6 +142,7 @@ func InspectStatus(request StatusRequest) (StatusReport, error) {
 		report.Targets = append(report.Targets, status)
 	}
 	sort.Slice(report.Targets, func(i, j int) bool { return report.Targets[i].Target.String() < report.Targets[j].Target.String() })
+	report.Skills = globalSkillDrift(request, registry, report.Targets)
 	return report, nil
 }
 

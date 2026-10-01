@@ -73,6 +73,13 @@ each file keeps execute permission (`0755`) or is written `0644`. Agents that
 take skills install them with `mango use` or `--default`; see
 [agents](agents.md) for where each one puts them.
 
+The folder in your package is the canonical copy; installed folders are
+output and are never copied back. An install refuses to replace a skill file
+mango does not own when that file differs and is newer than the package copy,
+unless you pass `--override` (it is backed up first); an older one is adopted
+with a backup. `mango status` lists skills whose global copy differs and which
+side is newer; see [status](cli.md#status).
+
 `source` records where a vendored skill came from; `repo` is a URL and
 `commit` the full 40-character commit. Nothing is downloaded: copy the folder
 into your package yourself, then pin `sha256`, the folder's tree digest. The

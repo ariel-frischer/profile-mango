@@ -43,6 +43,8 @@ type installOptions struct {
 	nonInteractive bool
 	// use (mango use) makes the profile each target's default and releases files it no longer writes.
 	use bool
+	// globalSkills (mango status) overrides the global skills directory compared with profile skills.
+	globalSkills string
 }
 
 func newInstallCmd() *cobra.Command {

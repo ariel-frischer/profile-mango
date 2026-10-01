@@ -18,7 +18,8 @@ func newStatusCmd() *cobra.Command {
 		Long: "Reads each agent's ownership manifest at its default config path (or --config), reports the recorded " +
 			"profile, every owned file as in-sync, edited, or missing, and whether the profile's current sources " +
 			"would change what is installed, naming each owned setting whose live value differs from the profile. Each agent is labeled " +
-			"with its installed version, plus the tested version when they differ.",
+			"with its installed version, plus the tested version when they differ. It also lists each skill of an agent's default " +
+			"profile whose copy in the global skills directory differs from the profile's copy, and which side is newer.",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -33,6 +34,7 @@ func newStatusCmd() *cobra.Command {
 	flags.StringArrayVar(&options.configs, "config", nil, "target[@version]=explicit config path; selects the target")
 	flags.StringArrayVar(&options.manifests, "manifest", nil, "target[@version]=explicit ownership manifest path")
 	flags.BoolVar(&options.jsonOutput, "json", false, "emit the deterministic status as JSON")
+	flags.StringVar(&options.globalSkills, "global-skills", "", "global skills directory compared with profile skills (defaults to ~/.agents/skills)")
 	return cmd
 }
 
@@ -50,7 +52,7 @@ func runStatus(cmd *cobra.Command, options installOptions) error {
 	}
 	report, err := install.InspectStatus(install.StatusRequest{
 		ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot, BindingsPath: paths.bindings,
-		Registry: registry, Env: install.OSPathEnv(), Targets: targets,
+		Registry: registry, Env: install.OSPathEnv(), Targets: targets, GlobalSkillsRoot: options.globalSkills,
 		DetectVersion: versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector),
 	})
 	if err != nil {
@@ -71,6 +73,17 @@ func writeHumanStatus(output io.Writer, report install.StatusReport) error {
 	styles := stylesFor(output, true)
 	for _, target := range report.Targets {
 		if err := writeHumanTargetStatus(output, target, styles); err != nil {
+			return err
+		}
+	}
+	return writeHumanSkillDrift(output, report.Skills, styles)
+}
+
+// writeHumanSkillDrift prints each profile skill whose global copy differs, the newer
+// side, and the safe next step; the profile's copy is canonical.
+func writeHumanSkillDrift(output io.Writer, drift []install.SkillDrift, styles outputStyles) error {
+	for _, entry := range drift {
+		if _, err := fmt.Fprintf(output, "%s  %s differs from profile %s (%s); newer: %s\n  files: %s\n  %s\n", styles.label("skill "+entry.Skill), entry.Global, entry.Profile, entry.Snapshot, entry.Newer, strings.Join(entry.Files, ", "), entry.Hint); err != nil {
 			return err
 		}
 	}
