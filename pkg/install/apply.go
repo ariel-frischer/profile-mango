@@ -40,7 +40,7 @@ func preflightApplyReport(plan Plan, cause error, failedTarget string) ApplyRepo
 	report := ApplyReport{Status: StatusNotAttempted, Targets: make([]ApplyTargetResult, 0, len(targets))}
 	hasPending := false
 	for _, target := range targets {
-		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
+		result := ApplyTargetResult{Target: target.installedTarget().String(), Status: target.Status}
 		changed := len(target.changes) > 0 || target.Status == StatusReady
 		if changed {
 			result.Status = StatusNotAttempted
@@ -90,7 +90,7 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 func targetApplyReport(targets []TargetPlan, status string, cause error) ApplyReport {
 	report := ApplyReport{Status: status, Targets: make([]ApplyTargetResult, 0, len(targets))}
 	for _, target := range targets {
-		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
+		result := ApplyTargetResult{Target: target.installedTarget().String(), Status: target.Status}
 		if len(target.changes) > 0 {
 			result.Status = status
 			if cause != nil {

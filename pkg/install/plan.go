@@ -54,7 +54,6 @@ func BuildPlan(request Request) (Plan, error) {
 	plan.sources = loaded.Sources
 	for _, targetRequest := range targets {
 		targetPlan := planTarget(request, registry, targetRequest, loaded)
-		attachVersionCheck(&targetPlan, request.DetectVersion)
 		plan.Targets = append(plan.Targets, targetPlan)
 		plan.Diagnostics = append(plan.Diagnostics, targetPlan.Diagnostics...)
 	}
@@ -340,12 +339,15 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		targetPlan.Reason = conflictReason(targetPlan.Diagnostics)
 		return targetPlan
 	}
+	attachVersionCheck(&targetPlan, request.DetectVersion)
 	recordedProfile := request.ProfileName
 	// A separate named install adds ownership without selecting a new default.
 	if manifestSnapshot.Exists && targetPlan.Install != nil && targetPlan.Install.Mode == InstallModeNamedProfile && !targetPlan.Install.SetsDefault && namedFile.Path != "" {
 		recordedProfile = ownership.Profile
 	}
-	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, targetRequest, recordedProfile, patch, targetPlan.Files, changes)
+	manifestTarget := targetRequest
+	manifestTarget.Target = targetPlan.installedTarget()
+	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, manifestTarget, recordedProfile, patch, targetPlan.Files, changes)
 	if err != nil {
 		targetPlan.Status = StatusBlocked
 		targetPlan.Reason = err.Error()
@@ -640,8 +642,8 @@ func decodeManifest(data []byte, target Target) (Manifest, error) {
 	if manifest.APIVersion != ManifestAPIVersion || manifest.Kind != ManifestKind {
 		return Manifest{}, fmt.Errorf("ownership manifest version or kind is unsupported")
 	}
-	// A manifest recorded by an earlier qualified version of the same target stays
-	// valid; the next apply rewrites it at the current version.
+	// Qualified and detected versions of the same target share ownership.
+	// The next apply records the currently detected version when available.
 	if manifest.Target.Name != "" && manifest.Target.Name != target.Name {
 		return Manifest{}, fmt.Errorf("ownership manifest target %s does not match %s", manifest.Target.String(), target.String())
 	}

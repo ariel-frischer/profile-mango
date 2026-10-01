@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
 - Allow --override to replace edited Mango-owned OpenCode profile agent files with a backup; plan headers now show installed agent versions and the tested range when outside it
 - Installing a skill no longer silently replaces an unmanaged skill file that differs and is newer than the profile's copy; the plan conflicts until you port the edits or pass --override
+- Install apply results and ownership manifests record the detected installed agent version instead of the adapter qualification version.
 
 ### Added
 
