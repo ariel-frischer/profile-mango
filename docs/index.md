@@ -35,7 +35,7 @@
 - [`dev/agents/claude-code.md`](dev/agents/claude-code.md) - Exact Claude Code v2.1.278 artifact provenance, mutable-documentation boundary, inert preview syntax, and bounded model-only native installation evidence.
 - [`dev/agents/codex.md`](dev/agents/codex.md) - Codex 0.157.1 configuration and precedence, inert preview boundary, and bounded three-setting installation.
 - [`dev/agents/pi.md`](dev/agents/pi.md) - Exact Pi v0.87.1 source/package provenance, inert preview syntax, static effect review, and bounded settings-module installation evidence.
-- [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.3.2 source/release evidence (v18.2.6 addon build), default model-role native getter qualification, source-reviewed per-role selectors, and broader blocked capabilities.
+- [`dev/agents/oh-my-pi.md`](dev/agents/oh-my-pi.md) - Exact Oh My Pi v18.4.6 source/release evidence (v18.2.6 addon build), isolated overlay settings qualification, source-reviewed per-role selectors and skill collision changes, and broader unverified capabilities.
 - [`dev/agents/openclaw.md`](dev/agents/openclaw.md) - Exact OpenClaw v2026.9.5 source evidence, JSON5 preview syntax, and blocked native inspection boundary.
 - [`dev/agents/hermes.md`](dev/agents/hermes.md) - Exact Hermes Agent v0.21.3 source evidence, YAML preview syntax, and bounded native config-merge installation qualification.
 - [`dev/agents/opencode.md`](dev/agents/opencode.md) - Exact OpenCode v1.18.31 model/one-skill and named primary/subagent installation evidence, isolated generated-definition consumption, and runtime limits.

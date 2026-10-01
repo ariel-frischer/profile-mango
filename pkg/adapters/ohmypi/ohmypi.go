@@ -11,10 +11,10 @@ import (
 
 const (
 	TargetName     = "oh-my-pi"
-	TargetVersion  = "18.3.2"
+	TargetVersion  = "18.4.6"
 	OhMyPiVersion  = TargetVersion
 	AdapterVersion = "profilemango.dev/oh-my-pi/v1alpha1"
-	EvidenceSHA256 = "2d07016b28d5d866c4947b4aa273ae31dbd29655513c508d9c658d024a721830"
+	EvidenceSHA256 = "bca974df221fecc1e706c642e1329a761849e46f76554d3df587f3629c8864f4"
 	EvidenceSource = "docs/dev/target-evidence.md"
 	EvidenceLevel  = "source-entrypoint-version"
 )
@@ -123,7 +123,7 @@ func addTargetCapabilities(result *Result, target TargetBuild) {
 		result.AddCapability("target.version", StatusBlocking, "exact Oh My Pi source version and evidence hash are not qualified")
 		return
 	}
-	result.AddCapability("target.version", StatusSupported, "exact Oh My Pi v18.3.2 source entrypoint is pinned")
+	result.AddCapability("target.version", StatusSupported, "exact Oh My Pi v18.4.6 source entrypoint is pinned")
 }
 
 func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {

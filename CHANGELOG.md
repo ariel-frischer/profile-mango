@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows
 - Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
+- Allow --override to replace edited Mango-owned OpenCode profile agent files with a backup; plan headers now show installed agent versions and the tested range when outside it
+
+### Changed
+
+- Requalify Oh My Pi to 18.4.6 (tested range >=18.4.6 <18.5.0) with config/skills source-diff and isolated installed-binary overlay evidence; Pi remains at 0.87.1
 
 ## [0.2.0] - 2026-09-27
 

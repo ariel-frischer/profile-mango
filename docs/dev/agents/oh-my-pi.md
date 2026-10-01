@@ -1,9 +1,9 @@
 # Oh My Pi configuration reference
 
-**Reference date:** 2026-09-21, requalified 2026-09-26. **Documentation pin:**
-release `v18.3.2`, commit `7853b4e499936f9dcc13c9b64adb55f6b342aabf` (originally
-`v18.2.6`, commit `78b753124d11f8dd3ae73e2524125890ff7c977e`; see
-[requalification](#requalification-to-v1832-2026-09-26)). **Status:** profile-mango
+**Reference date:** 2026-09-21, requalified 2026-09-30. **Documentation pin:**
+release `v18.4.6`, commit `8b25ad4a05625dde65df41d057756b4815f4837c` (originally
+`v18.2.6`, then `v18.3.2`; historical observations below remain versioned).
+See [requalification](#requalification-to-v1846-2026-09-30). **Status:** profile-mango
 ships an inert preview renderer and, since 2026-09-22, a model-role installer
 whose `modelRoles.default` storage is qualified through exact source-native
 read-only getters; since 2026-09-25 it writes suffixed per-role selectors on
@@ -288,9 +288,44 @@ apply the overlay to the `config` subcommand, so the overlay was supplied throug
 the same overlay layer. Slot consumers and the effort ceiling at spawn time rest
 on the source review above.
 
+## Requalification to v18.4.6, 2026-09-30
+
+The [evidence ledger](../target-evidence.md#oh-my-pi-requalification-to-v1846-2026-09-30)
+records the relevant `v18.3.2..v18.4.6` config/skills source diff and the
+isolated installed-ELF positive/control probe. Tag `v18.4.6` resolves to
+`8b25ad4a05625dde65df41d057756b4815f4837c`. Installed release ELF SHA-256
+`9eb0668d3ccab78c39598b7717461f8621136114618387da22b3ddd454fb163b` matches
+the official Linux x64 asset; the release is not immutable. The new tested
+range is `>=18.4.6 <18.5.0`, not all earlier 18.4 builds.
+
+Source file hashes (paths relative to `packages/coding-agent/`):
+
+| File | SHA-256 |
+| --- | --- |
+| `package.json` (adapter evidence hash) | `bca974df221fecc1e706c642e1329a761849e46f76554d3df587f3629c8864f4` |
+| `src/config/model-settings.ts` | `d0cef41cc2053d55f78d459c11d7efd3a85311cd9332730a846cde2664340f91` |
+| `src/config/settings.ts` | `7746bc9f3b881868faaf99c72d757ed85e17fef764c42204684b49f1797bd91b` |
+| `src/config/model-resolver.ts` | `85e9b57c5a804bd8edeaf90c9eb2f5e8beb85a2867e4279b55bd774ccfda571d` |
+| `src/sdk.ts` | `97fc3bb3cd9ffe43b190da942c8ac326a62975484d46bc87f8c8d1ebf3db982d` |
+| `src/task/settings.ts` | `fb71841ec1d77e87833b0a1320b9b40028f2f56652060f4a7c633d68b8bcc73c` |
+| `src/task/executor.ts` | `1d1d31ea16b74bcde15366ee94dcd93fc84ca130330805b4becdd596dadaa077` |
+| `src/discovery/builtin.ts` | `71652a999ae41e0e95a0e7b9e86e23d33f9322397cfad00eb9ec3cfae5b31600` |
+| `src/discovery/helpers.ts` | `2285212a57765dbb314f73f695cec2958a4a7955a3a4847b88f2652f932c4123` |
+| `src/extensibility/skills.ts` | `50892b528c20ab1fc901dad90e3900f05433d64767710e288d1821c96f50ea85` |
+
+Settings storage, overlay consumption and all seven generated role values
+were observed with `omp config list --json` in a disposable, timeout-bounded
+network/PID/IPC/UTS-isolated Bubblewrap sandbox with cleared environment and
+hidden personal homes. With `PI_CONFIG_FILES=<Mango overlay>`, the getter
+returned generated suffixed selectors and `task.maxEffort: medium`; without
+it, control selectors and `xhigh`. Both input files remained byte-identical.
+No live model, suffix interpretation, task consumer, skill delivery, auth or
+enforcement qualification is added. Pi remains at installed/qualified `0.87.1`;
+`0.99.1` was not requalified without an installed binary.
+
 ## Preview adapter boundary
 
-The CLI target is `oh-my-pi` with the exact version `18.3.2`. The renderer emits
+The CLI target is `oh-my-pi` with the exact version `18.4.6`. The renderer emits
 `preview/<profile>.config.yml.preview` and digest-verified resource copies that
 preserve their original relative paths.
 Every report is `applicable: false` and includes explicit blockers for:
@@ -307,21 +342,23 @@ the [target evidence ledger](../target-evidence.md) and
 [adapter architecture](../adapter-architecture.md) for the exact report and
 failure-boundary evidence.
 
-[settings]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/settings.md
-[providers]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/providers.md
-[models]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/models.md
-[approval]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/approval-mode.md
-[context]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/context-files.md
-[skills]: https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/skills.md
+[settings]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/settings.md
+[providers]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/providers.md
+[models]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/models.md
+[approval]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/approval-mode.md
+[context]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/context-files.md
+[skills]: https://github.com/can1357/oh-my-pi/blob/v18.4.6/docs/skills.md
 
 ## Global instruction files (ap-nym, 2026-09-25)
 
-`globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.3.2` `7853b4e`, `packages/coding-agent/src/discovery/builtin.ts:397,917`; originally `v18.2.6` `78b7531` lines 393, 913). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
+`globalInstructions` may own `AGENTS.md` and `RULES.md` in `~/.omp/agent` (source `v18.4.6` `8b25ad4`, `packages/coding-agent/src/discovery/builtin.ts:398,918`; the RULES loader also honors an SDK agent-dir override). Written only when the profile is the default (`mango use`, `install --default`); whole-file ownership with create-only backup, drift checks, release on `use`, and undo. See [target evidence](../target-evidence.md#global-instruction-files-2026-09-25-ap-nym).
 
 ## Home `~/AGENTS.md` (ap-5mp, 2026-09-25)
 
-`~/AGENTS.md` is read only when no repository encloses the working directory or the repository root is `$HOME`: `v18.3.2` `7853b4e`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:687-714` (originally `v18.2.6` `78b7531`, `helpers.ts:684-711`). Oh My Pi therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
+`~/AGENTS.md` is read only when no repository encloses the working directory or the repository root is `$HOME`: `v18.4.6` `8b25ad4`, `packages/coding-agent/src/discovery/agents-md.ts:20-22`, `packages/coding-agent/src/discovery/helpers.ts:704-731` (same traversal logic as `v18.3.2`). Oh My Pi therefore does not own `globalInstructions.home`. See [target evidence](../target-evidence.md#home-instruction-file-agentsmd-2026-09-25-ap-5mp).
 
 ## Skill folders (ap-794, 2026-09-27)
 
-Pinned source `v18.3.2`: the [native loader](https://github.com/can1357/oh-my-pi/blob/v18.3.2/packages/coding-agent/src/discovery/builtin.ts) reads user skills from `~/.omp/agent/skills` (the directory holding `config.yml`; `PI_CONFIG_DIR` moves both, see [dirs](https://github.com/can1357/oh-my-pi/blob/v18.3.2/packages/utils/src/dirs.ts)) and requires a `description` for native skills; `name` defaults to the folder name. Same-name skills collapse first-wins by provider precedence (native 100, Claude 80, `.agent[s]`/Codex 70; [skill key](https://github.com/can1357/oh-my-pi/blob/v18.3.2/packages/coding-agent/src/capability/skill.ts)), so a native skill wins over the same skill installed for Codex under `~/.agents/skills`. Each `skills` entry's whole folder (every regular file beside its `SKILL.md`, at most 256, modes normalized to `0755` when any execute bit is set and `0644` otherwise) is copied to `<folder name>/` under `<config dir>/skills` (by default `~/.omp/agent/skills`), with `{{route.…}}` placeholders rendered per target in UTF-8 text files (provenance digests cover the source bytes), written only when the profile is the default (`mango use`, `install --default`) and never for a named agent destination; a named profile lists `skills` as skipped. Files are whole-file owned (ownership kind `skill`) with create-only backups of adopted files, drift checks, release on `use` (released folders are removed once empty; adopted files are restored), and undo. A symlink or non-directory on the destination path is a conflict naming it; files in an adopted folder that profile-mango does not manage are kept and listed in a plan warning. The compact plan prints `skills: a, b` per target.
+Pinned source `v18.4.6`: the [native loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/discovery/builtin.ts) reads user skills from `~/.omp/agent/skills` (the directory holding `config.yml`; `PI_CONFIG_DIR` moves both, see [dirs](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/utils/src/dirs.ts)) and requires a `description` for native skills; `name` defaults to the folder name. Provider priority still gives a native skill the bare name over a same-name Codex skill under `~/.agents/skills`; the [skill loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/extensibility/skills.ts) now collapses identical body/frontmatter duplicates and namespaces differing same-name skills, while explicit custom directories can displace the bare name. Raw names with path separators are rejected. These discovery/collision changes are source-reviewed only.
+
+Each `skills` entry's whole folder (every regular file beside its `SKILL.md`, at most 256, modes normalized to `0755` when any execute bit is set and `0644` otherwise) is copied to `<folder name>/` under `<config dir>/skills` (by default `~/.omp/agent/skills`), with `{{route.…}}` placeholders rendered per target in UTF-8 text files (provenance digests cover the source bytes), written only when the profile is the default (`mango use`, `install --default`) and never for a named agent destination; a named profile lists `skills` as skipped. Files are whole-file owned (ownership kind `skill`) with create-only backups of adopted files, drift checks, release on `use` (released folders are removed once empty; adopted files are restored), and undo. A symlink or non-directory on the destination path is a conflict naming it; files in an adopted folder that profile-mango does not manage are kept and listed in a plan warning. The compact plan prints `skills: a, b` per target.

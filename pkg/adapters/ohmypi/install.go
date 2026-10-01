@@ -44,7 +44,7 @@ type SettingChange struct {
 	After  string
 }
 
-// RoleSlots maps each portable role to the Oh My Pi 18.3.2 modelRoles slots it
+// RoleSlots maps each portable role to the Oh My Pi 18.4.6 modelRoles slots it
 // sets. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
 // resolves plan (modes/interactive-mode.ts) and the reviewer agent @slow
 // (prompts/agents/reviewer.md); the scout agent uses @smol
@@ -58,7 +58,7 @@ var RoleSlots = map[string][]string{
 	profilemango.RoleTiny:     {"commit", "tiny"},
 }
 
-// TaskMaxEffortSetting is the Oh My Pi 18.3.2 setting route.subagentMaxEffort
+// TaskMaxEffortSetting is the Oh My Pi 18.4.6 setting route.subagentMaxEffort
 // installs: the ceiling on the task tool's per-spawn effort hint
 // (task/settings.ts "task.maxEffort", task/executor.ts).
 const TaskMaxEffortSetting = "task.maxEffort"

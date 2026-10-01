@@ -90,8 +90,11 @@ func planOpenCodeAgent(input AdapterInput, mode, filePath string) (Patch, error)
 	if err != nil {
 		return Patch{}, err
 	}
-	file := FilePatch{Path: filePath, Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: true}
-	patch := Patch{Fields: []FieldChange{{Path: "agent.mode", After: mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}}
+	// Only Mango-owned profile definitions may be overridden; explicit agent
+	// destinations and unowned collisions retain their fail-closed protection.
+	ownedProfile := filePath != "" && manifestHasFile(input.Ownership, filepath.Join(filepath.Dir(input.ConfigPath), filePath))
+	file := FilePatch{Path: filePath, Content: definition, Fields: []string{"agent.mode", "agent.model", "agent.instructions"}, NoOverride: !ownedProfile}
+	patch := Patch{Fields: []FieldChange{{Path: "agent.mode", After: mode}, {Path: "agent.model", After: input.Route.Provider + "/" + input.Route.Model}}, OverrideAllowed: true}
 	if supported, _ := opencode.EffortSupport(input.Route.Effort); supported {
 		file.Fields = append(file.Fields, "agent.variant")
 		patch.Fields = append(patch.Fields, FieldChange{Path: "agent.variant", After: input.Route.Effort})
