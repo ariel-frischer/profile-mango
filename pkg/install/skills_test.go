@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -217,6 +218,7 @@ func TestSkillSwitchRestoresAdoptedFolder(t *testing.T) {
 			request, root, skills := skillRequest(t, target)
 			existing := filepath.Join(skills, "review", "SKILL.md")
 			writeInstallTestFile(t, existing, "user skill\n")
+			setSkillTestTime(t, existing, -time.Hour)
 			writeInstallTestFile(t, filepath.Join(skills, "review", "notes.md"), "user notes\n")
 			plan := buildSkillPlan(t, request, StatusReady)
 			if !hasDiagnostic(plan.Targets[0].Diagnostics, "install.skill_unmanaged_files") || !hasFileAction(plan.Targets[0], ActionAdopt) {

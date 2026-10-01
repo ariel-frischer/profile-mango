@@ -283,6 +283,13 @@ OpenClaw copies skills beside every config it writes, named profiles included
 openclaw=<id>` also sets that existing agent's `agents.entries.<id>.skills`
 allowlist, which later installs keep and a switch gives back.
 
+The skill folder in the profile package is canonical; installed copies are
+output. Never copy an installed or `~/.agents/skills` copy over the package
+folder: it has rendered routes instead of `{{route.…}}` placeholders and may be
+older. `mango status` lists skills whose global copy differs and which side is
+newer; port a newer global edit into the package by hand. An install conflicts
+on an unmanaged skill file newer than the package copy unless `--override`.
+
 ## Safety boundary
 
 - `init`, `home`, `validate`, and `render` never inspect agent homes, read

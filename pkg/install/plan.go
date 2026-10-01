@@ -479,8 +479,11 @@ func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot
 
 func conflictReason(diagnostics profilemango.Diagnostics) string {
 	for _, diagnostic := range diagnostics {
-		if diagnostic.Code == "install.adopt_requires_backup" {
+		switch diagnostic.Code {
+		case "install.adopt_requires_backup":
 			return "adopting an existing file that profile-mango does not own requires a backup; remove --no-backup"
+		case "install.skill_destination_newer":
+			return "an unmanaged skill file is newer than the profile's copy; port its edits into the profile, or pass --override to replace it"
 		}
 	}
 	return "one or more target files conflict with unowned or edited state"
