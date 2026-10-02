@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Report install preflight rejection as not-attempted while preserving unchanged targets as noop in library and single-object CLI reports.
 - Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
 - Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
+- Release preparation recognizes empty Unreleased headers and reuses already-stamped release notes without stamping again.
 
 ## [0.0.1] - 2026-01-01
 

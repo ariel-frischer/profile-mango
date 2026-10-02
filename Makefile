@@ -1,5 +1,5 @@
 
-.PHONY: help deps d install i test t test-go test-installer test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
+.PHONY: help deps d install i test t test-go test-installer test-release test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
 
 MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -44,6 +44,9 @@ test-go: ## Run Go tests
 
 test-installer: ## Run offline installer fixture tests
 	sh tests/install_test.sh
+
+test-release: ## Run offline release fixtures (requires chlog)
+	sh tests/release_test.sh
 
 test-v: ## Run tests (verbose)
 	go test -v ./...
