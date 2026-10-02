@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/i
 Or with Go:
 
 ```bash
-go install github.com/ariel-frischer/profile-mango/cmd/mango@latest
+go install github.com/ariel-frischer/profile-mango/cmd/mango@latest   # Go 1.25.5+
 ```
 
 Optional: let your coding agent drive `mango` for you with the agent skill:
@@ -36,7 +36,9 @@ mango doctor                   # which agents you have
 mango install default --all    # preview the changes; nothing is written yet
 ```
 
-The preview ends with the exact command to apply it. Afterwards:
+The preview ends with the exact command to apply it. Pi, OpenClaw and Hermes have
+no separate `default` profile, so applying `default` edits their main config
+(backed up; `mango undo` restores it). Afterwards:
 
 ```bash
 codex --profile default        # each agent gets a profile you can switch to
@@ -49,7 +51,7 @@ mango undo --target codex      # preview putting Codex back
 ```bash
 mango route list                                     # routes and their models
 mango route set local --model gpt-6-sol --effort medium
-mango use default                                    # apply to every managed agent
+mango use default                                    # preview switching every managed agent; run the printed apply command
 ```
 
 ## What's a profile?
@@ -83,8 +85,9 @@ skipped.
 | Hermes | Provider, model, and effort as a named profile |
 
 Each agent is tested against a specific version; newer versions still install,
-with a warning. Credentials, sessions, plugins, and MCP are never read or
-written. Details per agent: [agents](docs/public/agents.md).
+with a warning. Credential stores, sessions, plugins, and MCP are left alone;
+config backups are full copies, so they include any keys stored inline in those
+files. Details per agent: [agents](docs/public/agents.md).
 
 ## Roles and global instructions
 
@@ -110,7 +113,7 @@ routes:
       research: {provider: openai, model: gpt-6-luna, effort: medium}
 ```
 
-`mango use daily-driver` then writes the role files (for example
+`mango use daily-driver` then plans the role files (apply to write them; for example
 `~/.codex/agents/research.toml`) and the global files, backing up anything it
 replaces. `agentFiles` also ships native subagent files as-is, for example
 `agentFiles: {oh-my-pi: {scout.md: agents/omp/scout.md}}` replaces Oh My Pi's
