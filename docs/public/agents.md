@@ -254,6 +254,22 @@ it with a create-only backup. Removed binding routes release only owned
 presets, restoring any adopted entry. Undo restores the transaction's prior
 file bytes under the usual drift/backup checks.
 
+After an omp preset switch, `mango status` reports the matching Mango route
+instead of generic role drift. Matching requires the complete roles, the
+preset's recorded thinking default, and an unchanged manifest-owned preset.
+Partial matches and user role edits still count as edits. Status also reports
+when the switched route's subagent cap differs from the applied cap; presets
+cannot switch that cap. JSON exposes `targets[].modelPreset` with `name`,
+`route`, `taskMaxEffort`, `routeSubagentMaxEffort`, and `maxEffortDiffers`.
+This describes the selected config file, not live session or overlay state.
+
+`mango use` recognizes a complete owned-preset switch and names the route it
+will overwrite, without requiring `--override` for those role changes.
+Other owned edits still require the usual override. Undo retains its existing
+whole-transaction drift protection; after omp changes the config, inspect
+the undo plan and explicitly use `--override` to restore its prior bytes.
+
+
 
 ## OpenClaw
 

@@ -264,7 +264,7 @@ func ConfigValues(source []byte, fields []string) (map[string]string, error) {
 		}
 		value := ""
 		if node != nil {
-			if strings.HasPrefix(path, "modelPresets.") {
+			if path == "modelRoles" || strings.HasPrefix(path, "modelPresets.") {
 				value, err = nodeValue(node)
 			} else if node.Kind == yaml.ScalarNode && node.Tag == "!!str" {
 				value = node.Value

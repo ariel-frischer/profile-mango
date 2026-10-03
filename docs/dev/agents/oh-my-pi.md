@@ -412,3 +412,16 @@ are deliberately not part of a preset. The field ownership manifest carries
 each preset key, a semantic hash, and raw prior-entry bytes for explicit
 adoption/release. Ordinary YAML comments and unrelated presets stay untouched.
 
+
+## Recognizing preset switches (ap-aqw)
+
+Mango status recognizes complete config-file matches of manifest-owned,
+hash-intact preset entries (all role keys and the recorded thinking level).
+It does not infer a match from a partial/default-only overlap or inspect a
+running omp session. Such a match permits the next Mango plan to replace role
+values without a drift override; task.maxEffort and preset-entry edits remain
+protected. Status exposes the matching route and any difference between that
+route's subagent cap and the applied config cap. The cap never follows an omp
+preset switch. Undo remains transaction/whole-file guarded rather than treating
+a preset switch as an implicit approval to restore the entire file.
+

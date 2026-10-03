@@ -110,6 +110,9 @@ func writeHumanTargetStatus(output io.Writer, target install.TargetStatus, style
 	if _, err := fmt.Fprintf(output, "%s%s  profile %s (generation %d) in %s\n  sources: %s\n", styles.label(statusTargetLabel(target)), recorded, target.Profile, target.Generation, humanPath(filepath.Dir(target.ConfigPath)), source); err != nil {
 		return err
 	}
+	if err := writeHumanModelPreset(output, target.ModelPreset); err != nil {
+		return err
+	}
 	for _, file := range target.Files {
 		fields := ""
 		if len(file.Fields) > 0 {
@@ -165,4 +168,26 @@ func driftValue(value string) string {
 		return "(absent)"
 	}
 	return value
+}
+
+func writeHumanModelPreset(output io.Writer, preset *install.ModelPresetStatus) error {
+	if preset == nil {
+		return nil
+	}
+	if _, err := fmt.Fprintf(output, "  roles match mango preset %s (%s; switched via omp)\n", preset.Route, preset.Name); err != nil {
+		return err
+	}
+	if preset.MaxEffortDiffers {
+		applied := preset.TaskMaxEffort
+		if applied == "" {
+			applied = "max (omp default)"
+		}
+		desired := preset.RouteSubagentMaxEffort
+		if desired == "" {
+			desired = "max (omp default)"
+		}
+		_, err := fmt.Fprintf(output, "  task.maxEffort stays %s from the applied profile; preset route requests %s (not switched)\n", applied, desired)
+		return err
+	}
+	return nil
 }

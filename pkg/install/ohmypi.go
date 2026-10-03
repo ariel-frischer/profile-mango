@@ -104,6 +104,18 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 		return Patch{}, err
 	}
 	rolePriors := fieldPriors(input.Ownership, input.ConfigPath, ohMyPiRolePriorPrefix)
+	preset := ohMyPiSwitchedPreset(input)
+	if preset != nil {
+		// Switching a complete preset can introduce fallback slots not owned by
+		// the applied route. Give them back when the next route omits them.
+		for _, slots := range ohmypi.RoleSlots {
+			for _, slot := range slots {
+				if _, recorded := rolePriors[slot]; !recorded {
+					rolePriors[slot] = ""
+				}
+			}
+		}
+	}
 	content, released, err := ohmypi.ReleaseRoles(configPatch.Content, withoutKeys(rolePriors, roleKeys(configPatch.Roles)))
 	if err != nil {
 		return Patch{}, err
@@ -117,6 +129,10 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	fields := ohMyPiRoleFields(&file, rolePriors, configPatch.Roles, released)
 	fields = append(fields, ohMyPiSettingFields(&file, settingPriors, configPatch.Settings, releasedSettings)...)
 	patch := Patch{Files: []FilePatch{file}, Fields: fields, OverrideAllowed: true}
+	if preset != nil {
+		patch.Files[0].PresetSwitch = preset.Name
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.overwrite_preset", "config.modelRoles", "overwrites mango preset "+preset.Route+" ("+preset.Name+") selected via omp; task.maxEffort and resources follow the applied profile", 0, 0)
+	}
 	patch, err = addOhMyPiPresets(input, patch, true)
 	if err != nil {
 		return Patch{}, err

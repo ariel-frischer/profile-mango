@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Oh My Pi 18.6.0 model presets for every Mango binding route, with lossless YAML ownership, conflict protection, release and undo.
+- Oh My Pi status recognizes complete owned model-preset switches, reports the unchanged task effort cap, and lets mango use replace switched roles without a drift override.
 
 ## [0.2.1] - 2026-10-01
 
