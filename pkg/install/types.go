@@ -115,12 +115,14 @@ type AdapterInput struct {
 	ManifestPath string
 	Profile      profilemango.ResolvedProfile
 	Route        profilemango.RouteBinding
-	Resources    []render.Resource
-	Config       Snapshot
-	Manifest     Snapshot
-	Ownership    Manifest
-	HasManifest  bool
-	Override     bool
+	// Bindings supplies every effective target route for native model presets.
+	Bindings    profilemango.Bindings
+	Resources   []render.Resource
+	Config      Snapshot
+	Manifest    Snapshot
+	Ownership   Manifest
+	HasManifest bool
+	Override    bool
 	// Install says where the profile goes; for a named profile, NamedFile is its current file.
 	Install   InstallMode
 	NamedFile Snapshot
@@ -146,6 +148,8 @@ type FilePatch struct {
 	// each field's FieldChange.Before is its live value, so edits to other bytes are
 	// judged per owned field instead of by the whole-file hash.
 	LiveFields bool
+	// PresetSwitch permits a verified omp preset switch, never other owned edits.
+	PresetSwitch string
 	// Release gives back a file the previous install owned and this plan no longer writes.
 	Release bool
 	Path    string

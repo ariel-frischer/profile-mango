@@ -1,7 +1,7 @@
 package ohmypi
 
 // profileFileDir is where install writes the Mango-owned named profile overlay,
-// below the config.yml directory. Oh My Pi 18.4.6 loads it with
+// below the config.yml directory. Oh My Pi 18.6.0 loads it with
 // `omp --config <path>` after global and project config (settings.ts
 // #rebuildMerged, #mergeOwnLayers); native `--profile` relocates auth and sessions and is not used.
 const profileFileDir = "profiles"

@@ -72,7 +72,7 @@ reproducible fixtures, and evidence independent of the developer's machine.
 | --- | --- | --- | --- |
 | OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model, skill folders under `<config dir>/skills`, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Full auth, precedence, runtime delegation and enforcement remain blocked |
 | Codex CLI | `codex-cli 0.157.1` (requalified from `0.154.0`) | Isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields (and project/session `medium`/`minimal` effort overrides) on both builds; exact-source resolver test on `0.154.0`; `ReasoningEffort` parser and profile-v2 loader source unchanged `rust-v0.154.0..rust-v0.157.1`; isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml` on both builds; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `none`/`minimal`/`low`/`medium`/`high`/`xhigh` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project, runtime, and (since 0.157.1) managed `requirements.toml` provider overrides can shadow them. OAuth identity, model availability and per-model effort support, delivery and full-profile applicability remain unverified |
-| Oh My Pi | source `omp/18.4.6` at `8b25ad4a05625dde65df41d057756b4815f4837c` (release ELF `9eb0668d…`) | Original `18.2.6` exact source/addon getter probes; `18.4.6` relevant config/skills source diff from `18.3.2` plus an isolated installed-release `config list` positive/control read of all seven Mango slots and `task.maxEffort`; slot consumers, suffix interpretation and skill discovery source-reviewed only | `modelRoles` selectors and `task.maxEffort` installable; full startup, authentication, precedence, delivery and enforcement remain unverified |
+| Oh My Pi | source `omp/18.6.0` at `89d2610993af69427574bde17791df63906ec4e5` | 18.6.0 exact source review of owned roles, task cap, overlays, agent discovery and model presets; isolated installed-binary `config list` reads generated selectors, cap and presets; historical 18.2.6 getters and 18.4.6 controls remain versioned below | `modelRoles`, `task.maxEffort`, and binding-route `modelPresets` installable; native parsing/storage only, not full startup, authentication, runtime switching or enforcement |
 | Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
 | OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
 | Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `<hermes-home>/profiles/<name>/config.yaml` profile that `hermes -p <name>` reads (main config must be `<hermes-home>/config.yaml`), and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
@@ -113,6 +113,78 @@ supports the wider range.
   exact-substring meaning.
 - A tested range is a stated claim, not new evidence. Qualification evidence
   still belongs to the exact version recorded above.
+
+### Oh My Pi requalification to v18.6.0, 2026-10-03
+
+Source tag `v18.6.0` is `89d2610993af69427574bde17791df63906ec4e5`,
+retrieved with `git clone --depth 1 --branch v18.6.0`.
+`packages/coding-agent/package.json` SHA-256 (adapter evidence identity) is
+`2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24`.
+The [reference](agents/oh-my-pi.md#requalification-to-v1860-2026-10-03)
+records review of all seven role slots and consumers, suffix parsing,
+task.maxEffort, overlay layering and agent discovery. Qualification moves to
+exact 18.6.0, with its default tilde tested range `>=18.6.0 <18.7.0`; 18.4.6
+remains historical evidence rather than a registered version. No continuous
+range across the 18.5 breaking changes is claimed.
+The ap-r85 installed-version apply/manifest label fix already ships in v0.2.1;
+this requalification does not change that command contract.
+An isolated installed `omp config list --json` positive read consumed all seven
+synthetic role selectors and `task.maxEffort: medium` on 18.6.0. The invocation
+used bubblewrap `--unshare-all`, cleared environment, hidden personal homes,
+read-only runtime/ELF mounts, writable task-owned HOME, and a 30-second timeout.
+The installed ELF reports `omp/18.6.0`; SHA-256:
+`844c640c620ec4c152abe4b3736049f963205da50e9e77bd9bdf2a981a6ead55`.
+No model call or network access was possible; this establishes settings storage
+consumption, not slot consumers or enforcement.
+
+The compiled Mango sandbox smoke installed two synthetic routes, `opus55` and
+`sol`, with complete role mappings. `omp/18.6.0 config list --json`, under the
+same bubblewrap isolation, returned `modelPresets.mango-opus55`,
+`modelPresets.mango-sol`, and the existing `personal` user preset. Generated
+thinking defaults were `high` and `medium`; task.maxEffort remained `high`.
+After a synthetic switch to sol's seven roles and `medium` thinking, Mango
+status reported the sol preset and the unchanged cap (`high` vs route
+`medium`). This is a file-state simulation, not a live `/modelpreset switch`
+or authenticated model-selection test.
+
+Smoke commands used a cleared environment with HOME/XDG paths inside the
+worktree's ignored `.external/smoke/home`, and the compiled
+`.external/mango` binary:
+
+```sh
+go build -o .external/mango ./cmd/mango
+mango use work --target oh-my-pi
+mango use work --target oh-my-pi --apply --yes --expect-plan <shown-plan-id>
+# Real omp via bubblewrap isolation described above:
+omp --version
+omp config list --json
+# Replace modelRoles and defaultThinkingLevel with mango-sol's values:
+mango status --target oh-my-pi
+mango status --target oh-my-pi --json
+mango use work --target oh-my-pi
+mango undo --target oh-my-pi --override
+mango undo --target oh-my-pi --override --apply --yes --expect-plan <shown-undo-id>
+```
+
+`use` already makes the profile default; it does not accept `--default`.
+Initial plan/apply reported `oh-my-pi@18.6.0` without an out-of-range warning
+and `applied oh-my-pi@18.6.0: committed`. After the simulated switch,
+the next use plan was ready and named the overwritten sol preset.
+Undo committed and restored the original commented `personal` preset and
+theme, removing Mango entries, manifest and overlay. Explicit undo override
+acknowledged the simulated whole-file edit.
+
+The follow-up carried-role smoke repeated this flow with unmanaged selectors
+`code: openai-codex/gpt-6.1-sol:medium`,
+`review: openai-codex/gpt-6.1-sol:high`, and `web: web/exa` in the synthetic
+config. Native `config list --json` read all three unchanged in both Mango
+presets. A simulated sol switch retained them and remained a recognized
+preset switch; use planned cleanly and undo committed. Table tests additionally
+change an unmanaged selector between installs and confirm re-apply refreshes
+both global and overlay-only presets without owning that config field.
+
+
+
 
 ## Pi evidence
 

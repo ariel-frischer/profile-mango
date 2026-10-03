@@ -1,9 +1,9 @@
 # Oh My Pi configuration reference
 
-**Reference date:** 2026-09-21, requalified 2026-09-30. **Documentation pin:**
-release `v18.4.6`, commit `8b25ad4a05625dde65df41d057756b4815f4837c` (originally
-`v18.2.6`, then `v18.3.2`; historical observations below remain versioned).
-See [requalification](#requalification-to-v1846-2026-09-30). **Status:** profile-mango
+**Reference date:** 2026-09-21, requalified 2026-10-03. **Documentation pin:**
+release `v18.6.0`, commit `89d2610993af69427574bde17791df63906ec4e5` (earlier
+observations below remain versioned).
+See [requalification](#requalification-to-v1860-2026-10-03). **Status:** profile-mango
 ships an inert preview renderer and, since 2026-09-22, a model-role installer
 whose `modelRoles.default` storage is qualified through exact source-native
 read-only getters; since 2026-09-25 it writes suffixed per-role selectors on
@@ -362,3 +362,71 @@ failure-boundary evidence.
 Pinned source `v18.4.6`: the [native loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/discovery/builtin.ts) reads user skills from `~/.omp/agent/skills` (the directory holding `config.yml`; `PI_CONFIG_DIR` moves both, see [dirs](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/utils/src/dirs.ts)) and requires a `description` for native skills; `name` defaults to the folder name. Provider priority still gives a native skill the bare name over a same-name Codex skill under `~/.agents/skills`; the [skill loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/extensibility/skills.ts) now collapses identical body/frontmatter duplicates and namespaces differing same-name skills, while explicit custom directories can displace the bare name. Raw names with path separators are rejected. These discovery/collision changes are source-reviewed only.
 
 Each `skills` entry's whole folder (every regular file beside its `SKILL.md`, at most 256, modes normalized to `0755` when any execute bit is set and `0644` otherwise) is copied to `<folder name>/` under `<config dir>/skills` (by default `~/.omp/agent/skills`), with `{{route.…}}` placeholders rendered per target in UTF-8 text files (provenance digests cover the source bytes), written only when the profile is the default (`mango use`, `install --default`) and never for a named agent destination; a named profile lists `skills` as skipped. Files are whole-file owned (ownership kind `skill`) with create-only backups of adopted files, drift checks, release on `use` (released folders are removed once empty; adopted files are restored), and undo. A symlink or non-directory on the destination path is a conflict naming it; files in an adopted folder that profile-mango does not manage are kept and listed in a plan warning. The compact plan prints `skills: a, b` per target.
+
+## Requalification to v18.6.0, 2026-10-03
+
+Tag `v18.6.0` resolves to `89d2610993af69427574bde17791df63906ec4e5`.
+The evidence identity remains the source `packages/coding-agent/package.json`
+SHA-256: `2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24`.
+The exact qualified version moves to 18.6.0 (tested range `>=18.6.0 <18.7.0`).
+18.4.6's evidence remains historical, not an exact registered install target:
+18.5 changed the effort cap's scope and introduced a task setting migration.
+
+Reviewed source contracts:
+
+- `config/model-roles.ts:56-66` retains all seven Mango slots, with hash
+  `7a306f6445810c3361de70dc9cce799589ef0abc11b618194758c443711f479e`.
+- `config/model-settings.ts` still registers `modelRoles` as a record;
+  `config/model-resolver.ts:924-949` interprets `:effort`. Task agent `@task`,
+  scout `@smol`, reviewer `@slow`, plan-mode `plan`, title `tiny/commit/smol`,
+  and commit `commit/smol` consumers retain the portable mapping.
+- `task/settings.ts:369-382` retains `task.maxEffort`, the `THINKING_EFFORTS`
+  enum and `max` default. `task/executor.ts:4032-4035,4166` still caps a per-call
+  effort hint; 18.5 additionally caps the interactive `/effort` picker.
+  `task.completionProbeMs` migrates per layer to boolean `task.completionProbe`
+  (`config/settings.ts:3118-3133`); Mango owns neither key. Task items now
+  accept per-call model selectors; Mango does not manage that runtime input.
+- `config/settings.ts:661-663,2425-2463,3826-3830` retains repeatable overlay
+  loading and global → project → overlay → runtime ordering.
+- `task/discovery.ts:55-58,78-96` discovers user `agents/*.md`;
+  `discovery/helpers.ts:312-318,368` still requires name/description and parses
+  the model list. These are source-reviewed, not runtime discovery evidence.
+
+Native parsing, model resolution, authentication and enforcement are separate
+claims. Earlier native storage evidence is not relabelled as 18.6.0 runtime
+evidence.
+
+
+## Binding-route presets (ap-ynf)
+
+`config/model-presets.ts` SHA-256
+`642cdcd78af5493f2f038900667af50803c540ed7ce957a4fc01e37610ef6472`
+defines the name grammar (24-28), validates roles/thinking (34-50), saves only
+one global entry (104-114), and switches complete role snapshots.
+`settings.ts:1793-1825` resolves a preset whole from its highest owning layer,
+not by merging same-name snapshots; overlay/runtime null hides a lower entry.
+Mango writes `mango-<escaped route>` entries to global config for default
+installs, and only the overlay for named-only installs. Seven managed slots
+are always present (unbound slots use default); task.maxEffort and resources
+are deliberately not part of a preset. The field ownership manifest carries
+each preset key, a semantic hash, and raw prior-entry bytes for explicit
+adoption/release. Ordinary YAML comments and unrelated presets stay untouched.
+Presets additionally carry unmanaged selectors from the target config, including
+custom slots such as code/review/web, because omp clears every omitted role.
+Re-apply refreshes the carried snapshot without owning those config fields.
+Status keeps exact full-role equality against the hash-intact owned preset,
+including carried roles, rather than relaxing the existing hash/drift model.
+
+
+## Recognizing preset switches (ap-aqw)
+
+Mango status recognizes complete config-file matches of manifest-owned,
+hash-intact preset entries (all role keys and the recorded thinking level).
+It does not infer a match from a partial/default-only overlap or inspect a
+running omp session. Such a match permits the next Mango plan to replace role
+values without a drift override; task.maxEffort and preset-entry edits remain
+protected. Status exposes the matching route and any difference between that
+route's subagent cap and the applied config cap. The cap never follows an omp
+preset switch. Undo remains transaction/whole-file guarded rather than treating
+a preset switch as an implicit approval to restore the entire file.
+

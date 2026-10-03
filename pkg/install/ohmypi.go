@@ -26,7 +26,7 @@ func (ohMyPiAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: ohmypi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Oh My Pi 18.4.6 source review and native settings reads (release-binary config list of a Mango overlay; 18.2.6 Settings.loadReadOnly getters) qualify only modelRoles selectors (default plus the slots of portable roles, each with its own :effort suffix) and task.maxEffort; install writes them to a Mango-owned overlay used with omp --config <path> by default, and to config.yml only with --default; authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged",
+		Reason:         "exact Oh My Pi 18.6.0 source review qualifies modelRoles selectors with :effort suffixes and task.maxEffort; isolated 18.6.0 config list reads and historical 18.2.6 Settings.loadReadOnly getters qualify storage only; install writes a Mango-owned --config overlay, and patches config.yml with --default; authentication, full precedence and runtime enforcement remain unmanaged",
 	}
 }
 
@@ -48,6 +48,9 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 		return planOhMyPiConfig(input)
 	}
 	patch, err := planOhMyPiOverlay(input.Install.ProfileName, input.Route, input.NamedFile.Content)
+	if err == nil && !input.Install.SetsDefault {
+		patch, err = addOhMyPiPresets(input, patch, false)
+	}
 	if err != nil || !input.Install.SetsDefault {
 		return patch, err
 	}
@@ -101,6 +104,18 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 		return Patch{}, err
 	}
 	rolePriors := fieldPriors(input.Ownership, input.ConfigPath, ohMyPiRolePriorPrefix)
+	preset := ohMyPiSwitchedPreset(input)
+	if preset != nil {
+		// Switching a complete preset can introduce fallback slots not owned by
+		// the applied route. Give them back when the next route omits them.
+		for _, slots := range ohmypi.RoleSlots {
+			for _, slot := range slots {
+				if _, recorded := rolePriors[slot]; !recorded {
+					rolePriors[slot] = ""
+				}
+			}
+		}
+	}
 	content, released, err := ohmypi.ReleaseRoles(configPatch.Content, withoutKeys(rolePriors, roleKeys(configPatch.Roles)))
 	if err != nil {
 		return Patch{}, err
@@ -114,6 +129,14 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	fields := ohMyPiRoleFields(&file, rolePriors, configPatch.Roles, released)
 	fields = append(fields, ohMyPiSettingFields(&file, settingPriors, configPatch.Settings, releasedSettings)...)
 	patch := Patch{Files: []FilePatch{file}, Fields: fields, OverrideAllowed: true}
+	if preset != nil {
+		patch.Files[0].PresetSwitch = preset.Name
+		patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.overwrite_preset", "config.modelRoles", "overwrites mango preset "+preset.Route+" ("+preset.Name+") selected via omp; task.maxEffort and resources follow the applied profile", 0, 0)
+	}
+	patch, err = addOhMyPiPresets(input, patch, true)
+	if err != nil {
+		return Patch{}, err
+	}
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.route_fields_only", "target.config", "only modelRoles selectors and task.maxEffort are applied; their :effort suffixes, non-default role slots, and task.maxEffort are source-reviewed, not natively observed; defaultThinkingLevel, authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged", 0, 0)
 	return patch, nil
 }

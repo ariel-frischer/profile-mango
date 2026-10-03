@@ -700,6 +700,17 @@ func compactFieldEffects(fields []install.FieldChange, seen map[string]struct{},
 		if field.Sensitive {
 			field.Before, field.After = "<redacted>", "<redacted>"
 		}
+		if strings.HasPrefix(field.Path, "config.modelPresets.") || strings.HasPrefix(field.Path, "profile.modelPresets.") {
+			action := "update"
+			if field.Before == "" {
+				action = "create"
+			}
+			if field.After == "" {
+				action = "release"
+			}
+			effects = append(effects, "preset "+label+" "+action)
+			continue
+		}
 		effects = append(effects, fmt.Sprintf("%s %s -> %s", label, strconv.Quote(field.Before), strconv.Quote(field.After)))
 	}
 	return effects
@@ -728,7 +739,7 @@ func semanticFieldLabel(path string) string {
 }
 
 // compactWarningCodes are the warnings the compact plan shows; the rest stay in --json.
-var compactWarningCodes = []string{"install.version_not_found", "install.version_unknown", "install.adopt_backup", "install.skill_unmanaged_files", "install.skill_root_undiscovered"}
+var compactWarningCodes = []string{"install.version_not_found", "install.version_unknown", "install.adopt_backup", "install.skill_unmanaged_files", "install.skill_root_undiscovered", "ohmypi.install.overwrite_preset"}
 
 func writeCompactWarnings(output io.Writer, target install.TargetPlan, styles outputStyles) error {
 	if target.VersionCheck != nil && target.VersionCheck.Status == install.VersionOutOfRange {

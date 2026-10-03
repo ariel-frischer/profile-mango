@@ -29,7 +29,7 @@ func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {
 	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionOverride {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if got := fieldPaths(plan.Targets[0].Fields); got != "config.modelRoles.default,profile.modelRoles.default" {
+	if got := fieldPaths(plan.Targets[0].Fields); got != "config.modelPresets.mango-primary,config.modelRoles.default,profile.modelRoles.default" {
 		t.Fatalf("fields = %s", got)
 	}
 	if len(plan.Targets[0].Files) != 3 {
@@ -40,7 +40,7 @@ func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "# keep\nmodelRoles:\n  reviewer: other/model\n  default: \"openai/gpt-5.6:high\" # owned\ndefaultThinkingLevel: low # owned\nunknown:\n  apiKey: SYNTHETIC\n"
-	assertInstallTestFile(t, config, want)
+	assertInstallTestFile(t, config, want+strings.Replace(ohMyPiPrimaryPresetGolden, "      slow:", "      reviewer: \"other/model\"\n      slow:", 1))
 	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
@@ -89,7 +89,7 @@ func TestOhMyPiInstallRolesPreservesUnrelatedKeysAndUndoes(t *testing.T) {
 		"  default: \"anthropic/claude-opus-5-5:medium\"\n  commit: \"opencode-go/glm-5.3-flash:low\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n" +
 		"  task: \"anthropic/claude-opus-5-5:medium\"\n  tiny: \"opencode-go/glm-5.3-flash:low\"\n" +
 		"defaultThinkingLevel: xhigh\nunknown:\n  apiKey: SYNTHETIC\ntask:\n  maxEffort: \"high\"\n"
-	assertInstallTestFile(t, config, want)
+	assertInstallTestFile(t, config, want+strings.Replace(ohMyPiRolesPresetGolden, "      slow:", "      reviewer: \"other/model\"\n      slow:", 1))
 	manifest, err := os.ReadFile(config + ".profile-mango.manifest.json")
 	if err != nil {
 		t.Fatal(err)
@@ -124,14 +124,15 @@ func TestOhMyPiRolePlanReportsEveryRoleField(t *testing.T) {
 		after[field.Path] = field.After
 	}
 	want := map[string]string{
-		"profile.modelRoles.default": "anthropic/claude-opus-5-5:medium",
-		"profile.modelRoles.commit":  "opencode-go/glm-5.3-flash:low",
-		"profile.modelRoles.plan":    "anthropic/claude-opus-5-5:high",
-		"profile.modelRoles.slow":    "anthropic/claude-opus-5-5:high",
-		"profile.modelRoles.smol":    "opencode-go/gpt-6-luna:high",
-		"profile.modelRoles.task":    "anthropic/claude-opus-5-5:medium",
-		"profile.modelRoles.tiny":    "opencode-go/glm-5.3-flash:low",
-		"profile.task.maxEffort":     "high",
+		"profile.modelPresets.mango-primary": ohMyPiRolesPresetJSON,
+		"profile.modelRoles.default":         "anthropic/claude-opus-5-5:medium",
+		"profile.modelRoles.commit":          "opencode-go/glm-5.3-flash:low",
+		"profile.modelRoles.plan":            "anthropic/claude-opus-5-5:high",
+		"profile.modelRoles.slow":            "anthropic/claude-opus-5-5:high",
+		"profile.modelRoles.smol":            "opencode-go/gpt-6-luna:high",
+		"profile.modelRoles.task":            "anthropic/claude-opus-5-5:medium",
+		"profile.modelRoles.tiny":            "opencode-go/glm-5.3-flash:low",
+		"profile.task.maxEffort":             "high",
 	}
 	if !reflect.DeepEqual(after, want) {
 		t.Fatalf("fields = %v, want %v", after, want)
@@ -226,7 +227,7 @@ func TestOhMyPiAdapterBlocksUnverifiedRequirements(t *testing.T) {
 			if route.Provider == "" {
 				route = ohMyPiRoute()
 			}
-			_, err := (ohMyPiAdapter{}).Plan(AdapterInput{Target: Target{Name: "oh-my-pi", Version: "18.4.6"}, Profile: test.profile, Route: route})
+			_, err := (ohMyPiAdapter{}).Plan(AdapterInput{Target: Target{Name: "oh-my-pi", Version: "18.6.0"}, Profile: test.profile, Route: route})
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want substring %q", err, test.want)
 			}
@@ -252,7 +253,7 @@ func ohMyPiTestRequest(t *testing.T) (Request, string) {
 	writeInstallTestFile(t, request.BindingsPath, ohMyPiTestBindings)
 	// Most tests here cover the config.yml patch, which only --default writes.
 	request.Override, request.Default = true, true
-	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.4.6"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "oh-my-pi", Version: "18.6.0"}, ConfigPath: filepath.Join(root, "target", "config.yml")}}
 	if err := os.MkdirAll(filepath.Dir(request.Targets[0].ConfigPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -72,7 +72,7 @@ func ownedBaseline(file FilePatch, ownership Manifest, path string, before insta
 	if !owned || !before.Exists || before.SHA256 == entry.SHA256 {
 		return entry.SHA256, owned
 	}
-	if ownedFieldsIntact(file, entry, fields) {
+	if ownedFieldsIntact(file, entry, fields) || ohMyPiPresetFieldsIntact(file, entry, fields) {
 		return before.SHA256, true
 	}
 	return entry.SHA256, true

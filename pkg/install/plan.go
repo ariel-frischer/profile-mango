@@ -316,11 +316,17 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	}
 	targetPlan.SkippedRequirements = skipped
 	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile), Skills: installedSkillNames(adapter, targetRequest, request.Default, loaded.Skills), SkillAgent: targetRequest.SkillAgent}
+	input.Bindings = loaded.Bindings
 	if targetPlan.Install != nil {
 		input.Install = *targetPlan.Install
 	}
 	patch, err := adapter.Plan(input)
 	if err != nil {
+		if conflict, ok := err.(ohMyPiPresetConflict); ok {
+			targetPlan.Status, targetPlan.Reason = StatusConflict, conflict.Error()
+			targetPlan.Diagnostics.Add(profilemango.SeverityError, "ohmypi.install.preset_conflict", "config.modelPresets", conflict.Error(), 0, 0)
+			return targetPlan
+		}
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)

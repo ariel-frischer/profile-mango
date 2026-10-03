@@ -397,8 +397,9 @@ cannot write shows as `effort <value> (role <role>): NOT APPLIED`;
 `subagentMaxEffort` caps the effort one subagent spawn may request: `minimal`,
 `low`, `medium`, `high`, `xhigh`, or `max`. Oh My Pi installs it as
 `task.maxEffort`, which lowers an effort the caller passes for a spawn to the
-cap. It does not raise the effort of spawns that pass none, and it does not
-change the role models. Other agents list it under "not installed for this
+cap and, since omp 18.5, also caps the interactive `/effort` picker. It does not
+raise the effort of spawns that pass none or change role models. Other agents
+list it under "not installed for this
 agent"; `install --strict` blocks it. `targets` overrides never change it.
 
 ### Editing routes

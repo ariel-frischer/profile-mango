@@ -20,7 +20,8 @@ const (
 	FileMissing = "missing"
 	// FileOtherEdits is a field-owned file whose owned values match the profile
 	// while other bytes changed, e.g. the agent re-serialized its config.
-	FileOtherEdits = "other-edits"
+	FileOtherEdits     = "other-edits"
+	FilePresetSwitched = "preset-switched"
 
 	SourceCurrent = "current"
 	SourceChanged = "changed"
@@ -73,8 +74,10 @@ type TargetStatus struct {
 	// VersionCheck compares the installed agent version with the adapter's tested
 	// version, detected the same way install plans detect it.
 	VersionCheck *VersionCheck `json:"versionCheck,omitempty"`
-	ConfigPath   string        `json:"-"`
-	ownsConfig   bool
+	// ModelPreset is set only for a complete match of a manifest-owned snapshot.
+	ModelPreset *ModelPresetStatus `json:"modelPreset,omitempty"`
+	ConfigPath  string             `json:"-"`
+	ownsConfig  bool
 }
 
 // FieldDrift is one owned setting whose live value differs from the profile's value
@@ -196,6 +199,9 @@ func inspectTarget(registry *Registry, env PathEnv, target TargetRequest) (Targe
 		status.RecordedVersion = manifest.Target.Version
 	}
 	err = addOwnedFiles(&status, manifest, env, adapter)
+	if err == nil {
+		inspectOhMyPiPreset(&status, manifest)
+	}
 	return status, err
 }
 
@@ -273,7 +279,7 @@ func ownedFileKind(configPath string, file ManifestFile) string {
 
 func isOwnershipMarker(field string) bool {
 	return wholeFileKind([]string{field}) != "" || field == priorAbsent || strings.HasPrefix(field, priorSHA256Prefix) || strings.HasPrefix(field, ohMyPiRolePriorPrefix) ||
-		strings.HasPrefix(field, ohMyPiSettingPriorPrefix) || strings.HasPrefix(field, openClawSkillsPriorPrefix) || strings.HasPrefix(field, writtenSHA256Prefix)
+		strings.HasPrefix(field, ohMyPiSettingPriorPrefix) || strings.HasPrefix(field, ohMyPiPresetPriorPrefix) || strings.HasPrefix(field, openClawSkillsPriorPrefix) || strings.HasPrefix(field, writtenSHA256Prefix)
 }
 
 // sourceState plans the recorded profile again without writing. Override lets the plan
@@ -299,6 +305,7 @@ func sourceState(request StatusRequest, registry *Registry, status *TargetStatus
 		markOtherEdits(status, plan.Targets[0], request.Env)
 	}
 	status.Source, status.SourceReason = sourceVerdict(plan, *status)
+	reconcileOhMyPiPreset(request, status)
 }
 
 // markOtherEdits reconciles live content with the planned profile. Byte-identical

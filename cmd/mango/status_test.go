@@ -110,6 +110,9 @@ func TestStatusNamesDriftFromProfile(t *testing.T) {
 			wantDrift: []install.FieldDrift{
 				{Path: "config.modelRoles.plan", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
 				{Path: "config.modelRoles.slow", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
+				{Path: "config.modelPresets.mango-route",
+					Live:    `{"defaultThinkingLevel":"high","modelRoles":{"commit":"openai/gpt-5.6:high","default":"openai/gpt-5.6:high","plan":"anthropic/opus:high","slow":"anthropic/opus:high","smol":"openai/gpt-5.6:high","task":"openai/gpt-5.6:high","tiny":"openai/gpt-5.6:high"}}`,
+					Profile: `{"defaultThinkingLevel":"high","modelRoles":{"commit":"openai/gpt-5.6:high","default":"openai/gpt-5.6:high","plan":"anthropic/opus:low","slow":"anthropic/opus:low","smol":"openai/gpt-5.6:high","task":"openai/gpt-5.6:high","tiny":"openai/gpt-5.6:high"}}`},
 				{Path: "profile.modelRoles.plan", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
 				{Path: "profile.modelRoles.slow", Live: "anthropic/opus:high", Profile: "anthropic/opus:low"},
 			},
