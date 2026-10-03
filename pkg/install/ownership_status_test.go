@@ -38,7 +38,7 @@ func TestStatusHermesNamedOwnedFieldsIgnoreSerialization(t *testing.T) {
 		content string
 		state   string
 	}{
-		"unquoted values": {"model:\n  provider: openai\n  default: gpt-5.6\nagent:\n  reasoning_effort: high\n", FileOtherEdits},
+		"unquoted values":     {"model:\n  provider: openai\n  default: gpt-5.6\nagent:\n  reasoning_effort: high\n", FileOtherEdits},
 		"changed owned value": {"model:\n  provider: openai\n  default: user-model\nagent:\n  reasoning_effort: high\n", FileEdited},
 		"missing owned value": {"model:\n  provider: openai\nagent:\n  reasoning_effort: high\n", FileEdited},
 	}
