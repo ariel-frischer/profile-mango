@@ -411,6 +411,11 @@ are always present (unbound slots use default); task.maxEffort and resources
 are deliberately not part of a preset. The field ownership manifest carries
 each preset key, a semantic hash, and raw prior-entry bytes for explicit
 adoption/release. Ordinary YAML comments and unrelated presets stay untouched.
+Presets additionally carry unmanaged selectors from the target config, including
+custom slots such as code/review/web, because omp clears every omitted role.
+Re-apply refreshes the carried snapshot without owning those config fields.
+Status keeps exact full-role equality against the hash-intact owned preset,
+including carried roles, rather than relaxing the existing hash/drift model.
 
 
 ## Recognizing preset switches (ap-aqw)

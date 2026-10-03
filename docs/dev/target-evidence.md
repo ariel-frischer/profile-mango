@@ -174,6 +174,15 @@ Undo committed and restored the original commented `personal` preset and
 theme, removing Mango entries, manifest and overlay. Explicit undo override
 acknowledged the simulated whole-file edit.
 
+The follow-up carried-role smoke repeated this flow with unmanaged selectors
+`code: openai-codex/gpt-6.1-sol:medium`,
+`review: openai-codex/gpt-6.1-sol:high`, and `web: web/exa` in the synthetic
+config. Native `config list --json` read all three unchanged in both Mango
+presets. A simulated sol switch retained them and remained a recognized
+preset switch; use planned cleanly and undo committed. Table tests additionally
+change an unmanaged selector between installs and confirm re-apply refreshes
+both global and overlay-only presets without owning that config field.
+
 
 
 

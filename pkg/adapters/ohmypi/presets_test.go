@@ -16,7 +16,7 @@ func TestPatchPresetsPreservesAndReleases(t *testing.T) {
 	}
 	for name, source := range cases {
 		t.Run(name, func(t *testing.T) {
-			patch, err := PatchPresets([]byte(source), routes)
+			patch, err := PatchPresets([]byte(source), routes, []byte(source))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -26,7 +26,7 @@ func TestPatchPresetsPreservesAndReleases(t *testing.T) {
 			if name == "user preset" && !strings.Contains(string(patch.Content), "default: mine/model # keep role") {
 				t.Fatal("changed user preset")
 			}
-			again, err := PatchPresets(patch.Content, routes)
+			again, err := PatchPresets(patch.Content, routes, patch.Content)
 			if err != nil || string(again.Content) != string(patch.Content) {
 				t.Fatalf("not idempotent: %v", err)
 			}
@@ -41,7 +41,7 @@ func TestPatchPresetsPreservesAndReleases(t *testing.T) {
 func TestPatchPresetsRestoresPriorEntry(t *testing.T) {
 	source := "modelPresets:\n  mango-sol: # prior\n    modelRoles: {default: old/model}\n    defaultThinkingLevel: low\n  personal:\n    modelRoles: {default: mine/model}\n"
 	route := profilemango.RouteBinding{Provider: "openai", Model: "gpt-6", Transport: "native", Authentication: "oauth", Effort: "high"}
-	patch, err := PatchPresets([]byte(source), map[string]profilemango.RouteBinding{"sol": route})
+	patch, err := PatchPresets([]byte(source), map[string]profilemango.RouteBinding{"sol": route}, []byte(source))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -241,7 +241,13 @@ and press Ctrl+←/→. Each preset contains `default`, `task`, `plan`, `slow`,
 role mapping as the applied profile. An unbound portable slot uses the
 route's default selector: omp clears roles a preset omits. A route's effort
 also sets the preset's `defaultThinkingLevel` (omitted when effort is unset).
-Other omp roles are not part of the snapshot and omp may clear them on switch.
+Each preset also carries every unmanaged `modelRoles` selector from the target
+config (for example `code`, `review`, and `web`), so omp's whole-snapshot switch
+does not clear them. These selectors are copied unchanged; Mango does not own
+or rewrite their entries in `config.yml`. Re-running `mango use` refreshes the
+carried values, including for overlay-only presets. Status matches the complete
+recorded snapshot, including these carried selectors; a different unmanaged
+selector is not a preset match, but remains unmanaged under normal drift rules.
 
 A preset switches **only roles and default thinking**. `task.maxEffort`,
 AGENTS/RULES, skills and agent files stay as the applied Mango profile set

@@ -31,7 +31,7 @@ func addOhMyPiPresets(input AdapterInput, patch Patch, global bool) (Patch, erro
 	}
 	file := &patch.Files[0]
 	routes := ohMyPiPresetRoutes(input.Bindings)
-	presets, err := ohmypi.PatchPresets(file.Content, routes)
+	presets, err := ohmypi.PatchPresets(file.Content, routes, input.Config.Content)
 	if err != nil {
 		return Patch{}, err
 	}

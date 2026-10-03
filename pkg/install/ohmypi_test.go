@@ -40,7 +40,7 @@ func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "# keep\nmodelRoles:\n  reviewer: other/model\n  default: \"openai/gpt-5.6:high\" # owned\ndefaultThinkingLevel: low # owned\nunknown:\n  apiKey: SYNTHETIC\n"
-	assertInstallTestFile(t, config, want+ohMyPiPrimaryPresetGolden)
+	assertInstallTestFile(t, config, want+strings.Replace(ohMyPiPrimaryPresetGolden, "      slow:", "      reviewer: \"other/model\"\n      slow:", 1))
 	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
@@ -89,7 +89,7 @@ func TestOhMyPiInstallRolesPreservesUnrelatedKeysAndUndoes(t *testing.T) {
 		"  default: \"anthropic/claude-opus-5-5:medium\"\n  commit: \"opencode-go/glm-5.3-flash:low\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n  slow: \"anthropic/claude-opus-5-5:high\"\n" +
 		"  task: \"anthropic/claude-opus-5-5:medium\"\n  tiny: \"opencode-go/glm-5.3-flash:low\"\n" +
 		"defaultThinkingLevel: xhigh\nunknown:\n  apiKey: SYNTHETIC\ntask:\n  maxEffort: \"high\"\n"
-	assertInstallTestFile(t, config, want+ohMyPiRolesPresetGolden)
+	assertInstallTestFile(t, config, want+strings.Replace(ohMyPiRolesPresetGolden, "      slow:", "      reviewer: \"other/model\"\n      slow:", 1))
 	manifest, err := os.ReadFile(config + ".profile-mango.manifest.json")
 	if err != nil {
 		t.Fatal(err)

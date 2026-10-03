@@ -62,8 +62,13 @@ func RoutePreset(route profilemango.RouteBinding) (ModelPreset, error) {
 	return preset, nil
 }
 
-// PatchPresets changes only named Mango entries, leaving other preset bytes alone.
-func PatchPresets(source []byte, routes map[string]profilemango.RouteBinding) (PresetPatch, error) {
+// PatchPresets changes only named Mango entries. Unmanaged selectors from
+// roleSource are carried into each snapshot because omp clears omitted roles.
+func PatchPresets(source []byte, routes map[string]profilemango.RouteBinding, roleSource []byte) (PresetPatch, error) {
+	carried, err := presetCarryRoles(roleSource)
+	if err != nil {
+		return PresetPatch{}, err
+	}
 	patch := PresetPatch{Content: source}
 	names := make([]string, 0, len(routes))
 	for name := range routes {
@@ -75,6 +80,11 @@ func PatchPresets(source []byte, routes map[string]profilemango.RouteBinding) (P
 		if err != nil {
 			return PresetPatch{}, fmt.Errorf("preset route %s: %w", name, err)
 		}
+		for slot, selector := range carried {
+			if _, managed := preset.ModelRoles[slot]; !managed {
+				preset.ModelRoles[slot] = selector
+			}
+		}
 		content, change, err := patchPreset(patch.Content, PresetName(name), preset)
 		if err != nil {
 			return PresetPatch{}, err
@@ -83,6 +93,22 @@ func PatchPresets(source []byte, routes map[string]profilemango.RouteBinding) (P
 		patch.Presets = append(patch.Presets, change)
 	}
 	return patch, nil
+}
+
+func presetCarryRoles(source []byte) (map[string]string, error) {
+	document, err := parseConfig(source)
+	if err != nil {
+		return nil, err
+	}
+	block, found, err := findEntry(document.root, "modelRoles")
+	if err != nil || !found {
+		return nil, err
+	}
+	var roles map[string]string
+	if err := block.value.Decode(&roles); err != nil {
+		return nil, fmt.Errorf("modelRoles: %w", err)
+	}
+	return roles, nil
 }
 
 func patchPreset(source []byte, name string, preset ModelPreset) ([]byte, PresetChange, error) {

@@ -127,6 +127,9 @@ Run `/modelpreset switch mango-opus55` in omp, or use Ctrl+←/→ in
 `/models` → Roles. Presets swap model roles and default thinking only:
 the applied profile's task effort cap, instructions, skills and agents stay
 in place. A full profile switch still uses `mango use`.
+Presets also carry the target config's unmanaged role selectors (for example
+`code`, `review`, and `web`), so omp's whole-snapshot switch preserves them.
+Re-running `mango use` refreshes those carried selectors.
 Overlay-only installs keep presets in the overlay rather than changing the
 global file. See [preset ownership and overlay limits](docs/public/agents.md#model-presets-omp-1860).
 

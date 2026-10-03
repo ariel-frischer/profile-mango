@@ -19,6 +19,7 @@ func TestOhMyPiStatusRecognizesPresetSwitch(t *testing.T) {
 			request, root := ohMyPiTestRequest(t)
 			request.Override = false
 			writeInstallTestFile(t, request.BindingsPath, ohMyPiTestBindings+"    subagentMaxEffort: high\n  alternate:\n    provider: openai\n    model: gpt-6\n    effort: low\n    subagentMaxEffort: low\n")
+			writeInstallTestFile(t, request.Targets[0].ConfigPath, "modelRoles:\n  code: openai-codex/gpt-6.1-sol:medium\n  web: web/exa\n")
 			applySwitchTestPlan(t, request)
 			config := request.Targets[0].ConfigPath
 			data, err := os.ReadFile(config)
