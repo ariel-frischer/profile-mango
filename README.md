@@ -119,6 +119,18 @@ replaces. `agentFiles` also ships native subagent files as-is, for example
 `agentFiles: {oh-my-pi: {scout.md: agents/omp/scout.md}}` replaces Oh My Pi's
 bundled `scout` agent. Full example: [`examples/profiles/daily-driver`](examples/profiles/daily-driver/profile.yaml).
 
+### Switch Mango routes inside Oh My Pi
+
+With omp 18.6.0, `mango use <profile> --target oh-my-pi` installs a
+`mango-<route>` model preset for every binding route in global `config.yml`.
+Run `/modelpreset switch mango-opus55` in omp, or use Ctrl+←/→ in
+`/models` → Roles. Presets swap model roles and default thinking only:
+the applied profile's task effort cap, instructions, skills and agents stay
+in place. A full profile switch still uses `mango use`.
+Overlay-only installs keep presets in the overlay rather than changing the
+global file. See [preset ownership and overlay limits](docs/public/agents.md#model-presets-omp-1860).
+
+
 ## What it isn't
 
 `mango` is not a unified configuration manager for every agent setting. It

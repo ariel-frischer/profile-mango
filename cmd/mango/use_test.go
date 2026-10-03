@@ -303,10 +303,10 @@ func TestUseSwitchesOhMyPiRolesAndReleasesDroppedOnes(t *testing.T) {
 	installA := env.options
 	installA.targets, installA.makeDefault = []string{"oh-my-pi"}, true
 	env.planThenApply(t, "roles-a", installA)
-	assertFileContent(t, config, "modelRoles:\n  smol: \"openai/mini:low\"\n  default: \"openai/gpt-5.6:high\"\n  commit: \"openai/nano\"\n  plan: \"anthropic/opus:high\"\n  slow: \"anthropic/opus:high\"\n  tiny: \"openai/nano\"\ntask:\n  maxEffort: \"high\"\n")
+	assertFileContent(t, config, "modelRoles:\n  smol: \"openai/mini:low\"\n  default: \"openai/gpt-5.6:high\"\n  commit: \"openai/nano\"\n  plan: \"anthropic/opus:high\"\n  slow: \"anthropic/opus:high\"\n  tiny: \"openai/nano\"\ntask:\n  maxEffort: \"high\"\n"+useRolesPresetGolden)
 
 	env.planThenApply(t, "roles-b", env.useOptions())
-	assertFileContent(t, config, "modelRoles:\n  smol: \"user/fast:low\"\n  default: \"openai/gpt-5.6:high\"\n  plan: \"openai/gpt-5.6:xhigh\"\n  slow: \"openai/gpt-5.6:xhigh\"\ntask:\n  maxEffort: \"max\"\n")
+	assertFileContent(t, config, "modelRoles:\n  smol: \"user/fast:low\"\n  default: \"openai/gpt-5.6:high\"\n  plan: \"openai/gpt-5.6:xhigh\"\n  slow: \"openai/gpt-5.6:xhigh\"\ntask:\n  maxEffort: \"max\"\n"+useRolesPresetGolden)
 	omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
 	if omp.Profile != "roles-b" || omp.Source != install.SourceCurrent || fileState(omp, "config.yml") != install.FileInSync {
 		t.Fatalf("status after use = %#v", omp)
@@ -327,12 +327,14 @@ func TestStatusKeepsDefaultWhenConfigAlreadyMatched(t *testing.T) {
 	}
 
 	env := newUseTestHome(t)
-	writeFile(t, filepath.Join(env.ompDir, "config.yml"), string(matched))
+	// Only copy the matching role config, not the unowned Mango-named preset:
+	// preset adoption deliberately requires an explicit override.
+	writeFile(t, filepath.Join(env.ompDir, "config.yml"), strings.Split(string(matched), "modelPresets:")[0])
 	useWork := env.useOptions()
 	useWork.targets = []string{"oh-my-pi"}
 	env.planThenApply(t, "work", useWork)
 	omp := targetStatus(t, statusForTest(t, env.options), "oh-my-pi")
-	if fileState(omp, "config.yml") != "" || omp.Source != install.SourceCurrent || len(omp.Drift) != 0 {
+	if fileState(omp, "config.yml") != install.FileInSync || omp.Source != install.SourceCurrent || len(omp.Drift) != 0 {
 		t.Fatalf("status after use over a matching config = %s (%s), drift %v", omp.Source, omp.SourceReason, omp.Drift)
 	}
 }

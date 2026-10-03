@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Oh My Pi 18.6.0 model presets for every Mango binding route, with lossless YAML ownership, conflict protection, release and undo.
+
 ## [0.2.1] - 2026-10-01
 
 ### Fixed

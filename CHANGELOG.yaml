@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased: {}
+    unreleased:
+        added:
+            - Oh My Pi 18.6.0 model presets for every Mango binding route, with lossless YAML ownership, conflict protection, release and undo.
     0.2.1:
         date: 2026-10-01
         fixed:

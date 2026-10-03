@@ -48,6 +48,9 @@ func (ohMyPiAdapter) Plan(input AdapterInput) (Patch, error) {
 		return planOhMyPiConfig(input)
 	}
 	patch, err := planOhMyPiOverlay(input.Install.ProfileName, input.Route, input.NamedFile.Content)
+	if err == nil && !input.Install.SetsDefault {
+		patch, err = addOhMyPiPresets(input, patch, false)
+	}
 	if err != nil || !input.Install.SetsDefault {
 		return patch, err
 	}
@@ -114,6 +117,10 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	fields := ohMyPiRoleFields(&file, rolePriors, configPatch.Roles, released)
 	fields = append(fields, ohMyPiSettingFields(&file, settingPriors, configPatch.Settings, releasedSettings)...)
 	patch := Patch{Files: []FilePatch{file}, Fields: fields, OverrideAllowed: true}
+	patch, err = addOhMyPiPresets(input, patch, true)
+	if err != nil {
+		return Patch{}, err
+	}
 	patch.Diagnostics.Add(profilemango.SeverityWarning, "ohmypi.install.route_fields_only", "target.config", "only modelRoles selectors and task.maxEffort are applied; their :effort suffixes, non-default role slots, and task.maxEffort are source-reviewed, not natively observed; defaultThinkingLevel, authentication, provider options, permissions, tools, instructions, skills, role definitions, precedence, and runtime enforcement remain unmanaged", 0, 0)
 	return patch, nil
 }

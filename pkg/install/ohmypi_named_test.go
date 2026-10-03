@@ -43,7 +43,7 @@ func TestOhMyPiNamedProfilesWriteOverlaysAndKeepConfig(t *testing.T) {
 	overlay := "modelRoles:\n  default: \"anthropic/claude-opus-5-5:medium\"\n  commit: \"opencode-go/glm-5.3-flash:low\"\n  plan: \"anthropic/claude-opus-5-5:high\"\n" +
 		"  slow: \"anthropic/claude-opus-5-5:high\"\n  smol: \"opencode-go/gpt-6-luna:high\"\n  task: \"anthropic/claude-opus-5-5:medium\"\n  tiny: \"opencode-go/glm-5.3-flash:low\"\ntask:\n  maxEffort: \"high\"\n"
 	for _, name := range []string{"coding", "review"} {
-		assertInstallTestFile(t, ohMyPiOverlay(config, name), overlay)
+		assertInstallTestFile(t, ohMyPiOverlay(config, name), overlay+ohMyPiRolesPresetGolden)
 	}
 	for _, name := range []string{"review", "coding"} {
 		request.ProfileName = name
@@ -61,7 +61,7 @@ func TestOhMyPiNamedDefaultWritesBothAndUndoRestoresBytes(t *testing.T) {
 	if !plan.Targets[0].Install.SetsDefault {
 		t.Fatalf("install mode = %#v", plan.Targets[0].Install)
 	}
-	assertInstallTestFile(t, config, strings.Replace(ohMyPiNamedBase, "old/model", "\"openai/gpt-5.6:high\"", 1))
+	assertInstallTestFile(t, config, strings.Replace(ohMyPiNamedBase, "old/model", "\"openai/gpt-5.6:high\"", 1)+ohMyPiPrimaryPresetGolden)
 	assertInstallTestFile(t, ohMyPiOverlay(config, "coding"), "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n")
 	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
 	assertInstallTestFile(t, config, ohMyPiNamedBase)

@@ -115,12 +115,14 @@ type AdapterInput struct {
 	ManifestPath string
 	Profile      profilemango.ResolvedProfile
 	Route        profilemango.RouteBinding
-	Resources    []render.Resource
-	Config       Snapshot
-	Manifest     Snapshot
-	Ownership    Manifest
-	HasManifest  bool
-	Override     bool
+	// Bindings supplies every effective target route for native model presets.
+	Bindings    profilemango.Bindings
+	Resources   []render.Resource
+	Config      Snapshot
+	Manifest    Snapshot
+	Ownership   Manifest
+	HasManifest bool
+	Override    bool
 	// Install says where the profile goes; for a named profile, NamedFile is its current file.
 	Install   InstallMode
 	NamedFile Snapshot

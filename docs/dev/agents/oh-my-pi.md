@@ -396,3 +396,19 @@ Native parsing, model resolution, authentication and enforcement are separate
 claims. Earlier native storage evidence is not relabelled as 18.6.0 runtime
 evidence.
 
+
+## Binding-route presets (ap-ynf)
+
+`config/model-presets.ts` SHA-256
+`642cdcd78af5493f2f038900667af50803c540ed7ce957a4fc01e37610ef6472`
+defines the name grammar (24-28), validates roles/thinking (34-50), saves only
+one global entry (104-114), and switches complete role snapshots.
+`settings.ts:1793-1825` resolves a preset whole from its highest owning layer,
+not by merging same-name snapshots; overlay/runtime null hides a lower entry.
+Mango writes `mango-<escaped route>` entries to global config for default
+installs, and only the overlay for named-only installs. Seven managed slots
+are always present (unbound slots use default); task.maxEffort and resources
+are deliberately not part of a preset. The field ownership manifest carries
+each preset key, a semantic hash, and raw prior-entry bytes for explicit
+adoption/release. Ordinary YAML comments and unrelated presets stay untouched.
+

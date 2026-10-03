@@ -55,7 +55,7 @@ apply shows in the plan as `effort <value>: NOT APPLIED`.
 | Codex | `0.157.1` | `>=0.157.1 <0.158.0` | `$CODEX_HOME/<profile>.config.toml` next to `$CODEX_HOME/config.toml`, default `~/.codex/` |
 | OpenCode | `1.18.31` | `>=1.18.31 <1.19.0` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json` |
 | Pi | `0.87.1` | `>=0.87.1 <0.88.0` | `~/.pi/agent/settings.json` (or `$PI_CODING_AGENT_DIR`) |
-| Oh My Pi | `18.4.6` | `>=18.4.6 <18.5.0` | `~/.omp/agent/config.yml` |
+| Oh My Pi | `18.6.0` | `>=18.6.0 <18.7.0` | `~/.omp/agent/config.yml` |
 | OpenClaw | `2026.9.5` | `>=2026.9.5 <2026.10.0` | `~/.openclaw/openclaw.json` (or `$OPENCLAW_CONFIG_PATH`) |
 | Hermes | `0.21.3` | `>=0.21.3 <0.22.0` | `~/.hermes/config.yaml` (or `$HERMES_HOME`) |
 
@@ -223,6 +223,37 @@ and explicit `--agent` destinations remain protected.
   profile no longer sets gets its pre-install value back, or is removed if
   profile-mango added it.
 - [Reference](../dev/agents/oh-my-pi.md)
+
+### Model presets (omp 18.6.0)
+
+Every binding route becomes a preset named `mango-<route>`, using that route's
+Oh My Pi overrides. Non-alphanumeric bytes other than `-` are escaped as
+`_hh` (hex), so names are deterministic and cannot collide with each other.
+With `--default` or `mango use`, presets go in global `config.yml`, where
+`/modelpreset save` writes. Overlay-only installs keep them in
+`profiles/<profile>.yml`; omp lists them when that overlay is loaded, but its
+role assignments can shadow a switch into global config. Prefer the default
+install and launch without the overlay when switching presets interactively.
+
+In omp, use `/modelpreset switch mango-opus55`, or open `/models` → Roles
+and press Ctrl+←/→. Each preset contains `default`, `task`, `plan`, `slow`,
+`smol`, `tiny`, and `commit`, with `:effort` suffixes from the same portable
+role mapping as the applied profile. An unbound portable slot uses the
+route's default selector: omp clears roles a preset omits. A route's effort
+also sets the preset's `defaultThinkingLevel` (omitted when effort is unset).
+Other omp roles are not part of the snapshot and omp may clear them on switch.
+
+A preset switches **only roles and default thinking**. `task.maxEffort`,
+AGENTS/RULES, skills and agent files stay as the applied Mango profile set
+them. Use `mango use <profile>` for a full profile switch.
+
+The plan lists each preset entry; the manifest records its owned key and
+semantic value hash. User presets with different names and their comments are
+preserved. A same-name user preset is a conflict; explicit `--override` adopts
+it with a create-only backup. Removed binding routes release only owned
+presets, restoring any adopted entry. Undo restores the transaction's prior
+file bytes under the usual drift/backup checks.
+
 
 ## OpenClaw
 
