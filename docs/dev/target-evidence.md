@@ -114,6 +114,28 @@ supports the wider range.
 - A tested range is a stated claim, not new evidence. Qualification evidence
   still belongs to the exact version recorded above.
 
+### Oh My Pi requalification to v18.6.0, 2026-10-03
+
+Source tag `v18.6.0` is `89d2610993af69427574bde17791df63906ec4e5`,
+retrieved with `git clone --depth 1 --branch v18.6.0`.
+`packages/coding-agent/package.json` SHA-256 (adapter evidence identity) is
+`2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24`.
+The [reference](agents/oh-my-pi.md#requalification-to-v1860-2026-10-03)
+records review of all seven role slots and consumers, suffix parsing,
+task.maxEffort, overlay layering and agent discovery. Qualification moves to
+exact 18.6.0, with its default tilde tested range `>=18.6.0 <18.7.0`; 18.4.6
+remains historical evidence rather than a registered version. No continuous
+range across the 18.5 breaking changes is claimed.
+The ap-r85 installed-version apply/manifest label fix already ships in v0.2.1;
+this requalification does not change that command contract.
+An isolated installed `omp config list --json` positive read consumed all seven
+synthetic role selectors and `task.maxEffort: medium` on 18.6.0. The invocation
+used bubblewrap `--unshare-all`, cleared environment, hidden personal homes,
+read-only runtime/ELF mounts, writable task-owned HOME, and a 30-second timeout.
+No model call or network access was possible; this establishes settings storage
+consumption, not slot consumers or enforcement.
+
+
 ## Pi evidence
 
 ### Requalification to v0.87.1, 2026-09-26

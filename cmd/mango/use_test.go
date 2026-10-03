@@ -189,7 +189,7 @@ func TestReplanInSyncShowsOnlyInstructionUpdate(t *testing.T) {
 	output := runInstallProfileForTest(t, "work", options)
 	output = regexp.MustCompile(`[0-9a-f]{64}`).ReplaceAllString(strings.ReplaceAll(output, env.home, "~"), "<id>")
 	const golden = "plan <id> (ready)\n" +
-		"  oh-my-pi@18.4.6: ready | destination: ~/.omp/agent/profiles/work.yml | also the default: ~/.omp/agent/config.yml | use it: omp --config ~/.omp/agent/profiles/work.yml\n" +
+		"  oh-my-pi@18.6.0: ready | destination: ~/.omp/agent/profiles/work.yml | also the default: ~/.omp/agent/config.yml | use it: omp --config ~/.omp/agent/profiles/work.yml\n" +
 		"    route: model openai/gpt-5.6, effort high\n" +
 		"    files: AGENTS.md update, RULES.md noop, config.yml noop, config.yml.profile-mango.manifest.json update, work.yml noop\n" +
 		"Summary: 1 ready, 0 unchanged, 0 blocked, 0 conflict, 0 skipped; files: 0 create, 2 update, 3 unchanged. Unrelated target settings are preserved.\n"
