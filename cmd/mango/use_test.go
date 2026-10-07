@@ -235,6 +235,30 @@ func TestUseApplyWithoutTerminalNeedsConsentOnlyForChanges(t *testing.T) {
 	assertFileContent(t, filepath.Join(env.ompDir, "RULES.md"), "# work rules\n")
 }
 
+// Without a terminal, --apply names the exact command that confirms the plan it
+// printed; running that command applies the plan.
+func TestUseApplyWithoutTerminalNamesConfirmCommand(t *testing.T) {
+	env := newUseTestHome(t)
+	options := env.options
+	options.targets, options.makeDefault, options.apply = []string{"oh-my-pi"}, true, true
+	cmd := &cobra.Command{}
+	var output bytes.Buffer
+	cmd.SetOut(&output)
+	cmd.SetErr(&output)
+	cmd.SetIn(strings.NewReader(""))
+	err := runInstall(cmd, "work", options)
+	planID := regexp.MustCompile(`plan ([0-9a-f]{64}) \(ready\)`).FindStringSubmatch(output.String())
+	if err == nil || planID == nil {
+		t.Fatalf("err = %v, want a refused ready plan:\n%s", err, output.String())
+	}
+	if want := "\n  " + installApplyCommand("work", options, planID[1]); !strings.HasSuffix(err.Error(), want) {
+		t.Fatalf("error = %q, want suffix %q", err, want)
+	}
+	options.yes, options.expectPlan = true, planID[1]
+	runInstallProfileForTest(t, "work", options)
+	assertFileContent(t, filepath.Join(env.ompDir, "RULES.md"), "# work rules\n")
+}
+
 func TestStatusReportsEditedAndMissingOwnedFiles(t *testing.T) {
 	env := newUseTestHome(t)
 	installWork := env.options

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- mango install, use and undo with --apply but no terminal (agents, make targets) now end with the exact --apply --yes --expect-plan command for the plan they just printed, instead of only naming the flags
+
 ## [0.3.0] - 2026-10-03
 
 ### Added
