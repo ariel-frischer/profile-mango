@@ -249,9 +249,13 @@ func TestRestoreInteractiveConsentAndHumanPath(t *testing.T) {
 			cmd := &cobra.Command{}
 			cmd.SetIn(strings.NewReader(test.input))
 			cmd.SetOut(&output)
-			err := authorizeRestore(cmd, restoreOptions{apply: true}, strings.Repeat("a", 64), test.terminal)
+			plan := install.RestorePlan{PlanID: strings.Repeat("a", 64), Target: "codex@0.157.1"}
+			err := authorizeRestore(cmd, restoreOptions{apply: true}, plan, test.terminal)
 			if (err == nil) != test.allow {
 				t.Fatalf("authorization = %v", err)
+			}
+			if !test.terminal && !strings.Contains(err.Error(), "\n  mango undo --target codex@0.157.1 --apply --yes --expect-plan "+plan.PlanID) {
+				t.Fatalf("non-terminal error lacks the confirm command: %v", err)
 			}
 		})
 	}

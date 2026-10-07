@@ -1,6 +1,8 @@
 project: profile-mango
 versions:
-    unreleased: {}
+    unreleased:
+        fixed:
+            - mango install, use and undo with --apply but no terminal (agents, make targets) now end with the exact --apply --yes --expect-plan command for the plan they just printed, instead of only naming the flags
     0.3.0:
         date: 2026-10-03
         added:

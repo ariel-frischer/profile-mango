@@ -74,7 +74,7 @@ func runRestore(cmd *cobra.Command, options restoreOptions) error {
 		}
 		return nil
 	}
-	if err := authorizeRestore(cmd, options, plan.PlanID, terminalInput(cmd.InOrStdin())); err != nil {
+	if err := authorizeRestore(cmd, options, plan, terminalInput(cmd.InOrStdin())); err != nil {
 		return err
 	}
 	if err := install.ApplyRestorePlan(plan, options.expectedID(plan.PlanID)); err != nil {
@@ -189,14 +189,14 @@ func (options restoreOptions) expectedID(planID string) string {
 	return planID
 }
 
-func authorizeRestore(cmd *cobra.Command, options restoreOptions, planID string, isTerminal bool) error {
+func authorizeRestore(cmd *cobra.Command, options restoreOptions, plan install.RestorePlan, isTerminal bool) error {
 	if options.yes {
 		return nil
 	}
 	if !isTerminal || options.jsonOutput || nonInteractive {
-		return fmt.Errorf("interactive undo apply requires a terminal; use --yes --expect-plan")
+		return fmt.Errorf("interactive undo apply requires a terminal; to apply the undo plan shown above, run:\n  %s", undoApplyCommand(plan, options))
 	}
-	return confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), planID)
+	return confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), plan.PlanID)
 }
 
 func writeRestorePlan(cmd *cobra.Command, plan install.RestorePlan, asJSON, verbose bool) error {
@@ -239,6 +239,12 @@ func writeCompactUndo(output io.Writer, plan install.RestorePlan) error {
 }
 
 func writeUndoHint(output io.Writer, plan install.RestorePlan, options restoreOptions) error {
+	_, err := fmt.Fprintf(output, "Nothing was written. Apply this undo plan with:\n  %s\n", undoApplyCommand(plan, options))
+	return err
+}
+
+// undoApplyCommand rebuilds the undo arguments, then appends non-interactive consent.
+func undoApplyCommand(plan install.RestorePlan, options restoreOptions) string {
 	args := []string{"mango"}
 	if homePathOverride != "" {
 		args = append(args, "--home", homePathOverride)
@@ -254,8 +260,7 @@ func writeUndoHint(output io.Writer, plan install.RestorePlan, options restoreOp
 	for index := range args {
 		args[index] = install.ShellQuote(args[index])
 	}
-	_, err := fmt.Fprintf(output, "Nothing was written. Apply this undo plan with:\n  %s\n", strings.Join(args, " "))
-	return err
+	return strings.Join(args, " ")
 }
 
 func orAbsent(hash string) string {

@@ -126,7 +126,7 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 	if plan.Status == install.StatusBlocked {
 		return fmt.Errorf("install plan is blocked; no files were written")
 	}
-	if err := authorizeInstall(cmd, options, plan); err != nil {
+	if err := authorizeInstall(cmd, profile, options, plan); err != nil {
 		return err
 	}
 	report, applyErr := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: options.expectPlanOrPlanID(plan)})
@@ -140,8 +140,9 @@ func runInstall(cmd *cobra.Command, profile string, options installOptions, regi
 }
 
 // authorizeInstall requires --yes --expect-plan or terminal consent before a plan
-// writes. An all-unchanged plan writes nothing, so it needs no consent.
-func authorizeInstall(cmd *cobra.Command, options installOptions, plan install.Plan) error {
+// writes. An all-unchanged plan writes nothing, so it needs no consent. Without a
+// terminal the error names the exact command that confirms the plan just shown.
+func authorizeInstall(cmd *cobra.Command, profile string, options installOptions, plan install.Plan) error {
 	switch {
 	case options.yes:
 		if options.expectPlan == "" {
@@ -151,7 +152,7 @@ func authorizeInstall(cmd *cobra.Command, options installOptions, plan install.P
 	case plan.Status == install.StatusNoop:
 		return nil
 	case !terminalInput(cmd.InOrStdin()):
-		return fmt.Errorf("interactive apply requires a terminal; use --yes --expect-plan")
+		return fmt.Errorf("interactive apply requires a terminal; to apply the plan shown above, run:\n  %s", installApplyCommand(profile, options, plan.PlanID))
 	}
 	return confirmInstall(cmd.InOrStdin(), cmd.OutOrStdout(), plan.PlanID)
 }
