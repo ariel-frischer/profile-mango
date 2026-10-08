@@ -208,3 +208,27 @@ func TestRoleFilesTargetRoleOverride(t *testing.T) {
 		})
 	}
 }
+
+func TestCustomRoleFilesInstallAndRelease(t *testing.T) {
+	rename := strings.NewReplacer("worker", "coder", "research", "reviewer", "@task", "@coder", "@smol", "@reviewer")
+	for name, test := range roleTargetCases() {
+		t.Run(name, func(t *testing.T) {
+			test.bindings = rename.Replace(test.bindings)
+			request, _, agents := roleInstallRequest(t, test)
+			root := request.ResourceRoot
+			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), rename.Replace(roleTestProfile))
+			writeInstallTestFile(t, filepath.Join(root, "roles", "coder.md"), roleTestWorker)
+			applySwitchTestPlan(t, request)
+			assertInstallTestFile(t, filepath.Join(agents, "coder"+test.ext), rename.Replace(test.worker))
+			assertInstallTestFile(t, filepath.Join(agents, "reviewer"+test.ext), rename.Replace(test.search))
+			request.ProfileName, request.Release = "plain", true
+			applySwitchTestPlan(t, request)
+			for _, role := range []string{"coder", "reviewer"} {
+				if _, err := os.Stat(filepath.Join(agents, role+test.ext)); !os.IsNotExist(err) {
+					t.Fatalf("released custom role %s remains: %v", role, err)
+				}
+			}
+			assertInstallTestFile(t, filepath.Join(agents, "keep"+test.ext), roleTestKeep)
+		})
+	}
+}

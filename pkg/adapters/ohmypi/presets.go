@@ -51,8 +51,8 @@ func RoutePreset(route profilemango.RouteBinding) (ModelPreset, error) {
 		return ModelPreset{}, err
 	}
 	preset := ModelPreset{ModelRoles: map[string]string{}, DefaultThinkingLevel: route.Effort}
-	for _, slots := range RoleSlots {
-		for _, slot := range slots {
+	for _, name := range profilemango.SemanticRoles {
+		for _, slot := range SlotsForRole(name) {
 			preset.ModelRoles[slot] = assignments[0].selector
 		}
 	}

@@ -179,9 +179,9 @@ func TestPatchConfigRejectsAmbiguousInput(t *testing.T) {
 			route: profilemango.RouteBinding{Provider: "openai", Model: "gpt-5.6", Transport: "native", Authentication: "oauth", Effort: "ultra"},
 			want:  "unsupported thinking level",
 		},
-		"unknown role": {
-			route: withRole("researcher", profilemango.RoleRoute{Provider: "openai", Model: "m"}),
-			want:  `rejects role "researcher"`,
+		"invalid role": {
+			route: withRole("Bad_Name", profilemango.RoleRoute{Provider: "openai", Model: "m"}),
+			want:  `rejects role "Bad_Name"`,
 		},
 		"unsupported role effort": {
 			route: withRole("research", profilemango.RoleRoute{Provider: "openai", Model: "m", Effort: "ultra"}),
@@ -195,9 +195,9 @@ func TestPatchConfigRejectsAmbiguousInput(t *testing.T) {
 			route: withRole("research", profilemango.RoleRoute{Provider: "zai", Model: "glm-4.7:max"}),
 			want:  "set effort explicitly",
 		},
-		"omp-native slot name as role": {
-			route: withRole("smol", profilemango.RoleRoute{Provider: "openai", Model: "m"}),
-			want:  `rejects role "smol"`,
+		"reserved default role": {
+			route: withRole("default", profilemango.RoleRoute{Provider: "openai", Model: "m"}),
+			want:  `rejects role "default"`,
 		},
 		"non-string existing role": {
 			route:  roleRoute(),
@@ -310,5 +310,57 @@ func TestSplitRoleSelector(t *testing.T) {
 				t.Fatalf("split = %q, %q", model, effort)
 			}
 		})
+	}
+}
+
+func TestRoleSlotCollisions(t *testing.T) {
+	tests := map[string]string{"task": "worker", "plan": "planner", "slow": "planner", "smol": "research", "commit": "tiny"}
+	for direct, alias := range tests {
+		t.Run(alias, func(t *testing.T) {
+			route := withRole(alias, profilemango.RoleRoute{Provider: "openai", Model: "m"})
+			route.Roles[direct] = route.Roles[alias]
+			for name, run := range map[string]func() error{
+				"config": func() error { _, err := PatchConfig(nil, route); return err },
+				"preset": func() error { _, err := RoutePreset(route); return err },
+			} {
+				t.Run(name, func(t *testing.T) {
+					err := run()
+					if err == nil || !strings.Contains(err.Error(), "slot collision") || !strings.Contains(err.Error(), alias) || !strings.Contains(err.Error(), direct) {
+						t.Fatalf("collision error = %v", err)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestCustomRoleSlots(t *testing.T) {
+	for name := range map[string]struct{}{"code": {}, "review": {}, "task": {}, "smol": {}} {
+		t.Run(name, func(t *testing.T) {
+			route := withRole(name, profilemango.RoleRoute{Provider: "openai", Model: "custom", Effort: "high"})
+			patch, err := PatchConfig(nil, route)
+			if err != nil || !strings.Contains(string(patch.Content), name+": \"openai/custom:high\"") {
+				t.Fatalf("config = %s, error = %v", patch.Content, err)
+			}
+			preset, err := RoutePreset(route)
+			if err != nil || preset.ModelRoles[name] != "openai/custom:high" {
+				t.Fatalf("preset = %#v, error = %v", preset, err)
+			}
+		})
+	}
+}
+
+func TestCustomRolePreviewAndCollision(t *testing.T) {
+	route := withRole("code", profilemango.RoleRoute{Provider: "openai", Model: "custom"})
+	input := Input{Profile: profilemango.ResolvedProfile{Metadata: profilemango.Metadata{Name: "custom"}}, Route: route, Target: DefaultTarget()}
+	result := Render(input)
+	if len(result.Artifacts) != 1 || !strings.Contains(string(result.Artifacts[0].Content), `code: "openai/custom"`) {
+		t.Fatalf("custom preview = %#v", result)
+	}
+	input.Route = withRole("worker", profilemango.RoleRoute{Provider: "openai", Model: "m"})
+	input.Route.Roles["task"] = input.Route.Roles["worker"]
+	result = Render(input)
+	if len(result.Artifacts) != 0 || !strings.Contains(result.Diagnostics.Error(), "slot collision") {
+		t.Fatalf("collision preview = %#v", result)
 	}
 }

@@ -138,7 +138,7 @@ func newRouteUnsetCmd(options *routeOptions) *cobra.Command {
 func addRouteScopeFlags(cmd *cobra.Command, options *routeOptions) {
 	flags := cmd.Flags()
 	flags.StringVarP(&options.target, "target", "t", "", "change only this agent's override, e.g. oh-my-pi")
-	flags.StringVar(&options.role, "role", "", "change only this subagent role: worker, planner, research, or tiny; with --target, only that agent's role")
+	flags.StringVar(&options.role, "role", "", "change only this subagent role (^[a-z][a-z0-9-]{0,62}$; default reserved); with --target, only that agent's role")
 	flags.BoolVar(&options.dryRun, "dry-run", false, "print the change without writing it")
 }
 

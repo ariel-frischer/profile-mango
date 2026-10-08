@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Roles accept any name matching ^[a-z][a-z0-9-]{0,62}$ (except default): custom roles like coder or reviewer get subagent files on Claude Code, Codex, OpenCode and Oh My Pi, and Oh My Pi bindings such as code or review set modelRoles.<name> directly, with or without an agent file. Binding a semantic role and its native slot together (e.g. worker and task) is rejected.
+
 ## [0.3.1] - 2026-10-08
 
 ### Fixed

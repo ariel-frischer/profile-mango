@@ -106,15 +106,8 @@ func planOhMyPiConfig(input AdapterInput) (Patch, error) {
 	rolePriors := fieldPriors(input.Ownership, input.ConfigPath, ohMyPiRolePriorPrefix)
 	preset := ohMyPiSwitchedPreset(input)
 	if preset != nil {
-		// Switching a complete preset can introduce fallback slots not owned by
-		// the applied route. Give them back when the next route omits them.
-		for _, slots := range ohmypi.RoleSlots {
-			for _, slot := range slots {
-				if _, recorded := rolePriors[slot]; !recorded {
-					rolePriors[slot] = ""
-				}
-			}
-		}
+		// Give back preset-only slots, preserving carried unmanaged selectors.
+		addOhMyPiPresetRolePriors(input, preset.Name, rolePriors)
 	}
 	content, released, err := ohmypi.ReleaseRoles(configPatch.Content, withoutKeys(rolePriors, roleKeys(configPatch.Roles)))
 	if err != nil {

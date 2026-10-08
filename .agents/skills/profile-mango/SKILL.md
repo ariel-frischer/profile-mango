@@ -91,17 +91,16 @@ other values block), Claude Code `effortLevel` (low/medium/high/xhigh), OpenCode
 `effort <v>: NOT APPLIED (<reason>)` in the plan and a JSON
 `skippedRequirements` entry; it is never dropped silently.
 
-Roles use a fixed portable vocabulary: `worker` (implementation subagents),
-`planner` (planning/architecture), `research` (read-only scouting), `tiny`
-(small mechanical tasks, commit messages). Any other name fails; old Oh My Pi
-slot names fail with a hint (`smol` -> `research`, `task` -> `worker`,
-`plan`/`slow` -> `planner`, `commit` -> `tiny`). Optional `roles` under a route
-bind a model per role. Oh My Pi installs them as `modelRoles.<slot>:
-provider/model:effort` (worker: task; planner: plan, slow; research: smol; tiny:
-tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
-(a cap on caller-requested per-spawn effort); other agents skip
-`subagentMaxEffort` and install bound roles only through role subagent files
-(below; `--strict` blocks skips):
+Role names match `^[a-z][a-z0-9-]{0,62}$`; `default` is reserved.
+Semantic roles keep their mappings: `worker` (implementation) → task,
+`planner` (planning) → plan+slow, `research` (scouting) → smol, and `tiny`
+(small tasks) → commit+tiny. Other names, such as `code` and `review`, map
+directly to Oh My Pi `modelRoles.<name>: provider/model:effort`; bound custom
+agent files use `model: "@<name>"`. Binding a semantic alias and a direct name
+for the same slot (e.g. worker+task) fails closed. Oh My Pi also installs the
+optional `subagentMaxEffort` as `task.maxEffort`; other agents skip that cap
+and install bound roles only through role subagent files (`--strict` blocks
+skips):
 
 ```yaml
     subagentMaxEffort: high
@@ -143,8 +142,10 @@ bound model/effort: Codex `~/.codex/agents/<role>.toml`, OpenCode
 `~/.claude/agents/<role>.md` (anthropic only). Named-only installs list them as
 `role-definitions` (subagent files are global); Pi, Hermes, and OpenClaw always
 skip them; `--strict` blocks. A role effort the agent cannot write shows as
-`effort <v> (role <r>): NOT APPLIED`; a bound role with no declared profile role
-installs only on Oh My Pi and is otherwise skipped as `roles`. A same-name
+`effort <v> (role <r>): NOT APPLIED`. For binding-only roles on Oh My Pi,
+bind names under the route but omit their profile definitions: modelRoles
+and presets are written without agent files. Other agents skip these as
+`roles`. There is no per-target suppression of declared role files. A same-name
 unmanaged file (e.g. a hand-written `~/.codex/agents/planner.toml`) is adopted
 with a backup and replaced whole, so native-only fields such as Codex
 `sandbox_mode` are lost: check the plan's `adopt` rows first.

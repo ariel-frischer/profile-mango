@@ -1102,13 +1102,16 @@ source-reviewed rather than natively observed.
 ### Oh My Pi portable roles and `task.maxEffort`, 2026-09-25
 
 Source review only, same commit `78b753124d11f8dd3ae73e2524125890ff7c977e`.
-Bindings roles use the portable names `worker`, `planner`, `research`, and
-`tiny`; the installer writes them to the slots `task`; `plan` and `slow`;
-`smol`; and `tiny` and `commit`, chosen from each slot's consumer (bundled task
-agent `@task`, plan mode and reviewer `@slow`, scout `@smol`, title and commit
-message selection). The old slot names fail in bindings validation with the
-portable name to use; `advisor` and `vision` are never written. Profile role
-definitions install as agent files on default installs; see
+Semantic binding names `worker`, `planner`, `research`, and `tiny` keep their
+consumer mappings: `task`; `plan` and `slow`; `smol`; and `commit` and `tiny`
+(bundled task `@task`, plan mode and reviewer `@slow`, scout `@smol`, title
+and commit selection). Other canonical identifiers except reserved `default`
+map directly to `modelRoles.<name>`; the string-record and `@<role>` resolver
+evidence qualifies this mapping at source-review level, not native runtime.
+A semantic alias and a direct name claiming the same slot fail closed.
+Binding-only roles write selectors without agent files. Declared profile roles
+install as agent files on default installs; semantic files use their first
+mapped slot (`tiny` → `@commit`), custom files use `@<name>`. See
 [role subagent files](#role-subagent-files-2026-09-25-ap-6lp).
 
 `task.maxEffort` (`settings-schema.ts` line 5222, enum `THINKING_EFFORTS`,

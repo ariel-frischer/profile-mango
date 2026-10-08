@@ -26,12 +26,15 @@ lives at `profiles/<name>/profile.yaml`, and its name is the folder name. A
 profile can `extend` another one. Profiles hold no credentials and no
 machine-specific model IDs, so you can share them.
 
-Roles classify subagent work with four portable names: `worker`
-(implementation), `planner` (planning), `research` (read-only exploration), and
-`tiny` (small mechanical tasks). A profile describes what each role does; a
-route's `roles:` picks each role's model and effort. Codex, OpenCode, Oh My Pi,
-and Claude Code get one subagent file per role when the profile is their
-default; see the [profile reference](profile-reference.md#roles).
+Role names are identifiers matching `^[a-z][a-z0-9-]{0,62}$`; `default` is
+reserved for the route's own model. Choose names such as `coder` and `reviewer`,
+or semantic names: `worker` (implementation), `planner` (planning), `research`
+(read-only exploration), and `tiny` (small mechanical tasks). A profile
+describes what each role does; a route's `roles:` picks its model and effort.
+Codex, OpenCode, Oh My Pi, and Claude Code get one subagent file per declared
+role when the profile is their default. Oh My Pi also supports binding-only
+roles: model slots without generated agent files. See the
+[profile reference](profile-reference.md#roles).
 
 ## Bindings, routes, and target overrides
 

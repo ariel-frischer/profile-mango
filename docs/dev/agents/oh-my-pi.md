@@ -139,9 +139,11 @@ and was not re-run. The plan warning says so.
 
 ## Portable roles and `task.maxEffort`, 2026-09-25
 
-Bindings roles now use the portable names `worker`, `planner`, `research`, and
-`tiny`; the installer expands each into the slots whose consumers match its
-purpose. Source review of the same checkout
+Bindings accept identifier role names except reserved `default`. Semantic
+names `worker`, `planner`, `research`, and `tiny` expand into the slots whose
+consumers match their purpose. Other names map 1:1 to `modelRoles.<name>`,
+based on the string-record and `@<role>` resolver evidence above.
+Source review of the same checkout
 (`78b753124d11f8dd3ae73e2524125890ff7c977e`):
 
 | Portable role | Slots | Consumer in pinned source (file SHA-256) |
@@ -151,8 +153,13 @@ purpose. Source review of the same checkout
 | `research` | `smol` | `packages/coding-agent/src/prompts/agents/scout.md` (`c65a6e928a80009acac0510c17bd70dc5cdc688121ffd30976c7e6b0e8ce58fe`): scout `model: "@smol"`; `task/agents.ts` line 68 `@smol` |
 | `tiny` | `tiny`, `commit` | `packages/coding-agent/src/utils/title-generator.ts` (`f76bd8fec0d2f3e1fd0b3ecd92243ca28413729e07b5e00f4b13b8f224889c8b`): candidates `["tiny", "commit", "smol"]` (line 126); `packages/coding-agent/src/commit/model-selection.ts` (`2cdc1f844f5072e62f8924a18be9dfb613a6335d9569354b9c361f86d930605e`): `["commit", "smol", ...]` (line 46) |
 
-`advisor` and `vision` have no portable role and are never written. Each slot
-keeps its own manifest field (`config.modelRoles.<slot>`) and
+Direct names such as `advisor`, `vision`, `code`, and `review` are written
+when bound. A direct slot and a semantic alias claiming it in one effective
+route fail closed with a slot-collision error, even for equal selectors.
+Binding-only roles write model selectors and presets without agent files;
+only profile definitions generate files. Custom names do not imply a
+bundled consumer or native runtime qualification.
+Each slot keeps its own manifest field (`config.modelRoles.<slot>`) and
 `ohmypi-role-prior:<slot>=<value>` marker, so `mango use` gives back every
 slot of a role the new route drops. It also records
 `written-sha256:config.modelRoles.<slot>=<hex>` (and the same for
@@ -197,7 +204,7 @@ Source review of `78b753124d11f8dd3ae73e2524125890ff7c977e`:
 The file carries `name`, `description`, the role's `instructions` (else its
 description) as the body, and, when the route binds the role, `model: "@<slot>"`
 naming the role's first slot (`worker` -> `@task`, `planner` -> `@plan`,
-`research` -> `@smol`, `tiny` -> `@tiny`). The same install writes that slot's
+`research` -> `@smol`, `tiny` -> `@commit`; custom roles -> `@<name>`). The same install writes that slot's
 `provider/model:effort` selector, so model and effort come from one place; the
 agent file never repeats them. Ownership and the named-only `role-definitions`
 skip match Codex and OpenCode. Evidence level: source review plus sandbox
@@ -406,14 +413,17 @@ one global entry (104-114), and switches complete role snapshots.
 `settings.ts:1793-1825` resolves a preset whole from its highest owning layer,
 not by merging same-name snapshots; overlay/runtime null hides a lower entry.
 Mango writes `mango-<escaped route>` entries to global config for default
-installs, and only the overlay for named-only installs. Seven managed slots
-are always present (unbound slots use default); task.maxEffort and resources
+installs, and only the overlay for named-only installs. Seven semantic slots
+are always present (unbound slots use default), plus each bound custom slot; task.maxEffort and resources
 are deliberately not part of a preset. The field ownership manifest carries
 each preset key, a semantic hash, and raw prior-entry bytes for explicit
 adoption/release. Ordinary YAML comments and unrelated presets stay untouched.
-Presets additionally carry unmanaged selectors from the target config, including
-custom slots such as code/review/web, because omp clears every omitted role.
-Re-apply refreshes the carried snapshot without owning those config fields.
+Presets additionally carry unmanaged selectors from the target config, such as
+unbound code/review/web, because omp clears every omitted role. A custom binding
+owns its corresponding config field and wins over carried selectors.
+Re-apply refreshes carried selectors without owning those fields. Per-preset
+slot-prior markers preserve custom-slot release after a native preset switch,
+even when the switched route has since been removed from the bindings.
 Status keeps exact full-role equality against the hash-intact owned preset,
 including carried roles, rather than relaxing the existing hash/drift model.
 

@@ -92,7 +92,7 @@ func validateTargetRoles(path string, base map[string]RoleRoute, overrides map[s
 	for _, name := range sortedKeys(overrides) {
 		rolePath := path + ".roles." + name
 		switch _, bound := base[name]; {
-		case !PortableRole(name):
+		case !ValidRoleName(name):
 			diagnostics.Add(SeverityError, "binding.role_unknown", rolePath, unknownRoleMessage(name), 0, 0)
 		case !bound:
 			diagnostics.Add(SeverityError, "binding.target_role_unbound", rolePath, fmt.Sprintf("role %q is not in the route's base roles; add roles.%s first", name, name), 0, 0)
@@ -135,7 +135,7 @@ func validateRouteRoles(path string, route RouteBinding, diagnostics *Diagnostic
 	}
 	for _, name := range route.SortedRoleNames() {
 		rolePath := path + ".roles." + name
-		if !PortableRole(name) {
+		if !ValidRoleName(name) {
 			diagnostics.Add(SeverityError, "binding.role_unknown", rolePath, unknownRoleMessage(name), 0, 0)
 		}
 		role := route.Roles[name]

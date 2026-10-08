@@ -95,9 +95,9 @@
       }
     },
     "roles": {
-      "description": "Portable role definitions. Models for each role come from bindings routes.<name>.roles; no qualified target installs these descriptions or instructions yet.",
+      "description": "Role definitions keyed by canonical identifier (default is reserved). Models come from bindings routes.<name>.roles; default installs generate subagent files for Claude Code, Codex, OpenCode, and Oh My Pi.",
       "type": "object", "minProperties": 1,
-      "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+      "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$", "not": {"const": "default"}},
       "additionalProperties": {
         "type": "object", "additionalProperties": false,
         "required": ["description"],

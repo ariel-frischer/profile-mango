@@ -54,7 +54,7 @@ var profileShapes = map[string]fieldShape{
 	"agentFiles.*":           {yaml.MappingNode, "a map of file names to resource paths (e.g. oh-my-pi: {scout.md: agents/scout.md})"},
 	// agentFiles.<target>.<file> is looked up through genericWildcard.
 	"agentFiles.*.*": {yaml.ScalarNode, "a resource path string"},
-	"roles":          {yaml.MappingNode, "a map of portable role names to definitions (e.g. roles: {worker: {description: Implements changes}})"},
+	"roles":          {yaml.MappingNode, "a map of role identifiers to definitions (e.g. roles: {worker: {description: Implements changes}})"},
 	"roles.*":        {yaml.MappingNode, "a role definition map (e.g. worker: {description: Implements changes, instructions: roles/worker.md})"},
 	// roles.<role>.<field> is looked up through genericWildcard.
 	"roles.*.*": {yaml.ScalarNode, "a string"},

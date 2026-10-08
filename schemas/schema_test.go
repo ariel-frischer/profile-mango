@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
@@ -29,6 +30,8 @@ func TestSchemasAcceptValidDocuments(t *testing.T) {
 		"bindings roles":           {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"anthropic","model":"claude-opus-5-5","effort":"medium","subagentMaxEffort":"high","roles":{"research":{"provider":"opencode-go","model":"gpt-6-luna","effort":"high"},"tiny":{"provider":"opencode-go","model":"glm-5.3-flash"}}}}}`},
 		"bindings target roles":    {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai-codex","model":"gpt-6-sol","effort":"high","roles":{"research":{"provider":"openai-codex","model":"gpt-6-luna"}},"targets":{"codex":{"roles":{"research":{"provider":"openai"}}}}}}}`},
 		"profile roles":            {schema: "profile.schema.json", document: `{"route":"main","roles":{"worker":{"description":"Implements"},"research":{"description":"Scouts","instructions":"roles/research.md"}}}`},
+		"profile custom roles":     {schema: "profile.schema.json", document: `{"route":"main","roles":{"coder":{"description":"Implements"},"reviewer":{"description":"Reviews"}}}`},
+		"bindings custom roles":    {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"m","effort":"high","roles":{"code":{"provider":"openai","model":"m"},"review":{"provider":"openai","model":"r"}},"targets":{"codex":{"roles":{"code":{"model":"other"}}}}}}}`},
 		"profile agent files":      {schema: "profile.schema.json", document: `{"route":"main","agentFiles":{"oh-my-pi":{"scout.md":"agents/omp/scout.md"},"codex":{"reviewer.toml":"agents/codex/reviewer.toml"}}}`},
 		"profile global fragments": {schema: "profile.schema.json", document: `{"route":"main","globalInstructions":{"oh-my-pi":{"AGENTS.md":["shared/core.md","omp/agents.md"],"RULES.md":"omp/rules.md"}}}`},
 		"plan":                     {schema: "plan.schema.json", document: `{"apiVersion":"profilemango.dev/plan/v1alpha1","kind":"Plan","profile":"route-only","target":"codex","route":{"provider":"openai","transport":"native","authentication":"oauth","model":"gpt-5.6","effort":"high"},"resources":[{"path":"instructions/system.md","kind":"instruction","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":12}]}`},
@@ -66,13 +69,13 @@ func TestSchemasRejectInvalidDocuments(t *testing.T) {
 		"bindings role missing model":       {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai"}}}}}`},
 		"bindings role unknown field":       {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai","model":"m","transport":"native"}}}}}`},
 		"bindings role invalid name":        {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"Smol":{"provider":"openai","model":"m"}}}}}`},
-		"bindings omp slot role name":       {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"smol":{"provider":"openai","model":"m"}}}}}`},
+		"bindings role dotted name":         {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"bad.name":{"provider":"openai","model":"m"}}}}}`},
 		"bindings unknown subagent cap":     {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","subagentMaxEffort":"ultra"}}}`},
 		"bindings empty target role":        {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai","model":"m"}},"targets":{"codex":{"roles":{"research":{}}}}}}}`},
 		"bindings target role field":        {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai","model":"m"}},"targets":{"codex":{"roles":{"research":{"transport":"native"}}}}}}}`},
-		"bindings target role slot name":    {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai","model":"m"}},"targets":{"codex":{"roles":{"smol":{"model":"m"}}}}}}}`},
+		"bindings target role default":      {schema: "bindings.schema.json", document: `{"routes":{"main":{"provider":"openai","model":"gpt-5.6","effort":"high","roles":{"research":{"provider":"openai","model":"m"}},"targets":{"codex":{"roles":{"default":{"model":"m"}}}}}}}`},
 		"profile role no description":       {schema: "profile.schema.json", document: `{"roles":{"worker":{"instructions":"roles/worker.md"}}}`},
-		"profile unknown role":              {schema: "profile.schema.json", document: `{"roles":{"reviewer":{"description":"x"}}}`},
+		"profile invalid role":              {schema: "profile.schema.json", document: `{"roles":{"Bad_Name":{"description":"x"}}}`},
 		"profile role unknown field":        {schema: "profile.schema.json", document: `{"roles":{"worker":{"description":"x","model":"gpt"}}}`},
 		"profile agent file unknown target": {schema: "profile.schema.json", document: `{"agentFiles":{"claude":{"scout.md":"a.md"}}}`},
 		"profile agent file nested name":    {schema: "profile.schema.json", document: `{"agentFiles":{"oh-my-pi":{"sub/scout.md":"a.md"}}}`},
@@ -165,38 +168,62 @@ func TestBindingsSchemaTargetsMatchDomain(t *testing.T) {
 	}
 }
 
-// TestSchemaRoleVocabularyMatchesDomain keeps the schema enums aligned with the
-// portable roles and subagent efforts the Go parser accepts.
+// TestSchemaRoleVocabularyMatchesDomain covers every input and output role contract.
 func TestSchemaRoleVocabularyMatchesDomain(t *testing.T) {
 	t.Parallel()
-	type schemaDefs struct {
-		Defs struct {
-			Roles struct {
-				PropertyNames struct {
-					Enum []string `json:"enum"`
-				} `json:"propertyNames"`
-			} `json:"roles"`
-			SubagentMaxEffort struct {
-				Enum []string `json:"enum"`
-			} `json:"subagentMaxEffort"`
-		} `json:"$defs"`
+	contracts := map[string]struct {
+		file string
+		path []string
+	}{
+		"profile": {"profile.schema.json", []string{"$defs", "roles", "propertyNames"}},
+		"bindings": {"bindings.schema.json", []string{"$defs", "roles", "propertyNames"}},
+		"target": {"bindings.schema.json", []string{"$defs", "targetOverride", "properties", "roles", "propertyNames"}},
+		"skipped": {"install-plan.schema.json", []string{"$defs", "skippedRequirement", "properties", "role"}},
 	}
-	decoded := map[string]schemaDefs{}
-	for _, file := range []string{"bindings.schema.json", "profile.schema.json"} {
-		data, err := os.ReadFile(file)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var document schemaDefs
-		if err := json.Unmarshal(data, &document); err != nil {
-			t.Fatal(err)
-		}
-		if !reflect.DeepEqual(document.Defs.Roles.PropertyNames.Enum, profilemango.PortableRoles) {
-			t.Fatalf("%s roles %v, domain roles %v", file, document.Defs.Roles.PropertyNames.Enum, profilemango.PortableRoles)
-		}
-		decoded[file] = document
+	for name, contract := range contracts {
+		t.Run(name, func(t *testing.T) {
+			checkRoleSchemaContract(t, schemaNode(t, contract.file, contract.path...))
+		})
 	}
-	if efforts := decoded["bindings.schema.json"].Defs.SubagentMaxEffort.Enum; !reflect.DeepEqual(efforts, profilemango.SubagentEfforts) {
-		t.Fatalf("schema subagentMaxEffort %v, domain %v", efforts, profilemango.SubagentEfforts)
+	efforts := schemaNode(t, "bindings.schema.json", "$defs", "subagentMaxEffort", "enum").([]any)
+	want := make([]any, len(profilemango.SubagentEfforts))
+	for index, effort := range profilemango.SubagentEfforts {
+		want[index] = effort
+	}
+	if !reflect.DeepEqual(efforts, want) {
+		t.Fatalf("schema subagentMaxEffort %v, domain %v", efforts, want)
 	}
 }
+
+func schemaNode(t *testing.T, file string, path ...string) any {
+	t.Helper()
+	node := loadDocument(t, file, false)
+	for _, key := range path {
+		node = node.(map[string]any)[key]
+	}
+	return node
+}
+
+func checkRoleSchemaContract(t *testing.T, contract any) {
+	t.Helper()
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource(schemaBaseURL+"role", contract); err != nil {
+		t.Fatal(err)
+	}
+	schema, err := compiler.Compile(schemaBaseURL + "role")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name := range map[string]struct{}{
+		"worker": {}, "planner": {}, "research": {}, "tiny": {},
+		"coder": {}, "reviewer": {}, "code": {}, "review": {}, "smol": {},
+		"a": {}, "a-1": {}, "default": {}, "": {}, "A": {}, "1role": {},
+		"bad_name": {}, "bad.name": {}, "../escape": {}, "role\n": {},
+		strings.Repeat("a", 63): {}, strings.Repeat("a", 64): {},
+	} {
+		if accepted := schema.Validate(name) == nil; accepted != profilemango.ValidRoleName(name) {
+			t.Errorf("schema accepts %q = %t, domain = %t", name, accepted, profilemango.ValidRoleName(name))
+		}
+	}
+}
+

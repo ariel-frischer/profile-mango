@@ -171,7 +171,10 @@ exist.
 
 ### `roles`
 
-`roles` describes what each portable role is for. The names are fixed:
+`roles` describes subagents by name. Names must match
+`^[a-z][a-z0-9-]{0,62}$`; `default` is reserved for the route's own model.
+Custom names such as `coder` and `reviewer` are accepted. These semantic names
+also have established target mappings:
 
 | Role | Used for |
 | --- | --- |
@@ -189,10 +192,9 @@ roles:
 ```
 
 Each role needs a non-empty `description`. `instructions` is optional and must
-be a path under the package root. Another role name fails with the list of
-valid names; an Oh My Pi slot name such as `smol` also names the portable role
-to use instead. The model for each role comes from the route's `roles` in the
-bindings file.
+be a path under the package root. Invalid names fail with their path and the
+identifier grammar. The model for each role comes from the route's `roles` in
+the bindings file.
 
 When the profile is an agent's default (`install --default` or `mango use`),
 each role becomes one subagent file, with the bound model and effort when the
@@ -211,6 +213,16 @@ files the next profile lacks, and `undo` restores the originals. A named-only
 install lists the roles as `role-definitions` under "not installed for this
 agent", because subagent files are global. Pi, Hermes, and OpenClaw always
 skip them. `install --strict` blocks skipped roles.
+
+**Binding-only roles (Oh My Pi):** to set model selectors without generating
+agent files, bind roles under `routes.<name>.roles` but omit their definitions
+from profile `roles`. For example, `code` and `review` bindings write
+`modelRoles.code` and `modelRoles.review` (and route presets) without writing
+`agents/code.md` or `agents/review.md`. A consumer must request `@code` or
+`@review`; a custom slot does not create a bundled agent. Semantic binding-only
+roles configure the existing native consumers, such as `worker` → `task` and
+`research` → `smol`. There is no per-target suppression switch: a role declared
+in the profile still generates its agent file on a default Oh My Pi install.
 
 ### `agentFiles`
 
@@ -348,14 +360,11 @@ OAuth, and an effort from `none` to `xhigh`. The plan says why when a route does
 
 ### `roles`
 
-`roles` gives portable roles (`worker`, `planner`, `research`, `tiny`) their
-own `provider`, `model`, and optional `effort`. The route's own fields are the
-default model, and `targets.<agent>.roles` changes a role for one agent (see
-[`targets` overrides](#targets-overrides)). Any other role name
-fails with its path. The older Oh My Pi slot names fail with a hint:
-`task` becomes `worker`, `plan` and `slow` become `planner`, `smol` becomes
-`research`, and `commit` becomes `tiny`. `advisor` and `vision` have no
-portable role.
+`roles` gives each role its own `provider`, `model`, and optional `effort`.
+Names follow `^[a-z][a-z0-9-]{0,62}$`, excluding reserved `default`. The
+route's own fields supply the default model. `targets.<agent>.roles` changes
+a role already bound in the base route for one agent (see
+[`targets` overrides](#targets-overrides)).
 
 ```yaml
 routes:
@@ -383,7 +392,16 @@ Oh My Pi writes each bound role into its model slots as
 | `worker` | `task` |
 | `planner` | `plan`, `slow` |
 | `research` | `smol` |
-| `tiny` | `tiny`, `commit` |
+| `tiny` | `commit`, `tiny` |
+| Any other valid name | The same name, e.g. `code` → `code` |
+
+Direct slot names such as `task` or `smol` are accepted, but cannot coexist
+with a semantic alias claiming the same slot in the same effective route:
+`worker` + `task`, `planner` + `plan`/`slow`, `research` + `smol`, or `tiny` +
+`commit` fail with a slot-collision error, even when their selectors agree.
+Bound custom role files use `model: "@<name>"`; semantic files use their first
+mapped slot (`tiny` uses `@commit`). All mappings also apply to overlays,
+presets, ownership, and release.
 
 Codex, OpenCode, and Claude Code install a bound role's model and effort only
 inside that role's subagent file, so the profile must also declare the role and
