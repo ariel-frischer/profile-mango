@@ -175,10 +175,10 @@ func TestSchemaRoleVocabularyMatchesDomain(t *testing.T) {
 		file string
 		path []string
 	}{
-		"profile": {"profile.schema.json", []string{"$defs", "roles", "propertyNames"}},
+		"profile":  {"profile.schema.json", []string{"$defs", "roles", "propertyNames"}},
 		"bindings": {"bindings.schema.json", []string{"$defs", "roles", "propertyNames"}},
-		"target": {"bindings.schema.json", []string{"$defs", "targetOverride", "properties", "roles", "propertyNames"}},
-		"skipped": {"install-plan.schema.json", []string{"$defs", "skippedRequirement", "properties", "role"}},
+		"target":   {"bindings.schema.json", []string{"$defs", "targetOverride", "properties", "roles", "propertyNames"}},
+		"skipped":  {"install-plan.schema.json", []string{"$defs", "skippedRequirement", "properties", "role"}},
 	}
 	for name, contract := range contracts {
 		t.Run(name, func(t *testing.T) {
@@ -226,4 +226,3 @@ func checkRoleSchemaContract(t *testing.T, contract any) {
 		}
 	}
 }
-
