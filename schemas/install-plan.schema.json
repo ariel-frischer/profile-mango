@@ -12,6 +12,7 @@
     "status": {"enum": ["ready", "noop", "blocked"]},
     "backup": {"type": "boolean"},
     "override": {"type": "boolean"},
+    "strict": {"type": "boolean"},
     "inputSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "targets": {"type": "array", "items": {"$ref": "#/$defs/targetPlan"}},
     "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
@@ -32,6 +33,7 @@
         "version": {"type": "string"},
         "adapterVersion": {"type": "string"},
         "evidenceSHA256": {"type": "string"},
+        "compatibleRange": {"type": "string"},
         "installable": {"type": "boolean"},
         "status": {"type": "string"},
         "reason": {"type": "string"}
@@ -54,7 +56,7 @@
       "required": ["path", "action", "owned"],
       "properties": {
         "path": {"type": "string"},
-        "action": {"enum": ["create", "update", "override", "noop", "delete"]},
+        "action": {"enum": ["create", "update", "override", "adopt", "restore", "noop", "delete"]},
         "beforeSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "afterSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "owned": {"type": "boolean"},
@@ -65,7 +67,7 @@
         {
           "required": ["afterSHA256"],
           "properties": {
-            "action": {"enum": ["create", "update", "override", "noop"]},
+            "action": {"enum": ["create", "update", "override", "adopt", "restore", "noop"]},
             "delete": {"const": false}
           }
         },
@@ -98,13 +100,42 @@
       "properties": {
         "target": {"$ref": "#/$defs/target"},
         "agent": {"type": "object", "additionalProperties": false, "required": ["mode", "name"], "properties": {"mode": {"enum": ["primary", "subagent"]}, "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}}},
+        "install": {"type": "object", "additionalProperties": false, "required": ["mode"], "properties": {"mode": {"enum": ["named-profile", "default-config"]}, "profileName": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}, "useCommand": {"type": "string"}, "setsDefault": {"type": "boolean"}}},
+        "config": {"type": "object", "additionalProperties": false, "required": ["source"], "properties": {"source": {"enum": ["default", "explicit"]}}},
         "metadata": {"$ref": "#/$defs/metadata"},
-        "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable"]},
+        "status": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable", "skipped"]},
         "reason": {"type": "string"},
 		"destinationSHA256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
         "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
-        "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
+        "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
+        "versionCheck": {"$ref": "#/$defs/versionCheck"},
+        "skippedRequirements": {"type": "array", "items": {"$ref": "#/$defs/skippedRequirement"}},
+        "skills": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"}}
+      }
+    },
+    "skippedRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement"],
+      "properties": {
+        "requirement": {"enum": ["permissions", "tools", "instructions", "skills", "roles", "role-definitions", "subagentMaxEffort", "effort", "globalInstructions", "agentFiles"]},
+        "count": {"type": "integer", "minimum": 1},
+        "value": {"type": "string", "minLength": 1},
+        "role": {"enum": ["worker", "planner", "research", "tiny"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "versionCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binary", "qualified", "range", "status"],
+      "properties": {
+        "binary": {"type": "string"},
+        "qualified": {"type": "string"},
+        "range": {"type": "string", "pattern": "^>=[0-9]+\\.[0-9]+\\.[0-9]+ <[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "detected": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "status": {"enum": ["in-range", "out-of-range", "not-found", "unknown"]}
       }
     }
   }

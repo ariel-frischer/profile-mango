@@ -26,14 +26,12 @@ executable target build was produced.
 
 ## Configuration and precedence
 
-**Native named profiles:** static inspection on 2026-09-22 of the pinned
-[`src/cli/profile.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/cli/profile.ts)
-shows root `--profile <name>` parsing and projection into `OPENCLAW_PROFILE`,
-`OPENCLAW_STATE_DIR`, and `OPENCLAW_CONFIG_PATH`. These select profile-specific
-config/state, distinct from provider-local authentication profiles. This is source
-evidence, not a new runtime probe or proof that Mango can create or activate native
-profiles. Mango installation still patches only its qualified fields at an explicit
-caller-supplied path.
+**Native named profiles:** the pinned source at
+`ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` maps `openclaw --profile <name>` to
+`<home>/.openclaw-<name>/openclaw.json`. profile-mango installs named profiles
+there; see [Named-profile installation](#named-profile-installation-2026-09-23)
+for the file and line evidence. These are config/state profiles, distinct from
+provider-local authentication profiles.
 
 Pinned documentation and source describe strict JSON5 at
 `~/.openclaw/openclaw.json`, relocatable with `OPENCLAW_CONFIG_PATH`; invalid or
@@ -68,9 +66,42 @@ an inert preview.
 Tool policy combines general and provider profiles, allow/deny rules, sender
 policy, plugins, and sandbox gates; documentation says deny wins. The agent
 workspace is not itself a sandbox, and instruction files are guidance rather than
-enforcement. Skills can come from project, user/state, and bundled sources. The
-adapter therefore reports route/authentication, delivery, precedence, permission,
-tool, and runtime-enforcement gaps instead of claiming equivalence.
+enforcement. The adapter reports route/authentication, delivery, precedence,
+permission, tool, and runtime-enforcement gaps instead of claiming equivalence.
+
+### Skill installation (ap-794)
+
+Pinned [skills docs][skills] rank skill roots: `<workspace>/skills`,
+`<workspace>/.agents/skills`, `~/.agents/skills` (only with the default state
+directory), `<state dir>/skills`, then bundled and `skills.load.extraDirs`. The
+[loader](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/local-loader.ts)
+requires a non-blank `description` and takes the name from frontmatter `name`,
+else the folder name; the shared bundle check already requires a description,
+so no OpenClaw-specific check exists.
+[`workspace-skill-loader.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/workspace-skill-loader.ts)
+reads managed skills from `CONFIG_DIR/skills`, and
+[`resolveConfigDir`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/utils.ts)
+picks `OPENCLAW_STATE_DIR`, else the directory of `OPENCLAW_CONFIG_PATH`, else
+`~/.openclaw`.
+
+profile-mango therefore copies each skill folder to `<dir of each written
+openclaw.json>/skills/<name>/`: `~/.openclaw-<name>/skills` for a named
+profile, plus `~/.openclaw/skills` with `--default` or `use`. Every install
+writes a config, so skills are never skipped. When `OPENCLAW_STATE_DIR` is set
+to another directory the plan warns that OpenClaw reads skills from there.
+
+`--agent openclaw=<id>` sets `agents.entries.<id>.skills` to the sorted profile
+skill names in each written config that defines the agent. Per
+[`skills-config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills-config.md)
+an entry's `skills` replaces `agents.defaults.skills`, which is never written.
+The [schema](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/zod-schema.agents.ts)
+needs ownership markers once several entries exist, so profile-mango never
+creates an entry: an id no written config defines blocks the plan. The value
+the allowlist had first is kept as an `openclaw-skills-prior:<id>=<json>`
+manifest marker (empty when absent). Later installs without `--agent` keep the
+recorded agents; `--agent` with another id gives the old one its prior back, as
+does a profile without skills. Undo restores the file bytes. Only the allowlist
+value changes; comments, quoting, and other keys stay byte for byte.
 
 ## Candidate inspection and safety boundary
 
@@ -98,7 +129,7 @@ Consequently, the adapter reports these independent evidence levels as blocking:
 - merged effective state and per-field provenance are unverified
 - config and runtime precedence are unverified
 - route authentication identity and credential handling are unverified
-- permissions, tools, plugins, instructions, skills, delivery, and runtime enforcement are unverified
+- permissions, tools, plugins, instructions, skill execution, delivery, and runtime enforcement are unverified
 
 A future probe must re-review the exact source, use a direct exact artifact, isolate
 all config/state/workspace/include paths, sanitize the environment, use synthetic
@@ -135,3 +166,60 @@ in the [native evidence fixture](../../../pkg/adapters/openclaw/testdata/opencla
 The [probe](../../../pkg/adapters/openclaw/testdata/openclaw-native-field-consumption-probe.mjs)
 accepts an optional generated-config path; otherwise it uses a synthetic fixture.
 Earlier M0 inspection observations above are historical, not current install gates.
+
+## Named-profile installation, 2026-09-23
+
+`mango install <profile> --target openclaw` writes the two qualified
+fields to the config that `openclaw --profile <profile>` reads, and leaves
+the default config alone unless you pass `--default`. The plan prints
+`use it: openclaw --profile <profile>`. Evidence is **source-only**: the pinned
+files below were fetched read-only from GitHub raw at commit
+`ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` on 2026-09-23. The locally installed
+npm package is `2026.9.4`, not the pinned version, so it was not read or run as
+evidence, and no native `--profile` probe was run.
+
+| Pinned file | Lines | Observation |
+| --- | --- | --- |
+| [`src/entry.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/entry.ts) | 131-134, 194-203 | Root `--profile` is parsed and applied to the environment before any command runs. |
+| [`src/cli/profile.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/cli/profile.ts) | 41-65 | `--profile <name>` must pass `isValidProfileName`, and it can't be combined with `--dev`. |
+| same | 89-95 | The selected state directory comes from `resolveProfileStateDir(profile, env, homedir)`. |
+| same | 110-118, 135-147 | `OPENCLAW_STATE_DIR` becomes the profile state directory, and `OPENCLAW_CONFIG_PATH` becomes `<stateDir>/openclaw.json`. An existing `OPENCLAW_CONFIG_PATH` or `OPENCLAW_STATE_DIR` is kept unless it is the inherited profile's own canonical path. |
+| [`src/cli/profile-utils.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/cli/profile-utils.ts) | 6-14 | Names match `^[a-z0-9][a-z0-9_-]{0,63}$`, case-insensitively. |
+| same | 31-42 | The state directory is `<home>/.openclaw-<name>`, and `default` (any case) maps to `<home>/.openclaw`. |
+| [`src/infra/home-dir.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/infra/home-dir.ts) and [`packages/normalization-core/src/home-dir.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/packages/normalization-core/src/home-dir.ts) | 14-25; 28-35, 45-53 | `<home>` is `OPENCLAW_HOME` when set, otherwise `HOME`, then `USERPROFILE`, then the OS home. |
+| [`src/config/paths.ts`](https://github.com/openclaw/openclaw/blob/ec9c1a13db8938e5a3eaa51fca2e981cde2395a9/src/config/paths.ts) | 222-230, 266-274 | Config resolution uses `OPENCLAW_CONFIG_PATH` directly, so the profile reads exactly `<home>/.openclaw-<name>/openclaw.json`. |
+
+Full fetched-file SHA-256 values: `entry.ts`
+`7714d6416147764e2499ef6b7cc694cd553b820c04b12a057611efa0445f615d`,
+`profile.ts` `969d6172f0ab4f4bcd1a3541bfc1bc0d9e80f9900f8055aa1b29dcedeb861dbe`,
+`profile-utils.ts` `f622c1c8922ffd91fa9813373f4a60c85b1faabb8b2d5e0961310d3455586e11`,
+`infra/home-dir.ts` `6c850a1712a5e33fdacdc6885a876843da2d854c3a5968e7396fd41d3684b184`,
+`normalization-core/src/home-dir.ts` `680f0632da8ad6a2cc74d8daf7ed89163f8cf7aad4bd29a5725134b0da03eec7`,
+`config/paths.ts` `9b97d69001407f6fed83e018ce04d379c0262806d2c1be7012d197bf0356cf0e`.
+
+**Path rule.** profile-mango derives the profile config from the main config
+path. `<dir>/.openclaw/openclaw.json` gives `<dir>/.openclaw-<name>/openclaw.json`.
+That is correct when `<dir>` is OpenClaw's effective home: the default
+`~/.openclaw/openclaw.json`, or an explicit `--config` or `OPENCLAW_CONFIG_PATH`
+under the home that OpenClaw will use. Any other main config path is blocked with
+`install.named_profile_path_unsafe`, because a relocated config says nothing
+about where `--profile` looks. profile-mango doesn't read `OPENCLAW_HOME`. If you
+set it, pass `--config $OPENCLAW_HOME/.openclaw/openclaw.json`.
+
+**`default` profile.** OpenClaw maps `--profile default` to the default state
+directory and keeps an existing `OPENCLAW_CONFIG_PATH`. So installing a profile
+named `default` patches the main config in place, and no second file is written.
+
+**Separate state.** A new profile directory has no authentication, sessions,
+workspace, or plugins. profile-mango doesn't copy them, and the plan says so
+(`openclaw.install.profile_state_separate`). An `OPENCLAW_CONFIG_PATH` or
+`OPENCLAW_STATE_DIR` already exported to another location still wins over
+`--profile`.
+
+**Validation.** Unit, command, and compiled-binary integration tests cover these
+cases in synthetic homes: create, noop reinstall, `--default`, `default`-name,
+blocked relocated paths, and undo. A sandbox run of the built binary in a scratch
+`HOME`, with `PROFILE_MANGO_HOME` inside it, installed `coding`. It created
+`~/.openclaw-coding/openclaw.json` and left `~/.openclaw/openclaw.json`
+byte-identical (SHA-256 before and after). It then applied `--default`, and two
+undos restored the original default config and removed the profile config.

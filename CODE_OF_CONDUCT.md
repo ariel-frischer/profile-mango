@@ -30,7 +30,10 @@ Examples of unacceptable behavior:
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project maintainer. All complaints will be reviewed and
+reported privately to the project maintainer through GitHub private reporting
+(https://github.com/ariel-frischer/profile-mango/security/advisories/new) or by
+contacting [@ariel-frischer](https://github.com/ariel-frischer) on GitHub. All
+complaints will be reviewed and
 investigated promptly and fairly.
 
 ## Attribution

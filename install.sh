@@ -1,5 +1,5 @@
 #!/bin/sh
-# profile-mango private release installer.
+# profile-mango release installer.
 #
 # This script is for explicitly invoked, configured installations. It does not
 # edit shell profiles, and it refuses to install unless a matching SHA-256
@@ -8,22 +8,23 @@
 # Environment variables:
 #   PROFILE_MANGO_INSTALL_DIR       Installation directory (default: ~/.local/bin)
 #   PROFILE_MANGO_VERSION           Version/tag, or latest (default: latest)
-#   PROFILE_MANGO_RELEASE_BASE_URL  Release downloads base URL (private default)
+#   PROFILE_MANGO_RELEASE_BASE_URL  Release downloads base URL
 #   PROFILE_MANGO_LATEST_URL        Latest-release metadata URL
 #   PROFILE_MANGO_*_CMD             Optional command paths for offline fixtures
 
 set -eu
 
-BINARY_NAME="profile-mango"
+BINARY_NAME="mango"
+ALIAS_NAME="profile-mango"
 RELEASE_NAME="profile-mango"
-GITLAB_REPO="ariel-frischer/profile-mango"
+GITHUB_REPO="ariel-frischer/profile-mango"
 if [ -n "${HOME:-}" ]; then
     DEFAULT_INSTALL_DIR="${HOME}/.local/bin"
 else
     DEFAULT_INSTALL_DIR=""
 fi
-DEFAULT_RELEASE_BASE_URL="https://gitlab.com/${GITLAB_REPO}/-/releases"
-DEFAULT_LATEST_URL="https://gitlab.com/api/v4/projects/ariel-frischer%2Fprofile-mango/releases/permalink/latest"
+DEFAULT_RELEASE_BASE_URL="https://github.com/${GITHUB_REPO}/releases/download"
+DEFAULT_LATEST_URL="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 
 CURL_CMD="${PROFILE_MANGO_CURL_CMD:-${PROFILE_MANGO_CURL:-curl}}"
 UNAME_CMD="${PROFILE_MANGO_UNAME_CMD:-${PROFILE_MANGO_UNAME:-uname}}"
@@ -339,6 +340,22 @@ replace_binary() {
     REPLACEMENT_DONE=1
 }
 
+create_alias() {
+    alias_target="$1"
+    alias_path="${INSTALL_DIR}/${ALIAS_NAME}"
+    if ! "$RM_CMD" -f "$alias_path"; then
+        warn "Unable to remove previous ${ALIAS_NAME} alias at ${alias_path}"
+        return 0
+    fi
+    if ln -s "$alias_target" "$alias_path" 2>/dev/null; then
+        info "Linked compatibility alias ${ALIAS_NAME} -> ${alias_target}"
+    elif "$CP_CMD" "$alias_target" "$alias_path" && "$CHMOD_CMD" 755 "$alias_path"; then
+        info "Copied compatibility alias ${ALIAS_NAME} (symlinks unavailable)"
+    else
+        warn "Unable to install ${ALIAS_NAME} compatibility alias"
+    fi
+}
+
 rollback_install() {
     if [ "$INSTALL_ACTIVE" -ne 1 ]; then
         return 0
@@ -409,6 +426,7 @@ show_success() {
     show_path_guidance "$INSTALL_DIR"
     printf '%s\n' "Verify with: ${BINARY_NAME} --version" >&2
     printf '%s\n' "Get started with: ${BINARY_NAME} --help" >&2
+    printf '%s\n' "${ALIAS_NAME} keeps working as a compatibility alias for ${BINARY_NAME}." >&2
 }
 
 main() {
@@ -441,6 +459,7 @@ main() {
     fi
     INSTALL_VERIFIED=1
     INSTALL_ACTIVE=0
+    create_alias "$TARGET_BINARY"
     show_success
 }
 

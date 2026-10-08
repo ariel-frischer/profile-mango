@@ -6,8 +6,8 @@ readonly requested_root="${PROFILE_MANGO_PROBE_ROOT:-}"
 readonly codex_requested="${PROFILE_MANGO_CODEX_BIN:-}"
 readonly jcode_requested="${PROFILE_MANGO_JCODE_BIN:-}"
 readonly keep_probe="${PROFILE_MANGO_KEEP_PROBE:-0}"
-readonly codex_expected_version='codex-cli 0.154.0'
-readonly codex_expected_sha256='3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022'
+readonly codex_expected_version='codex-cli 0.157.1'
+readonly codex_expected_sha256='3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970'
 readonly jcode_expected_version='jcode v0.83.909-dev (ca8017a3a)'
 readonly jcode_expected_sha256='392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992'
 
@@ -249,14 +249,14 @@ assert_contains "$jcode_current" '"provider": "openai-api"'
 assert_contains "$jcode_tool_override" '"profile": "minimal"'
 
 if jcode_malformed_output="$(run_jcode_profile "$jcode_malformed" list --json 2>&1)"; then
-	die 'malformed Ariel custom Jcode fork config unexpectedly succeeded'
+	die 'malformed Jcode fork config unexpectedly succeeded'
 fi
 assert_contains "$jcode_malformed_output" 'TOML parse error'
 jcode_unknown_output="$(run_jcode_profile "$jcode_unknown" resolve sentinel --json)"
 assert_contains "$jcode_unknown_output" '"model": "sentinel-model-unknown-key"'
 assert_not_contains "$jcode_unknown_output" 'SENTINEL-UNKNOWN-KEY'
 if jcode_invalid_output="$(run_jcode_profile "$jcode_invalid_effort" resolve sentinel --json 2>&1)"; then
-	die 'invalid Ariel custom Jcode fork reasoning effort unexpectedly succeeded'
+	die 'invalid Jcode fork reasoning effort unexpectedly succeeded'
 fi
 assert_contains "$jcode_invalid_output" 'invalid reasoning_effort'
 

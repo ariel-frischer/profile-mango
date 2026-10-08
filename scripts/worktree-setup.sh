@@ -3,7 +3,7 @@ set -euo pipefail
 
 BRANCH="${1:?Usage: worktree-setup.sh <branch-name> [base-branch]}"
 BASE="${2:-HEAD}"
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(dirname "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --path-format=absolute --git-common-dir)")"
 WORKTREE_DIR="$REPO_ROOT/.worktrees/$BRANCH"
 
 sync_agent_context() {
@@ -25,6 +25,12 @@ link_local_state() {
   local path
   for path in .beads .codegraph; do
     [ -e "$REPO_ROOT/$path" ] || continue
+    if [ "$path" = .beads ] && [ -d "$WORKTREE_DIR/$path" ] &&
+      [ ! -L "$WORKTREE_DIR/$path" ] && [ -z "$(git -C "$WORKTREE_DIR" ls-files -- .beads)" ]; then
+      echo "error: $WORKTREE_DIR/.beads is a separate copy of the beads database." >&2
+      echo "inspect it, remove it, and rerun to link $REPO_ROOT/.beads" >&2
+      exit 1
+    fi
     [ -e "$WORKTREE_DIR/$path" ] || [ -L "$WORKTREE_DIR/$path" ] || \
       ln -s "$REPO_ROOT/$path" "$WORKTREE_DIR/$path"
   done

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profilemango.dev/schemas/doctor-v1alpha1.json",
+  "title": "DoctorReport v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "profile", "targets"],
+  "properties": {
+    "apiVersion": {"const": "profilemango.dev/doctor/v1alpha1"},
+    "kind": {"const": "DoctorReport"},
+    "profile": {"type": "string", "minLength": 1},
+    "targets": {"type": "array", "items": {"$ref": "#/$defs/target"}}
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "binary", "binaryFound", "qualifiedVersion", "versionMatch", "configExists"],
+      "properties": {
+        "target": {"type": "string", "minLength": 1},
+        "binary": {"type": "string", "minLength": 1},
+        "binaryFound": {"type": "boolean"},
+        "binaryPath": {"type": "string"},
+        "detectedVersion": {"type": "string"},
+        "probeError": {"type": "string"},
+        "qualifiedVersion": {"type": "string", "minLength": 1},
+        "versionMatch": {"type": "boolean"},
+        "compatibleRange": {"type": "string"},
+        "inRange": {"type": "boolean"},
+        "configPath": {"type": "string"},
+        "configBlocked": {"type": "string"},
+        "configExists": {"type": "boolean"},
+        "planStatus": {"enum": ["ready", "noop", "blocked", "conflict", "unavailable", "not-attempted"]},
+        "planReason": {"type": "string"}
+      }
+    }
+  }
+}

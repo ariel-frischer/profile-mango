@@ -11,14 +11,80 @@
       "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$"},
       "additionalProperties": {
         "type": "object", "additionalProperties": false,
-        "required": ["provider", "transport", "authentication", "model", "effort"],
+        "required": ["provider", "model", "effort"],
         "properties": {
-          "provider": {"type": "string", "minLength": 1},
-          "transport": {"type": "string", "minLength": 1},
-          "authentication": {"type": "string", "minLength": 1},
-          "model": {"type": "string", "minLength": 1},
-          "effort": {"type": "string", "minLength": 1}
+          "provider": {"$ref": "#/$defs/field"},
+          "transport": {"$ref": "#/$defs/field", "default": "native"},
+          "authentication": {"$ref": "#/$defs/field", "default": "oauth"},
+          "model": {"$ref": "#/$defs/field"},
+          "effort": {"$ref": "#/$defs/field"},
+          "targets": {
+            "type": "object", "minProperties": 1,
+            "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+            "additionalProperties": {"$ref": "#/$defs/targetOverride"}
+          },
+          "subagentMaxEffort": {"$ref": "#/$defs/subagentMaxEffort"},
+          "roles": {"$ref": "#/$defs/roles"}
         }
+      }
+    }
+  },
+  "$defs": {
+    "field": {"type": "string", "minLength": 1},
+    "effectiveRoute": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "transport", "authentication", "model", "effort"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
+        "transport": {"$ref": "#/$defs/field"},
+        "authentication": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"},
+        "subagentMaxEffort": {"$ref": "#/$defs/subagentMaxEffort"},
+        "roles": {"$ref": "#/$defs/roles"}
+      }
+    },
+    "subagentMaxEffort": {
+      "description": "Cap on subagent effort. Installed only on Oh My Pi as task.maxEffort; skipped elsewhere.",
+      "enum": ["minimal", "low", "medium", "high", "xhigh", "max"]
+    },
+    "roles": {
+      "description": "Per-role routes keyed by portable role. Oh My Pi slots: worker=task, planner=plan+slow, research=smol, tiny=tiny+commit.",
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+      "additionalProperties": {"$ref": "#/$defs/roleRoute"}
+    },
+    "roleRoute": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"}
+      }
+    },
+    "targetOverride": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
+        "transport": {"$ref": "#/$defs/field"},
+        "authentication": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"},
+        "roles": {
+          "description": "Per-target changes to roles the base route binds under roles; non-empty fields replace the base role's.",
+          "type": "object", "minProperties": 1,
+          "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+          "additionalProperties": {"$ref": "#/$defs/roleOverride"}
+        }
+      }
+    },
+    "roleOverride": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "provider": {"$ref": "#/$defs/field"},
+        "model": {"$ref": "#/$defs/field"},
+        "effort": {"$ref": "#/$defs/field"}
       }
     }
   }

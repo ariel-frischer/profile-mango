@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/openclaw"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 func TestOpenClawAdapterMetadata(t *testing.T) {
@@ -76,7 +76,7 @@ func TestOpenClawAdapterBlocksUnqualifiedRequirements(t *testing.T) {
 			want:   "instruction",
 		},
 		"skills": {
-			mutate: func(input *AdapterInput) { input.Profile.Skills = []string{"skill/SKILL.md"} },
+			mutate: func(input *AdapterInput) { input.Profile.Skills = []profilemango.SkillRef{{Path: "skill/SKILL.md"}} },
 			want:   "instruction",
 		},
 		"resources": {
@@ -113,7 +113,7 @@ func TestOpenClawInstallPlanApplyReapplyBackupAndStale(t *testing.T) {
 	if plan.Status != StatusReady || plan.Targets[0].Status != StatusReady {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if plan.Targets[0].Files[0].Action != ActionOverride || len(plan.Targets[0].Fields) != 2 {
+	if !hasFileAction(plan.Targets[0], ActionOverride) || !hasFileAction(plan.Targets[0], ActionCreate) || len(plan.Targets[0].Fields) != 4 {
 		t.Fatalf("plan diff = %#v", plan.Targets[0])
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
@@ -153,13 +153,15 @@ func TestOpenClawInstallCreatesConfigFromMissingPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionCreate {
+	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionCreate || plan.Targets[0].Files[1].Action != ActionCreate {
 		t.Fatalf("create plan = %#v", plan)
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	assertInstallTestFile(t, config, "{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}}}\n")
+	created := "{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}}}\n"
+	assertInstallTestFile(t, config, created)
+	assertInstallTestFile(t, openClawProfileConfig(config, request.ProfileName), created)
 	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); !os.IsNotExist(err) {
 		t.Fatalf("unexpected backup for newly created config: %v", err)
 	}
@@ -176,12 +178,31 @@ func openClawInstallRequest(t *testing.T) (Request, string) {
     model: gpt-5.6
     effort: high
 `)
-	config := filepath.Join(root, "target", "openclaw.json")
+	config := filepath.Join(root, "home", ".openclaw", "openclaw.json")
 	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	request.Override = true
 	request.Targets = []TargetRequest{{Target: Target{Name: openclaw.TargetName, Version: openclaw.TargetVersion}, ConfigPath: config}}
+	// Most OpenClaw tests cover the default config patch, which only --default writes.
+	request.Default = true
+	return request, config
+}
+
+// openClawProfileConfig is where `openclaw --profile <name>` reads config beside config.
+func openClawProfileConfig(config, name string) string {
+	return filepath.Join(filepath.Dir(filepath.Dir(config)), ".openclaw-"+name, "openclaw.json")
+}
+
+// openClawAdoptRequest also seeds the profile config so --default adopts both files.
+func openClawAdoptRequest(t *testing.T) (Request, string) {
+	t.Helper()
+	request, config := openClawInstallRequest(t)
+	profile := openClawProfileConfig(config, request.ProfileName)
+	if err := os.MkdirAll(filepath.Dir(profile), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeInstallTestFile(t, profile, `{"theme":"dark"}`)
 	return request, config
 }
 

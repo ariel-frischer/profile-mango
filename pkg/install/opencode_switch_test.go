@@ -7,69 +7,100 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-func TestOpenCodeSwitchRemovesCleanOwnedLegacySkill(t *testing.T) {
-	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	installed := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md")
-	assertInstallTestFile(t, installed, openCodeTestSkill)
-	writeInstallTestFile(t, profile, switchTestProfile(false))
-	applySwitchTestPlan(t, request)
-	if _, err := os.Stat(installed); !os.IsNotExist(err) {
-		t.Fatalf("omitted clean owned skill was not removed: %v", err)
-	}
-}
-
-func TestOpenCodeSwitchDoesNotAdoptIdenticalUnownedSkill(t *testing.T) {
-	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	skill := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md")
-	writeInstallTestFile(t, skill, openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	for _, file := range readSwitchManifest(t, request.Targets[0].ConfigPath).Files {
-		if file.Path == skill {
-			t.Fatal("identical unowned skill was adopted into manifest")
-		}
-	}
-	writeInstallTestFile(t, profile, switchTestProfile(false))
-	applySwitchTestPlan(t, request)
-	assertInstallTestFile(t, skill, openCodeTestSkill)
-}
-
-func TestOpenCodeSwitchDoesNotReclaimEditedSkillOnNoop(t *testing.T) {
-	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	resource := filepath.Join(root, "SKILL.md")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, resource, openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	skill := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "SKILL.md")
-	updated := openCodeTestSkill + "External edit.\n"
-	writeInstallTestFile(t, resource, updated)
-	writeInstallTestFile(t, skill, updated)
-	applySwitchTestPlan(t, request)
-	writeInstallTestFile(t, profile, switchTestProfile(false))
-	plan, err := BuildPlan(request)
+// seedLegacyOpenCodeSkill recreates what the one-skill OpenCode install of earlier
+// versions left behind: a SKILL.md beside the config, a skills.paths entry for the
+// config directory, and manifest ownership of both, the entry marked when marked is set.
+func seedLegacyOpenCodeSkill(t *testing.T, request Request, root string, marked bool) (string, string) {
+	t.Helper()
+	config := request.Targets[0].ConfigPath
+	legacy := openCodeLegacySkillPath(config)
+	pathsJSON, err := json.Marshal(filepath.Dir(legacy))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusConflict {
-		t.Fatalf("edited skill omission status = %s/%s", plan.Status, plan.Targets[0].Status)
+	writeInstallTestFile(t, config, `{ "skills": { "paths": ["existing" /* keep */, `+string(pathsJSON)+`] } }`)
+	writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), switchTestProfile(false))
+	applySwitchTestPlan(t, request)
+	writeInstallTestFile(t, legacy, openCodeTestSkill)
+	manifest := readSwitchManifest(t, config)
+	for index := range manifest.Files {
+		if manifest.Files[index].Path == config && marked {
+			manifest.Files[index].Fields = append(manifest.Files[index].Fields, openCodeSkillsPathOwnership)
+		}
 	}
-	assertInstallTestFile(t, skill, updated)
+	manifest.Files = append(manifest.Files, ManifestFile{Path: legacy, SHA256: installfs.Hash([]byte(openCodeTestSkill))})
+	writeSwitchManifest(t, config+".profile-mango.manifest.json", manifest)
+	return config, legacy
+}
+
+func TestOpenCodeLegacySkillMigration(t *testing.T) {
+	tests := map[string]struct {
+		skill       bool
+		marked      bool
+		wantPath    bool
+		wantWarning bool
+	}{
+		"marked entry, skill profile":   {skill: true, marked: true},
+		"marked entry, no skills":       {marked: true},
+		"unmarked entry is preserved":   {skill: true, wantPath: true, wantWarning: true},
+		"unmarked entry without skills": {wantPath: true, wantWarning: true},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, root := openCodeTestRequest(t)
+			request.Default = true
+			config, legacy := seedLegacyOpenCodeSkill(t, request, root, test.marked)
+			writeInstallTestFile(t, filepath.Join(root, "profiles", "route-only", "profile.yaml"), switchTestProfile(test.skill))
+			writeInstallTestFile(t, filepath.Join(root, "skills", "profile-mango-synthetic", "SKILL.md"), openCodeTestSkill)
+			plan, err := BuildPlan(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if plan.Status != StatusReady || hasSwitchDiagnostic(plan.Targets[0].Diagnostics, "opencode.install.skills_path_preserved") != test.wantWarning {
+				t.Fatalf("migration plan = %s %#v", plan.Status, plan.Targets[0].Diagnostics)
+			}
+			if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+				t.Fatal(err)
+			}
+			assertLegacySkillReleased(t, config, legacy, test.wantPath)
+			installed := filepath.Join(filepath.Dir(config), "skills", "profile-mango-synthetic", "SKILL.md")
+			if _, err := os.Stat(installed); (err == nil) != test.skill {
+				t.Fatalf("skill folder installed = %v, want %v", err == nil, test.skill)
+			}
+		})
+	}
+}
+
+// assertLegacySkillReleased checks the legacy SKILL.md and its ownership are gone and
+// the skills.paths entry for the config directory remains only when wantPath is set.
+func assertLegacySkillReleased(t *testing.T, config, legacy string, wantPath bool) {
+	t.Helper()
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("legacy SKILL.md remains: %v", err)
+	}
+	configData, err := os.ReadFile(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pathsJSON, _ := json.Marshal(filepath.Dir(legacy))
+	if !strings.Contains(string(configData), `"existing" /* keep */`) || strings.Contains(string(configData), string(pathsJSON)) != wantPath {
+		t.Fatalf("skills.paths after migration = %s", configData)
+	}
+	for _, file := range readSwitchManifest(t, config).Files {
+		if file.Path == legacy || (file.Path == config && containsSwitchValue(file.Fields, openCodeSkillsPathOwnership)) {
+			t.Fatalf("legacy skill ownership remains: %#v", file)
+		}
+	}
 }
 
 func switchTestProfile(skill bool) string {
 	profile := "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: route-only\nspec:\n  routeRef: primary\n"
 	if skill {
-		profile += "  skills:\n    - SKILL.md\n"
+		profile += "  skills:\n    - skills/profile-mango-synthetic/SKILL.md\n"
 	}
 	return profile
 }
@@ -88,95 +119,50 @@ func applySwitchTestPlan(t *testing.T, request Request) {
 	}
 }
 
-func TestOpenCodeSwitchRemovesManagedSkillPathAndManifestOwnership(t *testing.T) {
-	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	config := request.Targets[0].ConfigPath
-	writeInstallTestFile(t, config, `{ "skills": { "paths": ["existing" /* keep */] } }`)
+func TestOpenCodeOverrideEditedOwnedAgent(t *testing.T) {
+	request, _ := openCodeTestRequest(t)
+	request.Override = false
 	applySwitchTestPlan(t, request)
-	writeInstallTestFile(t, profile, switchTestProfile(false))
+	agent := filepath.Join(filepath.Dir(request.Targets[0].ConfigPath), "agents", "route-only.md")
+	original, err := os.ReadFile(agent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := strings.Replace(string(original), "gpt-5.6", "gpt-6.1-sol", 1)
+	if edited == string(original) {
+		t.Fatal("fixture model was not edited")
+	}
+	writeInstallTestFile(t, agent, edited)
+	blocked, err := BuildPlan(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if blocked.Status != StatusBlocked || blocked.Targets[0].Status != StatusConflict {
+		t.Fatalf("edited agent without override = %s/%s", blocked.Status, blocked.Targets[0].Status)
+	}
+	request.Override = true
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if plan.Status != StatusReady {
-		t.Fatalf("cleanup plan status = %s, diagnostics=%v", plan.Status, plan.Targets[0].Diagnostics)
+		t.Fatalf("override plan = %s: %#v", plan.Status, plan.Targets[0].Diagnostics)
+	}
+	if file := piFilePlan(plan.Targets[0], filepath.Base(agent)); file.Action != ActionOverride {
+		t.Fatalf("override file = %#v", file)
 	}
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	configData, err := os.ReadFile(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	configText := string(configData)
-	if !strings.Contains(configText, `"existing" /* keep */`) || strings.Contains(configText, skillConfigDir(config)) {
-		t.Fatalf("managed path cleanup changed unrelated config: %s", configData)
-	}
-	if _, err := os.Stat(filepath.Join(filepath.Dir(config), "SKILL.md")); !os.IsNotExist(err) {
-		t.Fatalf("managed skill remains after cleanup: %v", err)
-	}
-	manifest := readSwitchManifest(t, config)
-	for _, file := range manifest.Files {
-		if file.Path == filepath.Join(filepath.Dir(config), "SKILL.md") {
-			t.Fatal("removed skill remains in ownership manifest")
-		}
-		if file.Path == config && containsSwitchValue(file.Fields, openCodeSkillsPathOwnership) {
-			t.Fatal("removed skills path remains in ownership manifest")
-		}
-	}
+	assertInstallTestFile(t, agent, string(original))
+	assertInstallTestFile(t, installfs.BackupPath(agent, plan.PlanID), edited)
 }
 
-func TestOpenCodeSwitchPreservesLegacyUnmarkedSkillsPath(t *testing.T) {
+func TestOpenCodeSwitchRejectsEditedLegacySkill(t *testing.T) {
 	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	config := request.Targets[0].ConfigPath
-	manifestPath := config + ".profile-mango.manifest.json"
-	manifest := readSwitchManifest(t, config)
-	for index := range manifest.Files {
-		if manifest.Files[index].Path == config {
-			manifest.Files[index].Fields = removeSwitchValue(manifest.Files[index].Fields, openCodeSkillsPathOwnership)
-		}
-	}
-	writeSwitchManifest(t, manifestPath, manifest)
-	writeInstallTestFile(t, profile, switchTestProfile(false))
-	plan, err := BuildPlan(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if plan.Status != StatusReady || !hasSwitchDiagnostic(plan.Targets[0].Diagnostics, "opencode.install.skills_path_preserved") {
-		t.Fatalf("legacy cleanup plan = %#v", plan.Targets[0])
-	}
-	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
-		t.Fatal(err)
-	}
-	configData, err := os.ReadFile(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(configData), skillConfigDir(config)) {
-		t.Fatalf("legacy unmarked skills path was removed: %s", configData)
-	}
-	if _, err := os.Stat(filepath.Join(filepath.Dir(config), "SKILL.md")); !os.IsNotExist(err) {
-		t.Fatalf("owned legacy skill was not removed: %v", err)
-	}
-}
-
-func TestOpenCodeSwitchRejectsEditedOwnedSkill(t *testing.T) {
-	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	config := request.Targets[0].ConfigPath
-	skill := filepath.Join(filepath.Dir(config), "SKILL.md")
-	writeInstallTestFile(t, skill, "edited by user")
-	writeInstallTestFile(t, profile, switchTestProfile(false))
+	request.Default = true
+	_, legacy := seedLegacyOpenCodeSkill(t, request, root, true)
+	writeInstallTestFile(t, legacy, "edited by user")
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
@@ -184,13 +170,12 @@ func TestOpenCodeSwitchRejectsEditedOwnedSkill(t *testing.T) {
 	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusConflict {
 		t.Fatalf("edited omission status = %s/%s, want blocked/conflict", plan.Status, plan.Targets[0].Status)
 	}
-	if _, err := os.Stat(skill); err != nil {
-		t.Fatal(err)
-	}
+	assertInstallTestFile(t, legacy, "edited by user")
 }
 
 func TestOpenCodeSwitchRejectsMismatchedOwnedSkillHash(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, switchTestProfile(false))
 	config := request.Targets[0].ConfigPath
@@ -207,24 +192,15 @@ func TestOpenCodeSwitchRejectsMismatchedOwnedSkillHash(t *testing.T) {
 	}
 }
 
-func TestOpenCodeSwitchCleansMissingOwnedSkillManifest(t *testing.T) {
+func TestOpenCodeSwitchCleansMissingLegacySkillManifest(t *testing.T) {
 	request, root := openCodeTestRequest(t)
-	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
-	writeInstallTestFile(t, profile, switchTestProfile(true))
-	writeInstallTestFile(t, filepath.Join(root, "SKILL.md"), openCodeTestSkill)
-	applySwitchTestPlan(t, request)
-	config := request.Targets[0].ConfigPath
-	if err := os.Remove(filepath.Join(filepath.Dir(config), "SKILL.md")); err != nil {
+	request.Default = true
+	config, legacy := seedLegacyOpenCodeSkill(t, request, root, true)
+	if err := os.Remove(legacy); err != nil {
 		t.Fatal(err)
 	}
-	writeInstallTestFile(t, profile, switchTestProfile(false))
 	applySwitchTestPlan(t, request)
-	manifest := readSwitchManifest(t, config)
-	for _, file := range manifest.Files {
-		if file.Path == filepath.Join(filepath.Dir(config), "SKILL.md") {
-			t.Fatal("missing skill was retained in ownership manifest")
-		}
-	}
+	assertLegacySkillReleased(t, config, legacy, false)
 }
 
 func readSwitchManifest(t *testing.T, config string) Manifest {
@@ -247,16 +223,6 @@ func writeSwitchManifest(t *testing.T, path string, manifest Manifest) {
 		t.Fatal(err)
 	}
 	writeInstallTestFile(t, path, string(data)+"\n")
-}
-
-func removeSwitchValue(values []string, value string) []string {
-	result := make([]string, 0, len(values))
-	for _, candidate := range values {
-		if candidate != value {
-			result = append(result, candidate)
-		}
-	}
-	return result
 }
 
 func containsSwitchValue(values []string, value string) bool {

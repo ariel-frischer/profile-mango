@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 const (
 	TargetName           = "pi"
-	TargetVersion        = "0.86.1"
+	TargetVersion        = "0.87.1"
 	PiVersion            = TargetVersion
-	ReleaseTag           = "v0.86.1"
-	SourceCommit         = "13cbf77df2396303013a41646bcfa77b4271ae56"
-	SourceArchiveSHA256  = "16d65ce53bfab1ae24d625538d434c341c4789d34b352d8c6ef699cf1d1d567d"
-	CommitArchiveSHA256  = "016d83312289ca9b8d3a9d2a5ad804b265277c659472833cfd602cdceecf3818"
+	ReleaseTag           = "v0.87.1"
+	SourceCommit         = "f07218c4d4bbc12bef056a7058c3dd49dfe41abe"
+	SourceArchiveSHA256  = "c3902f45689af9ed9c8ee225554d31a649a993b06f04ab2022bb91ed75e808dc"
+	CommitArchiveSHA256  = "f6ba24ed7e1e6dbda1844ca55c61e20e3ef21e5cc66f9eb2e0611318f6c46c15"
 	PackageName          = "@earendil-works/pi-coding-agent"
-	PackageTarballSHA256 = "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a"
-	PackageIntegrity     = "sha512-vZBuNfJnruxZyemZ3O05V0S/Ylze08ahFTIQ1Mik++gVdOevPl89gt/Uv0U97BPAJaj9cj6Vf9rcIgKtUrd0BA=="
+	PackageTarballSHA256 = "1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f"
+	PackageIntegrity     = "sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew=="
 	Entrypoint           = "dist/bundle/cli.js"
 	EntrypointSHA256     = "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
 	EvidenceSHA256       = PackageTarballSHA256
@@ -113,11 +113,11 @@ func addEvidenceBlockers(result *Result) {
 
 func addTargetCapabilities(result *Result, target TargetBuild) {
 	if target.Name != TargetName || target.Version != TargetVersion || target.EvidenceSHA256 != EvidenceSHA256 {
-		result.AddCapability("target.version", StatusBlocking, "exact Pi v0.86.1 source and package evidence is not qualified")
+		result.AddCapability("target.version", StatusBlocking, "exact Pi v0.87.1 source and package evidence is not qualified")
 		return
 	}
 	result.AddCapability("target.artifact", StatusSupported, "immutable Pi npm package and bundled entrypoint hashes are pinned")
-	result.AddCapability("target.version", StatusSupported, "exact Pi v0.86.1 source commit and package version are pinned")
+	result.AddCapability("target.version", StatusSupported, "exact Pi v0.87.1 source commit and package version are pinned")
 }
 
 func addRouteCapabilities(result *Result) {

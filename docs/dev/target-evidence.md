@@ -1,10 +1,12 @@
 # Target evidence ledger
 
-**Evidence dates:** initial 2026-09-20 local / 2026-09-21 UTC; installation updates 2026-09-22 UTC
+**Evidence dates:** initial 2026-09-20 local / 2026-09-21 UTC; installation updates 2026-09-22 UTC; Codex runtime diagnostics 2026-09-23 UTC
 **Platform:** Linux x86_64
 **Scope:** Canonical contract, shared transaction, exact-version renderer, and
-narrow installation evidence. All native qualification and install validation use
-synthetic disposable state, not personal agent homes or authenticated providers.
+narrow installation evidence. Installer qualification and validation use synthetic
+disposable state, not personal agent homes or authenticated providers. Separate,
+explicitly authorized Codex runtime diagnostics are recorded below and do not
+upgrade the installer's evidence level.
 The dated target sections below distinguish initial source/package review from
 subsequent isolated native commands or settings-module probes. Native probes may
 write only within their disposable sandbox. No full-profile runtime or policy
@@ -27,41 +29,192 @@ versions, installed binaries and tested support must remain distinct.
 ## Product boundary
 
 Codex is the first intended public adapter candidate. Public targets have inert
-exact-version renderers. Claude Code permits only model-field installation; Pi
-permits three route-default settings, Hermes three model/reasoning fields, and
-OpenCode model plus one qualified skill resource or an explicit named primary/
-subagent definition with model and instructions, and OpenClaw model-primary
-plus thinking-default settings. Other target gates
-remain blocked unless explicitly qualified below. Field consumption, full-route
+exact-version renderers. Installable subsets apply at an explicit `--config` path
+or, when omitted, at the documented default user path listed under
+[default config destinations](#default-config-destinations-2026-09-22).
+Codex permits only three route settings, written by default as a native
+`$CODEX_HOME/<name>.config.toml` profile selected with `codex --profile <name>`
+and, only with `--default`, also as root `config.toml` settings; the exact installed
+binary loaded both forms in an isolated synthetic home,
+but OAuth identity and full-profile applicability remain unverified. Claude
+Code permits model plus `low`/`medium`/`high`/`xhigh` `effortLevel` installation; Pi permits three route-default
+settings, Hermes three model/reasoning fields, and OpenCode a named primary
+agent definition (model, effort variant, and instructions) written by default as
+`agents/<profile>.md` next to `opencode.json` and selected with
+`opencode --agent <profile>`, or explicitly as `primary:<name>`/
+`subagent:<name>`; only with `--default` does it also patch the top-level
+`model` field of `opencode.json`. Claude Code, Codex, Oh My Pi, and OpenCode
+install the profile's `skills` as whole owned skill folders when the profile is
+the default; OpenClaw installs them into every state directory the install
+writes, named profiles included, and with `--agent openclaw=<id>` also sets that
+agent's skill allowlist (see [Skill folders](#skill-folders-2026-09-27-ap-794)).
+OpenClaw permits model-primary plus thinking-default settings. Other target gates
+remain blocked unless explicitly qualified below. By default `install` applies
+only a target's qualified subset and lists every known profile requirement it
+cannot install (permissions, tools, instructions, skills) as skipped for that
+target, in the human plan and as JSON `skippedRequirements`; a route effort a
+target cannot write is listed the same way (`effort <value>: NOT APPLIED
+(<reason>)`, JSON `requirement: effort` with `value` and `reason`). A skipped
+requirement is never claimed as honored. `install --strict` blocks on them
+instead. Unknown required properties and unqualified targets always block. Field consumption, full-route
 authentication, precedence, delivery, and runtime enforcement are separate claims.
-Native probes require approved disposable scope and exact evidence. Ariel's custom
+Native probes require approved disposable scope and exact evidence. The Jcode fork custom
 Jcode fork is experimental developer evidence, not a supported public target.
 
-Ariel's custom Jcode fork must not appear in the README support list, release
+the Jcode fork must not appear in the README support list, release
 promise, or public compatibility matrix. Public support for any Jcode variant
 would require a stable external distribution, versioned public documentation,
-reproducible fixtures, and evidence independent of Ariel's machine.
+reproducible fixtures, and evidence independent of the developer's machine.
 
 ## Pinned local observations
 
 | Target | Observed build | Evidence source | Current status |
 | --- | --- | --- | --- |
-| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption; lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model plus one SKILL.md and skills.paths, or an explicit named primary/subagent definition with model and ordered instructions. Directory discovery is not an exclusive allowlist. Full auth, precedence, runtime delegation and enforcement remain blocked |
-| Codex CLI | `codex-cli 0.154.0` | isolated native parsing probe, exact binary SHA-256, golden preview rendering, and negative applicability tests | Inert preview renderer only; native applicability remains blocked |
-| Oh My Pi | source `omp/18.2.6` at `78b753124d11f8dd3ae73e2524125890ff7c977e` | Exact source/addon, pinned Bun/nightly Rust, read-only getter positive/control probes against compiled CLI output | Two model-role/thinking-default fields installable; standalone startup, authentication, precedence, delivery and enforcement remain blocked |
-| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination and compiled transaction checks | Model-only installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
-| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable; full startup, auth, delivery and enforcement remain blocked |
-| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks | Three model/reasoning config fields installable; full startup, authentication, delivery and runtime enforcement remain blocked |
-| Pi | source tag `v0.86.1` at `13cbf77df2396303013a41646bcfa77b4271ae56`, package `@earendil-works/pi-coding-agent@0.86.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
-| Ariel custom Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
+| OpenCode | release `v1.18.31` at `a97622c801f4ca571530ddc51076af659a9c32cd`  | Exact binary debug config, skill and named-agent consumption (including `variant`); lossless JSONC/resource patch tests, compiled transactional lifecycle, isolated negative controls and backup/restore inventory | Main model, skill folders under `<config dir>/skills`, or an explicit named primary/subagent definition with model, effort `variant` and ordered instructions. Full auth, precedence, runtime delegation and enforcement remain blocked |
+| Codex CLI | `codex-cli 0.157.1` (requalified from `0.154.0`) | Isolated installed-binary `config/read` consumed installer-generated provider/model/high-effort fields (and project/session `medium`/`minimal` effort overrides) on both builds; exact-source resolver test on `0.154.0`; `ReasoningEffort` parser and profile-v2 loader source unchanged `rust-v0.154.0..rust-v0.157.1`; isolated installed-binary `--profile` controls loaded a generated `<name>.config.toml` on both builds; built profile-mango CLI synthetic plan/apply/reapply/undo | Three settings installable for an OpenAI/native/OAuth binding with `none`/`minimal`/`low`/`medium`/`high`/`xhigh` effort, as a named `<name>.config.toml` profile beside the explicit or documented default `config.toml`, and in root `config.toml` only with `--default`; trusted project, runtime, and (since 0.157.1) managed `requirements.toml` provider overrides can shadow them. OAuth identity, model availability and per-model effort support, delivery and full-profile applicability remain unverified |
+| Oh My Pi | source `omp/18.6.0` at `89d2610993af69427574bde17791df63906ec4e5` | 18.6.0 exact source review of owned roles, task cap, overlays, agent discovery and model presets; isolated installed-binary `config list` reads generated selectors, cap and presets; historical 18.2.6 getters and 18.4.6 controls remain versioned below | `modelRoles`, `task.maxEffort`, and binding-route `modelPresets` installable; native parsing/storage only, not full startup, authentication, runtime switching or enforcement |
+| Claude Code | npm `2.1.278`, release commit `bf7d404e26a5fb6167d21b46c93a2bf6c22ab274`  | Immutable release/package provenance plus exact-ELF explicit-file model consumption before no-auth termination, exact-ELF offline `/model` effort status, and compiled transaction checks | Model and `effortLevel` (low/medium/high/xhigh) installer qualified; full effective state, precedence, route/auth, resources and policy enforcement remain blocked |
+| OpenClaw | source `v2026.9.5` at `ec9c1a13db8938e5a3eaa51fca2e981cde2395a9` | Exact source/native getter hashes, override/fallback checks and actual compiled-output consumption | Two model/thinking defaults installable into the pinned-source `openclaw --profile <name>` config `<home>/.openclaw-<name>/openclaw.json`, derived only from a main config at `<home>/.openclaw/openclaw.json`, and into the main config only with `--default` (the `default` name is the main config); full startup, auth, delivery and enforcement remain blocked |
+| Hermes Agent | source `v2026.9.14` at `345cd2b057a452236de401d3534b8502a7465e8d` (`v0.21.3`)  | Immutable source/archive plus hash-gated native read-only config merge under isolated Python 3.12.13 and compiled transaction checks; source-only profile resolution evidence plus a built profile-mango CLI synthetic plan/apply/reapply/undo | Three model/reasoning config fields installable, as a named `<hermes-home>/profiles/<name>/config.yaml` profile that `hermes -p <name>` reads (main config must be `<hermes-home>/config.yaml`), and in the main `config.yaml` only with `--default` (the `default` name is the main config); full startup, authentication, delivery and runtime enforcement remain blocked |
+| Pi | source tag `v0.87.1` at `f07218c4d4bbc12bef056a7058c3dd49dfe41abe`, package `@earendil-works/pi-coding-agent@0.87.1`  | Immutable release/package provenance plus exact settings-module getter and project-override evidence, compiled transaction checks | Three route-default settings installable; full startup, authentication, delivery and runtime enforcement remain blocked |
+| Jcode fork | `jcode v0.83.909-dev (ca8017a3a)` | isolated synthetic `profile list/show/resolve` probe, exact binary SHA-256, retained golden/negative adapter tests, and bundled `README.md`/`docs/WRAPPERS.md` | Experimental-only inert preview renderer; native applicability remains blocked |
 
 The observations are version-qualified snapshots, not compatibility ranges.
 Dated initial M0 source reviews below are historical; later installation
 qualification sections and this summary record the current narrow support gates.
 
-## Pi v0.86.1 evidence
+## Installed-version policy (ap-uuz.14)
 
-### Immutable artifact, release, and platform
+Agents auto-update, so the installed binary often differs from the qualified
+version above. Each install adapter states a *tested range*. By default it is
+the tilde range of the qualified version: at least the qualified version and
+below the next minor (`2.1.278` gives `>=2.1.278 <2.2.0`; `0.157.1` gives
+`>=0.157.1 <0.158.0`). CalVer `year.month.patch` versions keep the same
+year and month (`2026.9.5` gives `>=2026.9.5 <2026.10.0`). An adapter may set an
+explicit `compatibleRange`, but only when new evidence recorded in this ledger
+supports the wider range.
+
+- `install` runs the target's documented command with `--version` (bounded
+  timeout, capped output, and credential-free environment, as `doctor` does)
+  for each ready or no-op target. It records the result as `versionCheck` in the
+  plan JSON and plan ID. Both compact and verbose plan headers identify the
+  installed version; an out-of-range header adds `(tested <range>)`. The
+  verbose plan also prints an `installed version:` line.
+- Inside the range, the plan proceeds without a compatibility warning.
+- Outside the range, the command is missing, or its version is unreadable, the
+  plan still proceeds with status `ready`. It shows a visible warning (human
+  and JSON diagnostic `install.version_out_of_range`, `install.version_not_found`
+  or `install.version_unknown`). The settings are still written for the qualified
+  version, and profile-mango makes no compatibility claim for that binary.
+- An explicit `--target name@version` is still exact. An unregistered version
+  stays blocked, and no version check runs for it.
+- `doctor` shows `IN RANGE` (`yes`, `no (tested <range>)`, or `-`) and adds
+  `inRange` and `compatibleRange` to `--json`. `versionMatch` keeps its earlier
+  exact-substring meaning.
+- A tested range is a stated claim, not new evidence. Qualification evidence
+  still belongs to the exact version recorded above.
+
+### Oh My Pi requalification to v18.6.0, 2026-10-03
+
+Source tag `v18.6.0` is `89d2610993af69427574bde17791df63906ec4e5`,
+retrieved with `git clone --depth 1 --branch v18.6.0`.
+`packages/coding-agent/package.json` SHA-256 (adapter evidence identity) is
+`2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24`.
+The [reference](agents/oh-my-pi.md#requalification-to-v1860-2026-10-03)
+records review of all seven role slots and consumers, suffix parsing,
+task.maxEffort, overlay layering and agent discovery. Qualification moves to
+exact 18.6.0, with its default tilde tested range `>=18.6.0 <18.7.0`; 18.4.6
+remains historical evidence rather than a registered version. No continuous
+range across the 18.5 breaking changes is claimed.
+The ap-r85 installed-version apply/manifest label fix already ships in v0.2.1;
+this requalification does not change that command contract.
+An isolated installed `omp config list --json` positive read consumed all seven
+synthetic role selectors and `task.maxEffort: medium` on 18.6.0. The invocation
+used bubblewrap `--unshare-all`, cleared environment, hidden personal homes,
+read-only runtime/ELF mounts, writable task-owned HOME, and a 30-second timeout.
+The installed ELF reports `omp/18.6.0`; SHA-256:
+`844c640c620ec4c152abe4b3736049f963205da50e9e77bd9bdf2a981a6ead55`.
+No model call or network access was possible; this establishes settings storage
+consumption, not slot consumers or enforcement.
+
+The compiled Mango sandbox smoke installed two synthetic routes, `opus55` and
+`sol`, with complete role mappings. `omp/18.6.0 config list --json`, under the
+same bubblewrap isolation, returned `modelPresets.mango-opus55`,
+`modelPresets.mango-sol`, and the existing `personal` user preset. Generated
+thinking defaults were `high` and `medium`; task.maxEffort remained `high`.
+After a synthetic switch to sol's seven roles and `medium` thinking, Mango
+status reported the sol preset and the unchanged cap (`high` vs route
+`medium`). This is a file-state simulation, not a live `/modelpreset switch`
+or authenticated model-selection test.
+
+Smoke commands used a cleared environment with HOME/XDG paths inside the
+worktree's ignored `.external/smoke/home`, and the compiled
+`.external/mango` binary:
+
+```sh
+go build -o .external/mango ./cmd/mango
+mango use work --target oh-my-pi
+mango use work --target oh-my-pi --apply --yes --expect-plan <shown-plan-id>
+# Real omp via bubblewrap isolation described above:
+omp --version
+omp config list --json
+# Replace modelRoles and defaultThinkingLevel with mango-sol's values:
+mango status --target oh-my-pi
+mango status --target oh-my-pi --json
+mango use work --target oh-my-pi
+mango undo --target oh-my-pi --override
+mango undo --target oh-my-pi --override --apply --yes --expect-plan <shown-undo-id>
+```
+
+`use` already makes the profile default; it does not accept `--default`.
+Initial plan/apply reported `oh-my-pi@18.6.0` without an out-of-range warning
+and `applied oh-my-pi@18.6.0: committed`. After the simulated switch,
+the next use plan was ready and named the overwritten sol preset.
+Undo committed and restored the original commented `personal` preset and
+theme, removing Mango entries, manifest and overlay. Explicit undo override
+acknowledged the simulated whole-file edit.
+
+The follow-up carried-role smoke repeated this flow with unmanaged selectors
+`code: openai-codex/gpt-6.1-sol:medium`,
+`review: openai-codex/gpt-6.1-sol:high`, and `web: web/exa` in the synthetic
+config. Native `config list --json` read all three unchanged in both Mango
+presets. A simulated sol switch retained them and remained a recognized
+preset switch; use planned cleanly and undo committed. Table tests additionally
+change an unmanaged selector between installs and confirm re-apply refreshes
+both global and overlay-only presets without owning that config field.
+
+
+
+
+## Pi evidence
+
+### Requalification to v0.87.1, 2026-09-26
+
+`git ls-remote https://github.com/earendil-works/pi.git refs/tags/v0.87.1`
+resolved to commit `f07218c4d4bbc12bef056a7058c3dd49dfe41abe`. The tag archive
+has SHA-256 `c3902f45689af9ed9c8ee225554d31a649a993b06f04ab2022bb91ed75e808dc`
+and the commit-pinned archive
+`f6ba24ed7e1e6dbda1844ca55c61e20e3ef21e5cc66f9eb2e0611318f6c46c15`. The npm
+package `@earendil-works/pi-coding-agent@0.87.1` has registry metadata SHA-256
+`3af72c075603c57bd832b538a0c08ae3ff191025ff5ec8edecffea496b42e117`, tarball
+SHA-256 `1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f`
+(the new `EvidenceSHA256`), and integrity
+`sha512-m8ArJUtVcQMSe1lLE/Ei7vX/JV7O39sWmWBsXV2NOU70F0qCp8GubA24pT3LnwTmM6LL2xV80/h6sQg85n69ew==`,
+recomputed from the tarball. It still declares Node.js `>=22.19.0` and
+`bin.pi` `dist/bundle/cli.js`; that entrypoint and
+`dist/core/settings-manager.js` keep the hashes recorded below.
+
+Source diff `v0.86.1..v0.87.1`: `src/core/settings-manager.ts` and
+`src/config.ts` are identical; `src/core/resource-loader.ts` changed only
+prompt-template diagnostics (context-file lines 71-72 and 119-156 identical);
+`docs/settings.md` was restructured but still lists the three managed keys and
+project-over-agent-directory precedence. No behavioral difference was found for
+the fields Mango writes or for `~/AGENTS.md`. The opt-in
+`TestNativeSettingsModuleQualification` passed against the extracted `0.87.1`
+tarball (with `PROFILE_MANGO_PI_NATIVE_TARBALL` hash-checked). File hashes are in
+the [target reference](agents/pi.md#requalification-to-v0871-2026-09-26).
+
+### Immutable artifact, release, and platform (original v0.86.1)
 
 The immutable Git tag `v0.86.1` for `earendil-works/pi` resolved with
 `git ls-remote https://github.com/earendil-works/pi.git refs/tags/v0.86.1` to
@@ -209,16 +362,64 @@ fault tests establish transaction rollback and tamper-checked recovery. This doe
 not promote the full-profile renderer or establish authentication, effort,
 permissions, tools, instruction/skill delivery, or runtime enforcement.
 
+### Emulated named profile installation, 2026-09-23
+
+Claude Code `2.1.278` has no native named-profile mechanism; the probe above
+only shows that `--settings <explicit-file>` consumes that file's `model`
+regardless of the path chosen. `mango install <name> --target
+claude-code` now uses this to write the model to a Mango-owned
+`profiles/<name>.json` beside `settings.json` by default, and prints `use it:
+claude --settings <path>`. `settings.json` is read for the existing
+empty/malformed/permission checks above but is left byte-for-byte unchanged in
+this mode. `--default` additionally patches `settings.json` with the same
+byte-preserving single-field patch qualified above, so plain `claude` also
+picks it up. Undo removes only the profile file (and manifest) from the install
+it reverses; earlier named-profile installs are untouched. This is a
+profile-mango file-placement and CLI-flag convention layered on the qualified
+explicit-file consumption; it is not additional native evidence.
+
+### Claude Code effort installation, 2026-09-25
+
+The exact Linux x64 package above was re-downloaded and matched both recorded
+SHA-256 values (tarball
+`d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7`, ELF
+`5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab`). Its embedded
+bundle declares settings `effortLevel` as `low`/`medium`/`high`/`xhigh` with an
+invalid value discarded, and resolves the session default as `--effort`, then
+`ultracode`, then merged settings `effortLevel`, with `CLAUDE_CODE_EFFORT_LEVEL`
+and per-model `modelSettings.<model>.effortLevel` as further override surfaces.
+
+`scripts/claudecode-config-probe.sh` now also runs the exact ELF's local
+`/model` command with `--print` in the same isolation (cleared environment,
+synthetic HOME/config/project, unshared network/PID/IPC, timeout). It prints the
+effective effort offline, before any authentication or provider request:
+
+| Synthetic settings | Mode | `/model` output |
+| --- | --- | --- |
+| `effortLevel` low, medium, high, xhigh | `--bare --settings <file>` | ``Current model: `Sonnet 4.5` (effort: <level>)`` |
+| `effortLevel` max, bogus | `--bare --settings <file>` | no effort reported |
+| user `settings.json` medium | default path, no `--settings` | `(effort: medium)` |
+| user medium, project `.claude/settings.json` high | default path | `(effort: high)` |
+
+A profile file produced by the built installer (`{"model": …, "effortLevel":
+"medium"}`) passed through `--settings` also reported `(effort: medium)`. The
+installed `2.1.281` binary (inside the tested range) gave the same results for
+Sonnet 4.5, Opus 4.5, Opus 4.8 and Fable 5 models. This establishes effective
+session effort selection, not provider-side reasoning use. The installer writes
+`effortLevel` beside `model` only for the four accepted levels; other route
+efforts are reported as not applied (`skippedRequirements`) and block with
+`--strict`.
+
 ### Capability classification
 
 | Portable property | Evidence | Applicability consequence |
 | --- | --- | --- |
 | Fidelity | Model-only field mapping | Partial preview fidelity |
-| Native acceptance | Exact ELF consumes explicit settings-file model sentinel | Narrow model-field installation only |
-| Effective state | No merged per-key report | Blocking |
-| Precedence | Explicit `--settings` path only; default and override hierarchy unverified | Blocking outside explicit-file consumption |
+| Native acceptance | Exact ELF consumes explicit settings-file model sentinel and `effortLevel` | Narrow model and effort installation only |
+| Effective state | No merged per-key report; `/model` reports effective model and effort | Blocking beyond model and effort |
+| Precedence | Explicit `--settings` path; project over user observed for effort only | Blocking outside explicit-file consumption |
 | Model | Exact native sentinel consumption and disposable CLI apply | Top-level model field installable; required exact route remains unverified |
-| Effort | No release-qualified mapping | Blocking |
+| Effort | Exact ELF offline `/model` status for low/medium/high/xhigh | `effortLevel` installable for those four levels; others not applied |
 | Provider and transport | No release-qualified mapping | Blocking |
 | Authentication | No credential-free identity proof | Blocking |
 | Permissions | No equivalence or runtime enforcement evidence | Blocking |
@@ -288,7 +489,7 @@ was run, and the repository probe harness was not broadened.
 | Config/runtime precedence | Documented layers and overrides were not observed in an exact isolated run | Blocking unknown |
 | Route and authentication | `provider/model` and thinking candidate fields are source-grounded; auth profile identity and route selection are unverified | Authentication-required mappings remain non-applicable |
 | Permissions and tools | Tool policy, plugins, sender rules, and sandbox gates are documented; enforcement and bypass surfaces were not observed | Blocking unknown |
-| Instructions and skills | Workspace and project/state/bundled sources are documented; delivery and precedence were not observed | Blocking unknown when requested |
+| Instructions and skills | Workspace and project/state/bundled sources are documented; skill folders and the per-agent allowlist are installed from source evidence (see [Skill folders](#skill-folders-2026-09-27-ap-794)); instruction delivery and skill execution were not observed | Instructions blocking unknown when requested |
 | Runtime enforcement | No gateway/session/runtime observation was authorized or performed | Blocking unknown |
 
 The adapter emits an inert JSON5 candidate at
@@ -357,8 +558,8 @@ environment, and a bounded ten-second timeout. It did not run `exec`, `doctor`,
 Reproduction command, with direct binary paths supplied by the operator:
 
 ```bash
-PROFILE_MANGO_CODEX_BIN=/absolute/path/to/codex-0.154.0 \
-PROFILE_MANGO_JCODE_BIN=/absolute/path/to/ariel-custom-jcode-ca8017a3a \
+PROFILE_MANGO_CODEX_BIN=/absolute/path/to/codex-0.157.1 \
+PROFILE_MANGO_JCODE_BIN=/absolute/path/to/jcode-fork-ca8017a3a \
 PROFILE_MANGO_PROBE_ROOT=/task-owned-scratch/ap-3kw \
 PROFILE_MANGO_PROBE_TIMEOUT_SECONDS=10 \
 ./scripts/agent-config-probe.sh
@@ -383,6 +584,12 @@ synthetic config layer:
   to `false`;
 - malformed synthetic TOML: `codex features list` rejected it with a TOML parse
   error.
+
+The script now pins `codex-cli 0.157.1` (SHA-256
+`3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`). On
+2026-09-26 the same five feature sentinels gave the same results on that binary
+in an equivalent bubblewrap sandbox. The full script was not rerun, because it
+also requires the Jcode fork binary.
 
 This is native feature-config parsing and feature-runtime-precedence evidence
 only. It does not establish that Codex consumes or enforces profile route,
@@ -472,25 +679,296 @@ Mango installation. OpenCode remains excluded from production installation and
 
 ## Codex preview-renderer evidence
 
-The first adapter boundary is pinned to `codex-cli 0.154.0` and binary SHA-256
-`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`.
+The adapter boundary was first pinned to `codex-cli 0.154.0` (binary SHA-256
+`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`) and is now
+pinned to `codex-cli 0.157.1`, binary SHA-256
+`3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`
+([requalification](#codex-01571-requalification-2026-09-26)).
 Golden and negative tests demonstrate deterministic candidate TOML, resource
 copies, report metadata, no-write behavior without `--preview`, atomic writes to
 a new explicit staging directory with `--preview`, and rejection of unsupported
 versions, invalid resources, permissions, and closed tool requirements.
 
-This is preview-rendering support only. Every report remains `applicable: false`,
-and the command returns nonzero while authentication, delivery, precedence, or
-enforcement is unverified. The preview never contains active `config.toml`,
+This is preview-rendering support only. Every report remains `applicable: false`
+while authentication, delivery, precedence, or enforcement is unverified; a staged
+`--preview` prints those blockers as warnings and exits 0, and a render without
+`--preview` returns nonzero. The preview never contains active `config.toml`,
 `AGENTS.md`, active skill destinations, credentials, launch recipes, or target-home
 paths.
 
-## Oh My Pi v18.2.6 source and preview-renderer evidence
+### Codex 0.154.0 settings-only installation, 2026-09-22
 
-The following records the initial preview qualification. The later installer
+This is a separate, bounded installer, not a promotion of the inert preview.
+Only root `model_provider = "openai"`, a non-empty safe `model`, and
+`model_reasoning_effort = "high"` are patched at one explicit config path (the
+effort gate was widened on 2026-09-25, see
+[below](#codex-01540-reasoning-effort-values-2026-09-25)).
+Permissions, tools, instructions, skills, non-native transport, non-OpenAI
+providers, non-OAuth bindings, other efforts, malformed/duplicate TOML, and
+profile/provider shadow state block. The installer does not write
+authentication settings or read a credential store.
+
+Quoted and dotted TOML keys are supported; Codex-written `[projects."<path>"]`
+and `[[skills.config]]` tables are preserved byte-for-byte.
+
+Retained local qualification at `.worktrees/reports/ap-6fu.14/qualification-milestone-20260922.md`
+used exact `rust-v0.154.0` source commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340` (archive SHA-256
+`848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`).
+Its resolver consumed actual `PatchConfig` output: effective OpenAI provider
+ID/object, model `gpt-5.6`, and effort `high`. An unknown-provider control
+failed, and omitted model/effort controls yielded absent values. Filtered Cargo
+and direct compiled test runs each passed exactly one test. The release lockfile
+required metadata-only normalization of 150 workspace version strings in a
+separate copy; no external dependency or edge changed. The test bypassed
+requirements.toml and ambient layers, so it does not prove installed-binary
+equivalence, model availability, active profile/project/runtime precedence,
+authentication identity, or runtime enforcement.
+
+The rebuilt profile-mango CLI planned without writing, then applied with
+`--override --apply --yes --expect-plan` and default backup against synthetic
+TOML. Config SHA-256 changed from
+`1e1a9c8dd11c8120885c38985a1c02d02bfeb4735088ef4f30de3e78637cb90c`
+to `f2d8fc2f623194d6f3f2b6a5b9d6c08cd7c2c1e2212039f6479d6aaf4a9eba66`;
+the backup retained the original digest. Target-owned
+`forced_login_method = "api"`, an unknown key, feature table, and comment remained unchanged. A
+second built plan and matching apply both reported `noop`. A read-only
+permission requirement remained blocked even with apply flags. Synthetic
+`auth.json` and outside-target sentinel SHA-256 values stayed unchanged at
+`011e02a527fc678e665c87d60d899e3ac72be7ffcf4bd289ff400e0d44f686b3`
+and `4d0646b302547417167fe19f380c26f501c6fe912e959ec788ccbdd5eb0d63d2`.
+Internal transaction tests cover stale plans and synthetic guarded restoration.
+The subsequently landed guarded public restore command reverses an eligible
+committed two-file install transaction at an explicit path with a fresh plan hash.
+Its built-binary disposable acceptance is recorded separately in
+`.worktrees/reports/ap-6fu.14/`; it does not verify Codex runtime state.
+
+On 2026-09-23, a separate offline probe fed the public installer's synthetic
+root config to the direct installed `codex-cli 0.154.0` binary (SHA-256
+`3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`).
+Its app-server `config/read` returned `openai`, `gpt-5.6`, and `high`, all with
+user-config origins. An untrusted project override was ignored with a warning;
+after explicit synthetic trust, project model/effort `project-model`/`medium`
+won. Session `-c` overrides won with `runtime-model`/`minimal`. The app-server
+rejects `--profile`; neither named runtime-profile selection nor live model use
+was exercised. This endpoint starts auth/config/cloud, plugin and SQLite
+machinery, so it was confined to an empty-auth, network/PID/IPC-isolated sandbox,
+not used as a personal-home inspector. Retained requirement-to-check evidence:
+`.worktrees/reports/ap-6fu.14/native-qualification-20260923.md`.
+
+Separately authorized Codex runtime diagnostics on 2026-09-23 inspected only
+read-only authentication metadata and mounted the confirmed credential file
+read-only inside disposable state. The stored `chatgpt` mode and pinned-binary
+ChatGPT login status were observed, but neither proves that profile-mango
+enforces an exact OAuth route. Two bounded provider-capable requests timed out;
+the first retained no partial events and the second retained no JSON events or
+usage. Model availability, delivery, effort enforcement, and the cause of either
+timeout remain unknown. Later credential-free, network-blocked cold-start
+probes sometimes emitted no event, while instrumented runs reached
+`thread.started`; no common blocking stage was identified. State-DB migration
+counts and zero thread rows do not locate the stall because a successful
+`--ephemeral` run also had zero persisted thread rows. These diagnostics do not
+alter the settings-only install claim and authorize no further provider call.
+Retained sanitized evidence: `.worktrees/reports/ap-6fu.14/live-qualification-20260923.md`
+and `.worktrees/reports/ap-6fu.14/cold-start-stages-20260923.md`.
+
+`codex login status` distinguishes stored API-key from ChatGPT login, but the
+same ChatGPT message covers both Codex-managed OAuth and externally supplied
+ChatGPT tokens in the pinned source. It is advice for a user, not a credential
+read or OAuth proof by profile-mango. Human and JSON plans warn that successful
+installation applies **only to three settings**, never the OAuth-required full
+profile, delivery, policy enforcement, or effective runtime route.
+
+### Codex 0.154.0 named-profile installation, 2026-09-23
+
+Named profiles in Codex `0.154.0` are separate files, not `[profiles.<name>]`
+tables. Exact release source `rust-v0.154.0` (commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`, archive SHA-256
+`848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`) shows:
+
+- `utils/cli/src/shared_options.rs`: `--profile`/`-p` "Layer
+  `$CODEX_HOME/<name>.config.toml` on top of the base user config"; names are
+  ASCII letters, digits, `_` and `-` (`protocol/src/config_types.rs`
+  `ProfileV2Name`).
+- `config/src/loader/mod.rs`: the profile file is pushed as a second user layer
+  above `config.toml` and merged into the same `ConfigToml`, so `model_provider`,
+  `model` and `model_reasoning_effort` have the same meaning there as at the root.
+  `--profile <name>` is a hard error while `config.toml` holds a legacy
+  `profile = "<name>"` or `[profiles.<name>]`; unrelated legacy tables are allowed.
+- `core/src/config/mod.rs`: any root `profile = "..."` is a hard startup error
+  ("no longer supported; use `--profile`").
+- `cli/src/main.rs`: `--profile` applies only to runtime commands, `codex mcp`,
+  `codex sandbox`, and `codex debug prompt-input`.
+
+The design recorded in the plan for ap-vjc.1 (`[profiles.<name>]` in
+`config.toml`, and `--default` writing root `profile = "<name>"`) would therefore
+have produced a profile Codex refuses to select and a config Codex refuses to
+start with. The installer instead writes `$CODEX_HOME/<name>.config.toml`,
+leaves `config.toml` byte-for-byte unchanged, and with `--default` writes the
+same three root settings into `config.toml`. It blocks a root `profile` key, a
+same-name legacy `[profiles.<name>]` table, and openai provider shadow state in
+`config.toml`; the unchanged `config.toml` is also a stale-plan check at apply.
+
+Installed-binary controls ran the direct `codex-cli 0.154.0` executable
+(SHA-256 `3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022`,
+verified before every run) under bubblewrap with unshared network, PID and IPC
+namespaces, a cleared environment, synthetic `HOME`/`XDG_CONFIG_HOME`/
+`CODEX_HOME`, no auth file, and a 20-second timeout. The only command was
+`codex [--profile <name>] debug prompt-input hi`, which builds the model-visible
+prompt offline (ephemeral, no state database, no provider request) and prints it.
+Results:
+
+| Synthetic state | Command | Result |
+| --- | --- | --- |
+| `coding.config.toml` with `model_provider = "no-such-provider"` | `--profile coding` | exit 1, ``Model provider `no-such-provider` not found`` |
+| same | no `--profile` | exit 0 |
+| root `model_provider = "no-such-provider"`, profile `model_provider = "openai"` | `--profile coding` | exit 0 (profile provider wins) |
+| same | no `--profile` | exit 1, provider not found |
+| profile `model = 42` | `--profile coding` | exit 1, ``coding.config.toml:1:9: invalid type: integer `42`, expected a string`` |
+| profile `model_reasoning_effort = 42` | `--profile coding` | exit 1, same typed error at `1:26` |
+| both controls above | no `--profile` | exit 0 |
+| `[profiles.coding]` in `config.toml` | `--profile coding` | exit 1, legacy-table refusal naming `coding.config.toml` |
+| root `profile = "coding"` | no `--profile` | exit 1, legacy `profile` no longer supported |
+| unrelated `[profiles.dev]` plus `coding.config.toml` | `--profile coding` | exit 0 |
+| profile-mango-generated `coding.config.toml`/`review.config.toml` (below) | `--profile coding`, `--profile review`, none | exit 0 each |
+| generated files, `coding` provider edited to `no-such-provider` | `--profile coding` / `--profile review` | exit 1 provider not found / exit 0 |
+| generated files | `--profile missing` | exit 0: a missing profile file is treated as empty |
+
+This proves that the pinned binary selects the generated file with `--profile`
+and consumes its `model_provider` (value-sensitive, overriding the root) and its
+typed `model` and `model_reasoning_effort` keys. `debug prompt-input` does not
+print the effective model or effort, so positive effective values for those two
+come from the loader source plus the earlier root `config/read` observation, not
+from this run. A bogus effort string was accepted, so effort values are not
+validated at load. OAuth, model availability and runtime delivery were not
+exercised.
+
+The built CLI (branch `agent/vjc1-codex-profiles`) ran with a cleared
+environment and synthetic `HOME`, `CODEX_HOME` and `PROFILE_MANGO_HOME`:
+`install coding --target codex` and then `install review --target codex` each
+planned `use it: codex --profile <name>`, created `<name>.config.toml`, and left
+a `config.toml` with a comment, root model/effort, a feature table and an MCP
+table at its original SHA-256. The JSON plan carried
+`install: {mode: named-profile, profileName, useCommand}`. Reinstalling either
+profile planned `noop`. `undo --target codex` removed only `review.config.toml`
+and restored the manifest; a second undo removed `coding.config.toml` and the
+manifest; `config.toml` stayed unchanged throughout. `install coding --default`
+then also adopted `config.toml` with a backup and wrote the three root settings.
+
+### Codex 0.154.0 reasoning-effort values, 2026-09-25
+
+Exact release source `rust-v0.154.0` (tag object
+`36eab01061df3cde5f95ec20a526777b430091ba`, commit
+`6b9826e3aa83b1a5947db50f4332cb9c65f1b340`) file
+`codex-rs/protocol/src/openai_models.rs` (SHA-256
+`2e9923d405a497441a0b264efc07de6ce21cdb108442e660a8b9fb63ca415aed`) defines
+`ReasoningEffort::from_str`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`,
+`max`, `ultra` and `persistent` parse as named variants, an empty string is an
+error, and any other string becomes `Custom`. The same enum types
+`model_reasoning_effort`, so every value loads; the isolated installed-binary
+`config/read` observation above already reported root `high`, trusted-project
+`medium`, and session `minimal` as effective values.
+
+The installer gate now accepts `none`, `minimal`, `low`, `medium`, `high` and
+`xhigh`; `max`, `ultra` and other efforts still block with an explicit error
+listing the accepted values, instead of being written or dropped. The built-CLI
+sandbox test `TestInstallCodexAppliesMediumEffortInSandbox` plans and applies
+`medium` with `--default` and observes `model_reasoning_effort = "medium"` in
+both `config.toml` and `<name>.config.toml`. Whether a given model accepts a
+level remains model-dependent and was not exercised; no provider call was made.
+
+### Codex 0.157.1 requalification, 2026-09-26
+
+The adapter pin moved from `0.154.0` to `0.157.1`, the npm `latest` release on
+2026-09-26. The sections above stay as the `0.154.0` record; this section
+re-establishes each fact the installer relies on for `0.157.1`.
+
+**Artifacts.** `npm pack @openai/codex@0.157.1-linux-x64` (tarball SHA-256
+`7f12677740f439fe4884c7031d9d703e571cecf5ea9fa3a05abd1bbccc2162a8`) ships
+`vendor/x86_64-unknown-linux-musl/bin/codex`, SHA-256
+`3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`, which
+prints `codex-cli 0.157.1`. This is the new `EvidenceSHA256`. The same path in
+`@openai/codex@0.154.0-linux-x64` hashes to the earlier pin `3188814c…0022`.
+Source tag `rust-v0.157.1` is tag object `ac0e23e5232692b95268583c8278c50b8c436d2b`
+and commit `36650394c5b38c2990ccf2a3457165ca3e9d9726`, and the GitHub commit
+archive has SHA-256 `392ac15292437f4163fc6b05cdcc53e80cdc15f88459fd969673e6ac717d7af5`.
+
+**Source diff `rust-v0.154.0..rust-v0.157.1` (all paths under `codex-rs/`).**
+
+| Behavior mango relies on | Files checked | Result |
+| --- | --- | --- |
+| `--profile`/`-p` layers `$CODEX_HOME/<name>.config.toml`; name rule | `utils/cli/src/shared_options.rs`, `protocol/src/config_types.rs` (`ProfileV2Name`) | Unchanged: no diff to `shared_options.rs`; `config_types.rs` only adds a doc comment to an unrelated enum |
+| Profile file is a second user layer over `config.toml`; same-name legacy `profile =`/`[profiles.<name>]` refuses `--profile` | `config/src/loader/mod.rs`, `config/src/loader/layer_io.rs` | Legacy-refusal block byte-identical (now line 314). `layer_io.rs` unchanged. Other loader changes cover managed requirements, projectless detection and credential-broker env keys |
+| Root `profile = "..."` is a hard startup error | `core/src/config/mod.rs` | Byte-identical block (now line 3348) |
+| `--profile` scope (runtime commands, `mcp`, `sandbox`, `debug prompt-input`) | `cli/src/main.rs`, `cli/src/lib.rs` | No profile-related change. The only removed option is the unrelated `--aws-profile` |
+| `model`, `model_provider`, `model_reasoning_effort` keys and types | `config/src/config_toml.rs` | Unchanged types (now lines 168, 173, 392) |
+| `ReasoningEffort` variants and `from_str` | `protocol/src/openai_models.rs` | The enum-through-`FromStr` block is byte-identical: `none`..`xhigh`, `max`, `ultra`, `persistent`, empty is an error, other strings become `Custom`. The file hash changed for unrelated code |
+| Built-in `openai` provider; reserved IDs; merging `model_providers` | `model-provider-info/src/lib.rs`, `config/src/config_toml.rs` | `validate_reserved_model_provider_ids` is unchanged. Only Amazon Bedrock override validation and new optional fields changed |
+| Role files `<config dir>/agents/**/*.toml` | `agent-roles/src/{agent_role_config,loader,discovery}.rs` | Byte-identical (same file SHA-256 values as `0.154.0`) |
+| `$CODEX_HOME/AGENTS.md`, `AGENTS.override.md` wins | `codex-home/src/instructions/mod.rs` | Same file names and order (lines 12-13, 43-44) |
+| `~/AGENTS.md` only at the project root or working directory | `core/src/agents_md.rs` | Same walk to the nearest `project_root_markers` directory (lines 1-18, 192-245) |
+
+Behavioral differences found, none of which needs an adapter change:
+
+- **Managed provider requirements (new).** `requirements.toml`, a cloud
+  bundle, or macOS MDM can now set `model_provider` and `model_providers`.
+  A required `model_provider` wins over root, profile and session selection
+  (`core/src/config/mod.rs`, `model_provider_id`). Required provider
+  definitions replace same-ID `model_providers` entries before parsing
+  (`config/src/model_provider_requirements.rs`, `config/src/state.rs`
+  `effective_config`). This adds a managed override surface above the files
+  mango writes. mango does not read requirements, and no managed state was
+  exercised.
+- **Instructions refresh.** When a refresh of the `$CODEX_HOME` instructions
+  fails, Codex keeps the last good copy and reports each warning once. A
+  confirmed absence still clears it.
+- **Project doc fallbacks.** `project_doc_fallback_filenames` entries with
+  path syntax are now ignored. mango does not write this key.
+- **Project config sanitization.** Project layers now also drop
+  `features.system_proxy_fallback` and `features.network_proxy.credentials`,
+  and credential-broker env handling changed. None of these are mango keys.
+
+**Installed-binary controls.** Both npm binaries ran on 2026-09-26 in the
+same harness as the 2026-09-23 controls: bubblewrap with unshared
+network/PID/IPC/UTS, `--cap-drop ALL`, `env -i`, synthetic
+`HOME`/`XDG_CONFIG_HOME`/`CODEX_HOME`, no auth file, and a bounded timeout.
+Every `debug prompt-input hi` row of the named-profile table above gave the
+same exit code and error text on `0.157.1` as on `0.154.0`. That includes
+profile provider precedence over the root, typed `model`/effort errors in the
+profile file, the legacy-table and root-`profile` refusals, the tolerated
+unrelated `[profiles.dev]`, a missing profile treated as empty, and an
+accepted bogus effort string. The `--profile` scope error was identical too.
+App-server `config/read` on `0.157.1` returned root `openai`/`gpt-5.6`/`high`
+with `user` origins. An untrusted project was ignored. A trusted project won
+with `project-model`/`medium` (`project` origin), and session `-c` won with
+`runtime-model`/`minimal` (`sessionFlags` origin).
+`TestNativeCodexConfigConsumption` passed against the `0.157.1` binary and
+rejected the `0.154.0` binary by hash.
+
+The built CLI ran with synthetic `HOME`/`CODEX_HOME`/`PROFILE_MANGO_HOME`.
+With the `0.154.0` binary on `PATH` it warned
+`installed version 0.154.0 is outside tested range >=0.157.1 <0.158.0`. With
+`0.157.1` it applied `install default --target codex --default --override`
+and wrote `default.config.toml` plus the three root keys. The comment, the
+feature table and key order stayed intact. The pinned binary then accepted
+`--profile default` and plain runs, rejected the profile after its provider was
+edited to `no-such-provider` while the plain run still passed, and
+`config/read` reported the generated root values with `user` origins.
+
+Not repeated for `0.157.1`: the exact-source Cargo resolver test. Its opt-in
+harness now pins the `0.157.1` commit and archive, but no `0.157.1` test
+binary was built. Its claims rest on the unchanged source above plus the
+installed-binary observations. OAuth identity, model availability, per-model
+effort support, runtime delivery and managed-requirement precedence remain
+unverified. No provider call was made and no personal Codex home was read.
+
+## Oh My Pi source and preview-renderer evidence
+
+The following records the initial preview qualification at `v18.2.6`; the
+[v18.4.6 requalification](#oh-my-pi-requalification-to-v1846-2026-09-30) updates the pin. The later installer
 qualification below supersedes the missing-addon blocker only for two fields.
 
-The task-owned source checkout is pinned to tag `v18.2.6` and commit
+The task-owned source checkout was pinned to tag `v18.2.6` and commit
 `78b753124d11f8dd3ae73e2524125890ff7c977e`. Frozen dependency installation used
 Bun `1.3.14` and the pinned `bun.lock`. The direct source entrypoint
 `packages/coding-agent/src/cli.ts --version` printed `omp/18.2.6` with an
@@ -559,7 +1037,8 @@ child, personal home, or target-home operation was invoked.
 The adapter consequently emits only deterministic inert YAML candidates and
 digest-verified, path-addressed resource copies that preserve original relative paths.
 Reports remain `applicable: false`, include
-the source, build, and config blockers above, and return nonzero. It never writes
+the source, build, and config blockers above (warnings with exit 0 once a `--preview`
+is staged; nonzero without `--preview`). It never writes
 `~/.omp`, active config destinations, credentials, launch recipes, or target-home
 paths.
 
@@ -589,10 +1068,250 @@ The compiled CLI checks demonstrated deterministic read-only plans, wrong-hash
 and stale-plan zero writes, lossless application, default byte-equal backup and
 no-op reapply. Shared transaction tests separately establish fault rollback and
 hash-guarded recovery. There is no public restore CLI command.
-Only `modelRoles.default` and `defaultThinkingLevel` are installable at an explicit
-path. Full-profile previews remain non-applicable. This evidence does not prove
+Only `modelRoles.default` and `defaultThinkingLevel` are installable at an explicit or
+documented default path. Full-profile previews remain non-applicable. This evidence does not prove
 model/provider resolution, authentication, precedence, delivery or enforcement.
 See the [target reference](agents/oh-my-pi.md) for the bounded patch contract.
+
+### Oh My Pi per-role selectors, 2026-09-25
+
+Source review only, at the same tag and commit (fresh read-only checkout,
+`git rev-parse HEAD` = `78b753124d11f8dd3ae73e2524125890ff7c977e`). The
+installer now writes `modelRoles.default` and one `modelRoles.<role>` per bound
+route role as `provider/model[:effort]`, and no longer writes
+`defaultThinkingLevel`:
+
+- `settings-schema.ts` types `modelRoles` as a string record;
+  `model-roles.ts` `MODEL_ROLES` lists the built-in roles `default`, `smol`,
+  `slow`, `vision`, `plan`, `commit`, `tiny`, `task`, and `advisor`.
+- `tui/src/overlays/model-selector.ts` `splitThinkingSuffix` and
+  `model-resolver.ts` `resolveModelRoleValue` split a trailing `:<level>`
+  (including `max`/`auto`) and report it as an explicit thinking level.
+- `sdk.ts` `pickInitialThinkingLevel` applies the default role's explicit
+  suffix before the model default and `defaultThinkingLevel`; an explicit
+  `--model` or persisted session level bypasses it.
+- `docs/settings.md` shows `slow: anthropic/claude-opus-4-5:high` and states
+  that role values may carry a thinking suffix.
+
+File hashes are recorded in the [target reference](agents/oh-my-pi.md#per-role-selectors-2026-09-25).
+Other targets list bound roles as a skipped `roles` requirement and
+`install --strict` blocks them. The 2026-09-22 native getter probe was not
+re-run, so suffix interpretation and non-default role storage remain
+source-reviewed rather than natively observed.
+
+### Oh My Pi portable roles and `task.maxEffort`, 2026-09-25
+
+Source review only, same commit `78b753124d11f8dd3ae73e2524125890ff7c977e`.
+Bindings roles use the portable names `worker`, `planner`, `research`, and
+`tiny`; the installer writes them to the slots `task`; `plan` and `slow`;
+`smol`; and `tiny` and `commit`, chosen from each slot's consumer (bundled task
+agent `@task`, plan mode and reviewer `@slow`, scout `@smol`, title and commit
+message selection). The old slot names fail in bindings validation with the
+portable name to use; `advisor` and `vision` are never written. Profile role
+definitions install as agent files on default installs; see
+[role subagent files](#role-subagent-files-2026-09-25-ap-6lp).
+
+`task.maxEffort` (`settings-schema.ts` line 5222, enum `THINKING_EFFORTS`,
+default `max`) is the ceiling `task/executor.ts` passes to
+`resolveTaskEffortLevel` when a caller supplies a per-spawn effort hint. It is
+modelled as the route field `subagentMaxEffort`, installed only on Oh My Pi
+with its own manifest field and prior marker, and skipped as
+`subagentMaxEffort` elsewhere. File hashes are recorded in the
+[target reference](agents/oh-my-pi.md#portable-roles-and-taskmaxeffort-2026-09-25).
+
+### Oh My Pi named profile overlay
+
+Oh My Pi's native `--profile` relocates auth and sessions, so named installs
+write a Mango-owned overlay `profiles/<name>.yml` beside `config.yml` instead,
+with the same `modelRoles` selectors and `task.maxEffort` the default install
+writes, and print `use it: omp --config <path>`. `config.yml` is left
+byte-identical unless `--default` is given. Pinned source `78b7531`
+(`cli/flag-tables.ts:117-119`, `main.ts:1735`, `config/settings.ts:603-605,
+1957-1998, 3131-3135`) loads repeatable `--config` files strictly (a missing
+file is a startup error) and deep-merges them after global and project config,
+before runtime flags. An isolated, network-less run of the installed
+`omp/18.3.2` binary (not the pinned version) took the overlay's
+`modelRoles.default` model and `:high` suffix over `config.yml`'s. Hashes and
+the probe are in the [target reference](agents/oh-my-pi.md#named-profile-overlay).
+Sandbox tests cover side-by-side overlays, an unchanged `config.yml`,
+`--default` writing both, and byte-restoring undo.
+
+### Oh My Pi requalification to v18.3.2, 2026-09-26
+
+`git ls-remote https://github.com/can1357/oh-my-pi.git refs/tags/v18.3.2`
+resolved to `7853b4e499936f9dcc13c9b64adb55f6b342aabf`.
+`packages/coding-agent/package.json` at that tag has SHA-256
+`2d07016b28d5d866c4947b4aa273ae31dbd29655513c508d9c658d024a721830`, the new
+`EvidenceSHA256` (same `source-entrypoint-version` level). The installed `omp`
+ELF `8cbbcd4bea7a7b86116a13352f31e3778fd4d93df931036bb1771738b0702534` equals
+the `v18.3.2` GitHub release asset `omp-linux-x64` digest; the release is not
+marked immutable.
+
+Every source file cited for Oh My Pi was diffed from `v18.2.6`. Behavioral
+differences relevant to Mango:
+
+- `MODEL_ROLES` (`config/model-roles.ts`) adds `memory`, `image`, `web`,
+  `speech`, `dictation`, and `judge`. Mango writes none of them. An unset
+  `memory` slot now falls back to a configured `tiny` (`model-resolver.ts`
+  1091-1109), so the portable `tiny` role also drives memory work.
+- `#migrateRawSettings` (`config/settings.ts` 3171-3185) moves a legacy
+  `providers.tinyModel`/`memoryModel` into the same layer's `tiny`/`memory`
+  slot as a leading `local/<model>` candidate. Mango does not write those keys.
+- A bare selector exactly naming a retired wire-tier id now implies its level
+  (`inferWireRouteThinkingLevel`, `model-resolver.ts` 852-866); suffixed
+  selectors are unaffected.
+- The `task.maxEffort` ceiling is also carried into the child session
+  (`task/executor.ts` 3841), so retry fallback cannot raise effort past it.
+- `settings-schema.ts` was replaced by per-domain registrations; `modelRoles`
+  (`config/model-settings.ts:97`) and `task.maxEffort` (`task/settings.ts`
+  343-356) keep their types, values and default, and declare no environment
+  variable, the one layer newly documented above overlays.
+
+Unchanged: suffix parsing, `@<role>` resolution, `pickInitialThinkingLevel`,
+slot consumers, `--config` overlay loading and merge order
+(`settings.ts` 610-612, 2243-2287, 3614-3618), `setByPath`, agent discovery,
+native `--profile` relocation, and the global/home instruction paths.
+
+Native observation: the worktree's compiled `mango install ... --apply` wrote
+an overlay with seven suffixed slots and `task.maxEffort: "medium"` in a
+disposable `HOME`, leaving `config.yml` byte-identical. The release ELF, run with
+`unshare -rn` and `env -i`, returned those values from `omp config list --json`
+with `PI_CONFIG_FILES=<overlay>` and `config.yml`'s values without it; both
+config files were unchanged afterwards. File hashes and line references are in
+the [target reference](agents/oh-my-pi.md#requalification-to-v1832-2026-09-26).
+
+### Oh My Pi requalification to v18.4.6, 2026-09-30
+
+Following the `456c783` requalification precedent, `git ls-remote` resolved
+[`v18.4.6`](https://github.com/can1357/oh-my-pi/tree/8b25ad4a05625dde65df41d057756b4815f4837c)
+to `8b25ad4a05625dde65df41d057756b4815f4837c`; the baseline `v18.3.2` is
+`7853b4e499936f9dcc13c9b64adb55f6b342aabf`. The exact package manifest
+SHA-256 is `bca974df221fecc1e706c642e1329a761849e46f76554d3df587f3629c8864f4`
+(new adapter `EvidenceSHA256`, same `source-entrypoint-version` level);
+`bun.lock` is `e8f016353712b2841ee8527ca2887cbd8c6e2651e121bb69d8a868f40a69991e`.
+The installed mise `18.4.6/omp` ELF SHA-256 is
+`9eb0668d3ccab78c39598b7717461f8621136114618387da22b3ddd454fb163b`, matching
+the [`omp-linux-x64` release asset digest](https://api.github.com/repos/can1357/oh-my-pi/releases/tags/v18.4.6).
+The release is not marked immutable. The tested range becomes
+`>=18.4.6 <18.5.0`; earlier 18.4 patches are not newly claimed.
+
+Source diff `v18.3.2..v18.4.6` covered the config declarations, settings
+loader/merge/persistence, resolver, SDK initial effort, CLI overlay flags,
+profile bootstrap, slot consumers, task settings/executor/discovery, global
+and home instruction discovery, skill scanner/capability/loader, effort
+helpers, directories, and settings/models/config-usage documentation.
+Relevant findings (paths below are beneath `packages/coding-agent/src/`):
+
+- `config/model-settings.ts:109` still declares `modelRoles` as a record,
+  without an env override; `task/settings.ts` keeps the same `task.maxEffort`
+  enum/default and no env override. Model presets and entry-granular native
+  persistence are new, but Mango writes neither presets nor native API calls.
+- `config/settings.ts:658-660,3749-3752` keeps environment/CLI overlay loading
+  and global → project → overlay → runtime merge order. `config-file.ts`,
+  `cli/config-cli.ts`, and `cli/profile-bootstrap.ts` are unchanged.
+  Native persistence improves disjoint-entry saves and Windows symlink handling;
+  neither changes Mango's lossless YAML patching contract.
+- `config/model-roles.ts`, selector suffix parsing and effort helpers are
+  unchanged. `config/model-resolver.ts` caches model ordering and removes
+  optional provider-hoisting in retry chains; explicit selectors, aliases and
+  suffix handling are unchanged. `sdk.ts:1956-1976` retains initial-effort
+  precedence, and `task/executor.ts:3857-3860,3997` retains the per-spawn
+  ceiling and propagation. Bundled task/reviewer/scout and commit role
+  consumers are unchanged; plan and title callers retain their slot choices.
+- `discovery/builtin.ts:300-306` still scans user `skills/` with required
+  description; the scanner's folder-name fallback is unchanged. The scanner
+  now rejects names containing path separators, which Mango already rejects.
+  `extensibility/skills.ts` now collapses identical body/frontmatter duplicates
+  and namespaces differing same-name skills instead of dropping them; custom
+  directories can displace the bare name. Native provider priority still
+  wins the bare name against lower-priority providers, but full skill
+  delivery/collision behavior is source-reviewed only, not natively qualified.
+- User `RULES.md` can now use an SDK-supplied agent directory; CLI default
+  `~/.omp/agent/RULES.md`, `AGENTS.md` and home traversal remain unchanged.
+  Agent discovery adds searched-directory diagnostics without changing order.
+
+Installed-binary positive/control probe: a compiled worktree `mango` wrote
+`profiles/qualification.yml` in a disposable HOME with all seven suffixed slots
+(`default`, `task`, `plan`, `slow`, `smol`, `tiny`, `commit`) and
+`task.maxEffort: medium`. The exact ELF reported `omp/18.4.6` and
+`omp config list --json`, with `PI_CONFIG_FILES=<overlay>`, returned every
+generated selector and `medium`. Without that variable, it returned only
+the control config's `default: anthropic/control-default:low`,
+`tiny: anthropic/control-tiny` and `maxEffort: xhigh`. The rebuilt requalified
+CLI then reported installed `18.4.6` in range, applied over the older Mango
+manifest, and the native getter returned the same generated values.
+
+Isolation: each process ran under a 30-second timeout with
+`bwrap --unshare-all --die-with-parent --new-session --clearenv`, separate
+network/PID/IPC/UTS, read-only `/usr` and exact ELF mounts, synthetic `/dev`
+and `/proc`, temporary `/tmp`, hidden personal homes/sockets, and only the
+disposable fixture tree writable. HOME, cache and cwd were inside that tree;
+no credentials, provider calls or native sessions were used. Omp created
+only sandbox logs/audit, `agent.db` and extracted natives. Config SHA-256
+`d05a265b2efbe18fb617c48f2a0bf89030843692eea62e3dc6d9ccb55f854a2a`
+and overlay SHA-256
+`e994db7bc527078f62e6bc9f871f2f86b8f5d0e922f662123723680348a278f7`
+were unchanged after both controls and the requalified apply.
+
+This proves native settings storage/overlay consumption only, not model
+availability, suffix interpretation, live slot consumers, skill discovery,
+authentication, full precedence or enforcement. Pi stays qualified at installed
+`0.87.1`; no installed `0.99.1` binary was available, so it was not requalified.
+Source hashes are in the [target reference](agents/oh-my-pi.md#requalification-to-v1846-2026-09-30).
+
+### OpenCode owned-profile override, 2026-09-30
+
+An edited Mango-owned `agents/<profile>.md` remains a conflict without
+`--override`. With it, the plan lists `override`, apply replaces the whole
+definition and the create-only backup preserves the edited bytes. A disposable
+compiled CLI plan/apply/edit/override/apply probe confirmed that plan line and
+backup. Unowned profile collisions, explicit `--agent` destinations and edited
+legacy-skill deletions retain their fail-closed protection.
+
+### Role subagent files, 2026-09-25 (ap-6lp)
+
+Each declared profile role (`roles.<role>: {description, instructions?}`)
+becomes one whole-file owned agent definition per qualified target, written
+only when the profile is the agent's default (`install --default`,
+`mango use`); named-only installs skip `role-definitions` with the reason
+"subagent files are global; install with --default or mango use". A bound
+role (`routes.<n>.roles.<role>`) adds its model and effort.
+
+| Target | File | Model / effort | Evidence |
+| --- | --- | --- | --- |
+| Codex `rust-v0.157.1` `3665039` (files unchanged since `rust-v0.154.0`) | `$CODEX_HOME/agents/<role>.toml` (`name`, `description`, `developer_instructions`) | `model_provider`, `model`, `model_reasoning_effort` (`none`..`xhigh`) | Source: `codex-rs/agent-roles/src/{agent_role_config,loader,discovery}.rs` ([codex](agents/codex.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| OpenCode `v1.18.31` `a97622c` | `<config>/opencode/agents/<role>.md` (`description`, `mode: subagent`) | `model: provider/model`, `variant` | Source: `packages/opencode/src/config/agent.ts`, `packages/core/src/v1/config/agent.ts` ([opencode](agents/opencode.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| Oh My Pi `78b7531` | `~/.omp/agent/agents/<role>.md` (`name`, `description`) | `model: "@<slot>"`, resolving the `modelRoles` slot the same install writes | Source: `discovery/helpers.ts`, `task/discovery.ts`, `config/model-resolver.ts` ([oh-my-pi](agents/oh-my-pi.md#role-subagent-files-ap-6lp-2026-09-25)) |
+| Claude Code `>=2.1.278 <2.2.0` | `~/.claude/agents/<role>.md` (`name`, `description`) | `model` (anthropic only), `effort` (`low`..`max`) | Installed-binary strings of `2.1.280`/`2.1.281`; no `2.1.278` binary ([claude-code](agents/claude-code.md#role-subagent-files-ap-6lp-2026-09-25)) |
+
+Pi, Hermes, and OpenClaw have no qualified surface and skip
+`role-definitions`; `--strict` blocks. An effort a target cannot write is
+omitted and listed as `effort <v> (role <r>): NOT APPLIED`. Ownership reuses the
+global instruction file machinery (`role-definition` kind): adopt with
+create-only backup, drift conflict unless `--override`, release on `mango use`
+(restoring adopted bytes), status, undo. A built-binary smoke in a `mktemp`
+HOME for Codex and OpenCode ran install (named-only and `--default`), status,
+drift, `use` to a role-less profile, and undo; undo left every target file
+byte-identical. No agent was run against the generated files.
+
+### Profile agent files, 2026-09-26 (ap-8x5)
+
+`agentFiles.<target>.<file>` copies a package resource byte-for-byte to the
+directory of that target's role files (`agents/` beside the main config), under
+the same gates as role subagent files: only the four targets above, only when
+the profile is the agent's default, and only with the target's role-file
+extension (`.toml` for Codex, `.md` otherwise; another blocks with
+`install.agent_file_extension_invalid`). Pi, Hermes, OpenClaw, the jcode fork,
+and named-only installs list `agentFiles` in `skippedRequirements`; `--strict`
+blocks. A file named like a resolved role fails resolution with
+`profile.agent_files_role_conflict`. Ownership is the whole-file machinery with
+kind `agent-file`. The discovery evidence is the role-file table above; mango
+does not parse or validate the copied content. For Oh My Pi, user agents take
+precedence over bundled ones (`task/discovery.ts` lines 51-105 in the
+[oh-my-pi reference](agents/oh-my-pi.md#role-subagent-files-ap-6lp-2026-09-25)),
+so a user `scout.md` replaces the bundled `scout`; override precedence is not
+claimed for the other targets. Tests: `pkg/install/agentfiles_test.go`,
+`pkg/profilemango/agentfiles_test.go`, all in a synthetic sandbox HOME.
 
 ## Hermes Agent v0.21.3 evidence
 
@@ -676,15 +1395,15 @@ memory, session, profile, or active target-home path. Reports remain
 `applicable: false`, include target-owned diagnostics, and return nonzero.
 
 
-## Experimental Ariel custom Jcode fork evidence
+## Experimental Jcode fork evidence
 
 All profile commands, profile fixtures, and profile observations in this section
-refer only to Ariel's custom Jcode fork. They do not describe upstream Jcode or
+refer only to the Jcode fork. They do not describe upstream Jcode or
 establish compatibility with any independently distributed Jcode build.
 
 ### Destination and precedence
 
-The Ariel custom Jcode fork defines named profiles as entries under
+The Jcode fork defines named profiles as entries under
 `[profiles.<name>]` in `~/.jcode/config.toml`, selected with the custom-fork
 `jcode --profile <name>` flag or its TUI profile picker. The bundled wrapper
 guide states that these custom-fork profiles supply provider, model, reasoning,
@@ -721,15 +1440,15 @@ Because explicit child overrides are possible, a root profile is not an organiza
 
 ### Route and authentication
 
-The Ariel custom-fork CLI distinguishes provider routes such as `openai` and
+The Jcode fork CLI distinguishes provider routes such as `openai` and
 `openai-api`, and supports explicit provider, model, and reasoning-effort
 selection. That distinction is promising for exact route mapping, but it is
 custom-fork behavior and no local profile values or credential state were read
 during M0.
 
-The Ariel custom-fork `jcode profile show`, `current`, and `resolve` commands
+The Jcode fork `jcode profile show`, `current`, and `resolve` commands
 are documented to avoid credential exposure and provider initialization. M0 did
-not run them against Ariel's live profiles because doing so would read personal
+not run them against the developer's live profiles because doing so would read personal
 target configuration. The isolated probe below uses only synthetic custom-fork
 configuration before making a route observation.
 
@@ -737,22 +1456,22 @@ configuration before making a route observation.
 
 | Command | Documented effect | M0 use |
 | --- | --- | --- |
-| Ariel custom fork: `jcode --version` | Prints build version | Run |
-| Ariel custom fork: `jcode profile --help` | Prints profile inspection and override surface | Run |
-| Ariel custom fork: `jcode --quiet profile list --json` | Lists configured names without provider initialization | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile show NAME --json` | Shows safe configured fields and instruction presence/length | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile current --json` | Shows current effective policy and explicit no-profile state | Run only in synthetic config |
-| Ariel custom fork: `jcode --quiet profile resolve NAME --json` | Resolves effective tools, skills, and field sources without mutating a session | Run only in synthetic config |
+| Jcode fork: `jcode --version` | Prints build version | Run |
+| Jcode fork: `jcode profile --help` | Prints profile inspection and override surface | Run |
+| Jcode fork: `jcode --quiet profile list --json` | Lists configured names without provider initialization | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile show NAME --json` | Shows safe configured fields and instruction presence/length | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile current --json` | Shows current effective policy and explicit no-profile state | Run only in synthetic config |
+| Jcode fork: `jcode --quiet profile resolve NAME --json` | Resolves effective tools, skills, and field sources without mutating a session | Run only in synthetic config |
 
 The first adapter experiment must use an isolated synthetic config and a private/new
-server socket where required. It must not reuse Ariel's live custom-fork config or
+server socket where required. It must not reuse the developer's live custom-fork config or
 shared daemon as a fixture. These profile commands remain custom-fork-only
 evidence and are not upstream Jcode evidence.
 
 ### Isolated 2026-09-21 UTC custom-fork profile probe
 
 The retained [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
-ran only Ariel's direct custom-fork `jcode` executable with synthetic
+ran only the developer's direct custom-fork `jcode` executable with synthetic
 `HOME/.jcode/config.toml`, `XDG_CONFIG_HOME`, an empty project, a private socket,
 `--no-update`, `--no-selfdev`, `JCODE_NO_TELEMETRY=1`, a cleared environment,
 an unshared network namespace, and a bounded ten-second timeout. These flags and
@@ -786,20 +1505,20 @@ Negative custom-fork profile fixtures produced these version-qualified results:
 - invalid `reasoning_effort` was rejected with the allowed-value diagnostic;
 - an unknown `unknown_key` was accepted but omitted from the resolved output.
 
-The last result is an explicit compatibility and safety gap: this current Ariel
+The last result is an explicit compatibility and safety gap: this current Jcode fork
 custom-fork profile parser is not demonstrated to reject unknown profile keys.
 Do not treat it as upstream Jcode behavior or as evidence of fail-closed
 validation for a future adapter.
 
 ### Experimental inert adapter boundary
 
-The `pkg/adapters/arieljcode` package is pinned to target identity
-`ariel-jcode`, tested build `jcode v0.83.909-dev (ca8017a3a)`, commit
+The `pkg/adapters/jcodefork` package is pinned to target identity
+`jcode-fork`, tested build `jcode v0.83.909-dev (ca8017a3a)`, commit
 `ca8017a3a`, and SHA-256
 `392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992`. It emits
 only a deterministic inert TOML preview under `preview/` and keeps
 `applicable: false` unconditionally. The report, diagnostic, and candidate
-comments identify it as the **Ariel custom Jcode fork, experimental-only**.
+comments identify it as the **Jcode fork, experimental-only**.
 
 Candidate syntax is limited to the exact-build-observed provider, model,
 reasoning effort, a `none` tool profile paired with canonical closed allow and
@@ -827,7 +1546,7 @@ overrides, hooks, extensions, MCP, and runtime enforcement remain blocking.
 
 `fidelity` describes whether the target has a corresponding concept. `delivery` describes whether M0 has an approved deterministic destination. `enforcement` describes what has actually been demonstrated. `unknown` and `unsupported` block applicability when the field is required.
 
-| Portable field | Codex 0.154.0 | Ariel custom Jcode fork 0.83.909-dev (ca8017a3a) | M0 applicability consequence |
+| Portable field | Codex 0.154.0 | Jcode fork 0.83.909-dev (ca8017a3a) | M0 applicability consequence |
 | --- | --- | --- | --- |
 | `spec.routeRef` provider/model/effort | **Partial fidelity.** Profile keys exist for provider, model, and effort; runtime overrides are higher precedence. Exact auth mode is unverified. | **Observed profile fields, not auth proof.** Synthetic custom-fork `profile resolve` reported provider `openai-api`, model, effort, and `Profile` sources. No credential or provider state was read. | Any binding requiring verified authentication mode is non-applicable. No silent route fallback. |
 | `permissions.mode` | **Partial concept.** Sandbox and approval fields exist, but read-only target behavior and all escape surfaces were not verified. | **Profile tool policy observed only.** Custom-fork tool-profile values resolve, but a general read-only filesystem/process guarantee was not verified. | Required read-only policy is non-applicable. |
@@ -846,7 +1565,7 @@ The minimum contract can proceed without public Jcode support and without preten
 
 - Codex is the first public M1 adapter candidate, and Claude Code, Pi, Oh My Pi,
   OpenClaw, and Hermes now have exact source-qualified inert preview renderers.
-- Ariel's custom Jcode fork is a private experimental comparison target only.
+- the Jcode fork is a private experimental comparison target only.
 - exact authentication-route proof is unresolved for each target without isolated target inspection
 - security-sensitive fields remain non-applicable unless M1 proves equivalent or stronger enforcement
 - no target artifact is applied, no launch recipe is emitted, and no live-state mutation is part of M0
@@ -856,31 +1575,31 @@ This satisfies the M0 evidence requirement by classifying unknowns and unsupport
 ## Evidence references
 
 - Local binaries: direct `codex --version`, `codex --help`, `codex features list`,
-  and Ariel custom-fork `jcode --version`, `jcode profile --help`, and custom-
+  and Jcode fork `jcode --version`, `jcode profile --help`, and custom-
   fork `jcode profile list/show/resolve` on 2026-09-20 local / 2026-09-21 UTC.
 - Reproducible harness: [`scripts/agent-config-probe.sh`](../../scripts/agent-config-probe.sh)
   and its opt-in integration test `TestAgentConfigProbe`.
 - OpenAI Codex source documentation: configuration loader order and `ConfigToml` types in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/config/src).
-- Pi v0.86.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/13cbf77df2396303013a41646bcfa77b4271ae56/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.86.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
-- Oh My Pi v18.2.6 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.2.6/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.2.6/docs/approval-mode.md). The local source review did not execute config inspection because initialization effects were not bounded.
+- Pi v0.87.1 source and documentation: [`coding-agent` source at the exact commit](https://github.com/earendil-works/pi/tree/f07218c4d4bbc12bef056a7058c3dd49dfe41abe/packages/coding-agent), [`settings.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/settings.md), [`providers.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/providers.md), [`models.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/models.md), [`security.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/security.md), [`skills.md`](https://github.com/earendil-works/pi/blob/v0.87.1/packages/coding-agent/docs/skills.md), and [npm package metadata](https://registry.npmjs.org/@earendil-works%2fpi-coding-agent/0.87.1). Retrieved source/package hashes and the no-execution decision are retained in the worker qualification record.
+- Oh My Pi v18.3.2 source and documentation: [`coding-agent` source](https://github.com/can1357/oh-my-pi/tree/v18.3.2/packages/coding-agent), [`settings.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/settings.md), [`models.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/models.md), and [`approval-mode.md`](https://github.com/can1357/oh-my-pi/blob/v18.3.2/docs/approval-mode.md). The original `v18.2.6` source review did not execute config inspection because initialization effects were not bounded; the `v18.3.2` requalification ran the release binary's `config list` only in a disposable, network-less sandbox.
 - OpenClaw v2026.9.5 source and documentation: [`openclaw.mjs`](https://github.com/openclaw/openclaw/blob/v2026.9.5/openclaw.mjs), [`config-cli.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/cli/config-cli.ts), [`io.snapshot.ts`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/io.snapshot.ts), [`configuration.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/gateway/configuration.md), and [`config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/cli/config.md). The exact source review did not execute config inspection because plugin/state/include and migration effects were not bounded.
-- Bundled Ariel custom Jcode fork documentation for source snapshot `ed9b93b89`:
+- Bundled Jcode fork documentation for source snapshot `ed9b93b89`:
   `README.md` named-session-profile section and `docs/WRAPPERS.md` profile
   inspection section. This source snapshot is separate from the tested build
   `ca8017a3a`; neither is evidence for upstream Jcode.
-- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in Ariel's OpenClaw workspace at `/home/ari/.openclaw/docs/research/general/2026-09-20-unified-coding-profile-mangos.md`. The Bead ID is the durable cross-repository reference.
+- Design gate: `openclaw-wpii`, `Unified coding-agent profiles: support matrix and product architecture`, retained in the developer.s OpenClaw research workspace (2026-09-20 design gate document). The Bead ID is the durable cross-repository reference.
 
 ## Deferred checks
 
 - Codex feature parsing is now observed in an isolated synthetic `CODEX_HOME`,
   but route/effective-config inspection remains unavailable without a safe
   inspector.
-- Ariel custom-fork `profile show/current/resolve` was run only against an
+- Jcode fork `profile show/current/resolve` was run only against an
   isolated synthetic config and private socket. Do not port these profile
   commands or results to upstream Jcode.
 - Do not read live agent homes, credentials, sessions, global configuration values, or provider endpoints.
 - Do not launch target sessions, hooks, extensions, children, or provider requests for M0 evidence.
-- Claude Code's v2.1.278 package and Pi's v0.86.1 source/package release are
+- Claude Code's v2.1.278 package and Pi's v0.87.1 source/package release are
   qualified for inert preview boundaries, but native acceptance, effective-state
   inspection, and enforcement remain blocked pending safe exact-artifact
   inspection paths. OpenClaw and Hermes retain their source-qualified inert
@@ -942,6 +1661,51 @@ authentication, higher-precedence target state, policy enforcement, and runtime
 behavior were not executed or inferred. Other targets have no qualified named
 instruction/subagent installer; their required fields remain blocked.
 
+## OpenCode default-install named primary agent, 2026-09-23 (ap-vjc.5)
+
+An install without `--agent` now reuses the qualified primary-agent renderer
+above (same `AgentDefinition` code path, same `mode: primary` frontmatter and
+model/instructions rendering) at `agents/<profile>.md` beside the resolved
+config, and reports it through the shared named-profile install mode already
+qualified for Codex (`docs/dev/target-evidence.md` Codex sections): the plan
+carries `install.mode: named-profile` and a `use it: opencode --agent
+<profile>` command, and `opencode.json`/`opencode.jsonc` is left byte-identical
+unless `--default` is also passed. This reuses the exact-binary evidence
+recorded above for the primary definition; no new native OpenCode probe was
+run for this change. `--default` additionally reuses the qualified top-level
+`model` patch and one-skill install exactly as documented under "OpenCode
+single-skill installation qualification, 2026-09-22", now gated behind that
+flag instead of being the unconditional default, since OpenCode's
+`skills.paths` is a directory-wide setting rather than a per-agent one.
+Compiled-CLI checks cover: default install creates the agent file only,
+`--default` also patches the model and skill fields, undo removes only the
+agent file and manifest it created, and an edited or unowned agent file at the
+default path is protected exactly as an explicit `--agent` destination.
+
+## OpenCode agent effort variant, 2026-09-25
+
+OpenCode `1.18.31` exposes effort per agent only as `variant`. Exact source at
+commit `a97622c801f4ca571530ddc51076af659a9c32cd`:
+`packages/core/src/v1/config/agent.ts` (SHA-256
+`4f2d7bc8283ff0c8cd922c614a74f74abb1abe9d5fc2a6dba3dd03d2dca5c624`) declares the
+agent `variant`; `packages/opencode/src/session/prompt.ts` (SHA-256
+`f0c5bc64c0f0e966693d4a57f7ede1e9d6e188b396152f04b55303dc75b9b768`) uses it only
+when the prompt uses the agent's own model and that model has a variant of that
+name; `packages/opencode/src/provider/transform.ts` (SHA-256
+`c07d49e48dd2478ad2813a10805781a72551db2fd847b7df994cc854bf654c16`) names
+built-in reasoning variants only from `none`, `minimal`, `low`, `medium`, `high`,
+`xhigh`, `max` (model- and provider-dependent), mapped to provider options such
+as `reasoningEffort`. The named agent renderer now emits
+`variant: "<effort>"` for those names; other efforts are listed as not applied.
+
+The opt-in `TestOpenCodeGeneratedAgentNativeProbe`, rerun against the exact
+binary (`f9dab32248695e9ebd56b16a1921798fd85112cf5a69c7dfd0cabc1e17be4a11`, verified before running) in the same isolation,
+resolved `variant: "high"` from both generated primary and subagent definitions;
+`changed variant` (`low`) and `missing variant` controls changed or removed the
+resolved value, and state restored to its baseline inventory. A missing variant
+on the model silently falls back to the model default at runtime, and the
+`--default` main-config model carries no effort; plans warn about both. No
+provider request was made.
 
 ## Hermes bounded installation qualification, 2026-09-22
 
@@ -991,3 +1755,153 @@ differs from retained archive SHA-256
 `0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4`.
 Neither replaces the other. Exact peeled Git identity and actual imported hashes,
 recorded in the target's native evidence fixture, underpin this qualification.
+
+### OpenClaw 2026.9.5 named-profile installation, 2026-09-23
+
+Source-only evidence from the pinned commit
+`ec9c1a13db8938e5a3eaa51fca2e981cde2395a9`, fetched read-only. `src/entry.ts`
+applies root `--profile` before any command runs. `src/cli/profile.ts`
+`applyCliProfileEnv` sets `OPENCLAW_CONFIG_PATH=<stateDir>/openclaw.json`.
+`src/cli/profile-utils.ts` `resolveProfileStateDir` returns
+`<home>/.openclaw-<name>`, or `<home>/.openclaw` for `default`. `<home>` is
+`OPENCLAW_HOME` or the OS home. The installer writes the qualified fields to that
+file and changes the main config only with `--default`. A main config path not
+shaped `<home>/.openclaw/openclaw.json` blocks named install
+(`install.named_profile_path_unsafe`). The profile named `default` patches the
+main config in place. No native `--profile` probe was run: the only local binary
+is `2026.9.4`. Unit, command, and compiled-binary tests plus a scratch-`HOME`
+sandbox run cover create, default-config byte identity, `--default`, and undo.
+File and line references are in
+[openclaw.md](agents/openclaw.md#named-profile-installation-2026-09-23).
+
+### Hermes 0.21.3 named-profile installation, 2026-09-23
+
+Source-only evidence from the pinned commit
+`345cd2b057a452236de401d3534b8502a7465e8d` (`v2026.9.14`), fetched read-only.
+`hermes_cli/profiles.py` `get_profile_dir`/`resolve_profile_env` map
+`hermes -p <name>` to `<hermes-home>/profiles/<name>/config.yaml`, where
+`<hermes-home>` is `HERMES_HOME` (its grandparent when it is itself a
+`profiles/<name>` directory) or `~/.hermes`; `"default"` (any case) resolves to that root directory itself,
+not `profiles/default`. `hermes_cli/main.py` `_apply_profile_override` pre-parses
+`-p`/`--profile <name>` and requires `resolve_profile_env` to find an existing,
+non-tombstoned `profiles/<name>` directory before it sets `HERMES_HOME`;
+`hermes -p <name>` refuses to start otherwise (`FileNotFoundError`) rather than
+creating it. The installer writes the qualified fields to
+`profiles/<name>/config.yaml` (creating that directory) and changes the main
+config only with `--default`. As with OpenClaw, a main config other than
+`<hermes-home>/config.yaml` blocks named install
+(`install.named_profile_path_unsafe`), and undo removes a profile directory the
+install created once it is empty. Reserved ids (`hermes`, `test`, `tmp`,
+`root`, `sudo`) and ids outside `[a-z0-9][a-z0-9_-]{0,63}` block named install
+(`install.named_profile_path_unsafe`), matching what `hermes -p <name>` itself
+refuses. The profile named `default` patches the main config in place. No
+native `hermes -p`/`hermes profile` probe was run: the only local binary is
+`0.19.0`. Unit and command tests plus a scratch-`HOME` sandbox run cover
+create, default-config byte identity, `--default`, the `default` name,
+reserved-name blocking, and undo. File and line references are in
+[hermes.md](agents/hermes.md#named-profile-installation-2026-09-23).
+
+## Default config destinations, 2026-09-22
+
+When `install` receives a target without `--config`, it plans against that
+target's documented user-level config file. The plan's human output shows
+`config: <path> (default)` and JSON reports `config.source`; JSON omits absolute
+paths. An explicit `--config` always overrides the default. Writes keep the plan
+diff, create-only backups, hash/drift checks, adjacent ownership manifests, and
+interactive or `--yes --expect-plan` consent. Resolution reads only `HOME`,
+`XDG_CONFIG_HOME`, and the documented relocation variables below, and stats only the
+OpenCode candidate files. It does not read auth stores, sessions, plugins, MCP, or
+providers. Relative relocation values block with a reason.
+
+| Target | Default path | Relocation | Documentation source |
+| --- | --- | --- | --- |
+| Claude Code `2.1.278` | `~/.claude/settings.json`; emulated named profiles go to `profiles/<name>.json` in the same folder | none | [claude-code.md](agents/claude-code.md#emulated-named-profiles) |
+| Codex `0.157.1` | `$CODEX_HOME/config.toml`, default `~/.codex/config.toml`; named profiles go to `<name>.config.toml` in the same folder | `CODEX_HOME` | [codex.md](agents/codex.md#configuration-and-precedence) |
+| OpenCode `1.18.31` | `${XDG_CONFIG_HOME:-~/.config}/opencode/opencode.json`; `opencode.jsonc` when only it exists; both present blocks | `XDG_CONFIG_HOME` | [opencode.md](agents/opencode.md#configuration-paths-syntax-and-precedence) |
+| Pi `0.87.1` | `~/.pi/agent/settings.json` | `PI_CODING_AGENT_DIR` | [pi.md](agents/pi.md#configuration-and-precedence) |
+| Oh My Pi `18.4.6` | `~/.omp/agent/config.yml` | none | [oh-my-pi.md](agents/oh-my-pi.md#configuration-and-precedence) |
+| OpenClaw `2026.9.5` | `~/.openclaw/openclaw.json`; named profiles go to `~/.openclaw-<name>/openclaw.json`, and a relocated main config blocks named install | `OPENCLAW_CONFIG_PATH` | [openclaw.md](agents/openclaw.md#configuration-and-precedence) |
+| Hermes `0.21.3` | `~/.hermes/config.yaml`; named profiles go to `<config-dir>/profiles/<name>/config.yaml` | `HERMES_HOME` | [hermes.md](agents/hermes.md#configuration-and-precedence) |
+
+These paths are documentation-derived destinations, not new native evidence.
+Field consumption remains qualified only as recorded in each target section; for
+example, Claude Code consumption was observed through an explicit `--settings`
+file, and project, managed, or runtime layers can still shadow a user-level value.
+OpenCode named `--agent` definitions and adapters without a documented default
+still require an explicit `--config`. Tests isolate `HOME`, `XDG_CONFIG_HOME`, and
+the relocation variables in a temporary sandbox and refuse to run if any default
+resolves outside it.
+
+## Global instruction files, 2026-09-25 (ap-nym)
+
+`globalInstructions` writes whole files beside a target's main config, only for
+the file names below, and only when the profile is the target's default
+(`mango use`, `install --default`, or a target without named profiles). Every
+file gets the same plan diff, create-only backup of an adopted file, hash/drift
+check, ownership manifest entry (with its pre-install state), consent gate and
+undo journal as the config. `mango use` releases a file the new profile no
+longer writes: it deletes a file profile-mango created and restores an adopted
+file's backup bytes. Other targets list `globalInstructions` in
+`skippedRequirements`; `--strict` blocks. This is source/doc evidence of the
+path each target reads, not observed runtime delivery or precedence.
+
+| Target | Files (directory) | Evidence |
+| --- | --- | --- |
+| Oh My Pi `18.4.6` | `AGENTS.md`, `RULES.md` (`~/.omp/agent`, `getAgentDir()`) | source tag `v18.4.6` commit `8b25ad4a05625dde65df41d057756b4815f4837c`, `packages/coding-agent/src/discovery/builtin.ts:398` (`RULES.md`, SDK agent-dir override) and `:918` (`AGENTS.md`); unchanged CLI default paths from `v18.3.2` |
+| Codex `0.157.1` | `AGENTS.md` (`$CODEX_HOME`) | source `rust-v0.157.1` commit `3665039`, `codex-rs/codex-home/src/instructions/mod.rs:12-13,43-44`; an existing `AGENTS.override.md` is read instead, so the plan's file can be shadowed |
+| OpenCode `1.18.31` | `AGENTS.md` (`${XDG_CONFIG_HOME:-~/.config}/opencode`) | release `v1.18.31` commit `a97622c801f4ca571530ddc51076af659a9c32cd`, `packages/opencode/src/session/instruction.ts:61` (`path.join(Global.Path.config, "AGENTS.md")`; line 62 also reads `~/.claude/CLAUDE.md`), `packages/core/src/global.ts:13` |
+| Claude Code `2.1.278` | `CLAUDE.md` (`~/.claude`) | documentation context only: mutable `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, row "User instructions `~/.claude/CLAUDE.md`"; not observed in the pinned binary |
+
+Tests: `pkg/install/globals_test.go`, `cmd/mango/use_test.go`
+(`TestUse*`, `TestStatus*`, `TestUndoAfterUseRestoresEachGeneration`), all in a
+synthetic sandbox HOME.
+
+## Home instruction file `~/AGENTS.md`, 2026-09-25 (ap-5mp)
+
+`globalInstructions.home` maps `AGENTS.md` to `$HOME/AGENTS.md`. The file lives
+in no target's config directory, so one target owns it: Pi `0.87.1`, the only
+pinned target whose source reads it in every working directory under `$HOME`.
+Pi's config manifest records it with the same whole-file ownership, create-only
+backup, drift check, consent gate, release on `mango use`, and undo journal as
+the other global instruction files. It is written whenever Pi (which has no named
+profiles) is planned with a resolvable home directory; plans and status label it
+`~/AGENTS.md` and warn (`install.home_instruction_shared`) that other agents read
+the same file. Another target in a plan without Pi lists `globalInstructions`
+(value `home`) in `skippedRequirements`; `--strict` blocks. Any other file name
+blocks with `install.global_instruction_unqualified`. This is source/doc evidence
+of the read path, not observed runtime delivery or precedence.
+
+| Agent | Reads `~/AGENTS.md` when | Evidence |
+| --- | --- | --- |
+| Pi `0.87.1` (owner) | every working directory under `$HOME`: each ancestor directory up to `/` contributes its first candidate of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, `CLAUDE.MD`, so a `~/AGENTS.override.md` shadows it | source `v0.87.1` commit `f07218c4d4bbc12bef056a7058c3dd49dfe41abe` (lines identical at `v0.86.1` `13cbf77`), `packages/coding-agent/src/core/resource-loader.ts:71-72` (candidates), `:119-156` (ancestor walk); the agent-dir `AGENTS.md` at `:128` is a separate global file |
+| Codex `0.157.1` | only when `$HOME` is the working directory or the nearest project root: discovery walks up to the nearest `project_root_markers` directory (`.git` by default) and reads only the working directory when none is found | source `rust-v0.157.1` commit `36650394c5b38c2990ccf2a3457165ca3e9d9726`, `codex-rs/core/src/agents_md.rs:1-18,192-245` |
+| OpenCode `1.18.31` | only outside a Git repository: project instructions use `findUp` from the working directory to the worktree root, and a non-Git worktree is `/` | release `v1.18.31` (tag commit `014614d`, file identical at `a97622c`), `packages/opencode/src/session/instruction.ts:122-133`, `packages/core/src/fs-util.ts:154-166`, `packages/opencode/src/project/project.ts:217` |
+| Oh My Pi `18.4.6` | when no repository encloses the working directory, or the repository root is `$HOME`; a repository nested under `$HOME` excludes the home copy | source `v18.4.6` commit `8b25ad4a05625dde65df41d057756b4815f4837c`, `packages/coding-agent/src/discovery/agents-md.ts:20-22` (unchanged), `packages/coding-agent/src/discovery/helpers.ts:704-731` (same traversal logic as `v18.3.2`) |
+| Claude Code `2.1.278` | documented for `2.1.277+`: `AGENTS.md` in the working directory and above only when no `CLAUDE.md`/`CLAUDE.local.md` exists there (default `claude-md-or-agents-md`) | documentation context only: `https://code.claude.com/docs/en/memory` retrieved 2026-09-25, Markdown SHA-256 `cf73d3a512d5bab41ed6f22adeb7751ef7e97f022addcf22da091b3830192a8f`, lines 333-360; not observed in the pinned binary |
+| Jcode fork (experimental) | every session, as the user-home `AGENTS.md` beside the project file; a profile `agents_md_path` replaces it | developer evidence only, see [Jcode](agents/jcode.md); not an install target and not a support claim |
+
+Codex, OpenCode, Oh My Pi and Claude Code read the file only in some directories,
+so none of them owns it; they do not install it on their own because that would
+claim a delivery the evidence does not give inside a Git repository.
+
+Tests: `pkg/install/globals_test.go` (`TestHomeInstructionGates`) and
+`cmd/mango/use_test.go` (`TestUseOwnsHomeAgentsMDThroughPi`: install,
+status, release on `use`, undo of each generation), in a synthetic sandbox HOME.
+
+## Skill folders (2026-09-27, ap-794)
+
+A profile's `skills` entries install as whole folders: every regular file beside
+each `SKILL.md` is copied, with `{{route.…}}` placeholders rendered in UTF-8 text files (no symlinks, at most 256 files, modes `0755`
+or `0644`), owned per file (kind `skill`), and written only when the profile is
+the default. Vendored entries pin `source.sha256`, the tree digest of the folder.
+
+| Target | Skill root | Evidence | Subset |
+| --- | --- | --- | --- |
+| Claude Code `2.1.278` | `<config dir>/skills` (`~/.claude/skills`) | Official [skills docs](https://code.claude.com/docs/en/skills), unversioned | Installed with default; skipped for named profiles and agents |
+| Codex `0.157.1` | `$HOME/.agents/skills` (never `CODEX_HOME`) | [`rust-v0.157.1` loader](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/lib.rs) and [parser](https://github.com/openai/codex/blob/rust-v0.157.1/codex-rs/skills/src/parser.rs) | Installed with default; skipped for named profiles and agents |
+| Oh My Pi `18.4.6` | `<config dir>/skills` (`~/.omp/agent/skills`) | [`v18.4.6` native loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/discovery/builtin.ts) and [collision loader](https://github.com/can1357/oh-my-pi/blob/v18.4.6/packages/coding-agent/src/extensibility/skills.ts) | Installed with default; skipped for named profiles and agents; differing same-name skills are now namespaced |
+| OpenCode `1.18.31` | `<config dir>/skills` (`~/.config/opencode/skills`) | [`a97622c` skill scan](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/skill/index.ts) over [`Config.directories()`](https://github.com/anomalyco/opencode/blob/a97622c801f4ca571530ddc51076af659a9c32cd/packages/opencode/src/config/paths.ts) | Installed with `--default`/`use`; blocks a skill whose frontmatter omits `name`; legacy `SKILL.md` and marked `skills.paths` are released |
+| OpenClaw `2026.9.5` | `<state dir>/skills` beside each written config (`~/.openclaw/skills`; `~/.openclaw-<name>/skills` for `openclaw --profile <name>`) | [`docs/tools/skills.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills.md) precedence and allowlist rules, [`skills-config.md`](https://github.com/openclaw/openclaw/blob/v2026.9.5/docs/tools/skills-config.md), [managed root `CONFIG_DIR/skills`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/workspace-skill-loader.ts), [`resolveConfigDir`](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/utils.ts), [loader](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/skills/loading/local-loader.ts), [`agents.entries` schema](https://github.com/openclaw/openclaw/blob/v2026.9.5/src/config/zod-schema.agents.ts) | Installed for every install mode into each written state directory; `--agent openclaw=<id>` sets `agents.entries.<id>.skills` to the sorted skill names in each written config defining that agent (never `agents.defaults.skills` or a new entry); a set `OPENCLAW_STATE_DIR` elsewhere is warned |
+
+Discovery and precedence were read from source or documentation; no agent was
+run to list the installed skills, and skill execution remains unobserved.

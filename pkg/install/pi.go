@@ -3,8 +3,8 @@ package install
 import (
 	"fmt"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/pi"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/pi"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 type piAdapter struct{}
@@ -17,7 +17,7 @@ func (piAdapter) Metadata() AdapterMetadata {
 		EvidenceSHA256: pi.EvidenceSHA256,
 		Installable:    true,
 		Status:         StatusReady,
-		Reason:         "exact Pi 0.86.1 settings-module consumption is qualified for three top-level route defaults",
+		Reason:         "exact Pi 0.87.1 settings-module consumption is qualified for three top-level route defaults",
 	}
 }
 
@@ -37,7 +37,7 @@ func (piAdapter) Plan(input AdapterInput) (Patch, error) {
 		fileFields = append(fileFields, path)
 	}
 	patch := Patch{
-		Files:           []FilePatch{{Content: settings.Content, Fields: fileFields}},
+		Files:           []FilePatch{{Content: settings.Content, Fields: fileFields, LiveFields: true}},
 		Fields:          fields,
 		OverrideAllowed: true,
 	}

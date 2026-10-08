@@ -63,9 +63,18 @@ type Source struct {
 type Options struct {
 	Client       *http.Client
 	TargetID     string
+	TargetIDs    []string
 	Timeout      time.Duration
 	MaxBodyBytes int64
 	MaxRedirects int
+	OnProgress   func(Progress)
+}
+
+type Progress struct {
+	Completed int
+	Total     int
+	TargetID  string
+	State     Status
 }
 
 type Report struct {
@@ -147,18 +156,29 @@ func Check(ctx context.Context, manifest Manifest, options Options) (Report, err
 	}
 
 	options = options.withDefaults()
-	targets, err := selectTargets(manifest.Targets, options.TargetID)
+	var targets []Target
+	var err error
+	if len(options.TargetIDs) > 0 {
+		targets, err = selectTargetIDs(manifest.Targets, options.TargetIDs)
+	} else {
+		targets, err = selectTargets(manifest.Targets, options.TargetID)
+	}
 	if err != nil {
 		return Report{}, err
 	}
 	client := configuredClient(options)
+	total := 0
+	for _, target := range targets {
+		total += len(target.Sources)
+	}
+	completed := 0
 	report := Report{
 		SchemaVersion: manifest.SchemaVersion,
 		RetrievedAt:   manifest.RetrievedAt,
 		Targets:       make([]TargetReport, 0, len(targets)),
 	}
 	for _, target := range targets {
-		targetReport := checkTarget(ctx, client, target, options)
+		targetReport := checkTarget(ctx, client, target, options, &completed, total)
 		report.Targets = append(report.Targets, targetReport)
 	}
 	report.Summary = summarize(report.Targets)
@@ -208,7 +228,26 @@ func selectTargets(targets []Target, targetID string) ([]Target, error) {
 	return selected, nil
 }
 
-func checkTarget(ctx context.Context, client *http.Client, target Target, options Options) TargetReport {
+func selectTargetIDs(targets []Target, ids []string) ([]Target, error) {
+	selected := make([]Target, 0, len(ids))
+	for _, id := range ids {
+		found := false
+		for _, target := range targets {
+			if target.ID == id {
+				selected = append(selected, target)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("target %q not found in source manifest", id)
+		}
+	}
+	sort.Slice(selected, func(i, j int) bool { return selected[i].ID < selected[j].ID })
+	return selected, nil
+}
+
+func checkTarget(ctx context.Context, client *http.Client, target Target, options Options, completed *int, total int) TargetReport {
 	sources := append([]Source(nil), target.Sources...)
 	sort.SliceStable(sources, func(i, j int) bool {
 		return sourceKey(sources[i]) < sourceKey(sources[j])
@@ -221,7 +260,15 @@ func checkTarget(ctx context.Context, client *http.Client, target Target, option
 		Sources:        make([]SourceReport, 0, len(sources)),
 	}
 	for _, source := range sources {
-		report.Sources = append(report.Sources, checkSource(ctx, client, source, options))
+		if options.OnProgress != nil {
+			options.OnProgress(Progress{Completed: *completed, Total: total, TargetID: target.ID})
+		}
+		result := checkSource(ctx, client, source, options)
+		report.Sources = append(report.Sources, result)
+		*completed++
+		if options.OnProgress != nil {
+			options.OnProgress(Progress{Completed: *completed, Total: total, TargetID: target.ID, State: result.State})
+		}
 	}
 	return report
 }

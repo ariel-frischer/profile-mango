@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://profilemango.dev/schemas/status-v1alpha1.json",
+  "title": "Status v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "targets"],
+  "properties": {
+    "apiVersion": {"const": "profilemango.dev/status/v1alpha1"},
+    "kind": {"const": "Status"},
+    "targets": {"type": "array", "items": {"$ref": "#/$defs/targetStatus"}},
+    "skills": {"type": "array", "items": {"$ref": "#/$defs/skillDrift"}}
+  },
+  "$defs": {
+    "targetStatus": {
+      "type": "object", "additionalProperties": false, "required": ["target", "state"],
+      "properties": {
+        "target": {"$ref": "install-plan.schema.json#/$defs/target"},
+        "recordedVersion": {"type": "string"},
+        "state": {"enum": ["managed", "unmanaged"]},
+        "reason": {"type": "string"}, "profile": {"type": "string"},
+        "generation": {"type": "integer", "minimum": 0},
+        "source": {"enum": ["current", "changed", "unknown"]}, "sourceReason": {"type": "string"},
+        "files": {"type": "array", "items": {"$ref": "#/$defs/fileStatus"}},
+        "drift": {"type": "array", "items": {"$ref": "#/$defs/fieldDrift"}},
+        "versionCheck": {"$ref": "install-plan.schema.json#/$defs/versionCheck"},
+        "modelPreset": {"$ref": "#/$defs/modelPreset"}
+      }
+    },
+    "modelPreset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "route", "maxEffortDiffers"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^mango-[a-zA-Z0-9_-]+$"},
+        "route": {"type": "string", "minLength": 1},
+        "taskMaxEffort": {"enum": ["minimal", "low", "medium", "high", "xhigh", "max"]},
+        "routeSubagentMaxEffort": {"enum": ["minimal", "low", "medium", "high", "xhigh", "max"]},
+        "maxEffortDiffers": {"type": "boolean"}
+      }
+    },
+    "fileStatus": {
+      "type": "object", "additionalProperties": false, "required": ["path", "kind", "state"],
+      "properties": {"path": {"type": "string"}, "kind": {"type": "string"},
+        "state": {"enum": ["in-sync", "edited", "missing", "other-edits", "preset-switched"]},
+        "fields": {"type": "array", "items": {"type": "string"}}}
+    },
+    "fieldDrift": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string"}, "live": {"type": "string"}, "profile": {"type": "string"}, "state": {"type": "string"}}
+    },
+    "skillDrift": {
+      "type": "object", "additionalProperties": false, "required": ["profile", "skill", "snapshot", "global", "files", "newer", "hint"],
+      "properties": {"profile": {"type": "string"}, "skill": {"type": "string"}, "snapshot": {"type": "string"}, "global": {"type": "string"},
+        "files": {"type": "array", "items": {"type": "string"}}, "newer": {"type": "string"}, "hint": {"type": "string"}}
+    }
+  }
+}

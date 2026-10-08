@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // The probe intentionally imports only Pi's exact settings module. It bypasses
@@ -46,7 +46,7 @@ if (mode === "positive") {
 func TestNativeSettingsModuleQualification(t *testing.T) {
 	packageRoot := os.Getenv("PROFILE_MANGO_PI_NATIVE_PACKAGE")
 	if packageRoot == "" {
-		t.Skip("set PROFILE_MANGO_PI_NATIVE_PACKAGE to the exact 0.86.1 package root for native qualification")
+		t.Skip("set PROFILE_MANGO_PI_NATIVE_PACKAGE to the exact " + TargetVersion + " package root for native qualification")
 	}
 	var err error
 	packageRoot, err = filepath.Abs(packageRoot)
@@ -170,13 +170,13 @@ func nativeProbeArgs(root, packageRoot, node, mode string) []string {
 		"--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
 		"--ro-bind", "/bin", "/bin", "--ro-bind", "/etc", "/etc", "--proc", "/proc", "--dev", "/dev",
 		"--tmpfs", "/run", "--tmpfs", "/tmp", "--tmpfs", "/var/tmp", "--dir", "/probe", "--ro-bind", node, "/probe/node",
-		"--bind", root, "/home/ari", "--ro-bind", packageRoot, "/package", "--chdir", "/home/ari/project",
-		"--clearenv", "--setenv", "HOME", "/home/ari", "--setenv", "PI_CODING_AGENT_DIR", "/home/ari/agent",
-		"--setenv", "PI_CODING_AGENT_SESSION_DIR", "/home/ari/sessions", "--setenv", "XDG_CONFIG_HOME", "/home/ari/xdg/config",
-		"--setenv", "XDG_DATA_HOME", "/home/ari/xdg/data", "--setenv", "XDG_CACHE_HOME", "/home/ari/xdg/cache",
-		"--setenv", "XDG_RUNTIME_DIR", "/run", "--setenv", "TMPDIR", "/home/ari/tmp", "--setenv", "PI_OFFLINE", "1",
+		"--bind", root, "/home/user", "--ro-bind", packageRoot, "/package", "--chdir", "/home/user/project",
+		"--clearenv", "--setenv", "HOME", "/home/user", "--setenv", "PI_CODING_AGENT_DIR", "/home/user/agent",
+		"--setenv", "PI_CODING_AGENT_SESSION_DIR", "/home/user/sessions", "--setenv", "XDG_CONFIG_HOME", "/home/user/xdg/config",
+		"--setenv", "XDG_DATA_HOME", "/home/user/xdg/data", "--setenv", "XDG_CACHE_HOME", "/home/user/xdg/cache",
+		"--setenv", "XDG_RUNTIME_DIR", "/run", "--setenv", "TMPDIR", "/home/user/tmp", "--setenv", "PI_OFFLINE", "1",
 		"--setenv", "PI_SKIP_VERSION_CHECK", "1", "--setenv", "PATH", "/usr/bin:/bin", "--", "/probe/node",
-		"/home/ari/probe.mjs", "/package", "/home/ari/project", "/home/ari/agent", mode,
+		"/home/user/probe.mjs", "/package", "/home/user/project", "/home/user/agent", mode,
 	}
 }
 

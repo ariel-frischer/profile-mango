@@ -70,7 +70,7 @@ On 2026-09-22, the pinned inputs produced `status: ok`. The effective native mer
 }
 ```
 
-The result is retained at `/home/ari/.jcode/scratch/profile-mango/unknown/ap-6fu.18/probes/native-patched-repair/result/hermes-native-result.json`. The generated input is retained at `/home/ari/.jcode/scratch/profile-mango/unknown/ap-6fu.18/probes/native-patched-repair/home/.hermes/config.yaml`. It recorded `clearenv: true`, hidden real home and run paths, `pid: 2` with `parent_pid: 1` in the isolated PID namespace, all four namespace flags, and the imported module hashes above. Hermes created only disposable home skeleton and config-backup state inside the bound state root.
+The result (`probes/native-patched-repair/result/hermes-native-result.json`) and generated input (`probes/native-patched-repair/home/.hermes/config.yaml`) were retained in a private local scratch directory. The result recorded `clearenv: true`, hidden real home and run paths, `pid: 2` with `parent_pid: 1` in the isolated PID namespace, all four namespace flags, and the imported module hashes above. Hermes created only disposable home skeleton and config-backup state inside the bound state root.
 
 ## Boundary
 

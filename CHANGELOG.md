@@ -6,6 +6,91 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- mango install, use and undo with --apply but no terminal (agents, make targets) now end with the exact --apply --yes --expect-plan command for the plan they just printed, instead of only naming the flags
+- Release preparation recognizes empty Unreleased headers and reuses already-stamped release notes without stamping again.
+
+## [0.3.0] - 2026-10-03
+
+### Added
+
+- Oh My Pi 18.6.0 model presets for every Mango binding route, with lossless YAML ownership, conflict protection, release and undo.
+- Oh My Pi status recognizes complete owned model-preset switches, reports the unchanged task effort cap, and lets mango use replace switched roles without a drift override.
+
+### Fixed
+
+- Oh My Pi model presets preserve unmanaged role selectors such as code, review and web; re-applying refreshes their snapshots.
+
+## [0.2.1] - 2026-10-01
+
+### Fixed
+
+- Agent skill: portable string compatibility field, documented .planID in --json plans, oh-my-pi target name, and how to resolve blocked mango use rows
+- Named profile installs no longer switch an already recorded default; status recognizes byte-identical owned files with stale hashes and serialization-only changes to Hermes owned fields.
+- Allow --override to replace edited Mango-owned OpenCode profile agent files with a backup; plan headers now show installed agent versions and the tested range when outside it
+- Installing a skill no longer silently replaces an unmanaged skill file that differs and is newer than the profile's copy; the plan conflicts until you port the edits or pass --override
+- Install apply results and ownership manifests record the detected installed agent version instead of the adapter qualification version.
+
+### Added
+
+- mango status lists each skill of an agent's default profile whose copy in the global skills directory (~/.agents/skills, or --global-skills) differs from the profile's copy, naming the differing files and which side is newer; the profile's copy is canonical
+
+### Changed
+
+- Requalify Oh My Pi to 18.4.6 (tested range >=18.4.6 <18.5.0) with config/skills source-diff and isolated installed-binary overlay evidence; Pi remains at 0.87.1
+
+## [0.2.0] - 2026-09-27
+
+### Added
+
+- Bindings accept per-agent role overrides under routes.<route>.targets.<agent>.roles.<role>, so one route can send a role to openai-codex on Oh My Pi and openai on Codex; mango route set --target X --role Y edits them
+- Instruction, skill, global-instruction, and agent-file resources can use {{route.<name>.<field>}} and {{route.<name>.roles.<role>.<field>}} placeholders, filled per agent from its effective route at render time; unknown placeholders fail validation
+- mango route set/unset list each profile file and resource line that still names a replaced provider or model
+- globalInstructions files accept a list of resource fragments composed in order (one blank line between fragments); each fragment resolves route placeholders and counts as a source for mango status, and the single-path form is unchanged
+- Profile skills install as whole skill folders (every file, execute bits kept) into Claude Code, Codex (~/.agents/skills), Oh My Pi, and OpenCode skill directories with mango use or --default, with ownership, backups, release on switch, and undo; vendored skills can pin source repo, commit, and tree-digest sha256; route placeholders render per agent in the folder's text files
+- OpenClaw installs profile skills into the skills folder beside every config it writes (named profiles included), and --agent openclaw=<id> sets that agent's agents.entries.<id>.skills allowlist, kept by later installs and given back on switch or undo
+
+### Fixed
+
+- mango route set no longer suggests a bare mango use that would switch agents on other profiles; it prints one mango install --target command per profile naming only agents already recorded on it
+- Field-owned configs (e.g. Oh My Pi config.yml) conflict only when a mango-owned value was edited, not when the agent re-serialized the file or unrelated keys changed; manifests from earlier versions keep the whole-file check until their next install
+- mango status labels each agent with its installed version and shows the tested version when they differ
+- Plans no longer show unchanged named-profile fields as "" -> value: Oh My Pi and Claude Code profile files report their current values, and fields of an unchanged whole file are shown as unchanged; mango status names changed profile-file fields individually
+- mango status no longer reports false drift for global instructions, role files, and skills after mango use left an already-matching main config unchanged
+- mango undo accepts installs that claimed an owned file already holding the profile's bytes, and install journals and locks sit beside a target config instead of inside an agents or skills folder
+
+### Changed
+
+- OpenCode default installs no longer limit profiles to one skill and now release the SKILL.md and skills.paths entry earlier versions wrote next to opencode.json
+
+## [0.1.2] - 2026-09-26
+
+### Added
+
+- Profiles can ship native subagent files with agentFiles: each file is copied unchanged into the agent's agents/ folder (Claude Code, Codex, OpenCode, Oh My Pi), for example to replace Oh My Pi's bundled scout agent. mango status lists them as agent-file, edits need --override, and mango use removes or restores files the next profile drops.
+
+### Fixed
+
+- Oh My Pi: role and task.maxEffort values that omp re-serialized (for example unquoted) no longer count as edits, so mango use re-owns config.yml instead of reporting a conflict
+
+### Changed
+
+- mango status labels a field-owned config whose owned values match the profile but whose other bytes changed as other-edits instead of edited
+
+## [0.1.1] - 2026-09-26
+
+### Fixed
+
+- mango status, use, install, and undo accept an ownership manifest recorded at an earlier version of the same target; status shows the recorded version and the next apply rewrites it
+- mango install/use --apply no longer asks for consent or a terminal when the plan changes nothing
+
+### Added
+
+- mango status lists drift: each owned setting whose live value differs from the profile, with live and profile values, and each whole owned file that differs
+
+## [0.1.0] - 2026-09-26
+
 ### Added
 
 - M0 strict profile contracts, deterministic resolution, resource hashing, schemas, fixtures, and offline validation
@@ -20,7 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exact Pi 0.86.1 inert JSON settings preview rendering with immutable source/package provenance, deterministic candidates, and explicit native inspection and applicability blockers
 - Exact OpenCode 1.18.31 inert JSONC preview rendering with immutable release/source provenance, source-grounded model syntax, and explicit native and install applicability blockers
 - Mock-only install planning and application mechanics with deterministic plan IDs, hash-bound consent, synthetic backups, stale checks, atomic replacement, ownership evidence, and production target gates
-- Experimental-only Ariel custom Jcode fork inert TOML preview rendering pinned to the exact tested 0.83.909-dev (ca8017a3a) build and SHA-256, with strict projection and non-applicability diagnostics
+- Experimental-only Jcode fork inert TOML preview rendering pinned to the exact tested 0.83.909-dev (ca8017a3a) build and SHA-256, with strict projection and non-applicability diagnostics
 - Target-neutral render report and resource boundary shared by inert target adapters
 - Deterministic profile scaffolding with profile-mango init
 - A user-owned global profile home with cross-platform `~/.profile-mango` semantics, explicit overrides, and read-only inspection
@@ -32,16 +117,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Install qualified OpenClaw 2026.9.5 model and thinking defaults with exact source-native consumption and transactional safeguards
 - Exact Oh My Pi 18.2.6 two-field YAML installation with source-native getter qualification, lossless patches, backups and guarded transactions
 - Install exact OpenCode 1.18.31 named primary and subagent definitions with model and ordered instructions at explicit owned paths, qualified by isolated native consumption
+- Codex 0.154.0 settings-only installation of source-qualified root provider, model, and high effort at explicit paths with consent, backups, preserved authentication, and full-profile warnings
+- Guarded public Codex 0.154.0 restore preview and hash-bound apply for adjacent committed install journals, original backups, and ownership manifests
+- Add copyable agent-oriented profile examples with original workflow instructions, skills, and version-scoped model bindings
+- Per-agent route overrides in bindings (routes.<name>.targets) so one profile installs across agents with different providers
+- preview alias for render
+- doctor command: read-only report of installed agents, detected vs qualified versions, default config paths, and what a profile would install
+- undo command (restore kept as alias) reverses the latest install for any installable target
+- install and doctor check the installed agent version against a tested range and warn outside it
+- Bindings routes accept an optional roles map (role -> provider/model/effort); Oh My Pi installs one modelRoles selector per role with its effort suffix and no longer rewrites the global defaultThinkingLevel; other agents list roles as skipped (--strict blocks)
+- mango use <profile> switches every managed agent to a profile in one plan (installs it as default and gives back files the previous profile owned that the new one does not, including dropped Oh My Pi roles), and mango status shows each agent's managed profile and whether owned files are in sync, edited, or missing; both keep the plan, backup, drift, and --expect-plan gates
+- Profiles accept globalInstructions to own an agent's global instruction file as a whole file: Codex AGENTS.md, Claude Code CLAUDE.md, OpenCode AGENTS.md, and Oh My Pi AGENTS.md/RULES.md, with create-only backups and undo
+- Portable roles: profiles declare worker, planner, research, and tiny roles, and bindings give each a provider, model, and effort; Oh My Pi maps them to task, plan/slow, smol, and tiny/commit model slots, and the optional subagentMaxEffort route field sets Oh My Pi task.maxEffort
+- globalInstructions.home writes ~/AGENTS.md through the Pi target, the only pinned agent that reads it from every directory under the home directory
+- Profile roles install as native subagent files on default installs: Codex agents/<role>.toml, OpenCode agents/<role>.md, Oh My Pi agents/<role>.md (model from its role slot), and Claude Code agents/<role>.md; named-only installs and other agents list them as skipped
+- Oh My Pi named profiles: install writes a Mango-owned overlay at ~/.omp/agent/profiles/<name>.yml used with omp --config; --default also patches config.yml
+- mango route list/show/set/unset edits routes in the bindings file, keeping comments and order, validating before writing and printing a diff
 
 ### Changed
 
 - Successful profile-mango init output now shows the ANSI README logo
 - Zero-argument init and omitted render repository inputs now use the effective global profile home; explicit project render inputs must be supplied together
 - Renamed the repository, Go module, CLI, package, schema namespace, and configuration identity to profile-mango
-- GitLab pipelines now run only when a human starts them from the web UI
 - Human-readable CLI output now uses semantic terminal colors with automatic non-TTY suppression and --no-color/NO_COLOR opt-outs, while JSON, completion, and path output remain ANSI-free
 - Add global --non-interactive consent handling and emit one JSON apply report instead of a concatenated plan/report stream.
 - Renamed the installed executable and user-facing CLI command to profile-mango while preserving profile-mango project, module, home, and environment identities
+- Clarify Codex 0.154.0 settings-only installation warnings with isolated installed-binary field and precedence evidence; OAuth and runtime behavior remain unverified
+- Install and restore accept a bare target name that resolves to its single qualified version; install uses one `--config target[@version]=path` flag that also selects its target, with `--config-path` kept as a hidden deprecated alias
+- install uses each agent's documented default config path when --config is omitted, still behind the plan, backups, drift checks, and confirmation
+- Profiles use a flat YAML format (name, description, extends, route, permissions, tools, instructions, skills); the old apiVersion/kind/metadata/spec form still loads with a deprecation warning
+- Routes default transport to native and authentication to oauth
+- Plain-language help text; the agents maintenance command and experimental targets are hidden from help
+- A first install into an existing, unowned agent config adopts it with a mandatory backup instead of requiring --override; plans end with the exact apply command
+- Examples consolidated into examples/ (coding, review, docs-research) with a per-agent bindings example; the bundled agent skill is shorter and its compatibility list is corrected
+- install --all skips agents that are not installed (listed as skipped); a named target with a missing config folder gets a clear message
+- install applies the supported subset of a profile by default and lists every skipped requirement per agent; --strict restores blocking; init starter bindings include a Claude Code override
+- User-first README and new docs/public pages (concepts, profile reference, agents); docs index split into user and developer sections
+- The curl installer one-liner and install.sh release defaults now point at GitHub
+- Codex install now writes a native named profile ($CODEX_HOME/<name>.config.toml, used with codex --profile <name>) and leaves config.toml unchanged; --default also writes the root settings; plans and JSON report the install mode and use command, and agents without profiles get a note
+- Install creates missing private parent directories for a new file (undo removes the file and leaves the directory), and named profiles may live in a nested or absolute path
+- OpenClaw install now writes a native named profile (<home>/.openclaw-<name>/openclaw.json, used with openclaw --profile <name>) and leaves the default config unchanged; --default also writes it; a main config outside <home>/.openclaw/openclaw.json blocks named install; the profile named default patches the default config
+- Claude Code install now writes an emulated named profile (~/.claude/profiles/<name>.json with the model, used with claude --settings <file>) and leaves settings.json unchanged; --default also writes settings.json
+- OpenCode install without --agent now writes a named primary agent (agents/<name>.md beside opencode.json, with model and instructions, used with opencode --agent <name>) and leaves opencode.json unchanged; skills are skipped with a reason unless --default, which also keeps the main-config model and skill write
+- Hermes install now writes a native named profile (<hermes-home>/profiles/<name>/config.yaml, used with hermes -p <name>) and leaves config.yaml unchanged; --default also writes it; the profile named default patches the default config
+- The CLI command is now mango (make build gives bin/mango; the installer, make install and releases ship mango plus a profile-mango compatibility alias); the ~/.profile-mango home, PROFILE_MANGO_HOME and on-disk .profile-mango.* files are unchanged
+- Accept comma-separated, repeated, and -t agent selectors across install, undo, render, agents check, and doctor, with per-target undo consent
+- Install and undo now show concise styled human previews with visible field effects, every skipped requirement, copyable apply commands, and optional --verbose detail; JSON plans and consent remain unchanged
+- Binding roles now use the portable role names instead of Oh My Pi slot names; the old slot keys fail with a hint naming the portable key
+- OpenCode --default installs of a profile with more than one skill now list the skills as not installed instead of blocking; --strict still blocks
+- Moved to GitHub: Go module is github.com/ariel-frischer/profile-mango, CI and tag releases run on GitHub Actions with GoReleaser, and security reports go through GitHub private vulnerability reporting
+- go install now uses github.com/ariel-frischer/profile-mango/cmd/mango@latest to install a mango binary; version info falls back to Go build metadata without ldflags
+- Codex target requalified from 0.154.0 to 0.157.1 (tested range >=0.157.1 <0.158.0) with source-diff and isolated installed-binary evidence
+- Requalify Pi to 0.87.1 and Oh My Pi to 18.3.2 (tested ranges >=0.87.1 <0.88.0 and >=18.3.2 <18.4.0)
 
 ### Removed
 
@@ -57,7 +184,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Report install preflight rejection as not-attempted while preserving unchanged targets as noop in library and single-object CLI reports.
 - Clean up verified preparation-owned install backups after backup or initial journal failure, preserving unrelated artifacts and same-plan retryability.
 - Reconcile only unchanged owned OpenCode skills and Mango-introduced discovery paths on profile omission, with guarded delete recovery and no adoption of identical unowned files
-- Release preparation recognizes empty Unreleased headers and reuses already-stamped release notes without stamping again.
+- init now scaffolds a usable bindings/local.yaml with a current model, and missing-bindings errors name the fix
+- Command tests no longer leak flag state between tests
+- undo works for every target of a multi-target install
+- Show live stderr progress while checking agent sources and probing installed agent versions without changing JSON reports
+- Removed maintainer-specific naming from an experimental target, its adapter package, and standalone main
+- make install now installs mango to ~/.local/bin (override with PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR) instead of the mise/asdf Go toolchain dir, and warns when pointed at a toolchain dir; make uninstall removes the same paths
+- Profile type errors name the field and expected shape (for example labels must be a map), doctor plans readiness with the same request as install, render --preview reports blockers as warnings and exits 0 once staged, and Claude Code settings.json keys are inserted on their own line with the file's indentation
+- Route effort now installs on Codex (model_reasoning_effort none through xhigh, including medium), Claude Code (settings effortLevel low/medium/high/xhigh), and OpenCode (named agent variant); an effort an agent cannot take is shown as 'effort <v>: NOT APPLIED (<reason>)' in the plan and in JSON skippedRequirements, and --strict blocks on it
+- Codex installs no longer block on configs Codex itself writes: quoted table names such as [projects."/home/u"] and repeated [[skills.config]] entries are parsed and preserved byte-for-byte
+- The use-it command for Claude Code and Oh My Pi named profiles names the file actually written, including beside an explicit --config
+- Hermes named profiles block when the config is not in the Hermes home, and undo removes the profile directories install created
+- install/use --all skip agents whose config folder is missing even when their command is on PATH, so the plan stays ready for the rest
+- doctor shows and range-checks the --version line install parses instead of a leading warning
+- an unknown --target name errors as unknown and lists the valid targets
+- README quickstart route example uses the local route that mango init scaffolds
 
 ## [0.0.1] - 2026-01-01
 
@@ -65,4 +206,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://gitlab.com/ariel-frischer/profile-mango/-/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.0.1...v0.1.0

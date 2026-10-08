@@ -3,17 +3,18 @@ package ohmypi
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 const (
 	TargetName     = "oh-my-pi"
-	TargetVersion  = "18.2.6"
+	TargetVersion  = "18.6.0"
 	OhMyPiVersion  = TargetVersion
 	AdapterVersion = "profilemango.dev/oh-my-pi/v1alpha1"
-	EvidenceSHA256 = "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e"
+	EvidenceSHA256 = "2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24"
 	EvidenceSource = "docs/dev/target-evidence.md"
 	EvidenceLevel  = "source-entrypoint-version"
 )
@@ -122,7 +123,7 @@ func addTargetCapabilities(result *Result, target TargetBuild) {
 		result.AddCapability("target.version", StatusBlocking, "exact Oh My Pi source version and evidence hash are not qualified")
 		return
 	}
-	result.AddCapability("target.version", StatusSupported, "exact Oh My Pi v18.2.6 source entrypoint is pinned")
+	result.AddCapability("target.version", StatusSupported, "exact Oh My Pi v18.6.0 source entrypoint is pinned")
 }
 
 func targetDiagnostics(target TargetBuild) profilemango.Diagnostics {
@@ -148,6 +149,12 @@ func addRouteCapabilities(result *Result, route profilemango.RouteBinding) {
 	for _, field := range []string{"provider", "model", "effort"} {
 		result.AddCapability("route."+field, StatusPartial, "documented candidate syntax only")
 	}
+	if len(route.Roles) > 0 {
+		result.AddCapability("route.roles", StatusPartial, "portable roles map to documented modelRoles slots (worker: task; planner: plan, slow; research: smol; tiny: commit, tiny)")
+	}
+	if route.SubagentMaxEffort != "" {
+		result.AddCapability("route.subagentMaxEffort", StatusPartial, "documented task.maxEffort setting syntax only")
+	}
 	result.AddCapability("route.transport", StatusBlocking, "Oh My Pi transport mapping is not qualified")
 }
 
@@ -163,7 +170,19 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 	if !render.ValidName(profile.Metadata.Name) || route.Provider == "" || route.Model == "" || route.Effort == "" {
 		return Artifact{}
 	}
-	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n  default: %s\ndefaultThinkingLevel: %s\n", TargetVersion, yamlString(route.Provider+"/"+route.Model), yamlString(route.Effort)))
+	slots, err := roleSlots(route)
+	if err != nil {
+		return Artifact{}
+	}
+	var roles strings.Builder
+	fmt.Fprintf(&roles, "  default: %s\n", yamlString(RoleSelector(route.Provider, route.Model, route.Effort)))
+	for _, slot := range slots {
+		fmt.Fprintf(&roles, "  %s: %s\n", slot.slot, yamlString(RoleSelector(slot.route.Provider, slot.route.Model, slot.route.Effort)))
+	}
+	if route.SubagentMaxEffort != "" {
+		fmt.Fprintf(&roles, "task:\n  maxEffort: %s\n", yamlString(route.SubagentMaxEffort))
+	}
+	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n%s", TargetVersion, roles.String()))
 	return render.NewArtifact("preview/"+profile.Metadata.Name+".config.yml.preview", "candidate-config", content)
 }
 

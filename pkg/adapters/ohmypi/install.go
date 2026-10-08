@@ -5,31 +5,78 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"gopkg.in/yaml.v3"
 )
 
-// ConfigPatch is the lossless change set for the two Oh My Pi settings that
-// have exact source-native YAML evidence: the default model role and thinking
-// level. It deliberately does not represent credentials, provider options, or
+// ConfigPatch is the lossless change set for the Oh My Pi model-role
+// selectors and task settings that have exact source-native YAML evidence. Each
+// selector carries its own `:<effort>` suffix, so no global thinking default is
+// changed. It deliberately does not represent credentials, provider options, or
 // policy settings.
 type ConfigPatch struct {
-	Content             []byte
-	BeforeModel         string
-	AfterModel          string
-	BeforeThinkingLevel string
-	AfterThinkingLevel  string
+	Content []byte
+	// Roles lists the default role first, then every other role by name.
+	Roles []RoleChange
+	// Settings lists the non-role settings the route sets, by dotted path.
+	Settings []SettingChange
 }
 
-// PatchConfig changes only modelRoles.default and defaultThinkingLevel while
-// preserving unrelated YAML bytes and keys.
+// RoleChange is one modelRoles.<Role> selector before and after the patch.
+// Before is empty when the role was absent.
+type RoleChange struct {
+	Role   string
+	Before string
+	After  string
+}
+
+// SettingChange is one dotted config setting (e.g. task.maxEffort) before and
+// after the patch. Before is empty when the setting was absent.
+type SettingChange struct {
+	Path   string
+	Before string
+	After  string
+}
+
+// RoleSlots maps each portable role to the Oh My Pi 18.6.0 modelRoles slots it
+// sets. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
+// resolves plan (modes/interactive-mode.ts) and the reviewer agent @slow
+// (prompts/agents/reviewer.md); the scout agent uses @smol
+// (prompts/agents/scout.md); commit messages resolve commit first
+// (commit/model-selection.ts) and small utilities tiny (utils/title-generator.ts;
+// the memory slot also falls back to a configured tiny, config/model-resolver.ts).
+var RoleSlots = map[string][]string{
+	profilemango.RoleWorker:   {"task"},
+	profilemango.RolePlanner:  {"plan", "slow"},
+	profilemango.RoleResearch: {"smol"},
+	profilemango.RoleTiny:     {"commit", "tiny"},
+}
+
+// TaskMaxEffortSetting is the Oh My Pi 18.6.0 setting route.subagentMaxEffort
+// installs: the ceiling on per-spawn effort hints and the /effort picker
+// (task/settings.ts, task/executor.ts, modes/interactive-mode.ts).
+const TaskMaxEffortSetting = "task.maxEffort"
+
+// subagentEfforts are the values task.maxEffort accepts (THINKING_EFFORTS in
+// packages/catalog/src/effort.ts); unlike role selectors it has no "auto".
+var subagentEfforts = []string{"minimal", "low", "medium", "high", "xhigh", "max"}
+
+type roleAssignment struct {
+	role     string
+	selector string
+}
+
+// PatchConfig sets modelRoles.default, the slots of every route role, and
+// task.maxEffort when the route caps subagent effort, while preserving unrelated
+// YAML bytes and keys.
 func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, error) {
-	model, effort, err := validateInstallRoute(route)
+	assignments, err := installAssignments(route)
 	if err != nil {
 		return ConfigPatch{}, err
 	}
@@ -37,80 +84,223 @@ func PatchConfig(source []byte, route profilemango.RouteBinding) (ConfigPatch, e
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	patch := ConfigPatch{Content: append([]byte(nil), source...), AfterModel: model, AfterThinkingLevel: effort}
-	modelEdit, beforeModel, err := patchModelRole(document, model)
+	edits, changes, err := patchBlock(document, "modelRoles", assignments)
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	patch.BeforeModel = beforeModel
-	thinkingEdit, beforeThinking, err := patchThinkingLevel(document, effort)
+	patch := ConfigPatch{Content: applyEdits(source, edits), Roles: changes}
+	if route.SubagentMaxEffort == "" {
+		return patch, nil
+	}
+	return patchTaskMaxEffort(patch, route.SubagentMaxEffort)
+}
+
+// patchTaskMaxEffort sets task.maxEffort on the already role-patched content.
+func patchTaskMaxEffort(patch ConfigPatch, effort string) (ConfigPatch, error) {
+	if !slices.Contains(subagentEfforts, effort) {
+		return ConfigPatch{}, fmt.Errorf("oh my pi %s rejects %q; expected one of %s", TaskMaxEffortSetting, effort, strings.Join(subagentEfforts, ", "))
+	}
+	document, err := parseConfig(patch.Content)
 	if err != nil {
 		return ConfigPatch{}, err
 	}
-	patch.BeforeThinkingLevel = beforeThinking
-	edits := appendEdit([]textEdit{modelEdit}, thinkingEdit)
-	patch.Content = applyEdits(source, edits)
+	block, key, _ := strings.Cut(TaskMaxEffortSetting, ".")
+	edits, changes, err := patchBlock(document, block, []roleAssignment{{role: key, selector: effort}})
+	if err != nil {
+		return ConfigPatch{}, err
+	}
+	patch.Content = applyEdits(patch.Content, edits)
+	patch.Settings = []SettingChange{{Path: TaskMaxEffortSetting, Before: changes[0].Before, After: effort}}
 	return patch, nil
 }
 
-func patchModelRole(document yamlDocument, model string) (textEdit, string, error) {
-	roles, found, err := findEntry(document.root, "modelRoles")
-	if err != nil {
-		return textEdit{}, "", err
+// RoleSelector formats an Oh My Pi model-role selector. The pinned source
+// splits a trailing `:<thinking level>` off role values (model-selector.ts
+// splitThinkingSuffix), and an explicit default-role suffix takes precedence over
+// defaultThinkingLevel (sdk.ts pickInitialThinkingLevel).
+func RoleSelector(provider, model, effort string) string {
+	if effort == "" {
+		return provider + "/" + model
 	}
-	if !found {
-		return rootInsertion(document, "modelRoles:\n  default: "+yamlString(model)+"\n"), "", nil
-	}
-	if roles.value.Kind != yaml.MappingNode || roles.value.Style&yaml.FlowStyle != 0 {
-		return textEdit{}, "", fmt.Errorf("modelRoles must be a block mapping")
-	}
-	defaultRole, found, err := findEntry(roles.value, "default")
-	if err != nil {
-		return textEdit{}, "", err
-	}
-	if !found {
-		edit, err := insertRole(document, roles, "default", model)
-		return edit, "", err
-	}
-	edit, before, err := replaceScalar(document, defaultRole.value, model)
-	if err != nil {
-		return textEdit{}, "", fmt.Errorf("patch modelRoles.default: %w", err)
-	}
-	return edit, before, nil
+	return provider + "/" + model + ":" + effort
 }
 
-func patchThinkingLevel(document yamlDocument, effort string) (textEdit, string, error) {
-	thinking, found, err := findEntry(document.root, "defaultThinkingLevel")
-	if err != nil {
-		return textEdit{}, "", err
+// SplitRoleSelector reverses RoleSelector for display: it separates a
+// trailing supported thinking level from the model selector.
+func SplitRoleSelector(selector string) (string, string) {
+	colon := strings.LastIndex(selector, ":")
+	if colon < 0 || !validThinkingLevel(selector[colon+1:]) {
+		return selector, ""
 	}
-	if !found {
-		return rootInsertion(document, "defaultThinkingLevel: "+yamlString(effort)+"\n"), "", nil
-	}
-	edit, before, err := replaceScalar(document, thinking.value, effort)
-	if err != nil {
-		return textEdit{}, "", fmt.Errorf("patch defaultThinkingLevel: %w", err)
-	}
-	return edit, before, nil
+	return selector[:colon], selector[colon+1:]
 }
 
-func validateInstallRoute(route profilemango.RouteBinding) (string, string, error) {
+func installAssignments(route profilemango.RouteBinding) ([]roleAssignment, error) {
+	selector, err := validateInstallRoute(route)
+	if err != nil {
+		return nil, err
+	}
+	slots, err := roleSlots(route)
+	if err != nil {
+		return nil, err
+	}
+	assignments := []roleAssignment{{role: profilemango.ReservedRoleDefault, selector: selector}}
+	for _, slot := range slots {
+		selector, err := roleSelector(slot.role, slot.route)
+		if err != nil {
+			return nil, err
+		}
+		assignments = append(assignments, roleAssignment{role: slot.slot, selector: selector})
+	}
+	return assignments, nil
+}
+
+// slotRoute is one Oh My Pi modelRoles slot set from a portable route role.
+type slotRoute struct {
+	slot  string
+	role  string
+	route profilemango.RoleRoute
+}
+
+// roleSlots expands every route role into its Oh My Pi slots, ordered by slot.
+func roleSlots(route profilemango.RouteBinding) ([]slotRoute, error) {
+	var slots []slotRoute
+	for _, name := range route.SortedRoleNames() {
+		mapped, found := RoleSlots[name]
+		if !found {
+			return nil, fmt.Errorf("oh my pi install rejects role %q; portable roles are %s", name, strings.Join(profilemango.PortableRoles, ", "))
+		}
+		for _, slot := range mapped {
+			slots = append(slots, slotRoute{slot: slot, role: name, route: route.Roles[name]})
+		}
+	}
+	sort.Slice(slots, func(left, right int) bool { return slots[left].slot < slots[right].slot })
+	return slots, nil
+}
+
+func validateInstallRoute(route profilemango.RouteBinding) (string, error) {
 	if route.Transport != "native" {
-		return "", "", fmt.Errorf("oh my pi install requires native transport")
+		return "", fmt.Errorf("oh my pi install requires native transport")
 	}
 	if route.Provider == "" || route.Model == "" {
-		return "", "", fmt.Errorf("oh my pi install requires provider and model")
+		return "", fmt.Errorf("oh my pi install requires provider and model")
 	}
 	if route.Authentication == "" {
-		return "", "", fmt.Errorf("oh my pi install requires an authentication mode")
+		return "", fmt.Errorf("oh my pi install requires an authentication mode")
 	}
-	if unsafeRoutePart(route.Provider) || unsafeRoutePart(route.Model) || strings.Contains(route.Provider, "/") {
-		return "", "", fmt.Errorf("oh my pi provider/model contains unsupported characters")
+	if err := validateSelectorParts(route.Provider, route.Model); err != nil {
+		return "", err
 	}
 	if !validThinkingLevel(route.Effort) {
-		return "", "", fmt.Errorf("oh my pi install rejects unsupported thinking level %q", route.Effort)
+		return "", fmt.Errorf("oh my pi install rejects unsupported thinking level %q", route.Effort)
 	}
-	return route.Provider + "/" + route.Model, route.Effort, nil
+	return RoleSelector(route.Provider, route.Model, route.Effort), nil
+}
+
+func roleSelector(name string, role profilemango.RoleRoute) (string, error) {
+	if role.Provider == "" || role.Model == "" {
+		return "", fmt.Errorf("oh my pi role %q requires provider and model", name)
+	}
+	if err := validateSelectorParts(role.Provider, role.Model); err != nil {
+		return "", fmt.Errorf("oh my pi role %q: %w", name, err)
+	}
+	if role.Effort != "" && !validThinkingLevel(role.Effort) {
+		return "", fmt.Errorf("oh my pi role %q rejects unsupported thinking level %q", name, role.Effort)
+	}
+	if role.Effort == "" && ambiguousThinkingSuffix(role.Model) {
+		return "", fmt.Errorf("oh my pi role %q model %q ends in a thinking-level suffix; set effort explicitly", name, role.Model)
+	}
+	return RoleSelector(role.Provider, role.Model, role.Effort), nil
+}
+
+func validateSelectorParts(provider, model string) error {
+	if unsafeRoutePart(provider) || unsafeRoutePart(model) || strings.Contains(provider, "/") {
+		return fmt.Errorf("oh my pi provider/model contains unsupported characters")
+	}
+	return nil
+}
+
+// thinkingSelectors are every value the pinned selector parser accepts as a
+// thinking suffix, including by unambiguous prefix (tui/src/thinking.ts).
+var thinkingSelectors = []string{"inherit", "off", "minimal", "low", "medium", "high", "xhigh", "max", "auto"}
+
+// ambiguousThinkingSuffix reports a bare model whose last `:` segment Oh My
+// Pi would read as a thinking level instead of part of the model id.
+func ambiguousThinkingSuffix(model string) bool {
+	colon := strings.LastIndex(model, ":")
+	if colon < 0 {
+		return false
+	}
+	suffix := model[colon+1:]
+	for _, selector := range thinkingSelectors {
+		if suffix == selector || len(suffix) >= 2 && strings.HasPrefix(selector, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// patchBlock sets block.<role> for every assignment, creating the root block
+// when absent. Changes carry each key's prior value.
+func patchBlock(document yamlDocument, block string, assignments []roleAssignment) ([]textEdit, []RoleChange, error) {
+	changes := make([]RoleChange, 0, len(assignments))
+	for _, assignment := range assignments {
+		changes = append(changes, RoleChange{Role: assignment.role, After: assignment.selector})
+	}
+	roles, found, err := findEntry(document.root, block)
+	if err != nil {
+		return nil, nil, err
+	}
+	ending := lineEnding(document.source)
+	if !found {
+		content := block + ":" + ending + roleLines(assignments, 2, ending)
+		return []textEdit{rootInsertion(document, content)}, changes, nil
+	}
+	if roles.value.Kind != yaml.MappingNode || roles.value.Style&yaml.FlowStyle != 0 {
+		return nil, nil, fmt.Errorf("%s must be a block mapping", block)
+	}
+	edits, err := patchExistingRoles(document, roles, assignments, changes)
+	return edits, changes, err
+}
+
+// patchExistingRoles replaces present key scalars in place, recording their
+// prior values in changes, and inserts absent keys as one block.
+func patchExistingRoles(document yamlDocument, roles mappingEntry, assignments []roleAssignment, changes []RoleChange) ([]textEdit, error) {
+	var edits []textEdit
+	var missing []roleAssignment
+	for index, assignment := range assignments {
+		entry, found, err := findEntry(roles.value, assignment.role)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			missing = append(missing, assignment)
+			continue
+		}
+		if entry.value.Kind == yaml.ScalarNode && entry.value.Value == assignment.selector {
+			// Already the desired value: keep its bytes, however omp re-quoted them.
+			changes[index].Before = entry.value.Value
+			continue
+		}
+		edit, before, err := replaceScalar(document, entry.value, assignment.selector)
+		if err != nil {
+			return nil, fmt.Errorf("patch %s.%s: %w", roles.key.Value, assignment.role, err)
+		}
+		edits, changes[index].Before = append(edits, edit), before
+	}
+	if len(missing) == 0 {
+		return edits, nil
+	}
+	edit, err := insertRoles(document, roles, missing)
+	return append(edits, edit), err
+}
+
+func roleLines(assignments []roleAssignment, indent int, ending string) string {
+	var builder strings.Builder
+	for _, assignment := range assignments {
+		builder.WriteString(strings.Repeat(" ", indent) + assignment.role + ": " + yamlString(assignment.selector) + ending)
+	}
+	return builder.String()
 }
 
 func validThinkingLevel(value string) bool {
@@ -393,18 +583,18 @@ func decodeScalar(raw []byte, style yaml.Style) (string, error) {
 	return strings.TrimSpace(string(raw)), nil
 }
 
-func insertRole(document yamlDocument, roles mappingEntry, key, value string) (textEdit, error) {
+func insertRoles(document yamlDocument, roles mappingEntry, assignments []roleAssignment) (textEdit, error) {
 	indent := roles.key.Column - 1 + 2
 	if len(roles.value.Content) > 0 {
 		childKey := roles.value.Content[0]
 		indent = childKey.Column - 1
 		if indent <= roles.key.Column-1 {
-			return textEdit{}, fmt.Errorf("modelRoles child indentation is ambiguous")
+			return textEdit{}, fmt.Errorf("%s child indentation is ambiguous", roles.key.Value)
 		}
 	}
 	offset := mappingInsertionOffset(document, roles.key.Line, roles.key.Column-1)
-	content := linePrefix(document.source, offset, lineEnding(document.source))
-	content += strings.Repeat(" ", indent) + key + ": " + yamlString(value) + lineEnding(document.source)
+	ending := lineEnding(document.source)
+	content := linePrefix(document.source, offset, ending) + roleLines(assignments, indent, ending)
 	return textEdit{start: offset, end: offset, content: []byte(content)}, nil
 }
 
@@ -441,16 +631,6 @@ func isDocumentEnd(line []byte) bool {
 	}
 	rest := strings.TrimSpace(trimmed[3:])
 	return rest == "" || strings.HasPrefix(rest, "#")
-}
-
-func appendEdit(edits []textEdit, edit textEdit) []textEdit {
-	for index := range edits {
-		if edits[index].start == edit.start && edits[index].end == edit.end {
-			edits[index].content = append(edits[index].content, edit.content...)
-			return edits
-		}
-	}
-	return append(edits, edit)
 }
 
 func applyEdits(source []byte, edits []textEdit) []byte {

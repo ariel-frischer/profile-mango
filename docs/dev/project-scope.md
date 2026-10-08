@@ -19,7 +19,7 @@ gaps, and accidental changes to permissions or model/authentication routes.
 
 ## Verified current delivery
 
-As of 2026-09-21, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
+As of 2026-09-23, the project ships the offline M0 canonical contract plus exact-version, explicitly inert Claude Code, Codex, Pi, Oh My Pi, OpenClaw, Hermes, and OpenCode preview renderers. M1 scaffolding adds a user-owned global profile home and explicit project packages. The [canonical domain](../../pkg/profilemango/types.go) and [schemas](../../schemas/) provide:
 
 - Strict `PolicyProfile` and machine-local route-binding parsing, with stable,
   field-aware diagnostics and rejection of unknown/duplicate keys, nulls,
@@ -39,21 +39,30 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
 - The effective application home resolves by root `--home`, then
   `PROFILE_MANGO_HOME`, then `<user-home>/.profile-mango`; `home` prints it without
   creating it.
-- A Codex CLI `0.154.0` preview renderer that emits deterministic candidate syntax,
+- A Codex CLI `0.157.1` preview renderer that emits deterministic candidate syntax,
   resource copies, and a versioned report only into an explicit staging directory.
   Its profile, resource, and binding inputs default coherently from the application
   home, while explicit project inputs must be supplied as a complete set.
-- A Pi `0.86.1` preview renderer that emits deterministic source-grounded JSON
+- A separate Codex `0.157.1` settings-only installer for root `model_provider`,
+  `model`, and `model_reasoning_effort` (`none` through `xhigh`), consumed by the exact installed
+  binary in an isolated synthetic home. It patches an
+  explicit or documented default path with consent and backup, preserving unrelated TOML and target-owned
+  auth. Trusted project and runtime overrides can shadow root settings; the
+  installer neither inspects nor controls those layers. OAuth identity, live
+  delivery, and full-profile applicability remain unverified and are warned,
+  not claimed.
+- A Pi `0.87.1` preview renderer that emits deterministic source-grounded JSON
   settings candidates for `defaultProvider`, `defaultModel`, and
   `defaultThinkingLevel`, resource copies, and a versioned report only into an
   explicit staging directory. Its immutable source/package provenance, unsafe
   startup/config inspection effects, and native applicability gaps remain explicit
   in every report.
-- An Oh My Pi `18.2.6` preview renderer that emits deterministic candidate YAML,
+- An Oh My Pi `18.6.0` preview renderer that emits deterministic candidate YAML,
   resource copies, and a versioned report only into an explicit staging directory.
   Its preview retains historical build and unsafe config-inspector limitations.
-  A separate two-field installer is qualified by exact source-native read-only
-  settings getters with a pinned addon, not full startup or precedence.
+  A separate `modelRoles` installer is qualified for the default role by exact
+  source-native read-only settings getters with a pinned addon, and for per-role
+  `:effort` selectors by source review only; not full startup or precedence.
 - An OpenClaw `2026.9.5` preview renderer that emits deterministic source-grounded
   JSON5 candidate syntax, resource copies, and a versioned report only into an
   explicit staging directory. Its source/archive provenance, missing runtime
@@ -68,7 +77,7 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   definition with model and ordered instructions, pinned to immutable release,
   source, archive and extracted-binary hashes. Exact native config, skill and
   generated named-agent consumption were observed in isolated disposable state.
-  Installation requires explicit paths, destination-bound consent and transactional
+  Installation uses explicit or documented default paths, destination-bound consent and transactional
   safeguards, preserving unrelated JSONC and credentials. Authentication identity,
   effort, permissions, tools, plugins, MCP, full precedence, active selection,
   delegation and runtime enforcement remain blocked or unverified.
@@ -76,20 +85,21 @@ As of 2026-09-21, the project ships the offline M0 canonical contract plus exact
   destination-bound plan IDs, hash-bound consent, bounded file snapshots, backups,
   stale checks, atomic replacement, ownership evidence, journals, rollback, and
   guarded recovery. Only the qualified target-specific subsets in the table below
-  can be installed at explicit paths; other targets remain blocked.
-  Validation uses fake adapters and synthetic disposable target state.
-  It never implicitly inspects or modifies global agent configuration.
-- An Ariel custom Jcode fork `ariel-jcode` experimental-only inert TOML preview
+  can be installed at an explicit `--config` path or, when omitted, the target's
+  documented default user config path shown in the plan; other targets remain
+  blocked. Validation uses fake adapters and synthetic disposable target state and
+  never resolves to the real user home.
+- An Jcode fork `jcode-fork` experimental-only inert TOML preview
   renderer pinned to `jcode v0.83.909-dev (ca8017a3a)` and its exact tested
   SHA-256. It is developer comparison evidence only, remains non-applicable,
   and is not a supported public target or upstream Jcode integration.
 **No full-profile production target adapter is shipped.** Only the exact subsets
 in the table below are installable. Renderers remain non-applicable for full
 profiles. The ordinary core, validation, and render paths stay offline and pure.
-Installers touch only explicit caller-supplied configuration and adjacent transaction
-paths. Separate opt-in native probes use disposable network-blocked state and do
+Installers touch only the selected configuration (explicit or documented default)
+and adjacent transaction paths. Separate opt-in native probes use disposable network-blocked state and do
 not establish authentication, full-profile delivery, or runtime enforcement.
-Ariel's Jcode fork remains experimental-only.
+The Jcode fork remains experimental-only.
 
 ## Confirmed intended MVP targets
 
@@ -98,15 +108,15 @@ supported targets. This is product intent, not a current compatibility matrix:
 
 | Target | Direction | Current shipped status |
 | --- | --- | --- |
-| Codex | First intended public adapter | Exact `0.154.0` inert preview renderer; native authentication, delivery, and enforcement remain blocked |
-| Claude Code | Intended MVP target | Exact `2.1.278` model-only strict-JSON installer; explicit settings-file consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
-| Pi | Intended MVP target | Exact `0.86.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
-| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.2.6` model-role/thinking-default YAML installer; native read-only getters qualified, full startup, precedence, authentication, delivery, and enforcement blocked |
+| Codex | First intended public adapter | Exact `0.157.1` inert preview plus bounded three-root-setting installer; native authentication, full precedence, delivery, and enforcement remain blocked |
+| Claude Code | Intended MVP target | Exact `2.1.278` model and `effortLevel` strict-JSON installer; explicit settings-file model and effort consumption verified, full effective state, precedence, route/auth, delivery, and enforcement remain blocked |
+| Pi | Intended MVP target | Exact `0.87.1` three-default settings installer; native module getters and project override verified, full startup/auth/delivery/enforcement remain blocked |
+| Oh My Pi | Intended MVP target variant, evaluated independently from Pi | Exact `18.6.0` role-selector, task-cap and model-preset YAML installer (isolated native storage reads, source-reviewed consumers), full startup, precedence, authentication, delivery and enforcement unverified |
 | OpenClaw | Intended MVP target | Exact `2026.9.5` model-primary/thinking-default JSON5 installer; source-native getters, agent overrides and fallback limits verified, full startup/auth/delivery/enforcement blocked |
 | Hermes | Intended MVP target | Exact `0.21.3` bounded YAML installer for model.provider, model.default, and agent.reasoning_effort; native read-only config merge qualified, full startup/auth/delivery/enforcement blocked |
-| OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/instructions; native generated-definition resolution verified, auth, effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
+| OpenCode | Intended MVP target | Exact `1.18.31`; main model plus one owned skill or explicit named primary/subagent definition with model/effort variant/instructions; native generated-definition resolution verified, auth, main-config effort, full delivery, permissions, tools, plugins, MCP, full precedence, delegation, and enforcement remain blocked or unverified |
 
-Ariel's **Jcode fork is experimental-only**, outside the intended supported MVP
+The **Jcode fork is experimental-only**, outside the intended supported MVP
 set and public compatibility promise. Its local observations are developer
 comparison evidence, not a public support commitment.
 
@@ -147,8 +157,8 @@ does not promise roles, MCP projection, or any other expansion.
 
 **Current exclusions:** full-profile application, import, generalized drift repair,
 user-level preference storage, credential handling, provider calls, implicit
-target-home inspection, roles, MCP projection, and identity management. Only the
-version-qualified subsets in the table above are installable at explicit paths. `init`
+target-home inspection beyond the planned config destination, roles, MCP projection, and identity management. Only the
+version-qualified subsets in the table above are installable at explicit or documented default paths. `init`
 scaffolds portable files and a route-identity example only. Home resolution selects
 only profile-mango-owned inputs; it does not resolve credentials, inspect target
 homes, or call providers. These are milestone boundaries, not all permanent bans.

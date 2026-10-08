@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 func TestInstalledBinaryPreparationFailureRetry(t *testing.T) {
@@ -18,6 +18,7 @@ func TestInstalledBinaryPreparationFailureRetry(t *testing.T) {
 			return installfs.BackupPath(w.config+".profile-mango.manifest.json", plan.PlanID)
 		}},
 		"initial journal obstruction": {func(w installWorkflow, plan install.Plan) string {
+			// The journal anchors on the target's main config, which --default changes.
 			return installfs.JournalPath(w.config, plan.PlanID)
 		}},
 	}
@@ -44,15 +45,15 @@ func preparationRetryWorkflow(t *testing.T) (installWorkflow, install.Plan) {
 	t.Helper()
 	w := newInstallWorkflow(t, "opencode@1.18.31", "openai", "gpt-5.6",
 		"{\"model\":\"openai/old\",\"keep\":true}\n", "")
-	w.args = append(w.args, "--manifest", "opencode@1.18.31="+w.config+".profile-mango.manifest.json")
+	w.args = append(w.args, "--default", "--manifest", "opencode@1.18.31="+w.config+".profile-mango.manifest.json")
 	applyPreparationPlan(t, w, w.plan(t))
 	bindings := "routes:\n  primary:\n    provider: openai\n    transport: native\n    authentication: oauth\n    model: gpt-5.6-next\n    effort: high\n"
 	if err := os.WriteFile(filepath.Join(w.root, "bindings.yaml"), []byte(bindings), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	plan := w.plan(t)
-	if plan.Status != install.StatusReady || len(plan.Targets) != 1 || len(plan.Targets[0].Files) != 2 {
-		t.Fatalf("expected ready config and manifest update: %#v", plan)
+	if plan.Status != install.StatusReady || len(plan.Targets) != 1 || len(plan.Targets[0].Files) != 3 {
+		t.Fatalf("expected ready agent, config, and manifest update: %#v", plan)
 	}
 	return w, plan
 }

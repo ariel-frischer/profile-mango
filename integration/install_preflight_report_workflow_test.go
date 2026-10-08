@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 func TestInstalledBinaryPreflightReportPreservesNoop(t *testing.T) {
@@ -32,7 +32,7 @@ func TestInstalledBinaryPreflightReportPreservesNoop(t *testing.T) {
 	if report.Targets[0].Target != "opencode@1.18.31" || report.Targets[0].Status != install.StatusNoop || report.Targets[0].Error != "" {
 		t.Fatalf("unchanged target mislabeled: %#v", report.Targets[0])
 	}
-	if report.Targets[1].Target != "pi@0.86.1" || report.Targets[1].Status != "not-attempted" || report.Targets[1].Error == "" {
+	if report.Targets[1].Target != "pi@0.87.1" || report.Targets[1].Status != "not-attempted" || report.Targets[1].Error == "" {
 		t.Fatalf("pending target mislabeled: %#v", report.Targets[1])
 	}
 	if after := preflightWorkflowFiles(t, w); !reflect.DeepEqual(before, after) {
@@ -51,7 +51,7 @@ func mixedPreflightWorkflow(t *testing.T) installWorkflow {
 	if err := os.WriteFile(pi, []byte("{\"defaultModel\":\"old\",\"keep\":true}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	w.args = append(w.args, "--target", "pi@0.86.1", "--config-path", "pi="+pi)
+	w.args = append(w.args, "--target", "pi@0.87.1", "--config", "pi="+pi)
 	return w
 }
 

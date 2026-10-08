@@ -1,0 +1,4 @@
+description: Shared behavior for example workflows; preview-only workflow
+route: openai
+instructions:
+  append: [instructions/AGENTS.md]

@@ -18,7 +18,7 @@ tested evidence, and supported capabilities.
 ```bash
 make build          # Build binary
 make deps           # Download dependencies
-make install        # Install profile-mango
+make install        # Install mango (+ profile-mango alias) to ~/.local/bin
 make test           # Run tests
 make lint           # Run linters
 make format         # Format code
@@ -27,7 +27,7 @@ make format         # Format code
 ## Architecture
 
 ```
-cmd/profile-mango/             # CLI entry point (cobra)
+cmd/mango/          # CLI entry point (cobra)
   home.go             # effective profile-home inspection
   validate.go         # offline strict validation
 internal/profilehome/  # --home/env/user-home resolution
@@ -54,11 +54,13 @@ assets/                # Demo content (GIFs, screenshots)
 
 ## Target Safety Boundary
 
-The canonical core, validation, and rendering remain offline and pure. Only exact installation subsets in `docs/dev/target-evidence.md` may modify explicit caller-supplied paths, using synthetic or separately approved disposable state unless new path-specific live approval is recorded. Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unqualified targets and unknown required properties remain blocked. Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated, timeout-bounded, and must hide personal homes and sockets. Jcode remains experimental developer evidence, not a supported public target.
+The canonical core, validation, and rendering remain offline and pure. Only exact installation subsets in `docs/dev/target-evidence.md` may modify target config: an explicit `--config` path or, when omitted, the target's documented default user path listed there. Every write keeps the displayed plan diff and resolved path, create-only backups, hash/drift checks, ownership manifests, and interactive or `--yes --expect-plan` consent. Tests and native probes use synthetic or disposable state and must never resolve to the real user home. Installers must not read auth stores or touch sessions, plugins, MCP, providers, or the network. Unqualified targets and unknown required properties remain blocked. Known requirements a target cannot install (permissions, tools, instructions, skills, or a route effort it cannot write) are skipped and listed per target in the plan; `install --strict` blocks on them instead. Native qualification is opt-in, exact-artifact, network/PID/IPC-isolated, timeout-bounded, and must hide personal homes and sockets. Jcode remains experimental developer evidence, not a supported public target.
 
 ## Post-Feature Checklist
 
 Always invoke the `/polish` skill after changes and before handoff.
+
+After a task is merged, pushed, and validated, automatically clean up its owned worktree. Verify the current HEAD is reachable from the fetched remote base, no agent still uses it, and staged, unstaged, untracked, and ignored contents contain no valuable data; preserve reports outside the worktree. Use ordinary `git worktree remove` without force and delete its local branch only if `git branch -d` permits it. Leave active, dirty, unmerged, or uncertain worktrees intact and report why.
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->

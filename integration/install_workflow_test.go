@@ -8,11 +8,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/install"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
 type installWorkflow struct {
@@ -25,14 +26,19 @@ func TestInstalledBinaryNoninteractiveInstallWorkflow(t *testing.T) {
 		provider, model, original, expected string
 	}{
 		"opencode@1.18.31":    {"openai", "gpt-5.6", "{\n  // keep user comment\n  \"model\": \"openai/old\",\n  \"theme\": \"system\"\n}\n", "{\n  // keep user comment\n  \"model\": \"openai/gpt-5.6\",\n  \"theme\": \"system\"\n}\n"},
-		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
+		"claude-code@2.1.278": {"anthropic", "claude-sonnet-4-5", "{\n  \"model\": \"old-model\",\n  \"unknown\": true\n}\n", "{\n  \"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n"},
 		"hermes@0.21.3":       {"openai", "gpt-5.6", "# keep\nmodel:\n  provider: old\n  default: old\nagent:\n  reasoning_effort: low\nunknown: true\n", "# keep\nmodel:\n  provider: \"openai\"\n  default: \"gpt-5.6\"\nagent:\n  reasoning_effort: \"high\"\nunknown: true\n"},
 		"openclaw@2026.9.5":   {"openai", "gpt-5.6", "// keep\n{agents:{defaults:{model:{primary:\"old\"},thinkingDefault:\"low\"}},unknown:true}\n", "// keep\n{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}},unknown:true}\n"},
-		"pi@0.86.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
+		"pi@0.87.1":           {"openai", "gpt-5.6", "{\n  \"defaultProvider\": \"old\",\n  \"defaultModel\": \"old\",\n  \"defaultThinkingLevel\": \"low\",\n  \"unknown\": true\n}\n", "{\n  \"defaultProvider\": \"openai\",\n  \"defaultModel\": \"gpt-5.6\",\n  \"defaultThinkingLevel\": \"high\",\n  \"unknown\": true\n}\n"},
 	}
 	for target, test := range tests {
 		t.Run(target, func(t *testing.T) {
 			w := newInstallWorkflow(t, target, test.provider, test.model, test.original, test.expected)
+			if target == "claude-code@2.1.278" || target == "opencode@1.18.31" {
+				// Claude Code and OpenCode install a named profile by default; --default
+				// also keeps the main-config model write this table asserts against.
+				w.args = append(w.args, "--default")
+			}
 			w.checkInstall(t)
 		})
 	}
@@ -71,13 +77,16 @@ func (w installWorkflow) checkInstall(t *testing.T) {
 
 func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	w := newInstallWorkflow(t, "claude-code@2.1.278", "anthropic", "claude-sonnet-4-5",
-		"{\"model\":\"old\",\"keep\":true}\n", "{\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
+		"{\"model\":\"old\",\"keep\":true}\n", "{\"effortLevel\":\"high\",\"model\":\"claude-sonnet-4-5\",\"keep\":true}\n")
+	// Claude Code writes its model to a Mango-owned profile file by default;
+	// --default exercises the direct settings.json patch this test checks.
+	w.args = append(w.args, "--default")
 	piPath := filepath.Join(w.root, "pi-settings.json")
 	before := []byte("{\"defaultProvider\":\"old\",\"defaultModel\":\"old\",\"defaultThinkingLevel\":\"low\",\"keep\":true}\n")
 	if err := os.WriteFile(piPath, before, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	w.args = append(w.args, "--target", "pi@0.86.1", "--config-path", "pi="+piPath)
+	w.args = append(w.args, "--target", "pi@0.87.1", "--config", "pi="+piPath)
 	plan := w.plan(t)
 	if len(plan.Targets) != 2 {
 		t.Fatalf("expected two targets, got %#v", plan.Targets)
@@ -98,17 +107,31 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 	repo := absolutePath(t, "..")
 	root := t.TempDir()
 	w := installWorkflow{root: root, binary: filepath.Join(root, executableName()), env: cleanInstallEnv(t, root), original: original, expected: expected}
-	runGo(t, repo, w.env, "build", "-o", w.binary, "./cmd/profile-mango")
+	runGo(t, repo, w.env, "build", "-o", w.binary, "./cmd/mango")
 	profile := filepath.Join(root, "profiles", "minimal")
 	if err := os.MkdirAll(profile, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	files := map[string]string{
-		filepath.Join(profile, "profile.yaml"):  "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: minimal\nspec:\n  routeRef: primary\n",
-		filepath.Join(root, "bindings.yaml"):    fmt.Sprintf("routes:\n  primary:\n    provider: %s\n    transport: native\n    authentication: oauth\n    model: %s\n    effort: high\n", provider, model),
+		filepath.Join(profile, "profile.yaml"):  "route: primary\n",
+		filepath.Join(root, "bindings.yaml"):    fmt.Sprintf("routes:\n  primary:\n    provider: %s\n    model: %s\n    effort: high\n", provider, model),
 		filepath.Join(root, "outside-sentinel"): "untouched",
 	}
 	w.config = filepath.Join(root, "target.json")
+	if strings.HasPrefix(target, "openclaw@") {
+		// OpenClaw profiles live beside <home>/.openclaw; --default also patches this config.
+		w.config = filepath.Join(root, ".openclaw", "openclaw.json")
+		if err := os.MkdirAll(filepath.Dir(w.config), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if strings.HasPrefix(target, "hermes@") {
+		// hermes -p reads profiles under the Hermes home, so named install needs its config.
+		w.config = filepath.Join(root, "home", ".hermes", "config.yaml")
+		if err := os.MkdirAll(filepath.Dir(w.config), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	files[w.config] = w.original
 	for path, content := range files {
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
@@ -116,7 +139,12 @@ func newInstallWorkflow(t *testing.T, target, provider, model, original, expecte
 		}
 	}
 	w.args = []string{"--non-interactive", "install", "minimal", "--profiles", filepath.Join(root, "profiles"), "--resource-root", root,
-		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config-path", target + "=" + w.config, "--override", "--json"}
+		"--bindings", filepath.Join(root, "bindings.yaml"), "--target", target, "--config", target + "=" + w.config, "--override", "--json"}
+	// OpenClaw and Hermes default to installing a native named profile ("minimal", from
+	// the project profile above); --default also patches this main config.
+	if strings.HasPrefix(target, "openclaw@") || strings.HasPrefix(target, "hermes@") {
+		w.args = append(w.args, "--default")
+	}
 	return w
 }
 
@@ -125,7 +153,7 @@ func (w installWorkflow) run(t *testing.T, extra ...string) commandResult {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, w.binary, append(append([]string(nil), w.args...), extra...)...)
-	cmd.Dir, cmd.Env = w.root, w.env
+	cmd.Dir, cmd.Env = w.root, withoutAgentCommands(w.env, w.root)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
@@ -196,4 +224,10 @@ func assertWorkflowBytes(t *testing.T, path string, want []byte) {
 	if got := readWorkflowFile(t, path); !bytes.Equal(got, want) {
 		t.Fatalf("unexpected contents at %s: %q, want %q", path, got, want)
 	}
+}
+
+// withoutAgentCommands points PATH at an empty directory so install's
+// installed-version check never runs a real agent command on this machine.
+func withoutAgentCommands(env []string, root string) []string {
+	return replaceEnvironment(env, []string{"PATH=" + filepath.Join(root, "no-agent-commands")})
 }

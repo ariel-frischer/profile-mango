@@ -1,0 +1,19 @@
+description: Test-driven coding with explicit approval for consequential effects; preview-only workflow
+extends: workflow-base
+permissions:
+  mode: workspace-write
+  network: deny
+  shell: allow
+tools:
+  allow: [read, search, edit, write, shell]
+  deny: [deploy, web]
+instructions:
+  append: [instructions/coding/AGENTS.md]
+skills: [skills/test-driven-coding/SKILL.md]
+# Each role becomes a subagent file (Codex, OpenCode, Oh My Pi, Claude Code)
+# when this profile is the agent's default; bindings routes pick its model.
+roles:
+  worker:
+    description: Implements one scoped change test-first
+    instructions: instructions/roles/worker.md
+  research: {description: Read-only codebase scout}

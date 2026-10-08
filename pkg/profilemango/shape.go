@@ -1,0 +1,159 @@
+package profilemango
+
+import (
+	"fmt"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
+// fieldShape is the YAML node kind a flat profile field requires and a
+// human-readable description of it, used in shape diagnostics.
+type fieldShape struct {
+	kind     yaml.Kind
+	expected string
+}
+
+// scalarListItems maps a scalar field's shape key to the item description of the
+// list form it also accepts, e.g. globalInstructions.<target>.<file> fragments.
+var scalarListItems = map[string]string{"globalInstructions.*.*": "a resource path string"}
+
+// scalarOrMapping lists scalar fields whose map form is also accepted, e.g. a skills
+// item given as {path, source}.
+var scalarOrMapping = map[string]bool{"skills[]": true}
+
+// profileShapes maps a flat profile path to its required shape. A trailing
+// ".*" entry covers every mapping value and "[]" covers every list item.
+var profileShapes = map[string]fieldShape{
+	"name":                  {yaml.ScalarNode, "a string"},
+	"description":           {yaml.ScalarNode, "a string"},
+	"extends":               {yaml.ScalarNode, "a profile name string"},
+	"route":                 {yaml.ScalarNode, "a route name string"},
+	"labels":                {yaml.MappingNode, "a map of string keys to string values (e.g. labels: {team: core})"},
+	"labels.*":              {yaml.ScalarNode, "a string value (e.g. labels: {team: core})"},
+	"permissions":           {yaml.MappingNode, "a map (e.g. permissions: {mode: read-only})"},
+	"permissions.*":         {yaml.ScalarNode, "a string"},
+	"tools":                 {yaml.MappingNode, "a map of allow/deny lists (e.g. tools: {allow: [read]})"},
+	"tools.allow":           {yaml.SequenceNode, "a list of tool names (e.g. allow: [read, edit])"},
+	"tools.deny":            {yaml.SequenceNode, "a list of tool names (e.g. deny: [shell])"},
+	"tools.allow[]":         {yaml.ScalarNode, "a tool name string"},
+	"tools.deny[]":          {yaml.ScalarNode, "a tool name string"},
+	"instructions":          {yaml.MappingNode, "a map (e.g. instructions: {append: [instructions/base.md]})"},
+	"instructions.append":   {yaml.SequenceNode, "a list of instruction file paths"},
+	"instructions.append[]": {yaml.ScalarNode, "a file path string"},
+	"skills":                {yaml.SequenceNode, "a list of skill paths (e.g. skills: [skills/review/SKILL.md])"},
+	"skills[]":              {yaml.ScalarNode, "a skill path string or a {path, source} map"},
+	"skills[].path":         {yaml.ScalarNode, "a skill path string"},
+	"skills[].source":       {yaml.MappingNode, "a map (e.g. source: {repo: https://github.com/owner/repo, commit: <40 hex>, sha256: <64 hex>})"},
+	"skills[].source.*":     {yaml.ScalarNode, "a string"},
+	"globalInstructions":    {yaml.MappingNode, "a map of target names to file maps (e.g. globalInstructions: {codex: {AGENTS.md: instructions/codex.md}})"},
+	"globalInstructions.*":  {yaml.MappingNode, "a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md})"},
+	// globalInstructions.<target>.<file> is looked up through genericWildcard.
+	"globalInstructions.*.*": {yaml.ScalarNode, "a resource path string or a list of them"},
+	"agentFiles":             {yaml.MappingNode, "a map of target names to file maps (e.g. agentFiles: {oh-my-pi: {scout.md: agents/scout.md}})"},
+	"agentFiles.*":           {yaml.MappingNode, "a map of file names to resource paths (e.g. oh-my-pi: {scout.md: agents/scout.md})"},
+	// agentFiles.<target>.<file> is looked up through genericWildcard.
+	"agentFiles.*.*": {yaml.ScalarNode, "a resource path string"},
+	"roles":          {yaml.MappingNode, "a map of portable role names to definitions (e.g. roles: {worker: {description: Implements changes}})"},
+	"roles.*":        {yaml.MappingNode, "a role definition map (e.g. worker: {description: Implements changes, instructions: roles/worker.md})"},
+	// roles.<role>.<field> is looked up through genericWildcard.
+	"roles.*.*": {yaml.ScalarNode, "a string"},
+}
+
+// validateProfileShape reports every known flat-profile field whose YAML node
+// kind differs from its required shape, naming the field path and the
+// expected shape. It returns false when any mismatch was reported so callers
+// skip the generic decoder error for the same problem.
+func validateProfileShape(document *yaml.Node, diagnostics *Diagnostics) bool {
+	if document.Kind != yaml.DocumentNode || len(document.Content) == 0 {
+		return true
+	}
+	root := document.Content[0]
+	if root.Kind != yaml.MappingNode {
+		return true
+	}
+	before := len(diagnostics.Errors())
+	checkShapeChildren(root, "", diagnostics)
+	return len(diagnostics.Errors()) == before
+}
+
+func checkShapeChildren(node *yaml.Node, path string, diagnostics *Diagnostics) {
+	if node.Kind == yaml.SequenceNode {
+		for _, item := range node.Content {
+			checkShape(item, path+"[]", path+"[]", diagnostics)
+		}
+		return
+	}
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		key, value := node.Content[i].Value, node.Content[i+1]
+		childPath := strings.TrimPrefix(path+"."+key, ".")
+		checkShape(value, childPath, strings.TrimPrefix(path+".*", "."), diagnostics)
+	}
+}
+
+func checkShape(node *yaml.Node, path, wildcard string, diagnostics *Diagnostics) {
+	key := path
+	shape, known := profileShapes[key]
+	if !known {
+		key = wildcard
+		shape, known = profileShapes[key]
+	}
+	if !known {
+		key = genericWildcard(wildcard)
+		shape, known = profileShapes[key]
+	}
+	if !known || node.Tag == "!!null" {
+		return
+	}
+	if item, list := scalarListItems[key]; list && node.Kind == yaml.SequenceNode {
+		checkListItems(node, path, item, diagnostics)
+		return
+	}
+	if scalarOrMapping[key] && node.Kind == yaml.MappingNode {
+		checkShapeChildren(node, path, diagnostics)
+		return
+	}
+	if node.Kind != shape.kind {
+		message := "expected " + shape.expected + ", got " + describeNodeKind(node.Kind)
+		diagnostics.Add(SeverityError, "yaml.shape", path, message, node.Line, node.Column)
+		return
+	}
+	checkShapeChildren(node, path, diagnostics)
+}
+
+// checkListItems reports every non-scalar item of a scalar-or-list field, naming
+// the item's index.
+func checkListItems(node *yaml.Node, path, expected string, diagnostics *Diagnostics) {
+	for index, item := range node.Content {
+		if item.Kind != yaml.ScalarNode {
+			message := "expected " + expected + ", got " + describeNodeKind(item.Kind)
+			diagnostics.Add(SeverityError, "yaml.shape", fmt.Sprintf("%s[%d]", path, index), message, item.Line, item.Column)
+		}
+	}
+}
+
+// genericWildcard turns a nested wildcard such as globalInstructions.codex.*,
+// agentFiles.oh-my-pi.*, or roles.worker.* into its shape key, e.g. roles.*.*.
+func genericWildcard(wildcard string) string {
+	parts := strings.Split(wildcard, ".")
+	if len(parts) == 3 && (parts[0] == "globalInstructions" || parts[0] == "agentFiles" || parts[0] == "roles") && parts[2] == "*" {
+		return parts[0] + ".*.*"
+	}
+	return ""
+}
+
+func describeNodeKind(kind yaml.Kind) string {
+	switch kind {
+	case yaml.MappingNode:
+		return "a map"
+	case yaml.SequenceNode:
+		return "a list"
+	case yaml.AliasNode:
+		return "an alias"
+	default:
+		return "a scalar value"
+	}
+}

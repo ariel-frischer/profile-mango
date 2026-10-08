@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 func ApplyPlan(plan Plan, options ApplyOptions) (ApplyReport, error) {
@@ -40,7 +40,7 @@ func preflightApplyReport(plan Plan, cause error, failedTarget string) ApplyRepo
 	report := ApplyReport{Status: StatusNotAttempted, Targets: make([]ApplyTargetResult, 0, len(targets))}
 	hasPending := false
 	for _, target := range targets {
-		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
+		result := ApplyTargetResult{Target: target.installedTarget().String(), Status: target.Status}
 		changed := len(target.changes) > 0 || target.Status == StatusReady
 		if changed {
 			result.Status = StatusNotAttempted
@@ -62,10 +62,12 @@ func preflightApplyReport(plan Plan, cause error, failedTarget string) ApplyRepo
 func applyTargetChanges(plan Plan) (ApplyReport, error) {
 	targets := sortedTargetPlans(plan.Targets)
 	var changes []installfs.Change
+	var anchors []string
 	for _, target := range targets {
 		changes = append(changes, target.changes...)
+		anchors = append(anchors, target.ConfigPath)
 	}
-	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup})
+	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors})
 	status := applied.Status
 	if status == "noop" {
 		status = "committed"
@@ -77,13 +79,18 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 	if err != nil {
 		return report, fmt.Errorf("apply installation transaction: %w", err)
 	}
+	if applied.Status == "committed" {
+		if err := writeJournalRefs(targets, plan.PlanID, applied); err != nil {
+			return report, fmt.Errorf("install committed, but undo cannot locate its journal: %w", err)
+		}
+	}
 	return report, nil
 }
 
 func targetApplyReport(targets []TargetPlan, status string, cause error) ApplyReport {
 	report := ApplyReport{Status: status, Targets: make([]ApplyTargetResult, 0, len(targets))}
 	for _, target := range targets {
-		result := ApplyTargetResult{Target: target.Target.String(), Status: target.Status}
+		result := ApplyTargetResult{Target: target.installedTarget().String(), Status: target.Status}
 		if len(target.changes) > 0 {
 			result.Status = status
 			if cause != nil {

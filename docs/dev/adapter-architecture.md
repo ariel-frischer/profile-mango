@@ -17,7 +17,7 @@ flowchart LR
     DISPATCH --> OPENCLAW[OpenClaw adapter]
     DISPATCH --> HERMES[Hermes adapter]
     DISPATCH --> OPENCODE[OpenCode adapter]
-    DISPATCH --> ARIEL[Ariel custom Jcode adapter]
+    DISPATCH --> FORK[Jcode fork adapter]
     CLAUDE --> CONTRACT
     CODEX --> CONTRACT[target-neutral render contract]
     PI --> CONTRACT
@@ -37,10 +37,10 @@ flowchart LR
 - `pkg/adapters/claudecode`, `pkg/adapters/codex`, `pkg/adapters/pi`,
   `pkg/adapters/ohmypi`, `pkg/adapters/openclaw`, `pkg/adapters/hermes`,
   `pkg/adapters/opencode`, and
-  `pkg/adapters/arieljcode` own exact evidence pins, target syntax, capability
-  mapping, target-specific diagnostics, and applicability. The Ariel package is
+  `pkg/adapters/jcodefork` own exact evidence pins, target syntax, capability
+  mapping, target-specific diagnostics, and applicability. The adapter package is
   experimental-only and is not an upstream Jcode adapter.
-- `cmd/profile-mango/render.go` owns common input loading, an explicit switch over
+- `cmd/mango/render.go` owns common input loading, an explicit switch over
   the known target names, report output, and staging through `internal/staging`.
 - `internal/staging` creates only a new explicit output directory and never writes
   a target home.
@@ -54,22 +54,24 @@ still fail closed for missing or mismatched exact versions, evidence hashes,
 authentication identity, delivery, precedence, permissions, tools, or enforcement.
 
 A preview artifact is an inert candidate only. `applicable` remains false whenever a
-required property is unverified, and the command returns nonzero. Candidate config
+required property is unverified. Without `--preview` the command then returns nonzero;
+with `--preview`, once staging succeeds, it prints each blocker as a `warning`, keeps
+the report's error diagnostics and `applicable: false`, and exits 0. Candidate config
 files use `preview/` paths and report metadata excludes artifact bytes. Resource
 copies preserve their original relative paths and are validated against the
 canonical digest before they are staged.
 
 ## Current target boundary
 
-Claude Code `2.1.278`, Codex `0.154.0`, Pi `0.86.1`, Oh My Pi `18.2.6`,
+Claude Code `2.1.278`, Codex `0.157.1`, Pi `0.87.1`, Oh My Pi `18.4.6`,
 OpenClaw `2026.9.5`, Hermes Agent `0.21.3`, and OpenCode `1.18.31` each have deterministic inert
-preview renderers. Ariel's custom Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
+preview renderers. the Jcode fork `jcode v0.83.909-dev (ca8017a3a)`
 also has a deterministic inert TOML renderer under the explicit target identity
-`ariel-jcode`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
+`jcode-fork`, but it is experimental-only and not publicly supported. Claude Code emits a documentation-context JSON `model`
 candidate. Codex uses TOML candidate syntax. Pi uses exact source-grounded JSON
 settings keys `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`.
-Oh My Pi uses the pinned source's YAML settings fields for a `modelRoles.default`
-and `defaultThinkingLevel` candidate. OpenClaw uses source-grounded JSON5 fields
+Oh My Pi uses the pinned source's YAML `modelRoles` selectors, `provider/model:effort`
+for the default role and each bound route role. OpenClaw uses source-grounded JSON5 fields
 for `agents.defaults.model.primary`, an explicit empty fallback list, and
 `agents.defaults.thinkingDefault`. Hermes uses source-grounded YAML fields for
 `model.provider`, `model.default`, and `agent.reasoning_effort`. OpenCode emits only
@@ -88,7 +90,7 @@ unowned or externally edited replacement even when config override is approved.
 Directory-wide native skill discovery is not an exclusive allowlist.
 Claude Code `2.1.278` additionally supports only strict-JSON top-level `model`
 replacement at one explicit path, backed by isolated exact-ELF model consumption
-and disposable built-binary application. Pi `0.86.1` applies only its three route
+and disposable built-binary application. Pi `0.87.1` applies only its three route
 defaults, qualified through native settings-module getters and project override
 tests. Hermes `0.21.3` applies model provider/default and agent reasoning effort,
 qualified through an exact source-native read-only config merge. Other targets
@@ -98,7 +100,7 @@ agent override/fallback checks. None of these narrow
 installers establishes authenticated full-route or policy enforcement.
 See [shared architecture](../architecture.md) for install/CLI ownership.
 
-The Ariel renderer uses only the exact retained synthetic profile-resolution
+The Jcode fork renderer uses only the exact retained synthetic profile-resolution
 evidence for provider/model/effort, closed tool selectors, empty-skill mode,
 canonical skill selectors, and instruction metadata. It rejects unsupported
 canonical policy shapes and does not accept arbitrary target-owned keys. The
@@ -114,7 +116,8 @@ and enforcement remain blocked, rather than treating parsing as runtime evidence
 
 Oh My Pi's initial build stopped at its missing native addon. A later exact-source
 addon build with pinned nightly Rust qualifies the separate installer for only
-`modelRoles.default` and `defaultThinkingLevel` through `Settings.loadReadOnly`.
+`modelRoles.default` through `Settings.loadReadOnly`; per-role `:effort` selectors
+since 2026-09-25 rest on source review only.
 The reviewed `config` commands still initialize discovery and migration paths and
 were not run. Full startup, authentication, precedence, and enforcement stay blocked.
 See [target evidence](target-evidence.md) and the [Oh My Pi reference](agents/oh-my-pi.md)
@@ -136,7 +139,7 @@ plugin, gateway, and session state before or during inspection, so no native
 Hermes command was accepted as a safe M0 probe. See [target evidence](target-evidence.md)
 and the [Hermes reference](agents/hermes.md).
 
-Pi's exact `v0.86.1` source commit, npm package tarball, registry integrity, and
+Pi's exact `v0.87.1` source commit, npm package tarball, registry integrity, and
 bundled `dist/bundle/cli.js` entrypoint hashes are pinned. Static review found
 startup settings/auth/model/session paths, project and extension discovery,
 migrations, package/update subprocesses, network-capable model/catalog paths, and

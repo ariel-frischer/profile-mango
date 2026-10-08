@@ -2,9 +2,9 @@ package install
 
 import (
 	"fmt"
+	"slices"
 	"sort"
-
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/codex"
+	"strings"
 )
 
 type Registry struct {
@@ -59,27 +59,46 @@ func (registry *Registry) Targets() []Target {
 	return result
 }
 
-type blockedAdapter struct{ metadata AdapterMetadata }
-
-func (adapter blockedAdapter) Metadata() AdapterMetadata { return adapter.metadata }
-
-func (adapter blockedAdapter) Plan(AdapterInput) (Patch, error) {
-	return Patch{}, fmt.Errorf("target %s is install-blocked", adapter.metadata.Target)
+// ResolveTarget parses "name" or "name@version". A bare name resolves to the
+// target's single installable registered version; an explicit version is kept
+// as given so an unqualified version still blocks during planning.
+func (registry *Registry) ResolveTarget(value string) (Target, error) {
+	selector, err := ParseTargetSelector(value)
+	if err != nil || selector.Version != "" {
+		return selector, err
+	}
+	var qualified, names []string
+	var result Target
+	for _, target := range registry.Targets() {
+		if !slices.Contains(names, target.Name) {
+			names = append(names, target.Name)
+		}
+		adapter, _ := registry.Lookup(target)
+		if target.Name == selector.Name && adapter.Metadata().Installable {
+			qualified = append(qualified, target.String())
+			result = target
+		}
+	}
+	switch {
+	case !slices.Contains(names, selector.Name):
+		return Target{}, fmt.Errorf("unknown target %q; valid targets: %s", selector.Name, strings.Join(names, ", "))
+	case len(qualified) == 1:
+		return result, nil
+	case len(qualified) == 0:
+		return Target{}, fmt.Errorf("target %s has no qualified version; use %s@<version>", selector.Name, selector.Name)
+	default:
+		return Target{}, fmt.Errorf("target %s has several qualified versions (%s); use target@version", selector.Name, strings.Join(qualified, ", "))
+	}
 }
 
 func DefaultRegistry() *Registry {
-	blockedReason := "production target installation is blocked pending disposable-target validation; no target state is read or written"
 	return NewRegistry(
 		claudeCodeAdapter{},
-		blockedAdapter{metadata: blockedMetadata(codex.TargetName, codex.TargetVersion, codex.AdapterVersion, codex.EvidenceSHA256, blockedReason)},
+		codexAdapter{},
 		hermesAdapter{},
 		ohMyPiAdapter{},
 		openClawAdapter{},
 		piAdapter{},
 		openCodeAdapter{},
 	)
-}
-
-func blockedMetadata(target, version, adapterVersion, evidence, reason string) AdapterMetadata {
-	return AdapterMetadata{Target: target, Version: version, AdapterVersion: adapterVersion, EvidenceSHA256: evidence, Installable: false, Status: StatusBlocked, Reason: reason}
 }

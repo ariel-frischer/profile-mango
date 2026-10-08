@@ -22,8 +22,8 @@ func TestCleanOfflineInstallAndInstalledBinary(t *testing.T) {
 	tempRoot := t.TempDir()
 	env := cleanInstallEnv(t, tempRoot)
 	builtBinary := filepath.Join(tempRoot, "build", executableName())
-	runGo(t, repoRoot, env, "build", "-o", builtBinary, "./cmd/profile-mango")
-	runGo(t, repoRoot, env, "install", "./cmd/profile-mango")
+	runGo(t, repoRoot, env, "build", "-o", builtBinary, "./cmd/mango")
+	runGo(t, repoRoot, env, "install", "./cmd/mango")
 
 	installedBinary := filepath.Join(tempRoot, "bin", executableName())
 	fixtures := filepath.Join(repoRoot, "pkg", "profilemango", "testdata", "fixtures")
@@ -47,20 +47,20 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 		evidenceHash string
 	}{
 		"claude-code": {version: "2.1.278", candidate: "preview/route-only.settings.json.preview", blocker: "claudecode.config.acceptance_unverified", evidenceHash: "d1fb51ab0a0234d1bd7f418ee9d6b6b124c2412b2ddaf3dfc3256bad8063f1c7"},
-		"codex":       {version: "0.154.0", candidate: "preview/route-only.config.toml.preview", blocker: "codex.route.authentication_unverified", evidenceHash: "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"},
-		"pi":          {version: "0.86.1", candidate: "preview/route-only.settings.json.preview", blocker: "pi.config.acceptance_unverified", evidenceHash: "8dff93e6fa03e0d498e72a78d2c7bb5f094f5e06ee268e6abd000ba2984a0b6a"},
-		"oh-my-pi":    {version: "18.2.6", candidate: "preview/route-only.config.yml.preview", blocker: "ohmypi.config.inspector_unsafe", evidenceHash: "4d9558530fdd8c76798181545d7cde8b558731596515b2f300e61c8d403bcb6e"},
+		"codex":       {version: "0.157.1", candidate: "preview/route-only.config.toml.preview", blocker: "codex.route.authentication_unverified", evidenceHash: "3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970"},
+		"pi":          {version: "0.87.1", candidate: "preview/route-only.settings.json.preview", blocker: "pi.config.acceptance_unverified", evidenceHash: "1423ee3c61e7c96464e1cbf3c8dc24d3056cb3410995c3671a98c3ecc527540f"},
+		"oh-my-pi":    {version: "18.6.0", candidate: "preview/route-only.config.yml.preview", blocker: "ohmypi.config.inspector_unsafe", evidenceHash: "2fcbf1a46b27ad7c631bb210abaa217dc092a6e629a74f977a8bde07b59c6d24"},
 		"openclaw":    {version: "2026.9.5", candidate: "preview/route-only.config.json5.preview", blocker: "openclaw.config.inspector_unsafe", evidenceHash: "0e15e679795134cf7d488302f2bdaf0682ad4413e19a7f5c6cc22584f03d02a4"},
 		"opencode":    {version: "1.18.31", candidate: "preview/route-only.opencode.jsonc.preview", blocker: "opencode.runtime.enforcement_unverified", evidenceHash: "76f69fe27ec2b44e23fa1749029e7c012eb7e975a0f0c7819e9458198dfd3896"},
 		"hermes":      {version: "0.21.3", candidate: "preview/route-only.config.yaml.preview", blocker: "hermes.config.inspector_unsafe", evidenceHash: "71f2db39a64fbba282e3bd3be4b0f7b935585948a59a368d61deeec0f0827c47"},
-		"ariel-jcode": {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "arieljcode.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
+		"jcode-fork":  {version: "0.83.909-dev (ca8017a3a)", candidate: "preview/route-only.config.toml.preview", blocker: "jcodefork.experimental_only", evidenceHash: "392ecafbb9ec20f49e78cf556a8a8bcb9040c54f2f92db7d6e112c0cf70ea992"},
 	}
 	for name, target := range targets {
 		t.Run(name, func(t *testing.T) {
 			out := filepath.Join(t.TempDir(), "preview")
 			result := runCommand(binary, repoRoot, env, "render", "route-only", "--profiles", fixtures, "--resource-root", resourceRoot, "--bindings", bindings, "--target", name, "--target-version", target.version, "--out", out, "--preview", "--json")
-			if result.err == nil {
-				t.Fatal("blocked preview unexpectedly succeeded")
+			if result.err != nil {
+				t.Fatalf("staged non-applicable preview must exit 0: %v\n%s", result.err, result.stderr)
 			}
 			var report struct {
 				Target        string `json:"target"`
@@ -77,7 +77,7 @@ func testInstalledRenderPreviews(t *testing.T, binary, repoRoot, fixtures, bindi
 			if report.Target != name || report.TargetVersion != target.version || report.Applicable || !report.Preview || report.Evidence.SHA256 != target.evidenceHash {
 				t.Fatalf("unexpected report: %#v", report)
 			}
-			if !strings.Contains(result.stderr, target.blocker) {
+			if !strings.Contains(result.stderr, "warning ") || !strings.Contains(result.stderr, target.blocker) {
 				t.Fatalf("missing target blocker %q:\n%s", target.blocker, result.stderr)
 			}
 			assertInstalledFile(t, out, "render.json")
@@ -102,9 +102,9 @@ func testInstalledCommands(t *testing.T, binary, repoRoot, fixtures, bindings st
 		contains   []string
 		notContain []string
 	}{
-		"help":       {args: []string{"--help"}, contains: []string{"profile-mango", "home", "validate", "--home", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
+		"help":       {args: []string{"--help"}, contains: []string{"mango", "home", "validate", "--home", "--no-color"}, notContain: []string{"config", "--config", "PROFILE_MANGO_CONFIG"}},
 		"home":       {args: []string{"home"}, contains: []string{profileHome}},
-		"version":    {args: []string{"version", "--plain"}, contains: []string{"profile-mango dev", "go: "}},
+		"version":    {args: []string{"version", "--plain"}, contains: []string{"mango ", "commit: ", "go: "}},
 		"route-only": {args: validateArgs(filepath.Join(fixtures, "route-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "route-only"`}},
 		"read-only":  {args: validateArgs(filepath.Join(fixtures, "read-only", "profile.yaml"), bindings), contains: []string{`"valid": true`, `"profileName": "read-only"`}},
 	}
@@ -162,6 +162,10 @@ func cleanInstallEnv(t *testing.T, root string) []string {
 	return replaceEnvironment(os.Environ(), []string{
 		"HOME=" + filepath.Join(root, "home"),
 		"XDG_CONFIG_HOME=" + filepath.Join(root, "config"),
+		"CODEX_HOME=",
+		"HERMES_HOME=",
+		"PI_CODING_AGENT_DIR=",
+		"OPENCLAW_CONFIG_PATH=",
 		"GOCACHE=" + filepath.Join(root, "cache"),
 		"GOBIN=" + filepath.Join(root, "bin"),
 		"GOMODCACHE=" + moduleCache,
@@ -212,9 +216,9 @@ func validateArgs(profile, bindings string) []string {
 
 func executableName() string {
 	if runtime.GOOS == "windows" {
-		return "profile-mango.exe"
+		return "mango.exe"
 	}
-	return "profile-mango"
+	return "mango"
 }
 
 func absolutePath(t *testing.T, path string) string {

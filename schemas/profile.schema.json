@@ -2,48 +2,140 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://profilemango.dev/schemas/policy-profile-v1alpha1.json",
   "title": "PolicyProfile v1alpha1",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["apiVersion", "kind", "metadata", "spec"],
-  "properties": {
-    "apiVersion": {"const": "profilemango.dev/v1alpha1"},
-    "kind": {"const": "PolicyProfile"},
-    "metadata": {
-      "type": "object", "additionalProperties": false, "required": ["name"],
-      "properties": {
-        "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
-        "description": {"type": "string"},
-        "labels": {"type": "object", "additionalProperties": {"type": "string"}}
-      }
-    },
-    "spec": {
+  "description": "A flat profile document. name is optional and defaults to the profile folder name; when present it must match. The apiVersion/kind/metadata/spec wrapper is deprecated but still accepted.",
+  "oneOf": [
+    {"$ref": "#/$defs/flatProfile"},
+    {"$ref": "#/$defs/legacyProfile"}
+  ],
+  "$defs": {
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+    "labels": {"type": "object", "additionalProperties": {"type": "string"}},
+    "flatProfile": {
       "type": "object", "additionalProperties": false,
       "properties": {
-        "extends": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
-        "routeRef": {"type": "string", "minLength": 1},
-        "permissions": {
+        "name": {"$ref": "#/$defs/name"},
+        "description": {"type": "string"},
+        "labels": {"$ref": "#/$defs/labels"},
+        "extends": {"$ref": "#/$defs/name"},
+        "route": {"type": "string", "minLength": 1},
+        "permissions": {"$ref": "#/$defs/permissions"},
+        "tools": {"$ref": "#/$defs/accessRules"},
+        "instructions": {"$ref": "#/$defs/instructions"},
+        "skills": {"$ref": "#/$defs/skills"},
+        "globalInstructions": {"$ref": "#/$defs/globalInstructions"},
+        "agentFiles": {"$ref": "#/$defs/agentFiles"},
+        "roles": {"$ref": "#/$defs/roles"}
+      }
+    },
+    "legacyProfile": {
+      "deprecated": true,
+      "description": "Deprecated wrapped form; parsed with a profile.legacy_format warning.",
+      "type": "object", "additionalProperties": false,
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "properties": {
+        "apiVersion": {"const": "profilemango.dev/v1alpha1"},
+        "kind": {"const": "PolicyProfile"},
+        "metadata": {
           "type": "object", "additionalProperties": false,
           "properties": {
-            "mode": {"enum": ["read-only", "workspace-write", "unrestricted"]},
-            "network": {"enum": ["allow", "deny", "unmanaged"]},
-            "shell": {"enum": ["allow", "deny", "unmanaged"]}
+            "name": {"$ref": "#/$defs/name"},
+            "description": {"type": "string"},
+            "labels": {"$ref": "#/$defs/labels"}
           }
         },
-        "tools": {"$ref": "#/$defs/accessRules"},
-        "instructions": {
+        "spec": {
           "type": "object", "additionalProperties": false,
-          "properties": {"append": {"type": "array", "items": {"type": "string"}}}
-        },
-        "skills": {"type": "array", "items": {"type": "string"}}
+          "properties": {
+            "extends": {"$ref": "#/$defs/name"},
+            "routeRef": {"type": "string", "minLength": 1},
+            "permissions": {"$ref": "#/$defs/permissions"},
+            "tools": {"$ref": "#/$defs/accessRules"},
+            "instructions": {"$ref": "#/$defs/instructions"},
+            "skills": {"$ref": "#/$defs/skills"},
+            "globalInstructions": {"$ref": "#/$defs/globalInstructions"}
+          }
+        }
       }
-    }
-  },
-  "$defs": {
+    },
+    "permissions": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "mode": {"enum": ["read-only", "workspace-write", "unrestricted"]},
+        "network": {"enum": ["allow", "deny", "unmanaged"]},
+        "shell": {"enum": ["allow", "deny", "unmanaged"]}
+      }
+    },
+    "instructions": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"append": {"$ref": "#/$defs/paths"}}
+    },
+    "globalInstructions": {
+      "description": "Whole global instruction files per target, or under the target-neutral home key for files in the user's home directory (home: {AGENTS.md: ...} writes ~/AGENTS.md): file name to a resource path beneath the package root, or a non-empty list of such paths composed in order (each fragment but the last loses its trailing newlines and is followed by one blank line). Only files with pinned evidence install; others are skipped or blocked.",
+      "type": "object",
+      "propertyNames": {"enum": ["home", "claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.md$"},
+        "additionalProperties": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          ]
+        }
+      }
+    },
+    "agentFiles": {
+      "description": "Whole native subagent files per target, installed verbatim in the target's subagent directory (agents/ under its config directory): file name to resource path beneath the package root. Only targets that install role subagent files accept them, with their role-file extension (.toml for codex, .md otherwise); others are skipped or blocked. A file named like a declared role is rejected.",
+      "type": "object",
+      "propertyNames": {"enum": ["claude-code", "codex", "hermes", "jcode-fork", "oh-my-pi", "openclaw", "opencode", "pi"]},
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.(md|toml)$"},
+        "additionalProperties": {"type": "string", "minLength": 1}
+      }
+    },
+    "roles": {
+      "description": "Portable role definitions. Models for each role come from bindings routes.<name>.roles; no qualified target installs these descriptions or instructions yet.",
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["description"],
+        "properties": {
+          "description": {"type": "string", "minLength": 1, "pattern": "\\S"},
+          "instructions": {"type": "string", "minLength": 1, "description": "Resource path beneath the package root."}
+        }
+      }
+    },
+    "paths": {"type": "array", "items": {"type": "string"}},
+    "skills": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string", "pattern": "(^|/)SKILL\\.md$"},
+          {
+            "type": "object", "additionalProperties": false, "required": ["path"],
+            "properties": {
+              "path": {"type": "string", "pattern": "(^|/)SKILL\\.md$"},
+              "source": {
+                "type": "object", "additionalProperties": false, "required": ["repo", "commit", "sha256"],
+                "properties": {
+                  "repo": {"type": "string", "minLength": 1},
+                  "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "path": {"type": "string", "minLength": 1},
+                  "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
     "accessRules": {
       "type": "object", "additionalProperties": false,
       "properties": {
-        "allow": {"type": "array", "items": {"type": "string"}},
-        "deny": {"type": "array", "items": {"type": "string"}}
+        "allow": {"$ref": "#/$defs/paths"},
+        "deny": {"$ref": "#/$defs/paths"}
       }
     }
   }

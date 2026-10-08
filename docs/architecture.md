@@ -10,7 +10,7 @@ The [adapter architecture](dev/adapter-architecture.md) describes rendering, and
 - `pkg/render` and `pkg/adapters/<target>` own deterministic inert previews and exact-version evidence.
 - `pkg/install` owns one target-neutral `Adapter`/`Patch` boundary, deterministic plans, capability gates, and application orchestration. Target-specific install adapters supply lossless bounded patches, not replacement preview files.
 - `internal/installfs` owns bounded filesystem inspection, transactions, backups, journals, and guarded recovery.
-- `cmd/profile-mango/install.go` owns shared target selection, human/JSON output, interactive consent, and hash-bound noninteractive apply. There is no separate installer command or transaction engine per target.
+- `cmd/mango/install.go` owns shared target selection, human/JSON output, interactive consent, and hash-bound noninteractive apply. There is no separate installer command or transaction engine per target.
 
 ## Safety and evidence
 

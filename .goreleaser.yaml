@@ -1,17 +1,19 @@
 version: 2
 
+project_name: profile-mango
+
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - main: ./cmd/profile-mango/
-    binary: profile-mango
+  - main: ./cmd/mango/
+    binary: mango
     ldflags:
       - -s -w
-      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Version={{.Version}}
-      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.Commit={{.ShortCommit}}
-      - -X gitlab.com/ariel-frischer/profile-mango/internal/version.BuildDate={{.Date}}
+      - -X github.com/ariel-frischer/profile-mango/internal/version.Version={{.Version}}
+      - -X github.com/ariel-frischer/profile-mango/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/ariel-frischer/profile-mango/internal/version.BuildDate={{.Date}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,23 +25,23 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
 
 checksum:
   name_template: checksums.txt
 
-changelog:
-  disable: true
+# The changelog pipe must stay enabled: it is what loads --release-notes (CHANGELOG.yaml
+# via chlog extract); disabling it publishes releases with an empty body.
 
 release:
-  gitlab:
+  github:
     owner: ariel-frischer
     name: profile-mango
   mode: replace

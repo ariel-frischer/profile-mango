@@ -1,7 +1,7 @@
 
-.PHONY: help deps d install i test t test-go test-installer test-release test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
+.PHONY: help deps d install i link-skill test t test-go test-installer test-skill test-release test-v test-coverage lint l lint-go lint-shell format f clean c build b bin run r check-agent-sources go-install install-global uninstall u release patch minor major prep-release worktree worktree-clean
 
-MODULE_PATH=gitlab.com/ariel-frischer/profile-mango
+MODULE_PATH=github.com/ariel-frischer/profile-mango
 BUILD_VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
 ifeq ($(BUILD_VERSION),)
   BUILD_VERSION=dev
@@ -13,7 +13,12 @@ LDFLAGS=-ldflags="-X ${MODULE_PATH}/internal/version.Version=${BUILD_VERSION} \
                    -X ${MODULE_PATH}/internal/version.BuildDate=${BUILD_DATE} \
                    -s -w"
 WORKTREE_SCRIPT ?= scripts/worktree-setup.sh
+SKILL_DEST ?= $(HOME)/.agents/skills/profile-mango/SKILL.md
 BASE ?= $(shell git branch --show-current 2>/dev/null || echo HEAD)
+# Match install.sh: ~/.local/bin unless PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR is set.
+# `go env GOBIN` is avoided because mise/asdf point it at a versioned toolchain dir.
+PROFILE_MANGO_INSTALL_DIR ?= $(HOME)/.local/bin
+GOBIN_DIR ?= $(PROFILE_MANGO_INSTALL_DIR)
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -26,16 +31,39 @@ deps: ## Download dependencies
 
 d: deps ## Alias for deps
 
-install: ## Install profile-mango to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/profile-mango/
+install: ## Install mango (and profile-mango alias) to ~/.local/bin (override: PROFILE_MANGO_INSTALL_DIR or GOBIN_DIR)
+	@case "$(GOBIN_DIR)" in */mise/installs/*|*/.asdf/installs/*) \
+		echo "warning: $(GOBIN_DIR) is inside a mise/asdf toolchain; mango may be unreachable outside this repo" >&2;; esac
+	@mkdir -p "$(GOBIN_DIR)"
+	go build ${LDFLAGS} -o "$(GOBIN_DIR)/mango" ./cmd/mango/
+	cp "$(GOBIN_DIR)/mango" "$(GOBIN_DIR)/profile-mango"
 
 i: install ## Alias for install
+
+link-skill: ## Link the global profile-mango skill to this repository's primary checkout
+	@set -eu; \
+	primary="$$(git worktree list --porcelain | sed -n '1s/^worktree //p')"; \
+	source="$$primary/.agents/skills/profile-mango/SKILL.md"; dest="$(SKILL_DEST)"; \
+	test -f "$$source" || { echo "Canonical skill not found: $$source" >&2; exit 1; }; \
+	if [ -L "$$dest" ] && [ "$$(readlink "$$dest")" = "$$source" ]; then \
+		echo "Already linked: $$dest"; exit 0; \
+	fi; \
+	if [ -d "$$dest" ] && [ ! -L "$$dest" ]; then \
+		echo "Refusing to replace directory: $$dest" >&2; exit 1; \
+	fi; \
+	mkdir -p "$$(dirname "$$dest")"; \
+	if [ -e "$$dest" ] || [ -L "$$dest" ]; then \
+		backup="$$(mktemp -d "$${dest}.backup.XXXXXXXX")"; \
+		mv "$$dest" "$$backup/SKILL.md"; \
+		echo "Previous skill saved: $$backup/SKILL.md"; \
+	fi; \
+	ln -s "$$source" "$$dest"; echo "Linked $$dest -> $$source"
 
 go-install: install ## Compatibility alias for install
 
 install-global: install ## Compatibility alias for install
 
-test: test-go test-installer ## Run Go and installer tests
+test: test-go test-installer test-skill ## Run Go, installer, and skill-link tests
 
 t: test ## Alias for test
 
@@ -44,6 +72,9 @@ test-go: ## Run Go tests
 
 test-installer: ## Run offline installer fixture tests
 	sh tests/install_test.sh
+
+test-skill: ## Check skill-link safety using disposable paths
+	sh tests/skill_link_test.sh
 
 test-release: ## Run offline release fixtures (requires chlog)
 	sh tests/release_test.sh
@@ -70,9 +101,9 @@ lint-go: ## Run Go linters
 
 lint-shell: ## Check POSIX shell scripts
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck --shell=sh install.sh tests/install_test.sh; \
+		shellcheck --shell=sh install.sh tests/install_test.sh tests/skill_link_test.sh; \
 	else \
-		sh -n install.sh && sh -n tests/install_test.sh; \
+		sh -n install.sh && sh -n tests/install_test.sh && sh -n tests/skill_link_test.sh; \
 		echo "shellcheck not installed, ran sh -n"; \
 	fi
 
@@ -88,19 +119,19 @@ clean: ## Clean build artifacts
 c: clean ## Alias for clean
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/profile-mango ./cmd/profile-mango/
+	go build ${LDFLAGS} -o bin/mango ./cmd/mango/
 
 b: build ## Alias for build
 
 bin: build ## Alias for build
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/profile-mango/
+	go run ${LDFLAGS} ./cmd/mango/
 
 r: run ## Alias for run
 
 check-agent-sources: ## Check documented agent sources without writing changes
-	go run ./cmd/profile-mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
+	go run ./cmd/mango agents check --manifest "$(or $(MANIFEST),docs/dev/agents/sources.json)"
 
 worktree: ## Create or reuse an isolated agent worktree (BRANCH required)
 	@test -n "$(BRANCH)" || (echo "BRANCH is required: make worktree BRANCH=agent/name [BASE=$$(git branch --show-current)]" >&2; exit 1)
@@ -112,8 +143,8 @@ worktree-clean: ## Remove registered worktrees beneath .worktrees (preserves rep
 		git worktree remove --force "$$wt"; \
 	done
 
-uninstall: ## Uninstall profile-mango
-	@./uninstall.sh
+uninstall: ## Uninstall mango and the profile-mango alias from the make install directory
+	@PROFILE_MANGO_INSTALL_DIR="$(GOBIN_DIR)" ./uninstall.sh
 
 u: uninstall ## Alias for uninstall
 

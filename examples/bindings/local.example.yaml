@@ -1,0 +1,33 @@
+# Copy to local.yaml and set the provider, model, and effort for your account.
+# These are illustrative IDs, not proof of client compatibility or authentication.
+# `targets` is optional: each listed agent gets the base route with its own
+# fields applied, so one route can drive several agents with different models.
+routes:
+  openai:
+    provider: openai
+    transport: native
+    authentication: oauth
+    model: gpt-6-sol
+    effort: high
+    targets:
+      claude-code:
+        provider: anthropic
+        model: claude-sonnet-5
+      opencode:
+        model: gpt-6-luna
+    # `roles` is optional: a model per portable role (worker, planner, research,
+    # tiny). Profile roles install as subagent files with these models (Codex,
+    # OpenCode, Claude Code) or as Oh My Pi model slots (worker: task; planner:
+    # plan, slow; research: smol; tiny: tiny, commit). A role without a model
+    # here uses the agent's default model. `subagentMaxEffort` (Oh My Pi task.maxEffort)
+    # caps the effort a subagent spawn may request.
+    subagentMaxEffort: high
+    roles:
+      research:
+        provider: openai
+        model: gpt-6-luna
+        effort: medium
+      tiny:
+        provider: openai
+        model: gpt-6-luna
+        effort: low

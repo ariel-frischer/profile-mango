@@ -32,6 +32,15 @@ can pin values. Provider, default model, base URL, API mode, custom providers,
 ordered fallbacks, reasoning effort, and provider-specific keys or OAuth are
 documented. A portable profile must not copy credentials or infer route identity.
 
+**Native named profiles:** the pinned source at commit `345cd2b057a452236de401d3534b8502a7465e8d`
+(`v2026.9.14`) maps `hermes -p <name>` / `hermes --profile <name>` to
+`<hermes-home>/profiles/<name>/config.yaml`, where `<hermes-home>` is the
+directory holding the main `config.yaml` (default `~/.hermes`). profile-mango
+installs named profiles there; see
+[Named-profile installation](#named-profile-installation-2026-09-23) for the
+file and line evidence. These are config/state profiles, distinct from
+provider-local authentication profiles.
+
 ## Tools, instructions, and skills
 
 Toolsets gate availability, but local execution otherwise has the user's
@@ -61,7 +70,7 @@ of those effects before execution.
 
 ## Inert preview boundary
 
-`profile-mango render <name> --target hermes --target-version 0.21.3` emits a
+`mango render <name> --target hermes --target-version 0.21.3` emits a
 deterministic `preview/<name>.config.yaml.preview` candidate through the
 versioned render report. Its source-grounded YAML fields are `model.provider`,
 `model.default`, and `agent.reasoning_effort`. It never copies authentication
@@ -102,3 +111,75 @@ execution. Permissions, tools, instructions, skills, and other required properti
 remain blocked. The initial M0 observations above remain historical evidence.
 See the [retained native evidence](../../../pkg/adapters/hermes/hermes_native_evidence.md)
 for exact hashes, invocation, and limitations.
+
+## Named-profile installation, 2026-09-23
+
+`mango install <profile> --target hermes` writes the three qualified
+fields to the config that `hermes -p <profile>` reads, and leaves the default
+config alone unless you pass `--default`. The plan prints
+`use it: hermes -p <profile>`. Evidence is **source-only**: the pinned files
+below were fetched read-only (via the GitHub Contents API and
+`raw.githubusercontent.com`) at commit `345cd2b057a452236de401d3534b8502a7465e8d`
+(`v2026.9.14`) on 2026-09-23. The locally installed pipx package is `0.19.0`,
+not the pinned version, so it was not read or run as this evidence, and no
+native `hermes -p`/`hermes profile` probe was run (the config-consumption
+probe in the [retained native evidence](#bounded-installation-qualification-2026-09-22)
+above does not exercise profile resolution).
+
+| Pinned file | Lines | Observation |
+| --- | --- | --- |
+| [`hermes_cli/profiles.py`](https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/hermes_cli/profiles.py) | 24 | `_PROFILE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")` — the on-disk profile id pattern. |
+| same | 120 | `_RESERVED_NAMES = frozenset({"hermes", "default", "test", "tmp", "root", "sudo"})`. |
+| same | 132-135, 138-142 | `_get_profiles_root()` is `_get_default_hermes_home() / "profiles"`; `_get_default_hermes_home()` is `~/.hermes` (or a Docker/custom root), independent of any already-active profile home. |
+| same | 172-186 | `normalize_profile_name` lowercases input and case-folds `"default"` before dispatch. |
+| same | 189-206 | `validate_profile_name` special-cases `"default"` to pass instead of rejecting it, then enforces the id pattern and rejects `_RESERVED_NAMES`. |
+| same | 232-244 | `get_profile_dir(name)`: `"default"` returns the root home unchanged; any other valid id returns `<profiles-root>/<name>`. |
+| same | 247-256 | `profile_exists(name)`: for a named profile, true only when `profile_dir.is_dir()` and the directory is not tombstoned — no other marker file is required. |
+| same | 1789-1813 | `resolve_profile_env(profile_name)`, called from `main.py` before HERMES_HOME is set: the root is `HERMES_HOME` when set (its grandparent when its parent directory is named `profiles`), else `~/.hermes` (1799-1806); `"default"` returns that root; otherwise it requires `<root>/profiles/<canon>` to already exist as a directory (`is_dir()`, not tombstoned) and raises `FileNotFoundError` otherwise — the directory is **not** auto-created by profile selection. |
+| [`hermes_cli/main.py`](https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/hermes_cli/main.py) | 401, 419-446 | `_scan_profile_flag` pre-parses `-p`/`--profile <name>` (and `--profile=<name>`) from `sys.argv` before any hermes module import. |
+| same | 508-556 | `_apply_profile_override()` calls `resolve_profile_env(profile_name)` and sets `os.environ["HERMES_HOME"]` to the result before any other hermes import; a missing profile directory prints `Error: Profile '<name>' does not exist. Create it with: hermes profile create <name>` and exits 1 (except a `SUDO_USER` fallback that does not apply here). |
+| [`hermes_cli/config_home.py`](https://github.com/NousResearch/hermes-agent/blob/v2026.9.14/hermes_cli/config_home.py) | 43-54 | `initialize_home` can create a missing `HERMES_HOME` and its required subdirectories — but this runs only *after* `HERMES_HOME` is set, i.e. after `resolve_profile_env` has already required the profile directory to exist. It does not rescue a missing named-profile directory. |
+
+**Path rule.** `hermes -p <name>` looks under the Hermes home that
+`resolve_profile_env` computes from `HERMES_HOME` (or `~/.hermes`), not beside
+any particular config file. So named install requires the main config to be
+`<hermes-home>/config.yaml` and writes `<hermes-home>/profiles/<name>/config.yaml`.
+Any other `--config` (for example one outside `~/.hermes` with `HERMES_HOME`
+unset, or a relative `HERMES_HOME`) is blocked with
+`install.named_profile_path_unsafe`. The `default` profile is exempt: it is
+the given config itself.
+
+**Profile validity.** Only the `profiles/<name>` directory needs to exist for
+`hermes -p <name>` to resolve (`profile_exists`/`resolve_profile_env` above);
+no `hermes profile create` bootstrap (memories/, sessions/, skills/, a
+`profile.yaml` description file, or a shell alias) is required. Writing
+`config.yaml` there creates that directory as a side effect, which is
+sufficient.
+
+**`default` profile.** Hermes maps `-p default` (any case) to the base
+`HERMES_HOME`, not `profiles/default`. So installing a profile named `default`
+patches the main config in place, and no second file is written.
+
+**Reserved and invalid names.** `hermes -p <name>` itself rejects the
+`_RESERVED_NAMES` set and any id outside `_PROFILE_ID_RE`, so profile-mango
+blocks the same names before writing (`install.named_profile_path_unsafe`)
+rather than installing a profile Hermes would refuse to start.
+
+**Separate state.** A new profile directory has no memories, sessions,
+skills, or credentials from the default profile. profile-mango doesn't copy
+them, and the plan says so (`hermes.install.profile_state_separate`).
+
+**Validation.** Unit and command-level tests cover these cases in synthetic
+homes: create, noop reinstall, `--default`, the `default` name, reserved-name
+blocking, and undo. A sandbox run of the built binary in a scratch `HOME`,
+with `PROFILE_MANGO_HOME` inside it, installed a `coding` profile. It created
+`~/.hermes/profiles/coding/config.yaml` and left `~/.hermes/config.yaml`
+byte-identical (SHA-256 `7ada0c81a5c481d8836800b97e0bedc79243d22e072c966e1f0f5d9be62f3231`
+before and after). Undo then removed the profile config and left the default config untouched.
+
+**Undo.** Hermes treats any `profiles/<name>` directory as a live profile
+(`profile_exists`), so an empty leftover would still start. The install journal
+records the parent directories the install created (`createdDirs`); undo
+removes them again once they are empty. A directory that already existed, or
+that has gained other files, is kept. Undo keeps its backup of the removed file
+next to the undo journal instead of inside that directory.

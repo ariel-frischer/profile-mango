@@ -1,231 +1,306 @@
 ---
 name: profile-mango
 description: >
-  Use the profile-mango CLI to scaffold, author, validate, and inspect portable
-  coding-agent profiles and machine-local route bindings. Use when working with
-  PolicyProfile YAML, local bindings, offline validation, or inert target
-  previews. Preserve its fail-closed safety and evidence boundaries.
+  Operates the mango CLI (profile-mango) that installs one portable coding-agent
+  profile — model/provider/effort route, subagent roles, global instruction files,
+  skills — across Claude Code, Codex, OpenCode, Oh My Pi, Pi, Hermes, and OpenClaw.
+  Use when switching agents to another profile, changing model or effort routing or
+  subagent roles across agents, editing profile.yaml or bindings/local.yaml, checking
+  `mango status` drift, or running mango init/validate/render/doctor/install/use/undo/route.
+  Not for editing the instruction text itself (global-agent-instructions).
 license: MIT
-compatibility:
-  - Claude Code
-  - Cursor
-  - Codex
-  - Gemini CLI
-  - VS Code
+compatibility: Requires the mango CLI on PATH. Usable from any Agent Skills host (Codex, OpenCode, Pi, Cursor, Gemini CLI, VS Code, Claude Code, Oh My Pi).
 metadata:
   author: Ariel Frischer
-  version: 0.0.1
+  version: 0.0.6
   tags: profile-mango, coding-agents, profiles, cli, yaml, validation
 allowed-tools: Bash Read Write Edit
 ---
 
 # profile-mango
 
-`profile-mango` separates portable coding-agent intent from machine-local route
-identity. Use it to create and validate strict profile packages, then inspect
-explicitly inert target previews without modifying an agent's configuration.
-
-## Check the CLI
+`mango` separates portable coding-agent intent from machine-local route
+identity: author/validate profiles, render inert previews, and plan only the
+version-qualified installs below. Install the CLI first if not on PATH:
 
 ```bash
-profile-mango version
-profile-mango --help
+go install github.com/ariel-frischer/profile-mango/cmd/mango@latest
+# or a checksum-verified release binary:
+curl -fsSL https://raw.githubusercontent.com/ariel-frischer/profile-mango/main/install.sh | sh
+mango version
 ```
 
-The skill is guidance. The `profile-mango` binary must be installed separately.
+Install or update this skill with
+`npx skills add ariel-frischer/profile-mango --skill profile-mango -g`.
 
-## Core workflow
-
-Choose one package location:
+## Scaffold a package
 
 ```bash
-profile-mango init                  # global package at ~/.profile-mango
-profile-mango init .                # explicit package in the current directory
-profile-mango init ./my-profiles # explicit package in a new directory
+mango init                # global package at ~/.profile-mango
+mango init ./my-profiles  # explicit package in a new directory
 ```
 
-`init` creates only absent paths and refuses to overwrite existing files:
+`init` creates only absent paths, never overwriting: `profiles/default/profile.yaml`,
+`bindings/local.example.yaml`, a gitignored `bindings/local.yaml` copy, and
+`bindings/.gitignore`. Home precedence is `--home`, `$PROFILE_MANGO_HOME`,
+then `~/.profile-mango` (`mango home` prints it). Explicit project
+`render`/`install` inputs (`--profiles`/`--resource-root`/`--bindings`) are
+all-or-none; else they default from the home.
 
-```text
-profiles/default/profile.yaml
-bindings/local.example.yaml
-bindings/.gitignore
-```
+## Author a profile
 
-For the global package, create the ignored machine-local binding and validate
-the starter profile:
-
-```bash
-cp ~/.profile-mango/bindings/local.example.yaml \
-   ~/.profile-mango/bindings/local.yaml
-profile-mango validate ~/.profile-mango/profiles/default/profile.yaml \
-  --bindings ~/.profile-mango/bindings/local.yaml
-```
-
-For an explicit project package, run the same workflow relative to its root:
-
-```bash
-cp bindings/local.example.yaml bindings/local.yaml
-profile-mango validate profiles/default/profile.yaml \
-  --bindings bindings/local.yaml
-```
-
-Use `--json` when another tool or agent will consume the validation result.
-
-## Authoring rules
-
-A profile contains portable intent:
+Every field sits at the top level of `profiles/<name>/profile.yaml`: `description`,
+`labels`, `extends`, `route`, `permissions`, `tools`, `instructions`, `skills`.
+A child's `instructions` append after the parent's; `skills` replaces unless omitted.
+`labels` is a string map (`labels: {team: core}`), not a list; a wrong shape
+fails with its path, e.g. `labels: expected a map of string keys to string
+values (e.g. labels: {team: core}), got a list`.
 
 ```yaml
-apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: research
-spec:
-  routeRef: local
-  permissions:
-    mode: read-only
-    network: allow
-    shell: deny
-  tools:
-    allow: [read, search, web]
-    deny: [write, edit, deploy]
-  instructions:
-    append:
-      - instructions/system.md
-  skills:
-    - skills/research/SKILL.md
+description: Read-only code review
+route: local
+permissions: {mode: read-only, network: deny, shell: deny}
+tools: {allow: [read, search], deny: [write, edit, shell, deploy]}
+instructions: {append: [instructions/AGENTS.md]}
+skills: [skills/review/SKILL.md]
 ```
 
-The local binding identifies a route, never credentials:
+Each `skills` entry is a skill folder's `SKILL.md` (frontmatter `description`
+required; `name`, if set, equals the folder name). A vendored copy adds
+`source: {repo, commit, path?, sha256}`, where `sha256` is the folder's tree
+digest; a mismatch fails validation and names the actual digest.
+
+`bindings/local.yaml` names a route, never credentials. `provider`/`model`/`effort`
+are required; an optional `targets` map gives named agents (`claude-code`,
+`codex`, `hermes`, `oh-my-pi`, `openclaw`, `opencode`, `pi`) override fields
+on top of the base route, so one profile drives several agents at once:
 
 ```yaml
 routes:
   local:
     provider: openai
-    transport: native
-    authentication: oauth
-    model: gpt-5.6
+    model: gpt-6-sol
     effort: high
+    targets:
+      claude-code: {provider: anthropic, model: claude-sonnet-5}
 ```
 
-Keep `bindings/local.yaml` untracked. Credentials remain owned by the target
-agent and must not be copied into profiles, bindings, generated artifacts, or
-diagnostics.
+Effort is applied per agent: Codex `model_reasoning_effort` (none..xhigh;
+other values block), Claude Code `effortLevel` (low/medium/high/xhigh), OpenCode agent `variant`, Oh My Pi
+`:effort` selector suffix. A value an agent cannot take shows as
+`effort <v>: NOT APPLIED (<reason>)` in the plan and a JSON
+`skippedRequirements` entry; it is never dropped silently.
 
-## Validation and errors
+Roles use a fixed portable vocabulary: `worker` (implementation subagents),
+`planner` (planning/architecture), `research` (read-only scouting), `tiny`
+(small mechanical tasks, commit messages). Any other name fails; old Oh My Pi
+slot names fail with a hint (`smol` -> `research`, `task` -> `worker`,
+`plan`/`slow` -> `planner`, `commit` -> `tiny`). Optional `roles` under a route
+bind a model per role. Oh My Pi installs them as `modelRoles.<slot>:
+provider/model:effort` (worker: task; planner: plan, slow; research: smol; tiny:
+tiny, commit) and the optional route `subagentMaxEffort` as `task.maxEffort`
+(a cap on caller-requested per-spawn effort); other agents skip
+`subagentMaxEffort` and install bound roles only through role subagent files
+(below; `--strict` blocks skips):
 
-Validation is strict and offline. Unknown or duplicate keys, null values,
-unsupported versions, missing parents, inheritance cycles, missing routes, and
-resource paths that escape the selected root are blocking errors.
+```yaml
+    subagentMaxEffort: high
+    roles:
+      planner: {provider: anthropic, model: claude-opus-5-5, effort: medium}
+      research: {provider: opencode-go, model: gpt-6-luna, effort: high}
+```
 
-When validation fails:
-
-1. Read the diagnostic code and field path.
-2. Fix the source profile, parent profile, binding, or referenced resource.
-3. Re-run `validate` with the same explicit inputs.
-4. Do not weaken a required permission, tool, authentication route, or transport
-   merely to make validation pass.
-
-## Inert target previews
-
-Rendering writes only to a new explicit staging directory. It does not install
-or apply target configuration. Use an exact documented target version and pass
-all three project input flags together:
+To change an existing route, use `mango route set` instead of hand-editing the
+bindings file: it edits only the affected lines (comments survive), creates a
+missing `targets.<agent>`/`roles.<role>` entry, validates like install, and
+writes nothing when invalid or unchanged. `mango route unset` removes fields and
+prunes emptied entries. An effort no agent uses only warns. Then apply with
+`mango use <profile>`.
 
 ```bash
-profile-mango render <profile-name> \
-  --profiles ./profiles \
-  --resource-root . \
-  --bindings ./bindings/local.yaml \
-  --target <target> \
-  --target-version <exact-version> \
-  --out ./preview-output \
-  --preview --json
+mango route list                                   # routes + profiles using each
+mango route show sol --target oh-my-pi [--json]    # as written + effective route
+mango route set sol --target oh-my-pi --effort medium --dry-run
+mango route set opus55 --role research --model gpt-6-luna
+mango route set luna --target codex --role research --provider openai  # targets.codex.roles.research
+mango route unset sol --target oh-my-pi effort     # provider|model|effort|subagent-max-effort
 ```
 
-Current target names are `claude-code`, `codex`, `pi`, `oh-my-pi`, `openclaw`,
-`hermes`, and `opencode`. `ariel-jcode` is experimental-only for Ariel's custom Jcode fork,
-not upstream Jcode or a supported public target.
+`targets.<agent>.roles.<role>: {provider?, model?, effort?}` changes a role the
+base `roles` already binds for one agent (e.g. ChatGPT OAuth is `openai-codex`
+on Oh My Pi but `openai` on Codex); an unbound role fails. Agents filter role providers:
+Claude Code role files take only `anthropic` models and Codex only its OpenAI
+provider; another provider leaves that role file without a model (the agent
+default) and the plan says why.
 
-All current target renderers remain non-applicable previews. Expect blocking
-diagnostics and a nonzero exit status even when preview artifacts are written.
-OpenCode `1.18.31` separately supports lossless transactional application of
-top-level `model` and optionally one `SKILL.md` plus `skills.paths` at one explicit
-path. A distinct named primary/subagent definition can receive model and ordered
-instructions. This does not make the renderer or full profile applicable. Never
-present preview syntax, field application, or native resolution as authentication
-or policy enforcement.
+Profile `roles.<role>: {description, instructions?}` describes each role
+(`instructions` is a package resource path; a child's role replaces the
+parent's same-name role). When the profile is the agent's default (`--default`
+or `mango use`) each role becomes a whole-file owned subagent file carrying the
+bound model/effort: Codex `~/.codex/agents/<role>.toml`, OpenCode
+`~/.config/opencode/agents/<role>.md` (`mode: subagent`, `variant`), Oh My Pi
+`~/.omp/agent/agents/<role>.md` (`model: "@<slot>"`), Claude Code
+`~/.claude/agents/<role>.md` (anthropic only). Named-only installs list them as
+`role-definitions` (subagent files are global); Pi, Hermes, and OpenClaw always
+skip them; `--strict` blocks. A role effort the agent cannot write shows as
+`effort <v> (role <r>): NOT APPLIED`; a bound role with no declared profile role
+installs only on Oh My Pi and is otherwise skipped as `roles`. A same-name
+unmanaged file (e.g. a hand-written `~/.codex/agents/planner.toml`) is adopted
+with a backup and replaced whole, so native-only fields such as Codex
+`sandbox_mode` are lost: check the plan's `adopt` rows first.
 
-## Plan-first install
+Optional `globalInstructions` owns whole global instruction files per agent
+(file name to package resource, or a non-empty list of resources joined in
+order with one blank line, e.g. shared core plus a per-agent part). Qualified files only: Claude Code `CLAUDE.md`,
+Codex `AGENTS.md`, Oh My Pi `AGENTS.md`/`RULES.md`, OpenCode `AGENTS.md`;
+another name blocks, other agents skip (`--strict` blocks). They are written
+beside the config only by `use`, `install --default`, or agents without named
+profiles:
 
-Only the exact subsets in the README install table and target evidence ledger are installable. Other targets remain blocked.
-OpenCode main-config installation requires exact version `1.18.31`, a route-only
-or single-skill profile, and one explicit config path. Plan first against
-synthetic or separately approved disposable state:
+```yaml
+globalInstructions:
+  oh-my-pi: {AGENTS.md: [instructions/shared/core.md, instructions/work/omp.md], RULES.md: instructions/work/RULES.md}
+  home: {AGENTS.md: instructions/work/home-AGENTS.md}   # ~/AGENTS.md, owned via Pi
+```
+
+`home` accepts only `AGENTS.md` and is written by the Pi target (the one agent
+that reads it in every folder under your home); installs without Pi skip it.
+Optional `agentFiles` ships native subagent files verbatim into the agent's
+role-file folder (`agents/`), for frontmatter mango does not model or to
+override a bundled agent by name (Oh My Pi loads `~/.omp/agent/agents/scout.md`
+over its bundled `scout`):
+
+```yaml
+agentFiles:
+  oh-my-pi: {scout.md: agents/omp/scout.md}
+  codex: {reviewer.toml: agents/codex/reviewer.toml}
+```
+
+Only role-file agents accept them (Codex `.toml`; Claude Code, OpenCode, Oh My
+Pi `.md`; a wrong extension blocks); other agents and named-only installs skip
+them as `agentFiles` (`--strict` blocks). A name matching a profile role
+(`research.md` with `roles.research`) fails validation. Ownership matches global
+files: adopt with backup, `agent-file` kind in `mango status`, edits need
+`--override`, `use` releases, `undo` restores.
+
+A full example with all four roles and global files:
+`examples/profiles/daily-driver/profile.yaml` in the source checkout.
+
+## Validate, preview, check readiness
 
 ```bash
-profile-mango install <profile-name> \
-  --profiles ./profiles \
-  --resource-root . \
-  --bindings ./bindings/local.yaml \
-  --target opencode@1.18.31 \
-  --config-path opencode=/explicit/disposable/opencode.jsonc \
-  --override --json
+mango validate <profile.yaml> --bindings <file> --json
+mango doctor --json
+mango render <profile-name> --profiles ./profiles --resource-root . \
+  --bindings ./bindings/local.yaml --target <name> --target-version <exact> \
+  --out ./preview --preview --json
 ```
 
-Review the destination digest, field diff, file hashes, and plan ID. Apply only by
-repeating the exact inputs with `--apply --yes --expect-plan <planID>`. Existing
-unowned or externally edited files require `--override`; there is no general force
-path. OpenCode skill files cannot override unowned or externally edited resources,
-even with `--override`. Its directory-wide discovery is not an exclusive allowlist.
-Never use a live path without new path-specific user approval after a verified
-disposable backup/restore rehearsal.
+`validate` checks one profile's syntax and route binding offline; parent
+resolution and resources are only checked by `render`/`install` with a
+package root. `doctor` is read-only; its `PLAN` column is exactly what a plain
+`mango install <profile> --target <name>` would plan, and `IN RANGE` compares
+the detected binary to the tested range (tested version up to the next minor):
 
-For a distinct named OpenCode agent definition, use an instruction-only profile
-with a native route and pass `--agent opencode@1.18.31=primary:mango-review` (or
-`subagent:mango-review`) plus `--config-path
-opencode@1.18.31=/explicit/disposable/opencode/agents/mango-review.md`. The
-parent `agents` directory must already exist. This writes a custom Markdown
-prompt and adjacent ownership manifest, not the main JSONC config or a native
-named-profile preset. A primary is not activated by installation and a subagent
-is not proven delegated. Required permissions, tools and skills block. Unowned
-or edited definitions never permit override, including identical bytes. On
-profile omission, only clean owned skills and Mango-introduced discovery paths
-are removed; ambiguous legacy paths remain with a warning.
+```text
+TARGET               BINARY  DETECTED               IN RANGE  CONFIG                                   PLAN
+claude-code@2.1.278  claude  2.1.281 (Claude Code)  yes       /home/u/.claude/settings.json (exists)   ready
+oh-my-pi@18.4.6      omp     omp/18.4.6             yes       /home/u/.omp/agent/config.yml (exists)   ready
+next: mango install default --target claude-code
+```
 
-Use global `--non-interactive` for automation. It never grants consent: apply
-still needs `--yes --expect-plan <planID>`. JSON and redirected input never prompt.
-Plan-only JSON is one `Plan`; ready apply JSON is one `ApplyReport`, including
-engine failure reports, not a concatenated plan/report stream. Blocked apply emits
-its blocked plan and exits nonzero. Check exit status even when JSON is present.
+`render` (alias `preview`) writes only beneath a new `--out` directory. Full
+profiles are never directly applicable (`render.json` keeps
+`applicable: false`); a staged `--preview` prints the blockers as `warning`
+lines, ends with `preview staged in <out>; applicable to <target>@<version>:
+no (...)`, and exits 0. Without `--preview` it writes nothing and exits nonzero.
+
+## Plan, apply, undo
+
+A preview's `applicable: false` does not mean the agent can't be installed:
+`install` applies the narrow per-agent subset in `docs/public/agents.md` (e.g.
+the Claude Code and Oh My Pi model settings). A `ready` plan is installable;
+use `install` rather than hand-writing agent config. An installed version
+outside the tested range still plans, with a warning. `install` always plans
+first, then repeats the same inputs to apply:
+
+```bash
+mango install <profile-name> --target <name>
+mango install <profile-name> --target <name> --apply --yes --expect-plan <planID>
+mango undo --target <name>   # add --apply --yes --expect-plan <id> to apply
+```
+
+Scripts read the ID from `--json` output as `.planID` (install, use, and undo;
+undo also reports `originalPlanID`), or from the text line `plan <id> (ready)`.
+Target names are `claude-code`, `codex`, `hermes`, `oh-my-pi` (not `omp`),
+`openclaw`, `opencode`, `pi`, optionally `@<version>`.
+
+Agents with named profiles, native or emulated, get the profile under its own
+name and leave the agent's default settings alone; the plan prints
+`use it: <command>` (Codex: `codex --profile <profile-name>`, from
+`$CODEX_HOME/<profile-name>.config.toml`; OpenClaw: `openclaw --profile <profile-name>`,
+from `~/.openclaw-<profile-name>/openclaw.json`; Claude Code, which has no native
+profiles: `claude --settings ~/.claude/profiles/<profile-name>.json`; OpenCode:
+`opencode --agent <profile-name>`, from `agents/<profile-name>.md` beside `opencode.json`;
+Hermes: `hermes -p <profile-name>`, from `<hermes-home>/profiles/<profile-name>/config.yaml`;
+Oh My Pi, emulated: `omp --config ~/.omp/agent/profiles/<profile-name>.yml`).
+Add `--default` to also write the agent's default settings. Agents without
+profiles are installed as their default settings, with a plan note saying so.
+Without `--config`, plans use the target's documented default config path.
+Review the resolved path, field diff, skipped requirements, and plan ID
+before applying. An existing config is adopted with a backup; a
+Mango-installed value the user later edited needs `--override`, and
+`--non-interactive` never grants consent by itself. `undo` (alias `restore`)
+restores the latest committed install, or an explicit `--original-plan <id>`.
+
+`mango use <profile>` switches every managed agent (or `--target`/`--all`) to
+the profile as its default, with the same plan-then-`--apply --yes
+--expect-plan <id>` consent. A `(blocked)` plan with `conflict` rows means an
+owned file was edited outside mango: review the file rows with `-v`, then rerun the
+plan with `--override` (or `--target` the unaffected agents). Global files the
+new profile does not write are released: deleted if profile-mango created them,
+restored from the backup if adopted. `mango status [--json]` is read-only: per agent the recorded profile,
+each owned file `in-sync`/`edited`/`missing`, and `sources:
+current`/`changed`/`unknown` against the current profile files and bindings.
+Each agent is labeled at its installed version (same `--version` probe as
+install plans), e.g. `codex@0.155.1 (tested 0.157.1)` when it differs from the
+tested adapter version; `--json` adds `versionCheck`
+(`binary`, `qualified`, `range`, `detected`, `status`).
+
+```bash
+mango status --json
+mango use <profile-name>            # add --apply --yes --expect-plan <id>
+```
+
+`mango use` only covers agents already managed (see `status`). To bring a new
+agent under a profile, first run `mango install <profile> --default --target
+<name>`. With `use` or `--default`, Claude Code, Codex, Oh My Pi, and OpenCode
+copy each skill folder whole into their skills folder (Codex:
+`~/.agents/skills`); named profiles list skills as not installed, and switching
+to a profile without a skill removes its files or restores the replaced ones.
+OpenClaw copies skills beside every config it writes, named profiles included
+(`~/.openclaw-<name>/skills`); `mango install <p> --target openclaw --agent
+openclaw=<id>` also sets that existing agent's `agents.entries.<id>.skills`
+allowlist, which later installs keep and a switch gives back.
+
+The skill folder in the profile package is canonical; installed copies are
+output. Never copy an installed or `~/.agents/skills` copy over the package
+folder: it has rendered routes instead of `{{route.…}}` placeholders and may be
+older. `mango status` lists skills whose global copy differs and which side is
+newer; port a newer global edit into the package by hand. An install conflicts
+on an unmanaged skill file newer than the package copy unless `--override`.
 
 ## Safety boundary
 
-- `init`, `home`, `validate`, and `render` do not inspect agent homes, access
+- `init`, `home`, `validate`, and `render` never inspect agent homes, read
   credentials, call providers, or launch target agents.
-- `install` may apply only qualified target-specific subsets. It may touch only
-  explicit config paths and adjacent Profile Mango manifests, backups, journals,
-  and locks.
-  It must not read auth stores, sessions, plugins, MCP, providers, or the network.
-  Do not point it at a live config without new path-specific user approval.
-- `render` writes only beneath the new path supplied by `--out` and never applies
-  the candidate.
-- `scripts/opencode-config-probe.sh` is an opt-in exact-binary developer probe. Run
-  it only with explicit authorization, synthetic scratch state, blocked network,
-  no TUI/session/provider credentials, and retained backup/restore evidence.
-- `profile-mango agents check` is separate: it performs an explicit network drift
-  check against documented sources. Do not run it when offline operation is
-  required.
-- Unknown or unsupported target behavior remains a blocker, not an invitation to
-  infer compatibility.
-
-## Installing the CLI from source
-
-```bash
-git clone git@gitlab.com:ariel-frischer/profile-mango.git
-cd profile-mango
-make deps
-make install
-profile-mango version
-```
+- `install`/`undo` touch only the planned config path and adjacent
+  profile-mango manifests, backups, journals, and locks; never auth stores,
+  sessions, plugins, MCP, providers, or the network. Unqualified targets and
+  unknown required properties block installation rather than being dropped.
+- Known requirements a target cannot install (permissions, tools,
+  instructions, skills, roles, unsupported effort) are skipped, not applied: the plan lists them under
+  each target (`not installed for this agent: ...`, JSON
+  `skippedRequirements`). Pass `--strict` to block instead.
+- `mango agents check` is a separate network drift check; skip it
+  when offline operation is required.

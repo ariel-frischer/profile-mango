@@ -1,0 +1,23 @@
+description: Everyday default with subagent roles and global instruction files
+extends: workflow-base
+# Global files change every profile of an agent, so they install only with
+# `mango use daily-driver` or `install --default`. Existing files are backed up.
+globalInstructions:
+  codex: {AGENTS.md: instructions/global/AGENTS.md}
+  claude-code: {CLAUDE.md: instructions/global/AGENTS.md}
+  opencode: {AGENTS.md: instructions/global/AGENTS.md}
+  oh-my-pi: {AGENTS.md: instructions/global/AGENTS.md}
+  home: {AGENTS.md: instructions/global/AGENTS.md}
+# Each role becomes a subagent file on Codex, OpenCode, Oh My Pi, and Claude
+# Code; the route's `roles` in bindings picks its model and effort.
+roles:
+  worker:
+    description: Implements one scoped change test-first
+    instructions: instructions/roles/worker.md
+  planner:
+    description: Plans and splits work; does not edit code
+    instructions: instructions/roles/planner.md
+  research:
+    description: Read-only codebase scout that returns evidence
+    instructions: instructions/roles/research.md
+  tiny: {description: Small mechanical edits and commit messages}

@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 type sourceCheck struct {
@@ -24,6 +25,16 @@ type loadedInput struct {
 	Resources   []render.Resource
 	InputSHA256 string
 	Sources     []sourceCheck
+	// Globals holds each target's loaded globalInstructions files.
+	Globals map[string][]globalFile
+	// AgentFiles holds each target's loaded agentFiles.
+	AgentFiles map[string][]globalFile
+	// Skills holds each skills entry's loaded folder, installed verbatim.
+	Skills []skillBundle
+	// RoleInstructions holds each role's loaded instructions resource.
+	RoleInstructions map[string][]byte
+	// Bindings resolves {{route.…}} placeholders in the resources per target.
+	Bindings profilemango.Bindings
 }
 
 func BuildPlan(request Request) (Plan, error) {
@@ -39,7 +50,7 @@ func BuildPlan(request Request) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
-	plan := Plan{APIVersion: PlanAPIVersion, Kind: PlanKind, Profile: request.ProfileName, Backup: request.Backup, Override: request.Override, InputSHA256: loaded.InputSHA256}
+	plan := Plan{APIVersion: PlanAPIVersion, Kind: PlanKind, Profile: request.ProfileName, Backup: request.Backup, Override: request.Override, Strict: request.Strict, InputSHA256: loaded.InputSHA256}
 	plan.sources = loaded.Sources
 	for _, targetRequest := range targets {
 		targetPlan := planTarget(request, registry, targetRequest, loaded)
@@ -48,6 +59,9 @@ func BuildPlan(request Request) (Plan, error) {
 	}
 	plan.Diagnostics = append(plan.Diagnostics, diagnostics...)
 	plan.Status = aggregateStatus(plan.Targets)
+	if allSkipped(plan.Targets) {
+		plan.Diagnostics.Add(profilemango.SeverityError, "install.no_agents_found", "targets", noAgentsFound, 0, 0)
+	}
 	plan.normalize()
 	plan.PlanID, err = planID(plan)
 	if err != nil {
@@ -102,7 +116,7 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	bindingsSnapshot, err := installfs.SnapshotFile(request.BindingsPath)
 	if err != nil || !bindingsSnapshot.Exists {
 		if err == nil {
-			err = fmt.Errorf("bindings file does not exist")
+			err = missingBindingsError(request.BindingsPath)
 		}
 		return loadedInput{}, diagnostics, fmt.Errorf("read bindings: %w", err)
 	}
@@ -116,6 +130,17 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 	resources, resourceDiagnostics, resourceSources := loadResources(request.ResourceRoot, resolved)
 	diagnostics = append(diagnostics, resourceDiagnostics...)
 	sources = append(sources, resourceSources...)
+	globals, globalDigests, globalDiagnostics, globalSources := loadGlobalInstructions(request.ResourceRoot, resolved)
+	diagnostics = append(diagnostics, globalDiagnostics...)
+	sources = append(sources, globalSources...)
+	roles, roleDigests, roleDiagnostics, roleSources := loadRoleInstructions(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, roleDiagnostics...), append(sources, roleSources...)
+	agentFiles, agentDigests, agentDiagnostics, agentSources := loadAgentFiles(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, agentDiagnostics...), append(sources, agentSources...)
+	skills, skillDigests, skillDiagnostics, skillSources := loadSkills(request.ResourceRoot, resolved)
+	diagnostics, sources = append(diagnostics, skillDiagnostics...), append(sources, skillSources...)
+	loaded := loadedInput{Resources: resources, Globals: globals, AgentFiles: agentFiles, Skills: skills, RoleInstructions: roles, Bindings: bindings}
+	diagnostics = append(diagnostics, loaded.routeRefDiagnostics()...)
 	if diagnostics.HasErrors() {
 		return loadedInput{}, diagnostics.Sorted(), fmt.Errorf("validate install inputs: %s", diagnostics.Error())
 	}
@@ -127,11 +152,21 @@ func loadInput(request Request) (loadedInput, profilemango.Diagnostics, error) {
 		Profile   profilemango.ResolvedProfile
 		Route     profilemango.RouteBinding
 		Resources []profilemango.ResourceDigest
-	}{Profile: resolved, Route: route, Resources: digest})
+		Globals   []profilemango.ResourceDigest `json:",omitempty"`
+	}{Profile: resolved, Route: route, Resources: digest, Globals: append(append(append(globalDigests, roleDigests...), agentDigests...), skillDigests...)})
 	if err != nil {
 		return loadedInput{}, diagnostics, fmt.Errorf("hash install inputs: %w", err)
 	}
-	return loadedInput{Profile: resolved, Route: route, Resources: resources, InputSHA256: inputHash, Sources: sources}, diagnostics.Sorted(), nil
+	loaded.Profile, loaded.Route, loaded.InputSHA256, loaded.Sources = resolved, route, inputHash, sources
+	return loaded, diagnostics.Sorted(), nil
+}
+
+// missingBindingsError names the exact fix for a missing local bindings file:
+// copy the starter example scaffolded by "mango init", or run init
+// again in a fresh package.
+func missingBindingsError(path string) error {
+	example := filepath.Join(filepath.Dir(path), "local.example.yaml")
+	return fmt.Errorf("bindings file does not exist; create it with: cp %s %s, or run: mango init", example, path)
 }
 
 func loadProfileChain(root, name string, profiles map[string]profilemango.PolicyProfile, diagnostics *profilemango.Diagnostics, sources *[]sourceCheck) error {
@@ -149,27 +184,24 @@ func loadProfileChain(root, name string, profiles map[string]profilemango.Policy
 	if !snapshot.Exists {
 		return fmt.Errorf("profile %q does not exist", name)
 	}
-	profile, foundDiagnostics := profilemango.ParseProfile(snapshot.Content)
+	profile, foundDiagnostics := profilemango.ParseProfileAt(snapshot.Content, name)
 	for _, diagnostic := range foundDiagnostics {
 		diagnostic.Path = name + "." + diagnostic.Path
 		*diagnostics = append(*diagnostics, diagnostic)
 	}
 	profiles[name] = profile
 	*sources = append(*sources, sourceCheck{Path: snapshot.Path, Snapshot: snapshot})
-	if profile.Spec.Extends != "" {
-		return loadProfileChain(root, profile.Spec.Extends, profiles, diagnostics, sources)
+	if profile.Extends != "" {
+		return loadProfileChain(root, profile.Extends, profiles, diagnostics, sources)
 	}
 	return nil
 }
 
 func loadResources(root string, profile profilemango.ResolvedProfile) ([]render.Resource, profilemango.Diagnostics, []sourceCheck) {
 	type reference struct{ path, kind string }
-	refs := make([]reference, 0, len(profile.Instructions)+len(profile.Skills))
+	refs := make([]reference, 0, len(profile.Instructions))
 	for _, path := range profile.Instructions {
 		refs = append(refs, reference{path: path, kind: "instruction"})
-	}
-	for _, path := range profile.Skills {
-		refs = append(refs, reference{path: path, kind: "skill"})
 	}
 	seen := make(map[string]struct{}, len(refs))
 	resources := make([]render.Resource, 0, len(refs))
@@ -215,16 +247,36 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 	if err := validateAgentDestination(targetRequest); err != nil {
 		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
 	}
+	if err := validateSkillAgent(adapter, targetRequest.SkillAgent); err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), "install.agent_destination_invalid")
+	}
+	targetPlan.Install = installModeFor(adapter, request, targetRequest)
+	loaded, err := loaded.forTarget(targetRequest.Target.Name)
+	if err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), render.RouteRefInvalidCode)
+	}
 	if !metadata.Installable {
 		return blockedTargetPlan(targetPlan, metadata.Reason, "install.target.blocked")
 	}
+	source := ConfigSourceExplicit
 	if strings.TrimSpace(targetRequest.ConfigPath) == "" {
-		return blockedTargetPlan(targetPlan, "an explicit synthetic or disposable config path is required", "install.config_path_required")
+		path, reason := resolveDefaultConfigPath(adapter, targetRequest, request.Env)
+		if reason != "" {
+			return blockedTargetPlan(targetPlan, reason, "install.config_path_required")
+		}
+		targetRequest.ConfigPath, targetPlan.ConfigPath, source = path, path, ConfigSourceDefault
+	}
+	targetPlan.Config = &ConfigDestination{Path: targetRequest.ConfigPath, Source: source}
+	if source == ConfigSourceDefault {
+		if missing, done := missingAgentFolder(request, targetPlan); done {
+			return missing
+		}
 	}
 	config, err := installfs.SnapshotFile(targetRequest.ConfigPath)
 	if err != nil {
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("inspect config path: %v", err), "install.config_path_unsafe")
 	}
+	targetPlan.Config.Path = config.Path
 	manifestPath := targetRequest.ManifestPath
 	if manifestPath == "" {
 		manifestPath = targetRequest.ConfigPath + ".profile-mango.manifest.json"
@@ -253,19 +305,55 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 			return blockedTargetPlan(targetPlan, "named definition is unowned or edited; --override cannot replace it", "install.agent_file_conflict")
 		}
 	}
-	patch, err := adapter.Plan(AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: loaded.Profile, Route: loaded.Route, Resources: loaded.Resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override})
+	namedFile, err := snapshotNamedFile(adapter, targetPlan.Install, config, request.Env)
 	if err != nil {
+		return blockedTargetPlan(targetPlan, err.Error(), "install.named_profile_path_unsafe")
+	}
+	useNamedProfileFile(adapter, targetPlan.Install, namedFile.Path, request.Env)
+	profile, resources, route, skipped, strictReason := targetSubset(adapter, request, targetRequest, loaded)
+	if strictReason != "" {
+		return blockedTargetPlan(targetPlan, strictReason, "install.strict_requirement_unsupported")
+	}
+	targetPlan.SkippedRequirements = skipped
+	input := AdapterInput{Target: targetRequest.Target, Agent: targetRequest.Agent, ConfigPath: config.Path, ManifestPath: manifestSnapshot.Path, Profile: profile, Route: route, Resources: resources, Config: snapshotFromFS(config), Manifest: snapshotFromFS(manifestSnapshot), Ownership: ownership, HasManifest: manifestSnapshot.Exists, Override: request.Override, NamedFile: snapshotFromFS(namedFile), Skills: installedSkillNames(adapter, targetRequest, request.Default, loaded.Skills), SkillAgent: targetRequest.SkillAgent}
+	input.Bindings = loaded.Bindings
+	if targetPlan.Install != nil {
+		input.Install = *targetPlan.Install
+	}
+	patch, err := adapter.Plan(input)
+	if err != nil {
+		if conflict, ok := err.(ohMyPiPresetConflict); ok {
+			targetPlan.Status, targetPlan.Reason = StatusConflict, conflict.Error()
+			targetPlan.Diagnostics.Add(profilemango.SeverityError, "ohmypi.install.preset_conflict", "config.modelPresets", conflict.Error(), 0, 0)
+			return targetPlan
+		}
 		return blockedTargetPlan(targetPlan, fmt.Sprintf("adapter planning failed: %v", err), "install.adapter_plan_failed")
 	}
 	targetPlan.Diagnostics = append(targetPlan.Diagnostics, patch.Diagnostics...)
 	targetPlan.Fields = publicFields(patch.Fields)
+	roles := newRoleInput(adapter, request, targetRequest, profile, loaded)
+	if reason, code := addSkillPatches(adapter, request, targetRequest, loaded, ownership, config.Path, &patch, &targetPlan); reason != "" {
+		return blockedTargetPlan(targetPlan, reason, code)
+	}
+	if reason, code := extendPatch(request, targetRequest, loaded, roles, ownership, config.Path, &patch, &targetPlan); reason != "" {
+		return blockedTargetPlan(targetPlan, reason, code)
+	}
+	skillReleaseDirs(adapter, config.Path, request.Env, ownership, patch.Files)
 	changes, blocked := planFiles(request, targetRequest, patch, ownership, config, &targetPlan)
 	if blocked {
 		targetPlan.Status = StatusConflict
-		targetPlan.Reason = "one or more target files conflict with unowned or edited state"
+		targetPlan.Reason = conflictReason(targetPlan.Diagnostics)
 		return targetPlan
 	}
-	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, targetRequest, request.ProfileName, patch, targetPlan.Files, changes)
+	attachVersionCheck(&targetPlan, request.DetectVersion)
+	recordedProfile := request.ProfileName
+	// A separate named install adds ownership without selecting a new default.
+	if manifestSnapshot.Exists && targetPlan.Install != nil && targetPlan.Install.Mode == InstallModeNamedProfile && !targetPlan.Install.SetsDefault && namedFile.Path != "" {
+		recordedProfile = ownership.Profile
+	}
+	manifestTarget := targetRequest
+	manifestTarget.Target = targetPlan.installedTarget()
+	manifest, manifestData, err := nextManifest(ownership, manifestSnapshot, manifestTarget, recordedProfile, patch, targetPlan.Files, changes)
 	if err != nil {
 		targetPlan.Status = StatusBlocked
 		targetPlan.Reason = err.Error()
@@ -276,6 +364,9 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 		changes = append(changes, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
 		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(manifestSnapshot.Path), Action: manifestAction(manifestSnapshot), BeforeSHA256: manifestSnapshot.SHA256, AfterSHA256: installfs.Hash(manifestData), Owned: manifestSnapshot.Exists, targetPath: manifestSnapshot.Path})
 		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: manifestSnapshot.Path, Before: manifestSnapshot, Content: manifestData})
+	}
+	if targetPlan.Install != nil && targetPlan.Install.Mode == InstallModeNamedProfile {
+		guardUnchangedConfig(&targetPlan, config)
 	}
 	targetPlan.changes = changes
 	if len(changes) == 0 {
@@ -290,6 +381,7 @@ func planTarget(request Request, registry *Registry, targetRequest TargetRequest
 func planFiles(request Request, target TargetRequest, patch Patch, ownership Manifest, config installfs.Snapshot, targetPlan *TargetPlan) ([]installfs.Change, bool) {
 	changes := make([]installfs.Change, 0, len(patch.Files))
 	seen := make(map[string]struct{}, len(patch.Files))
+	planned := fieldsByPath(patch.Fields)
 	for _, file := range patch.Files {
 		path, err := patchPath(target.ConfigPath, file.Path)
 		if err != nil {
@@ -324,25 +416,50 @@ func planFiles(request Request, target TargetRequest, patch Patch, ownership Man
 		if !file.Delete {
 			afterHash = installfs.Hash(file.Content)
 		}
-		ownedHash, owned := ownershipHash(ownership, path)
-		action, conflict := fileAction(request, patch.OverrideAllowed && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
+		ownedHash, owned := ownedBaseline(file, ownership, path, before, planned)
+		action, conflict := fileAction(request, (patch.OverrideAllowed || file.Adoptable) && !file.NoOverride, before, ownedHash, owned, afterHash, file.Delete)
+		if file.Release && action == ActionUpdate && !conflict {
+			action = ActionRestore
+		}
+		if action == ActionNoop && file.Mode != 0 && before.Mode.Perm() != file.Mode {
+			action = ActionUpdate
+		}
+		if action == ActionNoop && !file.LiveFields {
+			markFieldsUnchanged(targetPlan.Fields, file.Fields)
+		}
 		fields := fieldsForNames(file.Fields)
-		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filepath.Base(path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: append([]string(nil), file.Ownership...)})
-		targetPlan.checks = append(targetPlan.checks, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
+		ownedTags := append(fileOwnership(file, ownership, path, config.Path, before), writtenMarkers(file, planned)...)
+		targetPlan.Files = append(targetPlan.Files, FilePlan{Path: filePlanName(file, path), Action: action, BeforeSHA256: before.SHA256, AfterSHA256: afterHash, Owned: owned, Fields: fields, Delete: file.Delete, targetPath: path, ownership: ownedTags, release: file.Release})
+		change := installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete, Mode: file.Mode, RemoveEmptyDirs: file.RemoveEmptyDirs}
+		targetPlan.checks = append(targetPlan.checks, change)
+		addFileDiagnostic(targetPlan, filepath.Base(path), action, conflict, file.Delete)
 		if conflict {
-			message := "target file is edited or unowned; use an adapter-approved override only when the effect is understood"
-			if file.Delete {
-				message = "deletion requires an unchanged profile-mango-owned file and cannot be overridden"
-			}
-			targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", filepath.Base(path), message, 0, 0)
 			continue
 		}
 		if action != ActionNoop && (!file.Delete || before.Exists) {
-			changes = append(changes, installfs.Change{Path: path, Before: before, Content: append([]byte(nil), file.Content...), Delete: file.Delete})
+			changes = append(changes, change)
 		}
 	}
 	sort.Slice(targetPlan.Files, func(i, j int) bool { return targetPlan.Files[i].Path < targetPlan.Files[j].Path })
 	return changes, targetPlan.Diagnostics.HasErrors()
+}
+
+// markFieldsUnchanged records a byte-identical whole file's fields as already holding
+// their planned values; whole-file adapters render from scratch and leave Before empty.
+func markFieldsUnchanged(fields []FieldChange, names []string) {
+	for index := range fields {
+		if fields[index].Before == "" && slices.Contains(names, fields[index].Path) {
+			fields[index].Before = fields[index].After
+		}
+	}
+}
+
+// filePlanName is the plan's name for a patched file: its label, else its base name.
+func filePlanName(file FilePatch, path string) string {
+	if file.Label != "" {
+		return file.Label
+	}
+	return filepath.Base(path)
 }
 
 func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot, ownedHash string, owned bool, afterHash string, deleteFile bool) (string, bool) {
@@ -367,7 +484,36 @@ func fileAction(request Request, overrideAllowed bool, before installfs.Snapshot
 	if request.Override && overrideAllowed {
 		return ActionOverride, false
 	}
+	if !owned && overrideAllowed {
+		return ActionAdopt, !request.Backup
+	}
 	return ActionUpdate, true
+}
+
+func conflictReason(diagnostics profilemango.Diagnostics) string {
+	for _, diagnostic := range diagnostics {
+		switch diagnostic.Code {
+		case "install.adopt_requires_backup":
+			return "adopting an existing file that profile-mango does not own requires a backup; remove --no-backup"
+		case "install.skill_destination_newer":
+			return "an unmanaged skill file is newer than the profile's copy; port its edits into the profile, or pass --override to replace it"
+		}
+	}
+	return "one or more target files conflict with unowned or edited state"
+}
+
+// addFileDiagnostic explains an adoption backup or a file conflict for one planned file.
+func addFileDiagnostic(targetPlan *TargetPlan, name, action string, conflict, deleteFile bool) {
+	switch {
+	case action == ActionAdopt && conflict:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.adopt_requires_backup", name, "adopting an existing file that profile-mango does not own requires a backup; remove --no-backup", 0, 0)
+	case action == ActionAdopt:
+		targetPlan.Diagnostics.Add(profilemango.SeverityWarning, "install.adopt_backup", name, "existing "+name+" is not managed by profile-mango yet; it will be backed up before the first managed change, and unrelated settings are kept", 0, 0)
+	case conflict && deleteFile:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", name, "deletion requires an unchanged profile-mango-owned file and cannot be overridden", 0, 0)
+	case conflict:
+		targetPlan.Diagnostics.Add(profilemango.SeverityError, "install.file_conflict", name, "target file is edited or unowned; use an adapter-approved override only when the effect is understood", 0, 0)
+	}
 }
 
 func ownershipHash(manifest Manifest, path string) (string, bool) {
@@ -390,7 +536,10 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 	manifest.APIVersion = ManifestAPIVersion
 	manifest.Kind = ManifestKind
 	manifest.Owner = "profile-mango"
-	manifest.Profile = profile
+	// A reinstall that changes no file keeps the recorded profile, so it stays a no-op.
+	if len(changes) > 0 || !snapshot.Exists {
+		manifest.Profile = profile
+	}
 	manifest.Target = target.Target
 	manifest.Fields = nil
 	if !target.Agent.Empty() {
@@ -406,13 +555,14 @@ func nextManifest(ownership Manifest, snapshot installfs.Snapshot, target Target
 		if actualPath == "" || actualPath == snapshot.Path {
 			continue
 		}
-		if file.Delete {
+		if file.Delete || file.release {
 			manifest.Files = removeManifestFile(manifest.Files, actualPath)
 			continue
 		}
 		if file.Action == ActionNoop {
 			priorHash, owned := ownershipHash(ownership, actualPath)
-			if !owned || priorHash != file.BeforeSHA256 {
+			// A whole owned file already holding the profile's bytes is claimed as is.
+			if (!owned || priorHash != file.BeforeSHA256) && wholeFileKind(file.ownership) == "" {
 				continue
 			}
 		}
@@ -498,8 +648,10 @@ func decodeManifest(data []byte, target Target) (Manifest, error) {
 	if manifest.APIVersion != ManifestAPIVersion || manifest.Kind != ManifestKind {
 		return Manifest{}, fmt.Errorf("ownership manifest version or kind is unsupported")
 	}
-	if manifest.Target.Name != "" && manifest.Target != target {
-		return Manifest{}, fmt.Errorf("ownership manifest target does not match %s", target.String())
+	// Qualified and detected versions of the same target share ownership.
+	// The next apply records the currently detected version when available.
+	if manifest.Target.Name != "" && manifest.Target.Name != target.Name {
+		return Manifest{}, fmt.Errorf("ownership manifest target %s does not match %s", manifest.Target.String(), target.String())
 	}
 	return manifest, nil
 }
@@ -567,11 +719,14 @@ func fieldNames(fields []FieldChange) []string {
 }
 
 func aggregateStatus(targets []TargetPlan) string {
-	if len(targets) == 0 {
+	if len(targets) == 0 || allSkipped(targets) {
 		return StatusBlocked
 	}
 	allNoop := true
 	for _, target := range targets {
+		if target.Status == StatusSkipped {
+			continue
+		}
 		if target.Status != StatusReady && target.Status != StatusNoop {
 			return StatusBlocked
 		}
@@ -591,11 +746,13 @@ func planID(plan Plan) (string, error) {
 		InputSHA256 string
 		Backup      bool
 		Override    bool
+		Strict      bool
 		Targets     []TargetPlan
 	}
-	identityPlan := identity{Profile: plan.Profile, InputSHA256: plan.InputSHA256, Backup: plan.Backup, Override: plan.Override, Targets: append([]TargetPlan(nil), plan.Targets...)}
+	identityPlan := identity{Profile: plan.Profile, InputSHA256: plan.InputSHA256, Backup: plan.Backup, Override: plan.Override, Strict: plan.Strict, Targets: append([]TargetPlan(nil), plan.Targets...)}
 	for index := range identityPlan.Targets {
 		identityPlan.Targets[index].ConfigPath = ""
+		identityPlan.Targets[index].Config = nil
 		identityPlan.Targets[index].ManifestPath = ""
 		identityPlan.Targets[index].changes = nil
 		identityPlan.Targets[index].checks = nil
@@ -658,7 +815,7 @@ func validateAgentDestination(target TargetRequest) error {
 		}
 	}
 	if filepath.Base(target.ConfigPath) != name+".md" || filepath.Base(filepath.Dir(target.ConfigPath)) != "agents" {
-		return fmt.Errorf("named agent --config-path must end in agents/%s.md", name)
+		return fmt.Errorf("named agent --config path must end in agents/%s.md", name)
 	}
 	return nil
 }

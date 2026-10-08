@@ -1,0 +1,17 @@
+description: Read-only local documentation and research; preview-only workflow
+extends: workflow-base
+permissions:
+  mode: read-only
+  network: deny
+  shell: deny
+tools:
+  allow: [read, search]
+  deny: [edit, write, shell, web, deploy]
+instructions:
+  append: [instructions/docs-research/AGENTS.md]
+skills: [skills/docs-research/SKILL.md]
+roles:
+  research:
+    description: Reads local docs and returns cited findings
+    instructions: instructions/roles/research.md
+  tiny: {description: Fixes links and typos}

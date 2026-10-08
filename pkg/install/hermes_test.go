@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/adapters/hermes"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 func TestHermesAdapterPlansActualConfigPatch(t *testing.T) {
@@ -66,7 +66,7 @@ func TestHermesAdapterBlocksUnqualifiedDeliveryRequirements(t *testing.T) {
 			want:    "instruction, skill, and resource delivery",
 		},
 		"skills": {
-			profile: profilemango.ResolvedProfile{Skills: []string{"skill.md"}},
+			profile: profilemango.ResolvedProfile{Skills: []profilemango.SkillRef{{Path: "skill.md"}}},
 			want:    "instruction, skill, and resource delivery",
 		},
 		"resources": {
@@ -164,7 +164,7 @@ func TestHermesInstallPlanShowsOnlyBoundedDiff(t *testing.T) {
 	}
 	text := string(data)
 	for _, field := range []string{"model.provider", "model.default", "agent.reasoning_effort"} {
-		if !strings.Contains(text, `"path": "`+field+`"`) {
+		if !strings.Contains(text, `"path": "config.`+field+`"`) {
 			t.Fatalf("plan omitted bounded diff %q: %s", field, text)
 		}
 	}
@@ -183,6 +183,15 @@ func hermesInstallRequest(t *testing.T) (Request, string) {
 	}
 	request.Override = true
 	request.Targets = []TargetRequest{{Target: hermesTarget(), ConfigPath: config}}
+	// "default" is Hermes' built-in profile (hermes -p default reads the main config
+	// itself), so these tests cover the plain single-file default-config patch that
+	// --default always includes.
+	if err := os.MkdirAll(filepath.Join(request.ProfilesRoot, "default"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeInstallTestFile(t, filepath.Join(request.ProfilesRoot, "default", "profile.yaml"), "apiVersion: profilemango.dev/v1alpha1\nkind: PolicyProfile\nmetadata:\n  name: default\nspec:\n  routeRef: primary\n")
+	request.ProfileName = "default"
+	request.Default = true
 	return request, config
 }
 
@@ -202,9 +211,9 @@ func assertHermesPlanDiff(t *testing.T, target TargetPlan) {
 		got[field.Path] = field
 	}
 	want := map[string]FieldChange{
-		"model.provider":         {Path: "model.provider", Before: "old-provider", After: "openai"},
-		"model.default":          {Path: "model.default", Before: "old-model", After: "gpt-5.6"},
-		"agent.reasoning_effort": {Path: "agent.reasoning_effort", Before: "low", After: "high"},
+		"config.model.provider":         {Path: "config.model.provider", Before: "old-provider", After: "openai"},
+		"config.model.default":          {Path: "config.model.default", Before: "old-model", After: "gpt-5.6"},
+		"config.agent.reasoning_effort": {Path: "config.agent.reasoning_effort", Before: "low", After: "high"},
 	}
 	for path, field := range want {
 		if got[path] != field {

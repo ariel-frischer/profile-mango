@@ -31,22 +31,18 @@ func LoadProfiles(root string) (map[string]PolicyProfile, Diagnostics) {
 			diagnostics.Add(SeverityError, "repository.read", entry.Name(), err.Error(), 0, 0)
 			continue
 		}
-		profile, found := ParseProfile(data)
+		profile, found := ParseProfileAt(data, entry.Name())
 		for _, item := range found {
 			item.Path = entry.Name() + "." + item.Path
 			diagnostics = append(diagnostics, item)
 		}
-		if profile.Metadata.Name != "" && profile.Metadata.Name != entry.Name() {
-			diagnostics.Add(SeverityError, "repository.name_mismatch", entry.Name(), "folder name must match metadata.name", 0, 0)
-		}
-		if profile.Metadata.Name != "" {
-			profiles[profile.Metadata.Name] = profile
-		}
+		profiles[entry.Name()] = profile
 	}
 	return profiles, diagnostics.Sorted()
 }
 
-// Resolve deterministically resolves one optional parent chain.
+// Resolve deterministically resolves one optional parent chain. A profile
+// without a name takes its map key as its name.
 func Resolve(profiles map[string]PolicyProfile, name string) (ResolvedProfile, Diagnostics) {
 	return resolve(profiles, name, nil)
 }
@@ -55,32 +51,36 @@ func resolve(profiles map[string]PolicyProfile, name string, stack []string) (Re
 	profile, found := profiles[name]
 	if !found {
 		var diagnostics Diagnostics
-		diagnostics.Add(SeverityError, "resolution.missing_profile", "spec.extends", fmt.Sprintf("profile %q not found", name), 0, 0)
+		diagnostics.Add(SeverityError, "resolution.missing_profile", "extends", fmt.Sprintf("profile %q not found", name), 0, 0)
 		return ResolvedProfile{}, diagnostics
 	}
 	for _, current := range stack {
 		if current == name {
 			var diagnostics Diagnostics
-			diagnostics.Add(SeverityError, "resolution.cycle", "spec.extends", fmt.Sprintf("inheritance cycle includes %q", name), 0, 0)
+			diagnostics.Add(SeverityError, "resolution.cycle", "extends", fmt.Sprintf("inheritance cycle includes %q", name), 0, 0)
 			return ResolvedProfile{}, diagnostics
 		}
 	}
 
+	if profile.Name == "" {
+		profile.Name = name
+	}
 	result := emptyResolved(profile)
 	var diagnostics Diagnostics
-	if profile.Spec.Extends != "" {
-		parent, parentDiagnostics := resolve(profiles, profile.Spec.Extends, append(stack, name))
+	if profile.Extends != "" {
+		parent, parentDiagnostics := resolve(profiles, profile.Extends, append(stack, name))
 		diagnostics = append(diagnostics, parentDiagnostics...)
 		if !parentDiagnostics.HasErrors() {
 			result = mergeProfile(parent, profile)
 		}
 	}
 	if result.RouteRef == "" {
-		diagnostics.Add(SeverityError, "profile.route_required", "spec.routeRef", "routeRef is required after inheritance", 0, 0)
+		diagnostics.Add(SeverityError, "profile.route_required", "route", "route is required after inheritance", 0, 0)
 	}
 	if duplicates := duplicateStrings(result.Instructions); len(duplicates) > 0 {
-		diagnostics.Add(SeverityError, "resolution.duplicate_instruction", "spec.instructions.append", fmt.Sprintf("duplicate resolved paths: %v", duplicates), 0, 0)
+		diagnostics.Add(SeverityError, "resolution.duplicate_instruction", "instructions.append", fmt.Sprintf("duplicate resolved paths: %v", duplicates), 0, 0)
 	}
+	validateAgentFileRoles(result, &diagnostics)
 	return result, diagnostics.Sorted()
 }
 
@@ -88,37 +88,47 @@ func emptyResolved(profile PolicyProfile) ResolvedProfile {
 	resolved := ResolvedProfile{
 		APIVersion: APIVersion,
 		Kind:       KindPolicyProfile,
-		Metadata:   cloneMetadata(profile.Metadata),
-		RouteRef:   profile.Spec.RouteRef,
-		Parent:     profile.Spec.Extends,
+		Metadata:   cloneMetadata(profileMetadata(profile)),
+		RouteRef:   profile.Route,
+		Parent:     profile.Extends,
 	}
-	resolved.Permissions = mergePermissions(nil, profile.Spec.Permissions)
-	resolved.Tools = resolveRules(nil, profile.Spec.Tools)
-	if profile.Spec.Instructions.Append != nil {
-		resolved.Instructions = append([]string(nil), (*profile.Spec.Instructions.Append)...)
+	resolved.Permissions = mergePermissions(nil, profile.Permissions)
+	resolved.Tools = resolveRules(nil, profile.Tools)
+	if profile.Instructions.Append != nil {
+		resolved.Instructions = append([]string(nil), (*profile.Instructions.Append)...)
 	}
-	if profile.Spec.Skills != nil {
-		resolved.Skills = append([]string(nil), (*profile.Spec.Skills)...)
+	if profile.Skills != nil {
+		resolved.Skills = append([]SkillRef(nil), (*profile.Skills)...)
 	}
+	resolved.GlobalInstructions = mergeTargetFiles(nil, profile.GlobalInstructions)
+	resolved.AgentFiles = mergeTargetFiles(nil, profile.AgentFiles)
+	resolved.Roles = mergeRoleDefinitions(nil, profile.Roles)
 	return resolved
 }
 
 func mergeProfile(parent ResolvedProfile, child PolicyProfile) ResolvedProfile {
 	result := parent
-	result.Metadata = mergeMetadata(parent.Metadata, child.Metadata)
-	result.Parent = child.Spec.Extends
-	if child.Spec.RouteRef != "" {
-		result.RouteRef = child.Spec.RouteRef
+	result.Metadata = mergeMetadata(parent.Metadata, profileMetadata(child))
+	result.Parent = child.Extends
+	if child.Route != "" {
+		result.RouteRef = child.Route
 	}
-	result.Permissions = mergePermissions(parent.Permissions, child.Spec.Permissions)
-	result.Tools = resolveRules(parent.Tools, child.Spec.Tools)
-	if child.Spec.Instructions.Append != nil {
-		result.Instructions = append(append([]string(nil), parent.Instructions...), (*child.Spec.Instructions.Append)...)
+	result.Permissions = mergePermissions(parent.Permissions, child.Permissions)
+	result.Tools = resolveRules(parent.Tools, child.Tools)
+	if child.Instructions.Append != nil {
+		result.Instructions = append(append([]string(nil), parent.Instructions...), (*child.Instructions.Append)...)
 	}
-	if child.Spec.Skills != nil {
-		result.Skills = append([]string(nil), (*child.Spec.Skills)...)
+	if child.Skills != nil {
+		result.Skills = append([]SkillRef(nil), (*child.Skills)...)
 	}
+	result.GlobalInstructions = mergeTargetFiles(parent.GlobalInstructions, child.GlobalInstructions)
+	result.AgentFiles = mergeTargetFiles(parent.AgentFiles, child.AgentFiles)
+	result.Roles = mergeRoleDefinitions(parent.Roles, child.Roles)
 	return result
+}
+
+func profileMetadata(profile PolicyProfile) Metadata {
+	return Metadata{Name: profile.Name, Description: profile.Description, Labels: profile.Labels}
 }
 
 func mergeMetadata(parent, child Metadata) Metadata {

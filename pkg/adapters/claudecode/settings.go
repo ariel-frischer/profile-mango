@@ -9,10 +9,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
-// ModelPatch is the result of changing only the top-level Claude Code model.
+// ModelPatch is the result of changing one top-level Claude Code settings string.
 type ModelPatch struct {
 	Content  []byte
 	Before   string
@@ -50,11 +50,11 @@ func PatchModelJSON(source []byte, model string) (ModelPatch, error) {
 		content := replaceJSONSpan(source, scan.model.start, scan.model.end, strconv.Quote(model))
 		return ModelPatch{Content: content, Before: scan.model.value, After: model, Found: true}, nil
 	}
-	content := insertModel(source, scan, strconv.Quote(model))
+	content := insertTopLevelKey(source, scan, "model", strconv.Quote(model))
 	return ModelPatch{Content: content, After: model, Inserted: true}, nil
 }
 
-type modelSpan struct {
+type stringSpan struct {
 	start int
 	end   int
 	value string
@@ -63,7 +63,8 @@ type modelSpan struct {
 type settingsScan struct {
 	rootOpen int
 	hasKeys  bool
-	model    *modelSpan
+	model    *stringSpan
+	effort   *stringSpan
 }
 
 type settingsScanner struct {
@@ -125,9 +126,15 @@ func (scanner *settingsScanner) object(top bool) error {
 		if top && !scanner.scan.hasKeys {
 			scanner.scan.hasKeys = true
 		}
-		if top && key == "model" {
-			if err := scanner.modelValue(); err != nil {
+		if top && (key == "model" || key == effortKey) {
+			span, err := scanner.stringValue(key)
+			if err != nil {
 				return err
+			}
+			if key == "model" {
+				scanner.scan.model = span
+			} else {
+				scanner.scan.effort = span
 			}
 			continue
 		}
@@ -158,21 +165,21 @@ func (scanner *settingsScanner) objectKey(keys map[string]struct{}) (string, err
 	return key, nil
 }
 
-func (scanner *settingsScanner) modelValue() error {
+// stringValue reads the root string member key and records its byte span.
+func (scanner *settingsScanner) stringValue(key string) (*stringSpan, error) {
 	start, err := scanner.valueStart()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	token, err := scanner.dec.Token()
 	if err != nil {
-		return fmt.Errorf("read Claude Code model: %w", err)
+		return nil, fmt.Errorf("read Claude Code %s: %w", key, err)
 	}
 	value, ok := token.(string)
 	if !ok {
-		return fmt.Errorf("claude code settings model must be a string")
+		return nil, fmt.Errorf("claude code settings %s must be a string", key)
 	}
-	scanner.scan.model = &modelSpan{start: start, end: int(scanner.dec.InputOffset()), value: value}
-	return nil
+	return &stringSpan{start: start, end: int(scanner.dec.InputOffset()), value: value}, nil
 }
 
 func (scanner *settingsScanner) valueStart() (int, error) {
@@ -273,10 +280,26 @@ func replaceJSONSpan(data []byte, start, end int, replacement string) []byte {
 	return content
 }
 
-func insertModel(data []byte, scan settingsScan, literal string) []byte {
-	field := `"model":` + literal
-	if scan.hasKeys {
-		field += ","
+// insertTopLevelKey adds key as the first root member without reformatting
+// the rest of the file. In a multi-line object the member goes on its own line
+// with the first existing member's indentation and line ending; an empty
+// object gains one indented line; a one-line object stays on one line.
+func insertTopLevelKey(data []byte, scan settingsScan, key, literal string) []byte {
+	open := scan.rootOpen + 1
+	first := skipJSONSpace(data, open)
+	gap := data[open:first]
+	newline := "\n"
+	if bytes.Contains(gap, []byte("\r\n")) {
+		newline = "\r\n"
 	}
-	return replaceJSONSpan(data, scan.rootOpen+1, scan.rootOpen+1, field)
+	member := strconv.Quote(key) + ": " + literal
+	if !scan.hasKeys {
+		return replaceJSONSpan(data, open, first, newline+"  "+member+newline)
+	}
+	lineBreak := bytes.LastIndexByte(gap, '\n')
+	if lineBreak < 0 {
+		return replaceJSONSpan(data, open, open, strconv.Quote(key)+":"+literal+",")
+	}
+	indent := string(gap[lineBreak+1:])
+	return replaceJSONSpan(data, first, first, member+","+newline+indent)
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestPiInstallPreservesStateAndUsesOwnership(t *testing.T) {
@@ -74,12 +74,12 @@ func TestPiInstallConflictAndStaleApply(t *testing.T) {
 	}
 	writeInstallTestFile(t, config, `{ "defaultProvider": "third-party", "defaultModel": "third-party", "defaultThinkingLevel": "low" }`)
 	request.Targets[0].ConfigPath = config
-	conflict, err := BuildPlan(request)
+	adopt, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if conflict.Status != StatusBlocked || conflict.Targets[0].Status != StatusConflict {
-		t.Fatalf("unowned Pi config was not blocked: %#v", conflict)
+	if adopt.Status != StatusReady || adopt.Targets[0].Files[0].Action != ActionAdopt {
+		t.Fatalf("unowned Pi config was not adopted: %#v", adopt)
 	}
 	request.Override = true
 	initial, err := BuildPlan(request)
@@ -120,7 +120,7 @@ func TestPiInstallBlocksMalformedSettingsAndUnverifiedRequirements(t *testing.T)
 	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "adapter planning failed") {
 		t.Fatalf("malformed Pi settings were not blocked: %#v", plan)
 	}
-	input := AdapterInput{Target: Target{Name: "pi", Version: "0.86.1"}, Profile: requestProfile(), Route: piTestRoute()}
+	input := AdapterInput{Target: Target{Name: "pi", Version: "0.87.1"}, Profile: requestProfile(), Route: piTestRoute()}
 	input.Profile.Instructions = []string{"instructions/system.md"}
 	if _, err := (piAdapter{}).Plan(input); err == nil || !strings.Contains(err.Error(), "delivery") {
 		t.Fatalf("Pi resource delivery was not blocked: %v", err)
@@ -195,7 +195,7 @@ func TestPiInstallRejectsStalePlanWithoutWrites(t *testing.T) {
 	assertInstallTestFile(t, config, stale)
 }
 
-func TestPiInstallBlocksUnownedConfigUntilOverride(t *testing.T) {
+func TestPiInstallAdoptsUnownedConfigOrOverrides(t *testing.T) {
 	request, _ := piInstallTestRequest(t)
 	config := request.Targets[0].ConfigPath
 	writeInstallTestFile(t, config, "{\"defaultProvider\":\"old\",\"defaultModel\":\"old\",\"defaultThinkingLevel\":\"low\"}\n")
@@ -203,8 +203,8 @@ func TestPiInstallBlocksUnownedConfigUntilOverride(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusConflict {
-		t.Fatalf("unowned Pi config was not blocked: %#v", plan)
+	if plan.Status != StatusReady || piFilePlan(plan.Targets[0], "settings.json").Action != ActionAdopt {
+		t.Fatalf("unowned Pi config was not adopted: %#v", plan)
 	}
 	request.Override = true
 	override, err := BuildPlan(request)
@@ -216,8 +216,9 @@ func TestPiInstallBlocksUnownedConfigUntilOverride(t *testing.T) {
 	}
 }
 
-func TestPiInstallBlocksUnverifiedRequirements(t *testing.T) {
+func TestPiStrictInstallBlocksUnverifiedRequirements(t *testing.T) {
 	request, root := piInstallTestRequest(t)
+	request.Strict = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -252,7 +253,7 @@ func piInstallTestRequest(t *testing.T) (Request, string) {
 	if err := os.MkdirAll(filepath.Dir(config), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	request.Targets = []TargetRequest{{Target: Target{Name: "pi", Version: "0.86.1"}, ConfigPath: config}}
+	request.Targets = []TargetRequest{{Target: Target{Name: "pi", Version: "0.87.1"}, ConfigPath: config}}
 	return request, root
 }
 
@@ -278,7 +279,7 @@ func piTestRequest(t *testing.T) (Request, string) {
 	t.Helper()
 	request, root := testRequest(t, NewRegistry(piAdapter{}))
 	writeInstallTestFile(t, request.BindingsPath, piBindings("gpt-5.6"))
-	request.Targets[0].Target = Target{Name: "pi", Version: "0.86.1"}
+	request.Targets[0].Target = Target{Name: "pi", Version: "0.87.1"}
 	return request, root
 }
 

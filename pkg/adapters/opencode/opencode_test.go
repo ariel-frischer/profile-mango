@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 func TestRenderTable(t *testing.T) {
@@ -48,7 +48,7 @@ func TestRenderTable(t *testing.T) {
 				Permissions:  &profilemango.PermissionPolicy{Mode: &mode, Network: &network, Shell: &shell},
 				Tools:        &profilemango.ResolvedRules{Managed: true, Closed: true, Allow: []string{"read"}},
 				Instructions: []string{"instructions/research.md"},
-				Skills:       []string{"skills/research/SKILL.md"},
+				Skills:       []profilemango.SkillRef{{Path: "skills/research/SKILL.md"}},
 			},
 			resources: []Resource{
 				ResourceFromContent("instructions/research.md", "instruction", []byte("research\n")),

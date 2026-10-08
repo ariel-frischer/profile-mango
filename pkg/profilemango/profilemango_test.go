@@ -15,10 +15,22 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 		yaml string
 		code string
 	}{
-		"unknown key":   {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
-		"duplicate key": {yaml: strings.Replace(validProfileYAML(), "kind: PolicyProfile", "kind: PolicyProfile\nkind: PolicyProfile", 1), code: "yaml.duplicate_key"},
-		"null":          {yaml: strings.Replace(validProfileYAML(), "routeRef: research-primary", "routeRef: null", 1), code: "yaml.null"},
-		"version":       {yaml: strings.Replace(validProfileYAML(), APIVersion, "profilemango.dev/v9", 1), code: "profile.api_version"},
+		"unknown key":            {yaml: validProfileYAML() + "unknown: true\n", code: "yaml.strict"},
+		"duplicate key":          {yaml: validProfileYAML() + "route: other\n", code: "yaml.duplicate_key"},
+		"null":                   {yaml: strings.Replace(validProfileYAML(), "route: research-primary", "route: null", 1), code: "yaml.null"},
+		"invalid name":           {yaml: strings.Replace(validProfileYAML(), "name: research", "name: Research", 1), code: "profile.name_invalid"},
+		"old route key":          {yaml: strings.Replace(validProfileYAML(), "route:", "routeRef:", 1), code: "yaml.strict"},
+		"mixed wrapper":          {yaml: validProfileYAML() + "kind: PolicyProfile\n", code: "yaml.strict"},
+		"legacy version":         {yaml: "apiVersion: profilemango.dev/v9\nkind: PolicyProfile\nmetadata:\n  name: research\nspec:\n  routeRef: r\n", code: "profile.api_version"},
+		"global unknown target":  {yaml: validProfileYAML() + "globalInstructions:\n  claude:\n    CLAUDE.md: a.md\n", code: "profile.global_instructions_target_unknown"},
+		"global nested file":     {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    rules/AGENTS.md: a.md\n", code: "profile.global_instructions_file_invalid"},
+		"global escaping source": {yaml: validProfileYAML() + "globalInstructions:\n  codex:\n    AGENTS.md: ../secret.md\n", code: "profile.global_instructions_path_invalid"},
+		"agent unknown target":   {yaml: validProfileYAML() + "agentFiles:\n  omp:\n    scout.md: a.md\n", code: "profile.agent_files_target_unknown"},
+		"agent home target":      {yaml: validProfileYAML() + "agentFiles:\n  home:\n    scout.md: a.md\n", code: "profile.agent_files_target_unknown"},
+		"agent nested file":      {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    sub/scout.md: a.md\n", code: "profile.agent_files_file_invalid"},
+		"agent bad extension":    {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.txt: a.md\n", code: "profile.agent_files_file_invalid"},
+		"agent escaping source":  {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.md: ../secret.md\n", code: "profile.agent_files_path_invalid"},
+		"agent absolute source":  {yaml: validProfileYAML() + "agentFiles:\n  oh-my-pi:\n    scout.md: /etc/passwd\n", code: "profile.agent_files_path_invalid"},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -31,42 +43,88 @@ func TestParseProfileRejectsStrictInputFailures(t *testing.T) {
 	}
 }
 
+func TestParseProfileNamesFieldPathAndExpectedShape(t *testing.T) {
+	t.Parallel()
+	cases := map[string]struct {
+		yaml    string
+		path    string
+		message string
+	}{
+		"labels list": {
+			yaml:    "labels: [a, b]\n",
+			path:    "labels",
+			message: "expected a map of string keys to string values (e.g. labels: {team: core}), got a list",
+		},
+		"label value list": {
+			yaml:    "labels:\n  team: [core]\n",
+			path:    "labels.team",
+			message: "expected a string value (e.g. labels: {team: core}), got a list",
+		},
+		"skills scalar": {
+			yaml:    "skills: skills/review/SKILL.md\n",
+			path:    "skills",
+			message: "expected a list of skill paths (e.g. skills: [skills/review/SKILL.md]), got a scalar value",
+		},
+		"tools allow map": {
+			yaml:    "tools:\n  allow: {read: true}\n",
+			path:    "tools.allow",
+			message: "expected a list of tool names (e.g. allow: [read, edit]), got a map",
+		},
+		"global file list": {
+			yaml:    "globalInstructions:\n  codex: [AGENTS.md]\n",
+			path:    "globalInstructions.codex",
+			message: "expected a map of file names to resource paths (e.g. codex: {AGENTS.md: instructions/codex.md}), got a list",
+		},
+		"global resource map": {
+			yaml:    "globalInstructions:\n  codex:\n    AGENTS.md: {path: a.md}\n",
+			path:    "globalInstructions.codex.AGENTS.md",
+			message: "expected a resource path string or a list of them, got a map",
+		},
+		"global fragment list": {
+			yaml:    "globalInstructions:\n  codex:\n    AGENTS.md: [a.md, [b.md]]\n",
+			path:    "globalInstructions.codex.AGENTS.md[1]",
+			message: "expected a resource path string, got a list",
+		},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, diagnostics := ParseProfile([]byte(test.yaml))
+			errors := diagnostics.Errors()
+			if len(errors) != 1 || errors[0].Code != "yaml.shape" || errors[0].Path != test.path || errors[0].Message != test.message {
+				t.Fatalf("want one yaml.shape at %s %q, got %#v", test.path, test.message, errors)
+			}
+		})
+	}
+}
+
 func TestResolveInheritanceAndDenyWins(t *testing.T) {
 	t.Parallel()
-	base := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: base
-  labels: {team: core, tier: base}
-spec:
-  routeRef: primary
-  permissions:
-    mode: workspace-write
-    network: allow
-    shell: allow
-  tools:
-    allow: [read, edit, shell]
-    deny: [deploy]
-  instructions:
-    append: [instructions/base.md]
-  skills: [skills/base/SKILL.md]
+	base := mustParse(t, `name: base
+labels: {team: core, tier: base}
+route: primary
+permissions:
+  mode: workspace-write
+  network: allow
+  shell: allow
+tools:
+  allow: [read, edit, shell]
+  deny: [deploy]
+instructions:
+  append: [instructions/base.md]
+skills: [skills/base/SKILL.md]
 `)
-	child := mustParse(t, `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: research
-  labels: {tier: research}
-spec:
-  extends: base
-  permissions:
-    mode: read-only
-    shell: deny
-  tools:
-    allow: [read, search, edit]
-    deny: [edit]
-  instructions:
-    append: [instructions/research.md]
-  skills: []
+	child := mustParse(t, `labels: {tier: research}
+extends: base
+permissions:
+  mode: read-only
+  shell: deny
+tools:
+  allow: [read, search, edit]
+  deny: [edit]
+instructions:
+  append: [instructions/research.md]
+skills: []
 `)
 	resolved, diagnostics := Resolve(map[string]PolicyProfile{"base": base, "research": child}, "research")
 	if diagnostics.HasErrors() {
@@ -100,7 +158,7 @@ spec:
 
 func TestResolveFailures(t *testing.T) {
 	t.Parallel()
-	missing := mustParse(t, strings.Replace(validProfileYAML(), "name: research", "name: child", 1)+"  extends: absent\n")
+	missing := mustParse(t, strings.Replace(validProfileYAML(), "name: research", "name: child", 1)+"extends: absent\n")
 	_, diagnostics := Resolve(map[string]PolicyProfile{"child": missing}, "child")
 	if !hasCode(diagnostics, "resolution.missing_profile") {
 		t.Fatalf("missing parent: %#v", diagnostics)
@@ -119,7 +177,7 @@ func TestDigestResourcesDeterministicAndSafe(t *testing.T) {
 	root := t.TempDir()
 	mustWrite(t, filepath.Join(root, "instructions", "system.md"), "system\n")
 	mustWrite(t, filepath.Join(root, "skills", "research", "SKILL.md"), "skill\n")
-	profile := ResolvedProfile{Instructions: []string{"instructions/system.md"}, Skills: []string{"skills/research/SKILL.md"}}
+	profile := ResolvedProfile{Instructions: []string{"instructions/system.md"}, Skills: []SkillRef{{Path: "skills/research/SKILL.md"}}}
 	first, diagnostics := DigestResources(root, profile)
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
@@ -160,7 +218,11 @@ func TestCheckedInFixtures(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		profiles[name] = mustParse(t, string(data))
+		profile, diagnostics := ParseProfileAt(data, name)
+		if len(diagnostics) > 0 {
+			t.Fatal(diagnostics)
+		}
+		profiles[name] = profile
 	}
 	resolved, diagnostics := Resolve(profiles, "read-only")
 	if diagnostics.HasErrors() {
@@ -260,21 +322,11 @@ func mustWrite(t *testing.T, path, content string) {
 }
 
 func validProfileYAML() string {
-	return `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: research
-spec:
-  routeRef: research-primary
+	return `name: research
+route: research-primary
 `
 }
 
 func profileWithParent(name, parent string) string {
-	return `apiVersion: profilemango.dev/v1alpha1
-kind: PolicyProfile
-metadata:
-  name: ` + name + `
-spec:
-  extends: ` + parent + `
-`
+	return "name: " + name + "\nextends: " + parent + "\n"
 }

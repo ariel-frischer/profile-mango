@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 type testAdapter struct {
@@ -27,20 +27,37 @@ func (adapter testAdapter) Plan(input AdapterInput) (Patch, error) {
 	}, nil
 }
 
-func TestDefaultRegistryBlocksProductionWithoutReadingTargetPath(t *testing.T) {
-	request, root := testRequest(t, nil)
+func TestDefaultRegistryPlansCodexSettingsWithoutWriting(t *testing.T) {
+	request, _ := codexTestRequest(t)
 	request.Registry = DefaultRegistry()
-	request.Targets[0].Target = Target{Name: "codex", Version: "0.154.0"}
-	request.Targets[0].ConfigPath = filepath.Join(root, "does-not-exist")
+	config := request.Targets[0].ConfigPath
+	auth := filepath.Join(filepath.Dir(config), "auth.json")
+	writeInstallTestFile(t, auth, "synthetic auth sentinel")
 	plan, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || plan.Targets[0].Status != StatusBlocked {
+	if plan.Status != StatusReady || plan.Targets[0].Status != StatusReady || !plan.Targets[0].Metadata.Installable {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if _, err := os.Stat(request.Targets[0].ConfigPath); !os.IsNotExist(err) {
-		t.Fatalf("blocked plan touched target path: %v", err)
+	if !hasDiagnostic(plan.Targets[0].Diagnostics, "codex.install.auth_unmanaged") {
+		t.Fatalf("missing unmanaged-auth warning: %#v", plan.Targets[0].Diagnostics)
+	}
+	if _, err := os.Stat(config); !os.IsNotExist(err) {
+		t.Fatalf("read-only plan created config: %v", err)
+	}
+	assertInstallTestFile(t, auth, "synthetic auth sentinel")
+}
+
+func TestBuildPlanMissingBindingsNamesFix(t *testing.T) {
+	request, root := testRequest(t, DefaultRegistry())
+	request.BindingsPath = filepath.Join(root, "bindings", "missing.yaml")
+	_, err := BuildPlan(request)
+	if err == nil {
+		t.Fatal("build plan succeeded despite missing bindings")
+	}
+	if !strings.Contains(err.Error(), "cp ") || !strings.Contains(err.Error(), "local.example.yaml") || !strings.Contains(err.Error(), "mango init") {
+		t.Fatalf("missing bindings error lacks an exact fix: %v", err)
 	}
 }
 
@@ -163,6 +180,7 @@ func TestPlanJSONOmitsSyntheticAbsolutePaths(t *testing.T) {
 
 func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Default = true
 	config := request.Targets[0].ConfigPath
 	before := "{\n  // keep target-owned state\n  \"model\" : \"sentinel/old\",\n  \"provider\": {\"sentinel\": {\"options\": {\"apiKey\": \"SYNTHETIC\"}}},\n  \"unknown\": true,\n}\n"
 	writeInstallTestFile(t, config, before)
@@ -174,10 +192,10 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusReady || plan.Targets[0].Files[0].Action != ActionOverride {
+	if plan.Status != StatusReady || piFilePlan(plan.Targets[0], filepath.Base(config)).Action != ActionOverride {
 		t.Fatalf("plan = %#v", plan)
 	}
-	if plan.Targets[0].DestinationSHA256 == "" || len(plan.Targets[0].Fields) != 1 || plan.Targets[0].Fields[0].Path != "config.model" {
+	if plan.Targets[0].DestinationSHA256 == "" || !hasFieldChange(plan.Targets[0].Fields, "config.model") {
 		t.Fatalf("target plan = %#v", plan.Targets[0])
 	}
 	data, err := plan.JSON()
@@ -207,7 +225,7 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 		t.Fatal(err)
 	}
 	manifest, err := decodeManifest(manifestData, Target{Name: "opencode", Version: "1.18.31"})
-	if err != nil || len(manifest.Files) != 1 || strings.Join(manifest.Files[0].Fields, ",") != "config.model" {
+	if err != nil || len(manifest.Files) != 2 || !manifestFileHasField(manifest, config, "config.model") {
 		t.Fatalf("manifest = %#v, err = %v", manifest, err)
 	}
 
@@ -215,7 +233,7 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reapply.Status != StatusNoop || reapply.Targets[0].Files[0].Action != ActionNoop {
+	if reapply.Status != StatusNoop || piFilePlan(reapply.Targets[0], filepath.Base(config)).Action != ActionNoop {
 		t.Fatalf("reapply = %#v", reapply)
 	}
 }
@@ -251,8 +269,9 @@ func TestOpenCodePlanBindsDestinationAndRejectsStaleApply(t *testing.T) {
 	assertInstallTestFile(t, first, `{ "model": "third-party/edit" }`)
 }
 
-func TestOpenCodeInstallBlocksUnverifiedProfileRequirements(t *testing.T) {
+func TestOpenCodeStrictInstallBlocksUnverifiedProfileRequirements(t *testing.T) {
 	request, root := openCodeTestRequest(t)
+	request.Strict = true
 	profile := filepath.Join(root, "profiles", "route-only", "profile.yaml")
 	writeInstallTestFile(t, profile, `apiVersion: profilemango.dev/v1alpha1
 kind: PolicyProfile
@@ -267,7 +286,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "permission requirements") {
+	if plan.Status != StatusBlocked || !strings.Contains(plan.Targets[0].Reason, "permissions") {
 		t.Fatalf("plan = %#v", plan)
 	}
 }
@@ -339,6 +358,9 @@ spec:
 
 func writeInstallTestFile(t *testing.T, path, content string) {
 	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -353,6 +375,29 @@ func assertInstallTestFile(t *testing.T, path, want string) {
 	if string(data) != want {
 		t.Fatalf("%s = %q, want %q", path, data, want)
 	}
+}
+
+func hasFieldChange(fields []FieldChange, path string) bool {
+	for _, field := range fields {
+		if field.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
+func manifestFileHasField(manifest Manifest, path, field string) bool {
+	for _, candidate := range manifest.Files {
+		if candidate.Path != path {
+			continue
+		}
+		for _, name := range candidate.Fields {
+			if name == field {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func writeOwnedManifest(t *testing.T, config string, target Target, hash string) {

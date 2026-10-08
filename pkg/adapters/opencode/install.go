@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 )
 
 // ModelPatch is the model-only OpenCode configuration effect.
@@ -96,6 +96,12 @@ func routeModel(route profilemango.RouteBinding) (string, error) {
 		return "", fmt.Errorf("OpenCode provider/model contains unsupported characters")
 	}
 	return route.Provider + "/" + route.Model, nil
+}
+
+// RoleModel is the provider/model selector a role subagent file's model names
+// (packages/core/src/v1/config/agent.ts model).
+func RoleModel(provider, model string) (string, error) {
+	return routeModel(profilemango.RouteBinding{Transport: "native", Provider: provider, Model: model})
 }
 
 func validateInstallRoute(route profilemango.RouteBinding) (string, error) {

@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"gitlab.com/ariel-frischer/profile-mango/internal/installfs"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/profilemango"
-	"gitlab.com/ariel-frischer/profile-mango/pkg/render"
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
+	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
+	"github.com/ariel-frischer/profile-mango/pkg/render"
 )
 
 const (
@@ -28,14 +29,20 @@ const (
 	StatusConflict     = "conflict"
 	StatusUnavailable  = "unavailable"
 	StatusNotAttempted = "not-attempted"
+	// StatusSkipped marks a target left out because its agent is not installed (install --all).
+	StatusSkipped = "skipped"
 )
 
 const (
 	ActionCreate   = "create"
 	ActionUpdate   = "update"
 	ActionOverride = "override"
-	ActionNoop     = "noop"
-	ActionDelete   = "delete"
+	// ActionAdopt patches managed fields into an existing unowned file after a required backup.
+	ActionAdopt  = "adopt"
+	ActionNoop   = "noop"
+	ActionDelete = "delete"
+	// ActionRestore gives a released file back its pre-install bytes from a backup.
+	ActionRestore = "restore"
 )
 
 type Target struct {
@@ -46,9 +53,21 @@ type Target struct {
 func (target Target) String() string { return target.Name + "@" + target.Version }
 
 func ParseTarget(value string) (Target, error) {
-	name, version, found := strings.Cut(strings.TrimSpace(value), "@")
-	if !found || name == "" || version == "" || strings.ContainsAny(name+version, "\x00\r\n") {
+	target, err := ParseTargetSelector(value)
+	if err != nil {
+		return Target{}, err
+	}
+	if target.Version == "" {
 		return Target{}, fmt.Errorf("target must use exact target@version syntax")
+	}
+	return target, nil
+}
+
+// ParseTargetSelector parses "name" or "name@version"; Version is empty for a bare name.
+func ParseTargetSelector(value string) (Target, error) {
+	name, version, found := strings.Cut(strings.TrimSpace(value), "@")
+	if name == "" || (found && version == "") || strings.ContainsAny(name+version, "\x00\r\n") {
+		return Target{}, fmt.Errorf("target must use target or target@version syntax")
 	}
 	if filepath.Base(name) != name || strings.ContainsAny(name, "/\\") {
 		return Target{}, fmt.Errorf("target name must be a simple name")
@@ -56,14 +75,22 @@ func ParseTarget(value string) (Target, error) {
 	return Target{Name: name, Version: version}, nil
 }
 
+// Matches reports whether selector names target, treating an empty selector version as any version.
+func (selector Target) Matches(target Target) bool {
+	return selector.Name == target.Name && (selector.Version == "" || selector.Version == target.Version)
+}
+
 type AdapterMetadata struct {
 	Target         string `json:"target"`
 	Version        string `json:"version"`
 	AdapterVersion string `json:"adapterVersion"`
 	EvidenceSHA256 string `json:"evidenceSHA256,omitempty"`
-	Installable    bool   `json:"installable"`
-	Status         string `json:"status"`
-	Reason         string `json:"reason"`
+	// CompatibleRange overrides the default tilde range (">=A <B") of tested
+	// agent versions; widen it only with recorded evidence.
+	CompatibleRange string `json:"compatibleRange,omitempty"`
+	Installable     bool   `json:"installable"`
+	Status          string `json:"status"`
+	Reason          string `json:"reason"`
 }
 
 type Snapshot struct {
@@ -88,12 +115,21 @@ type AdapterInput struct {
 	ManifestPath string
 	Profile      profilemango.ResolvedProfile
 	Route        profilemango.RouteBinding
-	Resources    []render.Resource
-	Config       Snapshot
-	Manifest     Snapshot
-	Ownership    Manifest
-	HasManifest  bool
-	Override     bool
+	// Bindings supplies every effective target route for native model presets.
+	Bindings    profilemango.Bindings
+	Resources   []render.Resource
+	Config      Snapshot
+	Manifest    Snapshot
+	Ownership   Manifest
+	HasManifest bool
+	Override    bool
+	// Install says where the profile goes; for a named profile, NamedFile is its current file.
+	Install   InstallMode
+	NamedFile Snapshot
+	// Skills names the skill folders this install writes, sorted.
+	Skills []string
+	// SkillAgent is the OpenClaw agent whose skill allowlist this install sets, or "".
+	SkillAgent string
 }
 
 type Adapter interface {
@@ -105,9 +141,28 @@ type FilePatch struct {
 	// NoOverride preserves an edited or unowned file even when the patch permits overrides.
 	NoOverride bool
 	Delete     bool
-	Path       string
-	Content    []byte
-	Fields     []string
+	// Adoptable lets this whole file adopt or override an unowned or edited file even
+	// when the adapter's other files do not allow it.
+	Adoptable bool
+	// LiveFields says Content rewrites only Fields within the live file's bytes and
+	// each field's FieldChange.Before is its live value, so edits to other bytes are
+	// judged per owned field instead of by the whole-file hash.
+	LiveFields bool
+	// PresetSwitch permits a verified omp preset switch, never other owned edits.
+	PresetSwitch string
+	// Release gives back a file the previous install owned and this plan no longer writes.
+	Release bool
+	Path    string
+	// Label names the file in plans when its base name would mislead, e.g. ~/AGENTS.md.
+	Label   string
+	Content []byte
+	// Mode is the permission a written file gets; zero keeps the existing file's mode
+	// (0600 for a new file).
+	Mode fs.FileMode
+	// RemoveEmptyDirs lists, deepest first, parent directories a Delete removes
+	// afterwards while they are empty, e.g. a released skill's folders.
+	RemoveEmptyDirs []string
+	Fields          []string
 	// Ownership records target-specific provenance needed for safe future cleanup.
 	Ownership []string `json:"-"`
 }
@@ -140,6 +195,9 @@ type TargetRequest struct {
 	Agent        AgentDestination
 	ConfigPath   string
 	ManifestPath string
+	// SkillAgent selects the OpenClaw agent (agents.entries key) whose skill allowlist
+	// lists the profile's skills; the manifest keeps it for later installs.
+	SkillAgent string
 }
 
 // AgentDestination selects a native named OpenCode definition, not the default config.
@@ -160,6 +218,20 @@ type Request struct {
 	Backup       bool
 	Override     bool
 	Registry     *Registry
+	// Env resolves documented default config paths for targets without an explicit path.
+	Env PathEnv
+	// DetectVersion, when set, reports each ready target's installed agent version.
+	DetectVersion VersionDetector
+	// SkipNotInstalled (install --all) skips a default-path target whose config folder is
+	// missing, even when its command is on PATH, instead of blocking the plan.
+	SkipNotInstalled bool
+	// Strict blocks a target on any known requirement it cannot install instead
+	// of installing the supported subset and listing the rest as skipped.
+	Strict bool
+	// Default also makes an installed named profile the agent's default.
+	Default bool
+	// Release (mango use) gives back owned files the new profile does not write.
+	Release bool
 }
 
 type Manifest struct {
@@ -190,11 +262,14 @@ type FilePlan struct {
 	Delete       bool          `json:"delete,omitempty"`
 	targetPath   string        `json:"-"`
 	ownership    []string      `json:"-"`
+	release      bool          `json:"-"`
 }
 
 type TargetPlan struct {
 	Target            Target                   `json:"target"`
 	Agent             *AgentDestination        `json:"agent,omitempty"`
+	Install           *InstallMode             `json:"install,omitempty"`
+	Config            *ConfigDestination       `json:"config,omitempty"`
 	Metadata          AdapterMetadata          `json:"metadata"`
 	Status            string                   `json:"status"`
 	Reason            string                   `json:"reason,omitempty"`
@@ -202,10 +277,15 @@ type TargetPlan struct {
 	Files             []FilePlan               `json:"files,omitempty"`
 	Fields            []FieldChange            `json:"fields,omitempty"`
 	Diagnostics       profilemango.Diagnostics `json:"diagnostics,omitempty"`
-	ConfigPath        string                   `json:"-"`
-	ManifestPath      string                   `json:"-"`
-	changes           []installfs.Change       `json:"-"`
-	checks            []installfs.Change       `json:"-"`
+	VersionCheck      *VersionCheck            `json:"versionCheck,omitempty"`
+	// SkippedRequirements lists profile requirements this target does not install.
+	SkippedRequirements []SkippedRequirement `json:"skippedRequirements,omitempty"`
+	// Skills names the skill folders this target installs, in profile order.
+	Skills       []string           `json:"skills,omitempty"`
+	ConfigPath   string             `json:"-"`
+	ManifestPath string             `json:"-"`
+	changes      []installfs.Change `json:"-"`
+	checks       []installfs.Change `json:"-"`
 }
 
 type Plan struct {
@@ -216,6 +296,7 @@ type Plan struct {
 	Status      string                   `json:"status"`
 	Backup      bool                     `json:"backup"`
 	Override    bool                     `json:"override"`
+	Strict      bool                     `json:"strict"`
 	InputSHA256 string                   `json:"inputSHA256"`
 	Targets     []TargetPlan             `json:"targets"`
 	Diagnostics profilemango.Diagnostics `json:"diagnostics,omitempty"`

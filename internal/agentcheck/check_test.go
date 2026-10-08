@@ -34,6 +34,17 @@ func TestLoadRepositoryManifest(t *testing.T) {
 	}
 }
 
+func TestSelectTargetIDsBeforeCheckingSources(t *testing.T) {
+	fixtures := []Target{{ID: "pi"}, {ID: "codex"}, {ID: "opencode"}}
+	selected, err := selectTargetIDs(fixtures, []string{"opencode", "codex"})
+	if err != nil || len(selected) != 2 || selected[0].ID != "codex" || selected[1].ID != "opencode" {
+		t.Fatalf("selection=%v err=%v", selected, err)
+	}
+	if _, err := selectTargetIDs(fixtures, []string{"codex", "unknown"}); err == nil {
+		t.Fatal("unknown target must block before any source requests")
+	}
+}
+
 func TestCheckRequiredSourceStates(t *testing.T) {
 	stableBody := []byte("stable source")
 	changedBody := []byte("changed source")
@@ -151,6 +162,61 @@ func TestFailedFetchIsUnavailable(t *testing.T) {
 	}
 }
 
+func TestCheckReportsProgressBeforeAndAfterEachSource(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(started)
+		select {
+		case <-release:
+			_, _ = w.Write([]byte("fixture"))
+		case <-r.Context().Done():
+		}
+	}))
+	defer server.Close()
+	manifest := Manifest{SchemaVersion: 1, Targets: []Target{{ID: "fixture", Sources: []Source{
+		{URL: server.URL, Kind: "documentation"},
+		{Locator: "local", Kind: "local_snapshot_documentation"},
+	}}}}
+	events := make(chan Progress, 4)
+	done := make(chan error, 1)
+	go func() {
+		_, err := Check(context.Background(), manifest, Options{OnProgress: func(p Progress) { events <- p }})
+		done <- err
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("request did not start")
+	}
+	select {
+	case event := <-events:
+		if event.Completed != 0 || event.Total != 2 || event.TargetID != "fixture" || event.State != "" {
+			t.Fatalf("progress while request is blocked = %+v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("no progress before request completed")
+	}
+	close(release)
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Check() error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("check did not complete")
+	}
+	for _, want := range []Progress{
+		{Completed: 1, Total: 2, TargetID: "fixture", State: StatusUnversioned},
+		{Completed: 1, Total: 2, TargetID: "fixture"},
+		{Completed: 2, Total: 2, TargetID: "fixture", State: StatusNotChecked},
+	} {
+		if got := <-events; got != want {
+			t.Fatalf("progress = %+v, want %+v", got, want)
+		}
+	}
+}
+
 func TestFormatJSONIsStructured(t *testing.T) {
 	report := Report{SchemaVersion: 1, ManifestPath: "sources.json", Summary: Summary{Changed: 1}}
 	var output strings.Builder
@@ -215,7 +281,7 @@ func ExampleFormatText() {
 			Name:          "Codex",
 			ProductStatus: "candidate",
 			VersionContext: map[string]json.RawMessage{
-				"version": json.RawMessage(`"0.154.0"`),
+				"version": json.RawMessage(`"0.157.1"`),
 			},
 			Sources: []SourceReport{{
 				URL:            "https://example.test/schema.json",
@@ -233,7 +299,7 @@ func ExampleFormatText() {
 	// Output:
 	// manifest: docs/dev/agents/sources.json
 	// retrieved_at: 2026-09-20
-	// target: codex (Codex) product_status=candidate version_context=version="0.154.0"
+	// target: codex (Codex) product_status=candidate version_context=version="0.157.1"
 	//   source: https://example.test/schema.json kind=mutable_unversioned_schema category=schema state=unchanged
 	//     recommendation: No source refresh is indicated; this does not establish target compatibility.
 	// summary: unchanged=1 changed=0 unversioned=0 unavailable=0 relocated=0 not_checked=0
