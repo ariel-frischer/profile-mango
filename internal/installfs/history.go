@@ -45,6 +45,21 @@ func WriteHistoryFile(path string, data []byte) error {
 	return writeAtomicUnconditional(path, data, 0o600)
 }
 
+// ResolveTransaction fixes the lock and journal paths Apply will use for changes, so a
+// caller can index the journal before applying; Apply keeps paths it is given. Without
+// any change there is no transaction, and the returned JournalPath stays empty.
+func ResolveTransaction(changes []Change, options ApplyOptions) (ApplyOptions, error) {
+	normalized, err := normalizeChanges(changes)
+	if err != nil || len(normalized) == 0 {
+		return options, err
+	}
+	if options.PlanID == "" {
+		options.PlanID = Hash(changeIdentity(normalized))
+	}
+	err = resolveTransactionPaths(normalized, &options)
+	return options, err
+}
+
 // resolveTransactionPaths fills in the lock and journal paths, and, for a history
 // transaction, the private directory that holds its journal and backups.
 func resolveTransactionPaths(changes []Change, options *ApplyOptions) error {

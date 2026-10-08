@@ -1,6 +1,7 @@
 package install
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,9 @@ import (
 
 	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
+
+// errJournalMissing reports a referenced or named install journal that does not exist.
+var errJournalMissing = errors.New("install journal is missing")
 
 type journalCandidate struct {
 	file     installfs.Snapshot
@@ -84,6 +88,10 @@ func latestInstallJournal(config, manifest installfs.Snapshot, stateDir string) 
 	var matching, newest []journalCandidate
 	for _, location := range locations {
 		file, journal, err := loadJournalAt(location)
+		if location.history != "" && errors.Is(err, errJournalMissing) {
+			// The reference was written before a transaction that never committed.
+			continue
+		}
 		if err != nil {
 			return journalCandidate{}, err
 		}
@@ -141,7 +149,7 @@ func loadInstallJournal(location journalLocation) (installfs.Snapshot, installfs
 		return file, installfs.Journal{}, fmt.Errorf("inspect install journal: %w", err)
 	}
 	if !file.Exists {
-		return file, installfs.Journal{}, fmt.Errorf("committed install journal is missing")
+		return file, installfs.Journal{}, fmt.Errorf("%w: %s; that install never committed, or its history was removed", errJournalMissing, location.path)
 	}
 	journal, err := decodeInstallJournal(file)
 	if err != nil {

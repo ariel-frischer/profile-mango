@@ -50,9 +50,10 @@ func historyJournalValid(path, transactions string, journal installfs.Journal) b
 	return path == filepath.Join(installfs.TransactionDir(transactions, journal.PlanID, journal.LockPath), installfs.DefaultJournalName)
 }
 
-// writeJournalRefs records, in the state directory, the committed journal of every changed target config.
-func writeJournalRefs(targets []TargetPlan, planID, stateDir string, applied installfs.ApplyResult) error {
-	data, err := json.MarshalIndent(journalRef{APIVersion: journalRefVersion, PlanID: planID, JournalPath: applied.JournalPath}, "", "  ")
+// writeJournalRefs records, in the state directory, the journal of every changed target config.
+// It runs before the transaction, so a reference can name a journal that never committed.
+func writeJournalRefs(targets []TargetPlan, planID, stateDir, journalPath string) error {
+	data, err := json.MarshalIndent(journalRef{APIVersion: journalRefVersion, PlanID: planID, JournalPath: journalPath}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode journal reference: %w", err)
 	}

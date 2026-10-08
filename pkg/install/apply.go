@@ -70,7 +70,11 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 		changes = append(changes, target.changes...)
 		anchors = append(anchors, target.ConfigPath)
 	}
-	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors, HistoryDir: historyTransactions(plan.stateDir)})
+	options, err := indexTransaction(plan, targets, changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors, HistoryDir: historyTransactions(plan.stateDir)})
+	if err != nil {
+		return preflightApplyReport(plan, err, ""), err
+	}
+	applied, err := installfs.Apply(changes, options)
 	status := applied.Status
 	if status == "noop" {
 		status = "committed"
@@ -82,12 +86,23 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 	if err != nil {
 		return report, fmt.Errorf("apply installation transaction: %w", err)
 	}
-	if applied.Status == "committed" {
-		if err := writeJournalRefs(targets, plan.PlanID, plan.stateDir, applied); err != nil {
-			return report, fmt.Errorf("install committed, but undo cannot locate its journal: %w", err)
-		}
-	}
 	return report, nil
+}
+
+// indexTransaction fixes where the transaction will keep its journal and, before any target
+// changes, records that journal for every changed target config so undo can always find it.
+func indexTransaction(plan Plan, targets []TargetPlan, changes []installfs.Change, options installfs.ApplyOptions) (installfs.ApplyOptions, error) {
+	options, err := installfs.ResolveTransaction(changes, options)
+	if err != nil {
+		return options, fmt.Errorf("plan installation transaction: %w", err)
+	}
+	if options.JournalPath == "" {
+		return options, nil
+	}
+	if err := writeJournalRefs(targets, plan.PlanID, plan.stateDir, options.JournalPath); err != nil {
+		return options, fmt.Errorf("index install history, nothing was changed: %w", err)
+	}
+	return options, nil
 }
 
 func targetApplyReport(targets []TargetPlan, status string, cause error) ApplyReport {
