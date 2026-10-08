@@ -87,7 +87,9 @@ skipped.
 Each agent is tested against a specific version; newer versions still install,
 with a warning. Credential stores, sessions, plugins, and MCP are left alone;
 config backups are full copies, so they include any keys stored inline in those
-files. Details per agent: [agents](docs/public/agents.md).
+files; they live in `~/.local/state/profile-mango` (see
+[where history lives](docs/public/concepts.md#what-install-does)). Details per
+agent: [agents](docs/public/agents.md).
 
 ## Roles and global instructions
 

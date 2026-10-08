@@ -126,7 +126,7 @@ func TestOpenClawInstallPlanApplyReapplyBackupAndStale(t *testing.T) {
 	if !strings.Contains(string(patched), `primary: "openai/gpt-5.6"`) || !strings.Contains(string(patched), `thinkingDefault: "high"`) || !strings.Contains(string(patched), "SYNTHETIC") {
 		t.Fatalf("applied config lost qualified or unrelated state: %s", patched)
 	}
-	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); err != nil {
+	if _, err := os.Stat(installedBackup(t, plan.PlanID, config)); err != nil {
 		t.Fatalf("default backup missing: %v", err)
 	}
 	reapply, err := BuildPlan(request)
@@ -162,7 +162,7 @@ func TestOpenClawInstallCreatesConfigFromMissingPath(t *testing.T) {
 	created := "{agents:{defaults:{model:{primary:\"openai/gpt-5.6\"},thinkingDefault:\"high\"}}}\n"
 	assertInstallTestFile(t, config, created)
 	assertInstallTestFile(t, openClawProfileConfig(config, request.ProfileName), created)
-	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); !os.IsNotExist(err) {
+	if _, err := os.Stat(installedBackup(t, plan.PlanID, config)); !os.IsNotExist(err) {
 		t.Fatalf("unexpected backup for newly created config: %v", err)
 	}
 }

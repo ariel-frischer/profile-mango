@@ -96,7 +96,7 @@ func TestOpenClawSkillSwitchReleasesAndUndoRestores(t *testing.T) {
 	if _, err := os.Lstat(filepath.Join(skills, "review")); !os.IsNotExist(err) {
 		t.Fatalf("released skill folder remains: %v", err)
 	}
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	assertInstallTestFile(t, config, string(installed))
 	assertSkillFile(t, filepath.Join(skills, "review", "scripts", "check.sh"), reviewScript, 0o755)
 }

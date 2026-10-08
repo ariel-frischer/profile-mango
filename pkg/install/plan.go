@@ -51,7 +51,7 @@ func BuildPlan(request Request) (Plan, error) {
 		return Plan{}, err
 	}
 	plan := Plan{APIVersion: PlanAPIVersion, Kind: PlanKind, Profile: request.ProfileName, Backup: request.Backup, Override: request.Override, Strict: request.Strict, InputSHA256: loaded.InputSHA256}
-	plan.sources = loaded.Sources
+	plan.sources, plan.stateDir = loaded.Sources, request.StateDir
 	for _, targetRequest := range targets {
 		targetPlan := planTarget(request, registry, targetRequest, loaded)
 		plan.Targets = append(plan.Targets, targetPlan)

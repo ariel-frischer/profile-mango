@@ -117,7 +117,7 @@ func TestAgentFilesStatusAndDrift(t *testing.T) {
 
 func agentFileStatus(t *testing.T, request Request) FileStatus {
 	t.Helper()
-	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets})
+	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets, StateDir: testStateDir})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -111,7 +111,7 @@ func assertSkillFile(t *testing.T, path, content string, mode fs.FileMode) {
 
 func skillStatus(t *testing.T, request Request) TargetStatus {
 	t.Helper()
-	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets})
+	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets, StateDir: testStateDir})
 	if err != nil || len(report.Targets) != 1 {
 		t.Fatalf("status = %#v, %v", report, err)
 	}
@@ -141,10 +141,10 @@ func TestSkillInstallLifecycle(t *testing.T) {
 			if _, err := os.Lstat(filepath.Join(skills, "review")); !os.IsNotExist(err) {
 				t.Fatalf("released skill folder remains: %v", err)
 			}
-			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
+			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry, StateDir: testStateDir})
 			assertSkillFile(t, filepath.Join(skills, "review", "scripts", "check.sh"), reviewScript, 0o755)
 			// Undoing the first install removes the skill files it created at their source modes.
-			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
+			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry, StateDir: testStateDir})
 			for _, folder := range []string{"review", "vendored"} {
 				if _, err := os.Lstat(filepath.Join(skills, folder)); !os.IsNotExist(err) {
 					t.Fatalf("created skill folder %s survived undo: %v", folder, err)
@@ -166,7 +166,7 @@ func TestSkillUndoKeepsFileClaimedAsIs(t *testing.T) {
 				t.Fatal(err)
 			}
 			applySkillPlan(t, request)
-			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry})
+			applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: request.Targets[0].ConfigPath, Registry: request.Registry, StateDir: testStateDir})
 			assertSkillFile(t, existing, vendoredSkill, 0o644)
 			if _, err := os.Lstat(filepath.Join(skills, "review")); !os.IsNotExist(err) {
 				t.Fatalf("created skill folder survived undo: %v", err)

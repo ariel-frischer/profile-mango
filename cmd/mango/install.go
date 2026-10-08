@@ -165,7 +165,7 @@ func installPlanRequest(profile string, paths installPaths, targets []install.Ta
 		ProfileName: profile, ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot,
 		BindingsPath: paths.bindings, Targets: targets, All: false,
 		Backup: !options.noBackup, Override: options.override, Strict: options.strict, Default: options.makeDefault || options.use, Registry: registry,
-		Env: install.OSPathEnv(), SkipNotInstalled: options.all, Release: options.use,
+		Env: install.OSPathEnv(), SkipNotInstalled: options.all, Release: options.use, StateDir: paths.stateDir,
 	}
 }
 
@@ -220,10 +220,21 @@ func validateInstallOptions(options installOptions) error {
 }
 
 type installPaths struct {
-	profiles, resourceRoot, bindings string
+	profiles, resourceRoot, bindings, stateDir string
 }
 
 func resolveInstallPaths(options installOptions) (installPaths, error) {
+	paths, err := resolveSourcePaths(options)
+	if err != nil {
+		return installPaths{}, err
+	}
+	if paths.stateDir, err = selectedStateDir(); err != nil {
+		return installPaths{}, err
+	}
+	return paths, nil
+}
+
+func resolveSourcePaths(options installOptions) (installPaths, error) {
 	values := []string{options.profiles, options.resourceRoot, options.bindings}
 	explicit := 0
 	for _, value := range values {

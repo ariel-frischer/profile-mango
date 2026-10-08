@@ -52,7 +52,7 @@ func TestPiInstallPreservesStateAndUsesOwnership(t *testing.T) {
 	want = strings.Replace(want, `"old-model"`, `"gpt-5.6"`, 1)
 	want = strings.Replace(want, `"low"`, `"high"`, 1)
 	assertInstallTestFile(t, config, want)
-	assertInstallTestFile(t, installfs.BackupPath(config, first.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, first.PlanID, config), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("Pi config mode = %v, err = %v", info.Mode().Perm(), err)
@@ -162,7 +162,7 @@ func TestPiInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
 	want = strings.Replace(want, `"old-model"`, `"gpt-5.6"`, 1)
 	want = strings.Replace(want, `"low"`, `"high"`, 1)
 	assertInstallTestFile(t, config, want)
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("Pi config mode = %v, err = %v", info.Mode().Perm(), err)

@@ -108,7 +108,7 @@ func TestApplyReapplyAndStaleConsent(t *testing.T) {
 		t.Fatalf("apply: %v, checks=%#v, changes=%#v", err, plan.Targets[0].checks, plan.Targets[0].changes)
 	}
 	assertInstallTestFile(t, config, "new")
-	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); err != nil {
+	if _, err := os.Stat(installedBackup(t, plan.PlanID, config)); err != nil {
 		t.Fatalf("backup missing: %v", err)
 	}
 	reapply, err := BuildPlan(request)
@@ -211,12 +211,12 @@ func TestOpenCodeInstallPreservesUnrelatedStateAndReapplies(t *testing.T) {
 	}
 	want := strings.Replace(before, `"sentinel/old"`, `"openai/gpt-5.6"`, 1)
 	assertInstallTestFile(t, config, want)
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("config mode = %v, err = %v", info.Mode().Perm(), err)
 	}
-	journalData, err := os.ReadFile(installfs.JournalPath(config, plan.PlanID))
+	journalData, err := os.ReadFile(filepath.Join(installedTransaction(t, plan.PlanID), installfs.DefaultJournalName))
 	if err != nil || !strings.Contains(string(journalData), `"status": "committed"`) {
 		t.Fatalf("journal = %s, err = %v", journalData, err)
 	}
@@ -353,6 +353,7 @@ spec:
 		Registry:     registry,
 		Backup:       true,
 		Targets:      []TargetRequest{{Target: Target{Name: "fake", Version: "1"}, ConfigPath: filepath.Join(root, "config")}},
+		StateDir:     testStateDir,
 	}, root
 }
 

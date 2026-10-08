@@ -41,7 +41,7 @@ func TestOhMyPiInstallPreservesStateAndReapplies(t *testing.T) {
 	}
 	want := "# keep\nmodelRoles:\n  reviewer: other/model\n  default: \"openai/gpt-5.6:high\" # owned\ndefaultThinkingLevel: low # owned\nunknown:\n  apiKey: SYNTHETIC\n"
 	assertInstallTestFile(t, config, want+strings.Replace(ohMyPiPrimaryPresetGolden, "      slow:", "      reviewer: \"other/model\"\n      slow:", 1))
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("config mode = %v, err = %v", info.Mode().Perm(), err)
@@ -102,7 +102,7 @@ func TestOhMyPiInstallRolesPreservesUnrelatedKeysAndUndoes(t *testing.T) {
 	if strings.Contains(string(manifest), "defaultThinkingLevel") {
 		t.Fatalf("manifest claims defaultThinkingLevel:\n%s", manifest)
 	}
-	applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+	applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 	assertInstallTestFile(t, config, original)
 }
 

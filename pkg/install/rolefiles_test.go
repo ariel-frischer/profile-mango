@@ -92,7 +92,7 @@ func TestRoleFilesInstallAdoptAndUndo(t *testing.T) {
 			if !owned || !slices.Contains(entry.Fields, ownershipRoleDefinition) {
 				t.Fatalf("research agent is not owned as a role definition: %#v", entry)
 			}
-			applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+			applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 			assertInstallTestFile(t, config, test.original)
 			assertInstallTestFile(t, filepath.Join(agents, "research"+test.ext), roleTestOriginal)
 			assertInstallTestFile(t, filepath.Join(agents, "keep"+test.ext), roleTestKeep)

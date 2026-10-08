@@ -274,7 +274,7 @@ func extendPatch(request Request, target TargetRequest, loaded loadedInput, role
 		}
 		planned[path] = struct{}{}
 	}
-	releases, reason, code := releasePatches(ownership, configPath, planned)
+	releases, reason, code := releasePatches(ownership, configPath, planned, request.StateDir)
 	for index := range releases {
 		releases[index].Label = relativeOwnedPath(configPath, releases[index].Path, request.Env)
 	}
@@ -358,7 +358,7 @@ func manifestEntry(manifest Manifest, path string) (ManifestFile, bool) {
 // releasePatches returns patches that give back every whole owned file the new plan no
 // longer writes: deleting it when profile-mango created it, or restoring its pre-install
 // bytes from a create-only backup. Other owned files, such as a named profile, are kept.
-func releasePatches(ownership Manifest, configPath string, planned map[string]struct{}) ([]FilePatch, string, string) {
+func releasePatches(ownership Manifest, configPath string, planned map[string]struct{}, stateDir string) ([]FilePatch, string, string) {
 	var patches []FilePatch
 	for _, entry := range ownership.Files {
 		if _, kept := planned[entry.Path]; kept || entry.Path == configPath || wholeFileKind(entry.Fields) == "" {
@@ -369,7 +369,7 @@ func releasePatches(ownership Manifest, configPath string, planned map[string]st
 		case prior == priorAbsent:
 			patches = append(patches, FilePatch{Path: entry.Path, Delete: true, Release: true})
 		case prior != "":
-			backup, err := findBackup(entry.Path, strings.TrimPrefix(prior, priorSHA256Prefix))
+			backup, err := findBackup(entry.Path, strings.TrimPrefix(prior, priorSHA256Prefix), stateDir)
 			if err != nil {
 				return nil, err.Error(), "install.release_backup_missing"
 			}
@@ -379,22 +379,6 @@ func releasePatches(ownership Manifest, configPath string, planned map[string]st
 		}
 	}
 	return patches, "", ""
-}
-
-// findBackup locates a create-only backup of path whose bytes hash to sha256.
-func findBackup(path, sha256 string) (installfs.Snapshot, error) {
-	matches, err := filepath.Glob(filepath.Clean(path) + ".profile-mango.bak.*")
-	if err != nil {
-		return installfs.Snapshot{}, fmt.Errorf("list backups of %s: %w", filepath.Base(path), err)
-	}
-	sort.Strings(matches)
-	for _, match := range matches {
-		snapshot, err := installfs.SnapshotFile(match)
-		if err == nil && snapshot.Exists && snapshot.SHA256 == sha256 {
-			return snapshot, nil
-		}
-	}
-	return installfs.Snapshot{}, fmt.Errorf("no backup of %s holds its pre-install bytes; restore it manually or run mango undo", filepath.Base(path))
 }
 
 func sortedNames[V any](values map[string]V) []string {

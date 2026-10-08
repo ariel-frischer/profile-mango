@@ -103,7 +103,7 @@ func staleGlobalRequest(t *testing.T, target string) (Request, string) {
 
 func ownershipStatus(t *testing.T, request Request) TargetStatus {
 	t.Helper()
-	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets})
+	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets, StateDir: testStateDir})
 	if err != nil {
 		t.Fatal(err)
 	}

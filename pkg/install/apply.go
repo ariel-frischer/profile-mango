@@ -20,6 +20,9 @@ func ApplyPlan(plan Plan, options ApplyOptions) (ApplyReport, error) {
 		err := fmt.Errorf("install plan is not applicable: %s", plan.Status)
 		return preflightApplyReport(plan, err, ""), err
 	}
+	if err := requireStateDir(plan.stateDir); err != nil {
+		return preflightApplyReport(plan, err, ""), err
+	}
 	if err := validateSources(plan); err != nil {
 		return preflightApplyReport(plan, err, ""), err
 	}
@@ -67,7 +70,7 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 		changes = append(changes, target.changes...)
 		anchors = append(anchors, target.ConfigPath)
 	}
-	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors})
+	applied, err := installfs.Apply(changes, installfs.ApplyOptions{PlanID: plan.PlanID, Backup: plan.Backup, Anchors: anchors, HistoryDir: historyTransactions(plan.stateDir)})
 	status := applied.Status
 	if status == "noop" {
 		status = "committed"
@@ -80,7 +83,7 @@ func applyTargetChanges(plan Plan) (ApplyReport, error) {
 		return report, fmt.Errorf("apply installation transaction: %w", err)
 	}
 	if applied.Status == "committed" {
-		if err := writeJournalRefs(targets, plan.PlanID, applied); err != nil {
+		if err := writeJournalRefs(targets, plan.PlanID, plan.stateDir, applied); err != nil {
 			return report, fmt.Errorf("install committed, but undo cannot locate its journal: %w", err)
 		}
 	}

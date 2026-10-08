@@ -113,7 +113,7 @@ func TestHermesInstallPreservesStateAndCreatesDefaultBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertInstallTestFile(t, config, hermesPatchedConfig())
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	info, err := os.Stat(config)
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("config mode = %v, err = %v", info.Mode().Perm(), err)
@@ -134,9 +134,12 @@ func TestHermesInstallReapplyIsNoop(t *testing.T) {
 	if _, err := ApplyPlan(second, ApplyOptions{ExpectedPlanID: second.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	backups, err := filepath.Glob(config + ".profile-mango.bak.*")
+	backups, err := filepath.Glob(filepath.Join(installedTransaction(t, first.PlanID), "backups", "*"))
 	if err != nil || len(backups) != 1 {
 		t.Fatalf("backups = %v, err = %v", backups, err)
+	}
+	if again, _ := filepath.Glob(filepath.Join(historyTransactions(testStateDir), second.PlanID[:16]+"-*")); len(again) != 0 {
+		t.Fatalf("noop reapply recorded history: %v", again)
 	}
 }
 

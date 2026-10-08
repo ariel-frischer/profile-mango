@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ariel-frischer/profile-mango/internal/profilehome"
+	"github.com/ariel-frischer/profile-mango/internal/statehome"
 	"github.com/ariel-frischer/profile-mango/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -41,4 +42,10 @@ func init() {
 
 func selectedHome() (string, error) {
 	return profilehome.Resolve(homePathOverride)
+}
+
+// selectedStateDir is the private directory for install and undo history. It is independent
+// of --home, so history never lands in a git-tracked profile package.
+func selectedStateDir() (string, error) {
+	return statehome.Resolve()
 }

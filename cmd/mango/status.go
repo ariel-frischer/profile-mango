@@ -52,7 +52,7 @@ func runStatus(cmd *cobra.Command, options installOptions) error {
 	}
 	report, err := install.InspectStatus(install.StatusRequest{
 		ProfilesRoot: paths.profiles, ResourceRoot: paths.resourceRoot, BindingsPath: paths.bindings,
-		Registry: registry, Env: install.OSPathEnv(), Targets: targets, GlobalSkillsRoot: options.globalSkills,
+		Registry: registry, Env: install.OSPathEnv(), Targets: targets, GlobalSkillsRoot: options.globalSkills, StateDir: paths.stateDir,
 		DetectVersion: versionDetectorWithProgress(cmd.ErrOrStderr(), installVersionDetector),
 	})
 	if err != nil {

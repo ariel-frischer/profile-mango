@@ -119,10 +119,10 @@ func TestClaudeCodeInstallPlanApplyReapplyAndStale(t *testing.T) {
 	}
 	assertInstallTestFile(t, config, "{\n  \"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\",\n  \"unknown\": true\n}\n")
 	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "route-only.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
-	if _, err := os.Stat(installfs.BackupPath(config, plan.PlanID)); err != nil {
+	if _, err := os.Stat(installedBackup(t, plan.PlanID, config)); err != nil {
 		t.Fatalf("backup missing: %v", err)
 	}
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	reapply, err := BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
@@ -215,7 +215,8 @@ spec:
 		Registry:     NewRegistry(claudeCodeAdapter{}),
 		Targets:      []TargetRequest{{Target: Target{Name: claudecode.TargetName, Version: claudecode.TargetVersion}, ConfigPath: config}},
 		// Most tests in this file cover the settings.json patch, which only --default writes.
-		Default: true,
+		Default:  true,
+		StateDir: testStateDir,
 	}, root
 }
 
@@ -347,7 +348,7 @@ func TestClaudeCodeDefaultFlagInsertsModelOnOwnLineAndUndoRestoresBytes(t *testi
 	}
 	assertInstallTestFile(t, config, "{\n    \"model\": \"claude-sonnet-4-5\",\n    \"effortLevel\": \"high\",\n    \"permissions\": {\n        \"allow\": [\"Read\"]\n    },\n    \"unknown\": true\n}\n")
 	assertInstallTestFile(t, filepath.Join(filepath.Dir(config), "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	assertInstallTestFile(t, config, pretty)
 }
 
@@ -361,7 +362,7 @@ func TestClaudeCodeNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {
 	}
 	review := applyNamed(t, request, "review")
 	dir := filepath.Dir(config)
-	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	if undone.OriginalPlanID != review.PlanID {
 		t.Fatalf("undo selected %s, want review install %s", undone.OriginalPlanID, review.PlanID)
 	}
@@ -371,7 +372,7 @@ func TestClaudeCodeNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {
 	assertInstallTestFile(t, filepath.Join(dir, "profiles", "coding.json"), "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"effortLevel\": \"high\"\n}\n")
 	assertInstallTestFile(t, manifest, string(afterCoding))
 	assertInstallTestFile(t, config, claudeCodeNamedBase)
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	for _, path := range []string{filepath.Join(dir, "profiles", "coding.json"), manifest} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			t.Fatalf("%s survived second undo: %v", filepath.Base(path), err)

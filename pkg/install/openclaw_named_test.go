@@ -43,7 +43,7 @@ func TestOpenClawNamedProfileWritesProfileConfigAndKeepsDefault(t *testing.T) {
 func TestOpenClawNamedUndoRemovesProfileConfig(t *testing.T) {
 	request, config := openClawNamedRequest(t, "coding")
 	plan := applyNamed(t, request, "coding")
-	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	if undone.OriginalPlanID != plan.PlanID {
 		t.Fatalf("undo selected %s, want %s", undone.OriginalPlanID, plan.PlanID)
 	}

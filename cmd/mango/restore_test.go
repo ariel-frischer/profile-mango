@@ -22,7 +22,7 @@ func TestCodexRestorePlanAndApply(t *testing.T) {
 		t.Fatal(err)
 	}
 	request := install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true, Override: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}}
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}, StateDir: testStateDir(t)}
 	installed, err := install.BuildPlan(request)
 	if err != nil {
 		t.Fatal(err)
@@ -73,15 +73,15 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 				t.Fatal(err)
 			}
 		},
-		"edited backup":   func(t *testing.T, config, id string) { writeFile(t, config+".profile-mango.bak."+id[:16], "edited") },
+		"edited backup":   func(t *testing.T, config, id string) { writeFile(t, historyBackup(t, config, id), "edited") },
 		"edited manifest": func(t *testing.T, config, _ string) { writeFile(t, config+".profile-mango.manifest.json", "{}") },
 		"missing backup": func(t *testing.T, config, id string) {
-			if err := os.Remove(config + ".profile-mango.bak." + id[:16]); err != nil {
+			if err := os.Remove(historyBackup(t, config, id)); err != nil {
 				t.Fatal(err)
 			}
 		},
 		"wrong journal destination": func(t *testing.T, config, id string) {
-			path := config + ".profile-mango.journal." + id[:16] + ".json"
+			path := historyJournal(t, config, id)
 			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
@@ -89,7 +89,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 			writeFile(t, path, strings.Replace(string(data), `"path": "`+config+`"`, `"path": "`+config+`.other"`, 1))
 		},
 		"unexpected journal entry": func(t *testing.T, config, id string) {
-			path := config + ".profile-mango.journal." + id[:16] + ".json"
+			path := historyJournal(t, config, id)
 			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
@@ -97,7 +97,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 			writeFile(t, path, strings.Replace(string(data), `"entries": [`, `"entries": [{"path":"/unrelated"},`, 1))
 		},
 		"duplicate journal key": func(t *testing.T, config, id string) {
-			path := config + ".profile-mango.journal." + id[:16] + ".json"
+			path := historyJournal(t, config, id)
 			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
@@ -121,7 +121,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 			writeFile(t, path, string(data)+"{}")
 		},
 		"symlinked backup": func(t *testing.T, config, id string) {
-			path := config + ".profile-mango.bak." + id[:16]
+			path := historyBackup(t, config, id)
 			if err := os.Remove(path); err != nil {
 				t.Fatal(err)
 			}
@@ -138,7 +138,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := install.BuildRestorePlan("codex@0.157.1", config, id); err == nil {
+			if _, err := install.BuildRestorePlan("codex@0.157.1", config, id, testStateDir(t)); err == nil {
 				t.Fatal("tampered install accepted")
 			}
 			after, err := os.ReadFile(config)
@@ -151,7 +151,7 @@ func TestCodexRestoreRejectsTamperingWithoutWrites(t *testing.T) {
 
 func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 	config, id := installedRestoreFixture(t, true)
-	plan, err := install.BuildRestorePlan("codex@0.157.1", config, id)
+	plan, err := install.BuildRestorePlan("codex@0.157.1", config, id, testStateDir(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,10 +162,10 @@ func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 			}
 		})
 	}
-	if _, err := install.BuildRestorePlan("codex@0.157.1", config, strings.Repeat("0", 64)); err == nil {
+	if _, err := install.BuildRestorePlan("codex@0.157.1", config, strings.Repeat("0", 64), testStateDir(t)); err == nil {
 		t.Fatal("wrong original ID accepted")
 	}
-	if _, err := install.BuildRestorePlan("codex@0.153.0", config, id); err == nil {
+	if _, err := install.BuildRestorePlan("codex@0.153.0", config, id, testStateDir(t)); err == nil {
 		t.Fatal("wrong target accepted")
 	}
 	if err := os.WriteFile(config, []byte("changed after preview"), 0o600); err != nil {
@@ -175,7 +175,7 @@ func TestCodexRestoreRejectsWrongConsentAndNoBackup(t *testing.T) {
 		t.Fatal("stale preview accepted")
 	}
 	withoutBackup, otherID := installedRestoreFixture(t, false)
-	if _, err := install.BuildRestorePlan("codex@0.157.1", withoutBackup, otherID); err == nil {
+	if _, err := install.BuildRestorePlan("codex@0.157.1", withoutBackup, otherID, testStateDir(t)); err == nil {
 		t.Fatal("no-backup install accepted")
 	}
 }
@@ -185,14 +185,14 @@ func TestCodexRestoreDeletesOriginallyAbsentConfigAndManifest(t *testing.T) {
 	profiles, bindings := writeCodexInstallInputs(t, root)
 	config := filepath.Join(root, "config.toml")
 	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}})
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}, StateDir: testStateDir(t)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID)
+	restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID, testStateDir(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,19 +273,19 @@ func TestRestoreInteractiveConsentAndHumanPath(t *testing.T) {
 }
 
 func TestCodexRestoreRejectsSameContentReplacementAfterPreview(t *testing.T) {
-	for name, pathFor := range map[string]func(string, string) string{
-		"config":   func(config, _ string) string { return config },
-		"manifest": func(config, _ string) string { return config + ".profile-mango.manifest.json" },
-		"journal":  func(config, id string) string { return config + ".profile-mango.journal." + id[:16] + ".json" },
-		"backup":   func(config, id string) string { return config + ".profile-mango.bak." + id[:16] },
+	for name, pathFor := range map[string]func(*testing.T, string, string) string{
+		"config":   func(_ *testing.T, config, _ string) string { return config },
+		"manifest": func(_ *testing.T, config, _ string) string { return config + ".profile-mango.manifest.json" },
+		"journal":  func(t *testing.T, config, id string) string { return historyJournal(t, config, id) },
+		"backup":   func(t *testing.T, config, id string) string { return historyBackup(t, config, id) },
 	} {
 		t.Run(name, func(t *testing.T) {
 			config, id := installedRestoreFixture(t, true)
-			plan, err := install.BuildRestorePlan("codex@0.157.1", config, id)
+			plan, err := install.BuildRestorePlan("codex@0.157.1", config, id, testStateDir(t))
 			if err != nil {
 				t.Fatal(err)
 			}
-			path := pathFor(config, id)
+			path := pathFor(t, config, id)
 			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
@@ -336,14 +336,14 @@ func TestCodexRestoreOriginalManifestCanonicalBoundary(t *testing.T) {
 				t.Fatal(err)
 			}
 			plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: true,
-				Targets: []install.TargetRequest{{Target: owner.Target, ConfigPath: config}}})
+				Targets: []install.TargetRequest{{Target: owner.Target, ConfigPath: config}}, StateDir: testStateDir(t)})
 			if err != nil {
 				t.Fatal(err)
 			}
 			if _, err := install.ApplyPlan(plan, install.ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 				t.Fatal(err)
 			}
-			restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID)
+			restore, err := install.BuildRestorePlan("codex@0.157.1", config, plan.PlanID, testStateDir(t))
 			if !canonical {
 				if err == nil {
 					t.Fatal("reformatted original ownership manifest accepted")
@@ -373,7 +373,7 @@ func installedRestoreFixture(t *testing.T, backup bool) (string, string) {
 		t.Fatal(err)
 	}
 	plan, err := install.BuildPlan(install.Request{ProfileName: "route-only", Default: true, ProfilesRoot: profiles, ResourceRoot: root, BindingsPath: bindings, Backup: backup, Override: true,
-		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}})
+		Targets: []install.TargetRequest{{Target: install.Target{Name: "codex", Version: "0.157.1"}, ConfigPath: config}}, StateDir: testStateDir(t)})
 	if err != nil {
 		t.Fatal(err)
 	}

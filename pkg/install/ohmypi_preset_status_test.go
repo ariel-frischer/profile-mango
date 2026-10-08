@@ -57,7 +57,7 @@ func TestOhMyPiStatusRecognizesPresetSwitch(t *testing.T) {
 				t.Fatal(err)
 			}
 			writeInstallTestFile(t, config, string(data))
-			report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Targets: request.Targets, GlobalSkillsRoot: root + "/skills"})
+			report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Targets: request.Targets, GlobalSkillsRoot: root + "/skills", StateDir: testStateDir})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -45,7 +45,7 @@ func TestCodexInstallPreservesStateBacksUpAndReapplies(t *testing.T) {
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("config mode = %v, err=%v", info.Mode().Perm(), err)
 	}
-	backup, err := os.ReadFile(installfs.BackupPath(config, plan.PlanID))
+	backup, err := os.ReadFile(installedBackup(t, plan.PlanID, config))
 	if err != nil || string(backup) != before {
 		t.Fatalf("backup = %q, err=%v", backup, err)
 	}

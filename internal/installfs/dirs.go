@@ -24,9 +24,13 @@ func missingParentDirs(path string) []string {
 	return missing
 }
 
-// backupPathFor keeps a deleted file's backup out of the directories its delete removes,
-// next to the journal instead, so those directories can become empty.
+// backupPathFor keeps every backup of a history transaction in its private directory. Without
+// one, a deleted file's backup stays out of the directories its delete removes, next to the
+// journal instead, so those directories can become empty.
 func backupPathFor(change Change, options ApplyOptions, index int) string {
+	if options.transactionDir != "" {
+		return HistoryBackupPath(options.transactionDir, change.Path)
+	}
 	if change.Delete && len(change.RemoveEmptyDirs) > 0 {
 		return journalBackupPrefix(options.JournalPath) + strconv.Itoa(index)
 	}

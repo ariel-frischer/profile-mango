@@ -1,8 +1,6 @@
 package install
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,32 +11,44 @@ import (
 )
 
 type journalCandidate struct {
-	file    installfs.Snapshot
-	journal installfs.Journal
+	file     installfs.Snapshot
+	journal  installfs.Journal
+	location journalLocation
 }
 
-// selectInstallJournal loads the named install journal, or the latest committed one next to the config.
-// A multi-target install may anchor the journal next to another target's file; a reference locates it.
-func selectInstallJournal(config, manifest installfs.Snapshot, id string) (installfs.Snapshot, installfs.Journal, error) {
+// selectInstallJournal loads the named install journal, or the latest committed one for the config,
+// from the state history or, for installs made by earlier versions, beside the config.
+func selectInstallJournal(config, manifest installfs.Snapshot, id, stateDir string) (journalCandidate, error) {
 	if id == "" {
-		return latestInstallJournal(config, manifest)
+		return latestInstallJournal(config, manifest, stateDir)
 	}
-	location, err := namedJournalLocation(config.Path, id)
+	location, err := namedJournalLocation(config.Path, id, stateDir)
 	if err != nil {
-		return installfs.Snapshot{}, installfs.Journal{}, err
+		return journalCandidate{}, err
 	}
 	file, journal, err := loadJournalAt(location)
 	if err != nil {
-		return file, journal, err
+		return journalCandidate{}, err
 	}
 	if journal.PlanID != id || journal.Status != "committed" {
-		return file, journal, fmt.Errorf("install journal %s is not a committed install", id)
+		return journalCandidate{}, fmt.Errorf("install journal %s is not a committed install", id)
 	}
-	return file, journal, nil
+	return journalCandidate{file: file, journal: journal, location: location}, nil
 }
 
-// namedJournalLocation prefers a journal next to the config and falls back to a reference naming a shared one.
-func namedJournalLocation(config, id string) (journalLocation, error) {
+// namedJournalLocation prefers a state reference, then a legacy journal next to the config,
+// then a legacy reference naming a shared one.
+func namedJournalLocation(config, id, stateDir string) (journalLocation, error) {
+	if stateDir != "" {
+		path := historyRefPath(stateDir, config, id)
+		file, err := installfs.SnapshotFile(path)
+		if err != nil {
+			return journalLocation{}, fmt.Errorf("inspect install journal reference: %w", err)
+		}
+		if file.Exists {
+			return loadHistoryRef(path, config, stateDir)
+		}
+	}
 	local := journalLocation{path: installfs.JournalPath(config, id), anchor: config}
 	for _, path := range []string{local.path, journalRefPath(config, id)} {
 		file, err := installfs.SnapshotFile(path)
@@ -56,7 +66,7 @@ func namedJournalLocation(config, id string) (journalLocation, error) {
 }
 
 func loadJournalAt(location journalLocation) (installfs.Snapshot, installfs.Journal, error) {
-	file, journal, err := loadInstallJournal(location.path, location.anchor)
+	file, journal, err := loadInstallJournal(location)
 	if err == nil && location.planID != "" && journal.PlanID != location.planID {
 		err = fmt.Errorf("install journal %s does not record the referenced install", filepath.Base(location.path))
 	}
@@ -66,21 +76,21 @@ func loadJournalAt(location journalLocation) (installfs.Snapshot, installfs.Jour
 // latestInstallJournal prefers the newest committed journal whose installed hashes match the current
 // config and manifest, so successive undos step back through successive installs. Without a match it
 // returns the newest committed journal, whose drift the caller then reports.
-func latestInstallJournal(config, manifest installfs.Snapshot) (installfs.Snapshot, installfs.Journal, error) {
-	locations, err := installJournalLocations(config.Path)
+func latestInstallJournal(config, manifest installfs.Snapshot, stateDir string) (journalCandidate, error) {
+	locations, err := installJournalLocations(config.Path, stateDir)
 	if err != nil {
-		return installfs.Snapshot{}, installfs.Journal{}, err
+		return journalCandidate{}, err
 	}
 	var matching, newest []journalCandidate
 	for _, location := range locations {
 		file, journal, err := loadJournalAt(location)
 		if err != nil {
-			return file, journal, err
+			return journalCandidate{}, err
 		}
 		if journal.Status != "committed" || entryFor(journal, manifest.Path) == nil {
 			continue
 		}
-		candidate := journalCandidate{file: file, journal: journal}
+		candidate := journalCandidate{file: file, journal: journal, location: location}
 		newest = append(newest, candidate)
 		if journalMatches(journal, config, manifest) {
 			matching = append(matching, candidate)
@@ -88,21 +98,24 @@ func latestInstallJournal(config, manifest installfs.Snapshot) (installfs.Snapsh
 	}
 	for _, candidates := range [][]journalCandidate{matching, newest} {
 		if len(candidates) > 0 {
-			latest := newestCandidate(candidates)
-			return latest.file, latest.journal, nil
+			return newestCandidate(candidates), nil
 		}
 	}
-	return installfs.Snapshot{}, installfs.Journal{}, fmt.Errorf("no committed profile-mango install journal next to %s; nothing to undo", config.Path)
+	return journalCandidate{}, fmt.Errorf("no committed profile-mango install journal for %s; nothing to undo", config.Path)
 }
 
-// installJournalLocations lists journals next to the config and those named by adjacent references.
-func installJournalLocations(config string) ([]journalLocation, error) {
+// installJournalLocations lists the state journals referenced for the config, then legacy
+// journals next to the config and those named by legacy adjacent references.
+func installJournalLocations(config, stateDir string) ([]journalLocation, error) {
+	locations, err := historyJournalLocations(config, stateDir)
+	if err != nil {
+		return nil, err
+	}
 	entries, err := os.ReadDir(filepath.Dir(config))
 	if err != nil {
 		return nil, fmt.Errorf("list install journals: %w", err)
 	}
 	journalPrefix, refPrefix := filepath.Base(config)+".profile-mango.journal.", filepath.Base(config)+".profile-mango.journal-ref."
-	var locations []journalLocation
 	for _, entry := range entries {
 		path := filepath.Join(filepath.Dir(config), entry.Name())
 		switch {
@@ -120,9 +133,10 @@ func installJournalLocations(config string) ([]journalLocation, error) {
 	return locations, nil
 }
 
-// loadInstallJournal strictly decodes a journal and checks that it was written for this config's transaction.
-func loadInstallJournal(path, config string) (installfs.Snapshot, installfs.Journal, error) {
-	file, err := installfs.SnapshotFile(path)
+// loadInstallJournal strictly decodes a journal and checks that it was written where its
+// location requires: in its own state transaction directory, or beside the legacy anchor.
+func loadInstallJournal(location journalLocation) (installfs.Snapshot, installfs.Journal, error) {
+	file, err := installfs.SnapshotFile(location.path)
 	if err != nil {
 		return file, installfs.Journal{}, fmt.Errorf("inspect install journal: %w", err)
 	}
@@ -133,9 +147,12 @@ func loadInstallJournal(path, config string) (installfs.Snapshot, installfs.Jour
 	if err != nil {
 		return file, journal, err
 	}
-	if journal.APIVersion != installfs.JournalVersion || !restoreID.MatchString(journal.PlanID) || journal.LockPath != config+".profile-mango.lock" ||
-		file.Path != installfs.JournalPath(config, journal.PlanID) || !uniqueEntryPaths(journal) {
-		return file, journal, fmt.Errorf("install journal %s does not describe a transaction for this config", filepath.Base(path))
+	placed := journal.LockPath == installfs.LockPath(location.anchor) && file.Path == installfs.JournalPath(location.anchor, journal.PlanID)
+	if location.history != "" {
+		placed = historyJournalValid(file.Path, location.history, journal)
+	}
+	if journal.APIVersion != installfs.JournalVersion || !restoreID.MatchString(journal.PlanID) || !placed || !uniqueEntryPaths(journal) {
+		return file, journal, fmt.Errorf("install journal %s does not describe a transaction for this config", filepath.Base(location.path))
 	}
 	return file, journal, nil
 }
@@ -180,58 +197,29 @@ func newestCandidate(candidates []journalCandidate) journalCandidate {
 
 const journalRefVersion = "profilemango.dev/install-journal-ref/v1alpha1"
 
-// journalRef locates a transaction journal stored next to another path, so each target config of a
-// multi-target install can find the one shared journal. It is a locator only; undo validates the journal itself.
+// journalRef locates a shared transaction journal, so each target config of a multi-target
+// install can find it. It is a locator only; undo validates the journal itself.
 type journalRef struct {
 	APIVersion  string `json:"apiVersion"`
 	PlanID      string `json:"planID"`
 	JournalPath string `json:"journalPath"`
 }
 
-// journalLocation names a journal, the path it is anchored next to, and the plan a reference expects it to record.
+// journalLocation names a journal and the plan a reference expects it to record. A legacy
+// journal is anchored next to anchor; a state journal lives under the history transactions dir.
 type journalLocation struct {
-	path, anchor, planID string
+	path, anchor, planID, history string
 }
 
+// journalRefPath is where earlier versions referenced a shared journal, next to the config.
 func journalRefPath(config, planID string) string {
 	return filepath.Clean(config) + ".profile-mango.journal-ref." + planID[:16] + ".json"
 }
 
-// writeJournalRefs records, next to each changed target config, where the committed journal lives
-// when the transaction anchored it next to a different file.
-func writeJournalRefs(targets []TargetPlan, planID string, applied installfs.ApplyResult) error {
-	data, err := json.MarshalIndent(journalRef{APIVersion: journalRefVersion, PlanID: planID, JournalPath: applied.JournalPath}, "", "  ")
-	if err != nil {
-		return fmt.Errorf("encode journal reference: %w", err)
-	}
-	for _, target := range targets {
-		config, err := filepath.Abs(target.ConfigPath)
-		if err != nil {
-			return fmt.Errorf("resolve %s config: %w", target.Target.String(), err)
-		}
-		if len(target.changes) == 0 || installfs.JournalPath(config, planID) == applied.JournalPath {
-			continue
-		}
-		if err := installfs.WriteSidecar(journalRefPath(config, planID), append(data, '\n')); err != nil {
-			return fmt.Errorf("write %s journal reference: %w", target.Target.String(), err)
-		}
-	}
-	return nil
-}
-
-// loadJournalRef strictly decodes a reference written next to config and returns the journal it names.
+// loadJournalRef strictly decodes a legacy reference written next to config and returns the journal it names.
 func loadJournalRef(path, config string) (journalLocation, error) {
-	file, err := installfs.SnapshotFile(path)
+	file, ref, err := decodeJournalRef(path)
 	if err != nil {
-		return journalLocation{}, fmt.Errorf("inspect install journal reference: %w", err)
-	}
-	var ref journalRef
-	decoder := json.NewDecoder(bytes.NewReader(file.Content))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&ref); err != nil {
-		return journalLocation{}, fmt.Errorf("decode install journal reference: %w", err)
-	}
-	if err := requireGeneratedJSON(file.Content, ref, "install journal reference"); err != nil {
 		return journalLocation{}, err
 	}
 	if ref.APIVersion != journalRefVersion || !restoreID.MatchString(ref.PlanID) || file.Path != journalRefPath(config, ref.PlanID) {

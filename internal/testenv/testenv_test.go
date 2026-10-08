@@ -28,7 +28,7 @@ func TestWithin(t *testing.T) {
 }
 
 func TestSandboxIsolatesHomeAndRelocations(t *testing.T) {
-	for _, name := range append([]string{"HOME", "XDG_CONFIG_HOME"}, RelocationVars...) {
+	for _, name := range append([]string{"HOME", "XDG_CONFIG_HOME", "XDG_STATE_HOME"}, RelocationVars...) {
 		t.Setenv(name, "/real/"+name)
 	}
 	root, cleanup, err := Sandbox()
@@ -36,8 +36,8 @@ func TestSandboxIsolatesHomeAndRelocations(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cleanup()
-	if home, _ := os.UserHomeDir(); !Within(root, home) || !Within(root, os.Getenv("XDG_CONFIG_HOME")) {
-		t.Fatalf("home=%q xdg=%q not under %q", home, os.Getenv("XDG_CONFIG_HOME"), root)
+	if home, _ := os.UserHomeDir(); !Within(root, home) || !Within(root, os.Getenv("XDG_CONFIG_HOME")) || !Within(root, os.Getenv("XDG_STATE_HOME")) {
+		t.Fatalf("home=%q xdg=%q state=%q not under %q", home, os.Getenv("XDG_CONFIG_HOME"), os.Getenv("XDG_STATE_HOME"), root)
 	}
 	for _, name := range RelocationVars {
 		if value, set := os.LookupEnv(name); set {

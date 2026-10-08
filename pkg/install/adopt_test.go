@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 type adoptCase struct {
@@ -69,7 +67,7 @@ func TestInstallAdoptsUnownedFieldPatchConfigWithBackup(t *testing.T) {
 			if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 				t.Fatal(err)
 			}
-			assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), test.existing)
+			assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), test.existing)
 			data, err := os.ReadFile(config)
 			if err != nil || !strings.Contains(string(data), test.sentinel) {
 				t.Fatalf("adopted config lost unrelated state: %q err=%v", data, err)
