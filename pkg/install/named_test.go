@@ -115,7 +115,7 @@ func TestCodexNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {
 	}
 	review := applyNamed(t, request, "review")
 	dir := filepath.Dir(config)
-	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	undone := applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	if undone.OriginalPlanID != review.PlanID {
 		t.Fatalf("undo selected %s, want review install %s", undone.OriginalPlanID, review.PlanID)
 	}
@@ -125,7 +125,7 @@ func TestCodexNamedUndoRevertsOnlyTheLastInstall(t *testing.T) {
 	assertInstallTestFile(t, filepath.Join(dir, "coding.config.toml"), "model_provider = \"openai\"\nmodel = \"gpt-5.6\"\nmodel_reasoning_effort = \"high\"\n")
 	assertInstallTestFile(t, manifest, string(afterCoding))
 	assertInstallTestFile(t, config, codexNamedBase)
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	for _, path := range []string{filepath.Join(dir, "coding.config.toml"), manifest} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			t.Fatalf("%s survived second undo: %v", filepath.Base(path), err)

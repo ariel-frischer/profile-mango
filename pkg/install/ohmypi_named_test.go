@@ -63,7 +63,7 @@ func TestOhMyPiNamedDefaultWritesBothAndUndoRestoresBytes(t *testing.T) {
 	}
 	assertInstallTestFile(t, config, strings.Replace(ohMyPiNamedBase, "old/model", "\"openai/gpt-5.6:high\"", 1)+ohMyPiPrimaryPresetGolden)
 	assertInstallTestFile(t, ohMyPiOverlay(config, "coding"), "modelRoles:\n  default: \"openai/gpt-5.6:high\"\n")
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	assertInstallTestFile(t, config, ohMyPiNamedBase)
 	for _, path := range []string{ohMyPiOverlay(config, "coding"), config + manifestSuffix} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
@@ -84,9 +84,9 @@ func TestOhMyPiNamedUndoRestoresPreviousOverlay(t *testing.T) {
 	}
 	writeInstallTestFile(t, request.BindingsPath, ohMyPiRolesBindings)
 	applyNamed(t, request, "coding")
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	assertInstallTestFile(t, overlay, string(first))
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	if _, err := os.Lstat(overlay); !os.IsNotExist(err) {
 		t.Fatalf("overlay survived second undo: %v", err)
 	}

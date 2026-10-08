@@ -69,6 +69,12 @@ type ApplyOptions struct {
 	LockPath     string
 	FaultAfter   int
 	LeaveJournal bool
+	// HistoryDir, when set, keeps the journal and every backup in a private per-transaction
+	// directory under it (see TransactionDir) instead of beside the changed files.
+	HistoryDir string
+	// JournalName names the journal inside the transaction directory; empty means journal.json.
+	JournalName    string
+	transactionDir string
 }
 
 type ApplyResult struct {
@@ -163,11 +169,6 @@ func JournalPath(path, planID string) string {
 	return filepath.Clean(path) + ".profile-mango.journal." + shortID(planID) + ".json"
 }
 
-// WriteSidecar atomically writes a small installer-owned 0600 file outside a transaction.
-func WriteSidecar(path string, data []byte) error {
-	return writeAtomicUnconditional(path, data, 0o600)
-}
-
 // ReplaceFile atomically replaces an existing file, through a temporary file in
 // the same directory, if it still matches expected; the file keeps its mode.
 func ReplaceFile(path string, data []byte, expected Snapshot) error {
@@ -188,15 +189,8 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 	if options.PlanID == "" {
 		options.PlanID = Hash(changeIdentity(changes))
 	}
-	anchor, err := journalAnchor(changes, options.Anchors)
-	if err != nil {
+	if err := resolveTransactionPaths(changes, &options); err != nil {
 		return ApplyResult{}, err
-	}
-	if options.JournalPath == "" {
-		options.JournalPath = JournalPath(anchor, options.PlanID)
-	}
-	if options.LockPath == "" {
-		options.LockPath = anchor + ".profile-mango.lock"
 	}
 	release, err := acquireLock(options.LockPath)
 	if err != nil {
@@ -207,6 +201,9 @@ func Apply(changes []Change, options ApplyOptions) (ApplyResult, error) {
 		return ApplyResult{}, fmt.Errorf("preflight transaction sources: %w", err)
 	}
 	if err := preflight(changes); err != nil {
+		return ApplyResult{}, err
+	}
+	if err := prepareTransactionDir(options); err != nil {
 		return ApplyResult{}, err
 	}
 	entries, backups, ownedBackups, err := prepareBackups(changes, options)
@@ -463,8 +460,12 @@ func applyChange(change Change) error {
 // ensureParentDirs creates missing private parent directories without following symlinks.
 // The journal records which ones were missing, so rollback and undo can remove them.
 func ensureParentDirs(path string) error {
-	parent := filepath.Dir(path)
-	parts := strings.Split(strings.TrimPrefix(parent, string(os.PathSeparator)), string(os.PathSeparator))
+	return ensureDirs(filepath.Dir(path))
+}
+
+// ensureDirs creates the missing private directories of an absolute path without following symlinks.
+func ensureDirs(dir string) error {
+	parts := strings.Split(strings.TrimPrefix(filepath.Clean(dir), string(os.PathSeparator)), string(os.PathSeparator))
 	current := string(os.PathSeparator)
 	for _, part := range parts {
 		if part == "" {

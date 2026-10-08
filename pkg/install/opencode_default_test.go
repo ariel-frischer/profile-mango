@@ -86,7 +86,7 @@ func TestOpenCodeDefaultUndoRemovesOnlyTheNamedAgent(t *testing.T) {
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	if _, err := os.Lstat(agentFile); !os.IsNotExist(err) {
 		t.Fatalf("agent file survived undo: %v", err)
 	}

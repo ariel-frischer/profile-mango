@@ -25,6 +25,9 @@ type UndoRequest struct {
 	// Override discards edits made to target files after the install; the ownership manifest must still be unchanged.
 	Override bool
 	Registry *Registry
+	// StateDir is the Mango state directory holding install and undo history; undo also
+	// reads history that earlier versions kept beside the target files.
+	StateDir string
 }
 
 // RestorePlan is an inert, content-bound preview of one installation reversal.
@@ -68,13 +71,13 @@ func (err *DriftError) Error() string {
 	return builder.String()
 }
 
-// BuildRestorePlan keeps the original restore signature: an exact target@version and an optional install plan ID.
-func BuildRestorePlan(target, configPath, originalID string) (RestorePlan, error) {
+// BuildRestorePlan plans undoing an install by exact target@version, config, optional install plan ID, and state directory.
+func BuildRestorePlan(target, configPath, originalID, stateDir string) (RestorePlan, error) {
 	parsed, err := ParseTarget(target)
 	if err != nil {
 		return RestorePlan{}, fmt.Errorf("parse restore target: %w", err)
 	}
-	return BuildUndoPlan(UndoRequest{Target: parsed, ConfigPath: configPath, OriginalPlanID: originalID})
+	return BuildUndoPlan(UndoRequest{Target: parsed, ConfigPath: configPath, OriginalPlanID: originalID, StateDir: stateDir})
 }
 
 type undoState struct {
@@ -83,6 +86,8 @@ type undoState struct {
 	// before is the ownership manifest the install replaced, from its journal backup.
 	before  Manifest
 	journal installfs.Journal
+	// location says where the journal lives, which fixes where its backups may live.
+	location journalLocation
 }
 
 // BuildUndoPlan previews reversing one committed install of a registered, installable target.
@@ -138,10 +143,11 @@ func loadUndoState(request UndoRequest) (undoState, error) {
 	if state.ownership, err = validateRestoreManifest(state.manifest, request.Target); err != nil {
 		return state, err
 	}
-	state.journalFile, state.journal, err = selectInstallJournal(state.config, state.manifest, request.OriginalPlanID)
+	selected, err := selectInstallJournal(state.config, state.manifest, request.OriginalPlanID, request.StateDir)
 	if err != nil {
 		return state, err
 	}
+	state.journalFile, state.journal, state.location = selected.file, selected.journal, selected.location
 	if state.before, err = journalOriginalOwnership(state.journal, state.manifest.Path, request.Target); err != nil {
 		return state, err
 	}
@@ -238,7 +244,7 @@ func appendRestoreEntries(plan *RestorePlan, state undoState) error {
 		if err != nil {
 			return err
 		}
-		if err := planRestoreEntry(plan, entry, current, state.journalFile.Path, entry.Path == state.manifest.Path); err != nil {
+		if err := planRestoreEntry(plan, entry, current, state, entry.Path == state.manifest.Path); err != nil {
 			return err
 		}
 	}
@@ -259,12 +265,12 @@ func currentSnapshot(path string, state undoState) (installfs.Snapshot, error) {
 	return snapshot, nil
 }
 
-func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current installfs.Snapshot, journalPath string, isManifest bool) error {
+func planRestoreEntry(plan *RestorePlan, entry installfs.JournalEntry, current installfs.Snapshot, state undoState, isManifest bool) error {
 	drifted, err := installedDrift(entry, current, isManifest)
 	if err != nil {
 		return err
 	}
-	original, err := originalContent(entry, plan.OriginalPlanID, journalPath, plan.request.Target, isManifest)
+	original, err := originalContent(entry, plan.OriginalPlanID, state, plan.request.Target, isManifest)
 	if err != nil {
 		return err
 	}
@@ -317,18 +323,16 @@ func installedDrift(entry installfs.JournalEntry, current installfs.Snapshot, is
 }
 
 // originalContent returns the verified pre-install backup, or an absent snapshot when the
-// install created the file. The backup is adjacent to the file, or, for a delete that
-// removed its emptied directories (a released skill file), beside the install journal.
-func originalContent(entry installfs.JournalEntry, id, journalPath string, target Target, isManifest bool) (installfs.Snapshot, error) {
+// install created the file. The backup must be where the journal's install kept it.
+func originalContent(entry installfs.JournalEntry, id string, state undoState, target Target, isManifest bool) (installfs.Snapshot, error) {
 	if !entry.BeforeExists {
 		if entry.BackupPath != "" || entry.BeforeSHA256 != "" || entry.BeforeMode != 0 {
 			return installfs.Snapshot{}, fmt.Errorf("unexpected backup for created file")
 		}
 		return installfs.Snapshot{}, nil
 	}
-	adjacent := entry.BackupPath == installfs.BackupPath(entry.Path, id) || (entry.Delete && !isManifest && installfs.IsJournalBackupPath(journalPath, entry.BackupPath))
-	if !restoreID.MatchString(entry.BeforeSHA256) || !adjacent || entry.BeforeMode == 0 || entry.BeforeMode&^0o777 != 0 {
-		return installfs.Snapshot{}, fmt.Errorf("original %s lacks a valid adjacent backup (was it installed with --no-backup?)", entry.Path)
+	if !restoreID.MatchString(entry.BeforeSHA256) || !recordedBackupPath(entry, id, state, isManifest) || entry.BeforeMode == 0 || entry.BeforeMode&^0o777 != 0 {
+		return installfs.Snapshot{}, fmt.Errorf("original %s lacks a valid recorded backup (was it installed with --no-backup?)", entry.Path)
 	}
 	backup, err := installfs.SnapshotFile(entry.BackupPath)
 	if err != nil {
@@ -341,6 +345,17 @@ func originalContent(entry installfs.JournalEntry, id, journalPath string, targe
 		return backup, validateOriginalManifest(backup, target)
 	}
 	return backup, nil
+}
+
+// recordedBackupPath reports whether the entry's backup is where its install kept it: in the
+// state journal's own transaction directory, or, for history written by earlier versions,
+// beside the file or, for a delete that removed its emptied directories, beside the journal.
+func recordedBackupPath(entry installfs.JournalEntry, id string, state undoState, isManifest bool) bool {
+	if state.location.history != "" {
+		return entry.BackupPath == installfs.HistoryBackupPath(filepath.Dir(state.journalFile.Path), entry.Path)
+	}
+	return entry.BackupPath == installfs.BackupPath(entry.Path, id) ||
+		(entry.Delete && !isManifest && installfs.IsJournalBackupPath(state.journalFile.Path, entry.BackupPath))
 }
 
 func validateOriginalManifest(backup installfs.Snapshot, target Target) error {
@@ -418,14 +433,12 @@ func restoreSourceIdentities(plan RestorePlan) []installfs.Identity {
 	return identities
 }
 
-// undoJournalPath keeps undo journals apart from install journals so undo never selects its own transaction.
-func undoJournalPath(config, planID string) string {
-	return filepath.Clean(config) + ".profile-mango.undo-journal." + planID[:16] + ".json"
-}
-
 func ApplyRestorePlan(plan RestorePlan, expected string) error {
 	if expected == "" || expected != plan.PlanID {
 		return fmt.Errorf("restore requires matching --expect-plan")
+	}
+	if err := requireStateDir(plan.request.StateDir); err != nil {
+		return err
 	}
 	fresh, err := BuildUndoPlan(plan.request)
 	if err != nil {
@@ -437,7 +450,9 @@ func ApplyRestorePlan(plan RestorePlan, expected string) error {
 	if err := installfs.Preflight(fresh.checks); err != nil {
 		return fmt.Errorf("revalidate restore source: %w", err)
 	}
-	options := installfs.ApplyOptions{PlanID: fresh.PlanID, Backup: true, Checks: fresh.checks, JournalPath: undoJournalPath(fresh.ConfigPath, fresh.PlanID)}
+	// Undo journals are never referenced, so undo never selects its own transaction.
+	options := installfs.ApplyOptions{PlanID: fresh.PlanID, Backup: true, Checks: fresh.checks,
+		HistoryDir: historyTransactions(plan.request.StateDir), JournalName: undoJournalName}
 	if _, err := installfs.Apply(fresh.changes, options); err != nil {
 		return fmt.Errorf("apply restore transaction: %w", err)
 	}

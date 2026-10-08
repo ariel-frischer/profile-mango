@@ -22,7 +22,7 @@ func setSkillTestTime(t *testing.T, path string, offset time.Duration) {
 // skillDriftReport inspects status for request, comparing profile skills with global.
 func skillDriftReport(t *testing.T, request Request, global string) []SkillDrift {
 	t.Helper()
-	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets, GlobalSkillsRoot: global})
+	report, err := InspectStatus(StatusRequest{ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot, BindingsPath: request.BindingsPath, Registry: request.Registry, Env: request.Env, Targets: request.Targets, GlobalSkillsRoot: global, StateDir: testStateDir})
 	if err != nil {
 		t.Fatal(err)
 	}

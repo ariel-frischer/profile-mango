@@ -7,13 +7,18 @@ import (
 )
 
 func newHomeCmd() *cobra.Command {
-	return &cobra.Command{
+	var state bool
+	cmd := &cobra.Command{
 		Use:     "home",
 		Aliases: []string{"h"},
 		Short:   "Print the folder mango is using for profiles and settings",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := selectedHome()
+			resolve := selectedHome
+			if state {
+				resolve = selectedStateDir
+			}
+			path, err := resolve()
 			if err != nil {
 				return err
 			}
@@ -23,4 +28,6 @@ func newHomeCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&state, "state", false, "print the install history folder instead ($PROFILE_MANGO_STATE_DIR, else $XDG_STATE_HOME/profile-mango, else ~/.local/state/profile-mango)")
+	return cmd
 }

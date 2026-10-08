@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
@@ -65,7 +64,7 @@ func (w installWorkflow) checkInstall(t *testing.T) {
 		t.Fatalf("expected one committed JSON report: err=%v output=%s", err, result.stdout)
 	}
 	assertWorkflowBytes(t, w.config, []byte(w.expected))
-	backup := installfs.BackupPath(w.config, plan.PlanID)
+	backup := workflowBackup(t, w.root, plan.PlanID, w.config)
 	assertWorkflowBytes(t, backup, before)
 	w.checkNoopAndStale(t, plan.PlanID)
 	if err := os.WriteFile(w.config, readWorkflowFile(t, backup), 0o600); err != nil {
@@ -94,7 +93,7 @@ func TestInstalledBinaryMultiTargetInstall(t *testing.T) {
 	w.checkInstall(t)
 	want := []byte("{\"defaultProvider\":\"anthropic\",\"defaultModel\":\"claude-sonnet-4-5\",\"defaultThinkingLevel\":\"high\",\"keep\":true}\n")
 	assertWorkflowBytes(t, piPath, want)
-	backup := installfs.BackupPath(piPath, plan.PlanID)
+	backup := workflowBackup(t, w.root, plan.PlanID, piPath)
 	assertWorkflowBytes(t, backup, before)
 	if err := os.WriteFile(piPath, readWorkflowFile(t, backup), 0o600); err != nil {
 		t.Fatal(err)

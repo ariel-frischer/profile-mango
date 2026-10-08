@@ -39,6 +39,17 @@ func (test undoTargetCase) target() Target {
 // installAtDefault installs one target at its documented default path under a synthetic home.
 func installAtDefault(t *testing.T, test undoTargetCase, original *string) (string, string) {
 	t.Helper()
+	config, plan, _ := planAtDefault(t, test, original)
+	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
+		t.Fatal(err)
+	}
+	return config, plan.PlanID
+}
+
+// planAtDefault plans installing one target at its default path under root/home and
+// returns its config, the ready plan, and the test root.
+func planAtDefault(t *testing.T, test undoTargetCase, original *string) (string, Plan, string) {
+	t.Helper()
 	request, root := testRequest(t, DefaultRegistry())
 	writeInstallTestFile(t, request.BindingsPath, test.bindings)
 	request.Override = true
@@ -62,10 +73,7 @@ func installAtDefault(t *testing.T, test undoTargetCase, original *string) (stri
 	if err != nil || plan.Status != StatusReady {
 		t.Fatalf("install plan status=%s err=%v diagnostics=%v", plan.Status, err, plan.Diagnostics)
 	}
-	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
-		t.Fatal(err)
-	}
-	return config, plan.PlanID
+	return config, plan, root
 }
 
 func applyUndo(t *testing.T, request UndoRequest) RestorePlan {
@@ -84,7 +92,7 @@ func TestUndoRestoresOriginalForEveryInstallableTarget(t *testing.T) {
 	for name, test := range undoTargetCases() {
 		t.Run(name, func(t *testing.T) {
 			config, id := installAtDefault(t, test, &test.original)
-			plan := applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+			plan := applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 			if plan.OriginalPlanID != id {
 				t.Fatalf("undo selected %s, want latest install %s", plan.OriginalPlanID, id)
 			}
@@ -95,7 +103,7 @@ func TestUndoRestoresOriginalForEveryInstallableTarget(t *testing.T) {
 			if _, err := os.Lstat(config + ".profile-mango.manifest.json"); !os.IsNotExist(err) {
 				t.Fatalf("install-created manifest survived undo: %v", err)
 			}
-			if _, err := BuildUndoPlan(UndoRequest{Target: test.target(), ConfigPath: config}); err == nil {
+			if _, err := BuildUndoPlan(UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir}); err == nil {
 				t.Fatal("second undo of the same install accepted")
 			}
 		})
@@ -106,7 +114,7 @@ func TestUndoRemovesConfigCreatedByInstallForEveryTarget(t *testing.T) {
 	for name, test := range undoTargetCases() {
 		t.Run(name, func(t *testing.T) {
 			config, _ := installAtDefault(t, test, nil)
-			applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+			applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 			for _, path := range []string{config, config + ".profile-mango.manifest.json"} {
 				if _, err := os.Lstat(path); !os.IsNotExist(err) {
 					t.Fatalf("install-created %s survived undo: %v", path, err)
@@ -126,7 +134,7 @@ func TestUndoRefusesDriftUnlessOverride(t *testing.T) {
 			}
 			edited := string(installed) + "\n# edited after install\n"
 			writeInstallTestFile(t, config, edited)
-			request := UndoRequest{Target: test.target(), ConfigPath: config}
+			request := UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir}
 			_, err = BuildUndoPlan(request)
 			var drift *DriftError
 			if !errors.As(err, &drift) || !strings.Contains(err.Error(), "+# edited after install") && !strings.Contains(err.Error(), "-# edited after install") {
@@ -149,7 +157,7 @@ func TestUndoRefusesEditedManifestEvenWithOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeInstallTestFile(t, manifest, string(data)+"\n")
-	if _, err := BuildUndoPlan(UndoRequest{Target: test.target(), ConfigPath: config, Override: true}); err == nil {
+	if _, err := BuildUndoPlan(UndoRequest{Target: test.target(), ConfigPath: config, Override: true, StateDir: testStateDir}); err == nil {
 		t.Fatal("edited manifest accepted")
 	}
 }
@@ -173,12 +181,12 @@ func TestUndoStepsBackThroughSuccessiveInstalls(t *testing.T) {
 	if _, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID}); err != nil {
 		t.Fatal(err)
 	}
-	undone := applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+	undone := applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 	if undone.OriginalPlanID != plan.PlanID {
 		t.Fatalf("first undo selected %s, want %s", undone.OriginalPlanID, plan.PlanID)
 	}
 	assertInstallTestFile(t, config, string(first))
-	applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config})
+	applyUndo(t, UndoRequest{Target: test.target(), ConfigPath: config, StateDir: testStateDir})
 	assertInstallTestFile(t, config, test.original)
 }
 
@@ -186,7 +194,7 @@ func TestUndoWithoutJournalExplainsNothingToUndo(t *testing.T) {
 	root := t.TempDir()
 	config := filepath.Join(root, "settings.json")
 	writeInstallTestFile(t, config, "{}\n")
-	_, err := BuildUndoPlan(UndoRequest{Target: undoTargetCases()["claude-code"].target(), ConfigPath: config})
+	_, err := BuildUndoPlan(UndoRequest{Target: undoTargetCases()["claude-code"].target(), ConfigPath: config, StateDir: testStateDir})
 	if err == nil {
 		t.Fatal("undo without an install accepted")
 	}
@@ -219,10 +227,10 @@ func TestUndoOfMultiTargetInstallLeavesOtherTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	applyUndo(t, UndoRequest{Target: codexTarget, ConfigPath: codexConfig})
+	applyUndo(t, UndoRequest{Target: codexTarget, ConfigPath: codexConfig, StateDir: testStateDir})
 	assertInstallTestFile(t, codexConfig, "# codex original\n")
 	assertInstallTestFile(t, piConfig, string(installedPi))
 	// The shared journal sits beside the lexically first path; a reference beside the pi config locates it.
-	applyUndo(t, UndoRequest{Target: piTarget, ConfigPath: piConfig})
+	applyUndo(t, UndoRequest{Target: piTarget, ConfigPath: piConfig, StateDir: testStateDir})
 	assertInstallTestFile(t, piConfig, "{}\n")
 }

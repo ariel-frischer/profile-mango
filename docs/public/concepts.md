@@ -113,6 +113,15 @@ mandatory, so `--no-backup` blocks adoption. A file you edited after a
 profile-mango install is protected; `--override` replaces it only where that
 agent allows it.
 
+**Where history lives:** backups and the journals undo reads are kept in
+mango's state folder, not beside your agent configs: `$PROFILE_MANGO_STATE_DIR`,
+else `$XDG_STATE_HOME/profile-mango`, else `~/.local/state/profile-mango`
+(`mango home --state` prints it). Only the ownership manifest
+(`<config>.profile-mango.manifest.json`) stays next to the config. Backups and
+journals written beside configs by earlier releases are still read by undo and
+release; mango never moves or deletes them, so remove them by hand once you no
+longer need them.
+
 **Shared configs:** in a config profile-mango patches field by field (such as
 Oh My Pi `config.yml` or Codex `config.toml`), the manifest records a hash of
 each value it wrote. Only a changed owned value counts as your edit. Other
@@ -141,7 +150,7 @@ a multi-target install is undone separately.
 - A config edited after the install is refused unless `--override` discards
   those edits.
 - Undo needs the install's backup, so it can't reverse an install made with
-  `--no-backup`.
+  `--no-backup`, or one whose history you removed from the state folder.
 
 Use `--original-plan <id>` to undo a specific earlier install.
 

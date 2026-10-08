@@ -15,18 +15,18 @@ func TestInstalledBinaryPreparationFailureRetry(t *testing.T) {
 		blocker func(installWorkflow, install.Plan) string
 	}{
 		"later backup collision": {func(w installWorkflow, plan install.Plan) string {
-			return installfs.BackupPath(w.config+".profile-mango.manifest.json", plan.PlanID)
+			return preparationBackup(w, plan, w.config+".profile-mango.manifest.json")
 		}},
 		"initial journal obstruction": {func(w installWorkflow, plan install.Plan) string {
 			// The journal anchors on the target's main config, which --default changes.
-			return installfs.JournalPath(w.config, plan.PlanID)
+			return filepath.Join(workflowTransaction(w.root, plan.PlanID, w.config), installfs.DefaultJournalName)
 		}},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			w, plan := preparationRetryWorkflow(t)
 			blocker := test.blocker(w, plan)
-			if err := os.Mkdir(blocker, 0o700); err != nil {
+			if err := os.MkdirAll(blocker, 0o700); err != nil {
 				t.Fatal(err)
 			}
 			assertPreparationFailurePreserved(t, w, plan, blocker)
@@ -39,6 +39,11 @@ func TestInstalledBinaryPreparationFailureRetry(t *testing.T) {
 			applyPreparationPlan(t, w, plan)
 		})
 	}
+}
+
+// preparationBackup is where applying the single-target plan backs up path.
+func preparationBackup(w installWorkflow, plan install.Plan, path string) string {
+	return installfs.HistoryBackupPath(workflowTransaction(w.root, plan.PlanID, w.config), path)
 }
 
 func preparationRetryWorkflow(t *testing.T) (installWorkflow, install.Plan) {
@@ -78,7 +83,7 @@ func assertPreparationFailurePreserved(t *testing.T, w installWorkflow, plan ins
 		if err != nil || !snapshot.Equal(current) {
 			t.Fatalf("preparation changed %s: %v", path, err)
 		}
-		backup := installfs.BackupPath(path, plan.PlanID)
+		backup := preparationBackup(w, plan, path)
 		if backup != blocker {
 			if _, err := os.Lstat(backup); !os.IsNotExist(err) {
 				t.Fatalf("preparation backup remained %s: %v", backup, err)

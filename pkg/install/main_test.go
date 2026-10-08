@@ -3,10 +3,14 @@ package install
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ariel-frischer/profile-mango/internal/testenv"
 )
+
+// testStateDir is the sandbox Mango state directory every test install and undo writes history to.
+var testStateDir string
 
 // TestMain isolates every test from the real user home and refuses to run if any
 // default target config path could still resolve outside the sandbox.
@@ -16,6 +20,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	testStateDir = filepath.Join(root, "state")
 	code := 1
 	if err := guardDefaultPaths(root); err != nil {
 		fmt.Fprintln(os.Stderr, err)

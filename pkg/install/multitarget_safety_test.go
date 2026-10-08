@@ -4,8 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 )
 
 func TestLaterTargetBackupFailurePreservesEveryConfig(t *testing.T) {
@@ -23,7 +21,7 @@ func TestLaterTargetBackupFailurePreservesEveryConfig(t *testing.T) {
 	if err != nil || plan.Status != StatusReady {
 		t.Fatalf("plan status=%s err=%v", plan.Status, err)
 	}
-	backup := installfs.BackupPath(second, plan.PlanID)
+	backup := plannedBackup(plan.PlanID, first, second)
 	writeInstallTestFile(t, backup, "independent-backup")
 	report, err := ApplyPlan(plan, ApplyOptions{ExpectedPlanID: plan.PlanID})
 	if err == nil || !strings.Contains(err.Error(), "backup already exists") {

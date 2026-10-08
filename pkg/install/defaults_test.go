@@ -132,7 +132,7 @@ func TestDefaultPathPlanApplyPreservesCredentialsAndDetectsDrift(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertInstallTestFile(t, config, strings.Replace(before, `"model": "old/model"`, "\"effortLevel\": \"high\",\n  \"model\": \"claude-sonnet-4-5\"", 1))
-	assertInstallTestFile(t, installfs.BackupPath(config, plan.PlanID), before)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, config), before)
 	if _, err := os.Stat(config + ".profile-mango.manifest.json"); err != nil {
 		t.Fatalf("ownership manifest missing: %v", err)
 	}

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 	"github.com/spf13/cobra"
 )
@@ -78,7 +77,7 @@ func TestInstallDefaultFlagAlsoAdoptsConfig(t *testing.T) {
 	if err != nil || !strings.HasPrefix(string(data), before) || !strings.Contains(string(data), `model = "gpt-5.6"`) {
 		t.Fatalf("installed config = %q, err=%v", data, err)
 	}
-	if backup, err := os.ReadFile(installfs.BackupPath(config, planID[1])); err != nil || string(backup) != before {
+	if backup, err := os.ReadFile(historyBackup(t, config, planID[1])); err != nil || string(backup) != before {
 		t.Fatalf("adoption backup = %q, err=%v", backup, err)
 	}
 }

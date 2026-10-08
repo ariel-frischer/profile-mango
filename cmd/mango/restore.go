@@ -150,7 +150,11 @@ func undoRequest(options restoreOptions, registry *install.Registry, env install
 			return install.UndoRequest{}, fmt.Errorf("resolve undo config: %w", err)
 		}
 	}
-	return install.UndoRequest{Target: target, ConfigPath: config, OriginalPlanID: options.originalPlan, Override: options.override, Registry: registry}, nil
+	stateDir, err := selectedStateDir()
+	if err != nil {
+		return install.UndoRequest{}, err
+	}
+	return install.UndoRequest{Target: target, ConfigPath: config, OriginalPlanID: options.originalPlan, Override: options.override, Registry: registry, StateDir: stateDir}, nil
 }
 
 func validateRestoreOptions(options restoreOptions) error {

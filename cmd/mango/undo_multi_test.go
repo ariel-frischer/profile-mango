@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/spf13/cobra"
 )
 
@@ -135,7 +136,7 @@ func TestUndoListPreviewRequiresPerTargetApply(t *testing.T) {
 func TestUndoMultiTargetByOriginalPlanAndRejectsForgedReference(t *testing.T) {
 	configs := installClaudeAndCodexAtDefault(t)
 	codex := configs[1]
-	refs, err := filepath.Glob(codex.path + ".profile-mango.journal-ref.*.json")
+	refs, err := filepath.Glob(filepath.Join(testStateDir(t), "targets", installfs.Hash([]byte(codex.path))[:16], "journals", "*.json"))
 	if err != nil || len(refs) != 1 {
 		t.Fatalf("codex journal references = %v, err=%v", refs, err)
 	}
@@ -151,8 +152,13 @@ func TestUndoMultiTargetByOriginalPlanAndRejectsForgedReference(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeFile(t, refs[0], strings.Replace(string(data), filepath.Join(".claude", "settings.json"), filepath.Join(".codex", "other.toml"), 1))
-	if _, err := runUndoForTest(t, restoreOptions{target: "codex"}); err == nil {
-		t.Fatal("undo accepted a reference to a journal that does not exist")
+	for name, forged := range map[string]string{
+		"missing journal": regexp.MustCompile(`-[0-9a-f]{16}/journal\.json`).ReplaceAllString(string(data), "-0000000000000000/journal.json"),
+		"foreign journal": strings.Replace(string(data), testStateDir(t), filepath.Dir(codex.path), 1),
+	} {
+		writeFile(t, refs[0], forged)
+		if _, err := runUndoForTest(t, restoreOptions{target: "codex"}); err == nil {
+			t.Fatalf("undo accepted a forged reference (%s)", name)
+		}
 	}
 }

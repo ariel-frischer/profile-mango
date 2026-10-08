@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ariel-frischer/profile-mango/internal/profilehome"
+	"github.com/ariel-frischer/profile-mango/internal/statehome"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -299,7 +300,9 @@ func TestHomeCommandPrecedenceAndNoMutation(t *testing.T) {
 	root := t.TempDir()
 	environmentHome := filepath.Join(root, "environment")
 	flagHome := filepath.Join(root, "flag")
+	stateDir := filepath.Join(root, "state")
 	t.Setenv(profilehome.EnvHome, environmentHome)
+	t.Setenv(statehome.EnvStateDir, stateDir)
 
 	tests := map[string]struct {
 		args []string
@@ -307,6 +310,7 @@ func TestHomeCommandPrecedenceAndNoMutation(t *testing.T) {
 	}{
 		"environment": {args: []string{"home"}, want: environmentHome},
 		"flag":        {args: []string{"--home", flagHome, "home"}, want: flagHome},
+		"state":       {args: []string{"--home", flagHome, "home", "--state"}, want: stateDir},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

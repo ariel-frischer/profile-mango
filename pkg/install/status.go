@@ -44,6 +44,9 @@ type StatusRequest struct {
 	// GlobalSkillsRoot is the global skills directory compared with profile-owned
 	// skills; empty means $HOME/.agents/skills.
 	GlobalSkillsRoot string
+	// StateDir is the Mango state directory the source comparison searches for the
+	// backups a release would restore; it is only read.
+	StateDir string
 }
 
 // StatusReport is the deterministic state of every inspected target.
@@ -293,7 +296,7 @@ func sourceState(request StatusRequest, registry *Registry, status *TargetStatus
 	plan, err := BuildPlan(Request{
 		ProfileName: status.Profile, ProfilesRoot: request.ProfilesRoot, ResourceRoot: request.ResourceRoot,
 		BindingsPath: request.BindingsPath, Registry: registry, Env: request.Env, Backup: true, Override: true,
-		Default: status.ownsConfig, Release: true,
+		Default: status.ownsConfig, Release: true, StateDir: request.StateDir,
 		Targets: []TargetRequest{{Target: status.Target, ConfigPath: status.ConfigPath}},
 	})
 	if err != nil {

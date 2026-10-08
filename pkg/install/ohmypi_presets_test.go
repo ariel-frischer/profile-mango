@@ -42,7 +42,7 @@ func TestOhMyPiBindingPresetsLifecycle(t *testing.T) {
 	if strings.Contains(string(data), "mango-alternate:") {
 		t.Fatal("removed route preset survived release")
 	}
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 }
 
 func TestOhMyPiPresetNameCollision(t *testing.T) {
@@ -57,6 +57,6 @@ func TestOhMyPiPresetNameCollision(t *testing.T) {
 	}
 	request.Override = true
 	applySwitchTestPlan(t, request)
-	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry})
+	applyUndo(t, UndoRequest{Target: request.Targets[0].Target, ConfigPath: config, Registry: request.Registry, StateDir: testStateDir})
 	assertInstallTestFile(t, config, original)
 }

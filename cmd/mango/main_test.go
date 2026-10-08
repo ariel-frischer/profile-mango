@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ariel-frischer/profile-mango/internal/statehome"
 	"github.com/ariel-frischer/profile-mango/internal/testenv"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
@@ -31,6 +32,9 @@ func TestMain(m *testing.M) {
 }
 
 func guardDefaultPaths(root string) error {
+	if state, err := statehome.Resolve(); err != nil || !testenv.Within(root, state) {
+		return fmt.Errorf("test home guard: state directory %q escapes sandbox %s: %v", state, root, err)
+	}
 	registry := install.DefaultRegistry()
 	for _, target := range registry.Targets() {
 		path, err := registry.DefaultConfigPath(target, install.OSPathEnv())

@@ -162,6 +162,8 @@ func cleanInstallEnv(t *testing.T, root string) []string {
 	return replaceEnvironment(os.Environ(), []string{
 		"HOME=" + filepath.Join(root, "home"),
 		"XDG_CONFIG_HOME=" + filepath.Join(root, "config"),
+		"XDG_STATE_HOME=" + filepath.Join(root, "xdg-state"),
+		"PROFILE_MANGO_STATE_DIR=" + workflowStateDir(root),
 		"CODEX_HOME=",
 		"HERMES_HOME=",
 		"PI_CODING_AGENT_DIR=",

@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Roles accept any name matching ^[a-z][a-z0-9-]{0,62}$ (except default): custom roles like coder or reviewer get subagent files on Claude Code, Codex, OpenCode and Oh My Pi, and Oh My Pi bindings such as code or review set modelRoles.<name> directly, with or without an agent file. Binding a semantic role and its native slot together (e.g. worker and task) is rejected.
 
+### Changed
+
+- Install and undo history (backups, journals, journal references) now goes to the Mango state dir ($PROFILE_MANGO_STATE_DIR, else $XDG_STATE_HOME/profile-mango, else ~/.local/state/profile-mango) instead of sitting beside agent config files; mango home --state prints it. History left beside configs by older versions is still read for undo and release. Older mango binaries cannot read history written by this version.
+
 ## [0.3.1] - 2026-10-08
 
 ### Fixed

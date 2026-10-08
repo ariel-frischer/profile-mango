@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ariel-frischer/profile-mango/internal/installfs"
 	"github.com/ariel-frischer/profile-mango/pkg/install"
 )
 
@@ -26,7 +25,7 @@ func TestInstalledBinaryOpenCodeSkillInstall(t *testing.T) {
 	}
 	installed := workflowInstalledSkill(w)
 	assertWorkflowBytes(t, installed, []byte(workflowSkill))
-	assertWorkflowBytes(t, installfs.BackupPath(w.config, plan.PlanID), []byte(w.original))
+	assertWorkflowBytes(t, workflowBackup(t, w.root, plan.PlanID, w.config), []byte(w.original))
 	assertInstalledSkillConfig(t, w)
 	noop := w.plan(t)
 	if noop.Status != install.StatusNoop {

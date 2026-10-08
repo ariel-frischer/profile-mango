@@ -155,7 +155,7 @@ func TestOpenCodeOverrideEditedOwnedAgent(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertInstallTestFile(t, agent, string(original))
-	assertInstallTestFile(t, installfs.BackupPath(agent, plan.PlanID), edited)
+	assertInstallTestFile(t, installedBackup(t, plan.PlanID, agent), edited)
 }
 
 func TestOpenCodeSwitchRejectsEditedLegacySkill(t *testing.T) {

@@ -232,6 +232,9 @@ type Request struct {
 	Default bool
 	// Release (mango use) gives back owned files the new profile does not write.
 	Release bool
+	// StateDir is the absolute Mango state directory that keeps install history (journals,
+	// backups, journal references) and where release looks for adopted files' backups.
+	StateDir string
 }
 
 type Manifest struct {
@@ -301,6 +304,7 @@ type Plan struct {
 	Targets     []TargetPlan             `json:"targets"`
 	Diagnostics profilemango.Diagnostics `json:"diagnostics,omitempty"`
 	sources     []sourceCheck            `json:"-"`
+	stateDir    string
 }
 
 func (plan Plan) JSON() ([]byte, error) {
