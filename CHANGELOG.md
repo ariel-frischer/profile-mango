@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-08
+
 ### Added
 
 - Roles accept any name matching ^[a-z][a-z0-9-]{0,62}$ (except default): custom roles like coder or reviewer get subagent files on Claude Code, Codex, OpenCode and Oh My Pi, and Oh My Pi bindings such as code or review set modelRoles.<name> directly, with or without an agent file. Binding a semantic role and its native slot together (e.g. worker and task) is rejected.
@@ -216,7 +218,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/ariel-frischer/profile-mango/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/ariel-frischer/profile-mango/compare/v0.2.0...v0.2.1
