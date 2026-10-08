@@ -65,7 +65,9 @@ chlog check
 
 mkdir -p .release
 echo "==> Checking unreleased entries..."
-if chlog show unreleased 2>/dev/null | grep -q .; then
+# Plain entry bullets are indented four spaces; version/category headers are not.
+# Drain the output instead of using grep -q so pipefail cannot see an early SIGPIPE.
+if chlog show unreleased --plain 2>/dev/null | grep -E '^    - ' >/dev/null; then
   echo "==> Stamping changelog: ${BARE_VERSION}..."
   chlog release "${BARE_VERSION}"
 
