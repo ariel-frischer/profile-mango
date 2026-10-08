@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Install and undo history (backups, journals, journal references) now goes to the Mango state dir ($PROFILE_MANGO_STATE_DIR, else $XDG_STATE_HOME/profile-mango, else ~/.local/state/profile-mango) instead of sitting beside agent config files; mango home --state prints it. History left beside configs by older versions is still read for undo and release. Older mango binaries cannot read history written by this version.
+
 ## [0.3.1] - 2026-10-08
 
 ### Fixed
