@@ -107,6 +107,13 @@ func TestRouteSetAndUnsetEditTheBindingsFile(t *testing.T) {
 			wantFile: routeTestBindings + "    targets:\n      codex:\n        roles:\n          research:\n            provider: openai\n",
 			wantOut:  []string{"+    targets:", "+          research:", "+            provider: openai", "No profile uses route spare yet"},
 		},
+		"set custom role": {
+			args:     []string{"route", "set", "sol", "--role", "code", "--provider", "openai", "--model", "gpt-6"},
+			wantFile: strings.Replace(routeTestBindings, "  spare:\n", "    roles:\n      code:\n        provider: openai\n        model: gpt-6\n  spare:\n", 1),
+			wantOut:  []string{"+      code:"},
+		},
+		"invalid role": {args: []string{"route", "set", "sol", "--role", "Bad_Name", "--model", "x"}, wantFile: routeTestBindings, wantError: `unknown role "Bad_Name"`},
+		"reserved role": {args: []string{"route", "set", "sol", "--role", "default", "--model", "x"}, wantFile: routeTestBindings, wantError: "remove roles.default"},
 		"target role the base lacks": {args: []string{"route", "set", "sol", "--target", "codex", "--role", "tiny", "--model", "x"}, wantFile: routeTestBindings, wantError: "binding.target_role_unbound"},
 		"no field flags":             {args: []string{"route", "set", "sol", "--target", "codex"}, wantFile: routeTestBindings, wantError: "pass at least one of"},
 		"unknown unset field":        {args: []string{"route", "unset", "sol", "colour"}, wantFile: routeTestBindings, wantError: `unknown route field "colour"`},

@@ -181,7 +181,7 @@ func TestEditBindingsRejectsInvalidEdits(t *testing.T) {
 		"role without a model":       {edit: RouteEdit{Route: "opus55", Role: "research", Set: map[string]string{"provider": "openai"}}, want: "binding.role_incomplete"},
 		"unknown route":              {edit: RouteEdit{Route: "missing", Set: map[string]string{"effort": "low"}}, want: `route "missing" is not in the bindings file`},
 		"unknown target":             {edit: RouteEdit{Route: "sol", Target: "vim", Set: map[string]string{"effort": "low"}}, want: `unknown target "vim"`},
-		"unknown role":               {edit: RouteEdit{Route: "sol", Role: "boss", Set: map[string]string{"model": "x"}}, want: `unknown role "boss"`},
+		"invalid role":               {edit: RouteEdit{Route: "sol", Role: "Bad_Name", Set: map[string]string{"model": "x"}}, want: `unknown role "Bad_Name"`},
 		"target role the base lacks": {edit: RouteEdit{Route: "sol", Target: "codex", Role: "tiny", Set: map[string]string{"model": "x"}}, want: "binding.target_role_unbound"},
 		"subagent cap per target":    {edit: RouteEdit{Route: "sol", Target: "codex", Set: map[string]string{"subagentMaxEffort": "high"}}, want: "applies to the whole route"},
 		"empty value":                {edit: RouteEdit{Route: "sol", Set: map[string]string{"model": " "}}, want: "use route unset"},

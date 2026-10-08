@@ -85,7 +85,7 @@ func (edit RouteEdit) check() error {
 	if edit.Target != "" && !knownRouteTarget(edit.Target) {
 		return fmt.Errorf("unknown target %q; expected one of %s", edit.Target, strings.Join(RouteTargets, ", "))
 	}
-	if edit.Role != "" && !PortableRole(edit.Role) {
+	if edit.Role != "" && !ValidRoleName(edit.Role) {
 		return errors.New(unknownRoleMessage(edit.Role))
 	}
 	if len(edit.Set)+len(edit.Unset) == 0 {

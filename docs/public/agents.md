@@ -191,9 +191,10 @@ and explicit `--agent` destinations remain protected.
 ## Oh My Pi
 
 - **Installs:** `modelRoles.default` as `provider/model:effort`, plus the
-  model slots of each bound portable role (`worker`: `task`; `planner`:
-  `plan`, `slow`; `research`: `smol`; `tiny`: `tiny`, `commit`), and
-  `task.maxEffort` from `subagentMaxEffort`, in an emulated named profile:
+  model slots of each bound role: semantic names map as `worker`: `task`;
+  `planner`: `plan`, `slow`; `research`: `smol`; `tiny`: `commit`, `tiny`.
+  Other valid role names map directly, e.g. `code` → `modelRoles.code`.
+  It also writes `task.maxEffort` from `subagentMaxEffort`, in an emulated named profile:
   the overlay `~/.omp/agent/profiles/<profile>.yml`. Start it with
   `omp --config <path>`, printed by the plan as `use it:`. `config.yml` is not
   changed unless you pass `--default`, which also writes these there so plain
@@ -203,6 +204,9 @@ and explicit `--agent` destinations remain protected.
 - **Roles:** with `--default` or `mango use`, each profile role becomes
   `~/.omp/agent/agents/<role>.md`, whose `model: "@<slot>"` resolves the slot
   above, so model and effort come from the active config.
+  Binding-only roles (no profile definition) set model slots without agent
+  files. Custom files reference `@<name>`; consumers must request that slot.
+  A semantic alias and a direct name claiming the same slot fail closed.
 - **Agent files:** `agentFiles.oh-my-pi` copies native `.md` agent files
   unchanged to `~/.omp/agent/agents/`, with `mango use` or `--default`. A
   file named like a bundled agent, such as `scout.md`, replaces it.
@@ -242,9 +246,10 @@ role mapping as the applied profile. An unbound portable slot uses the
 route's default selector: omp clears roles a preset omits. A route's effort
 also sets the preset's `defaultThinkingLevel` (omitted when effort is unset).
 Each preset also carries every unmanaged `modelRoles` selector from the target
-config (for example `code`, `review`, and `web`), so omp's whole-snapshot switch
-does not clear them. These selectors are copied unchanged; Mango does not own
-or rewrite their entries in `config.yml`. Re-running `mango use` refreshes the
+config (for example unbound `code`, `review`, or `web`), so omp's whole-snapshot
+switch does not clear them. Binding one of those names makes its config field
+managed; the binding wins over the carried value, and dropping it restores its
+prior value or removes a Mango-created slot. Re-running `mango use` refreshes
 carried values, including for overlay-only presets. Status matches the complete
 recorded snapshot, including these carried selectors; a different unmanaged
 selector is not a preset match, but remains unmanaged under normal drift rules.

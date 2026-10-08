@@ -161,13 +161,13 @@ func TestCodexRoleSubsetByInstallMode(t *testing.T) {
 		strictReason  string
 	}{
 		"default": {status: StatusReady, want: []SkippedRequirement{
-			{Requirement: RequirementRoles, Count: 1, Reason: rolesUnsupportedReason},
+			{Requirement: RequirementRoles, Count: 1, Reason: rolesUnsupportedReason + "; roles: planner"},
 			{Requirement: RequirementSubagentMaxEffort, Value: "medium", Reason: subagentMaxEffortUnsupportedReason},
 		}},
 		"default strict": {strict: true, status: StatusBlocked, strictReason: "1 route roles cannot be installed"},
 		"named": {named: true, status: StatusReady, want: []SkippedRequirement{
 			{Requirement: RequirementRoleDefinitions, Count: 2, Reason: roleFilesNamedOnlyReason},
-			{Requirement: RequirementRoles, Count: 2, Reason: rolesUnsupportedReason},
+			{Requirement: RequirementRoles, Count: 2, Reason: rolesUnsupportedReason + "; roles: planner, research"},
 			{Requirement: RequirementSubagentMaxEffort, Value: "medium", Reason: subagentMaxEffortUnsupportedReason},
 		}},
 		"named strict": {named: true, strict: true, status: StatusBlocked, strictReason: "2 role definitions cannot be installed: " + roleFilesNamedOnlyReason},
@@ -218,4 +218,24 @@ func TestStrictBlocksRouteRolesWithoutRoleDefinitions(t *testing.T) {
 	if target := plan.Targets[0]; target.Status != StatusBlocked || !strings.Contains(target.Reason, "2 route roles cannot be installed") {
 		t.Fatalf("strict target = %s (%s)", target.Status, target.Reason)
 	}
+}
+
+func TestPiReportsCustomRoleSkip(t *testing.T) {
+	test := roleTargetCase{undoTargetCase: undoTargetCases()["pi"].withBindings(ohMyPiCustomBindings)}
+	request, _, _ := roleInstallRequest(t, test)
+	plan, err := BuildPlan(request)
+	if err != nil || plan.Status != StatusReady {
+		t.Fatalf("plan = %#v, error = %v", plan, err)
+	}
+	for _, skipped := range plan.Targets[0].SkippedRequirements {
+		if skipped.Requirement == RequirementRoles && skipped.Count == 2 && strings.Contains(skipped.Reason, "code, review") {
+			request.Strict = true
+			strict, err := BuildPlan(request)
+			if err != nil || strict.Status != StatusBlocked {
+				t.Fatalf("strict plan = %#v, error = %v", strict, err)
+			}
+			return
+		}
+	}
+	t.Fatalf("custom role names missing from skips: %#v", plan.Targets[0].SkippedRequirements)
 }

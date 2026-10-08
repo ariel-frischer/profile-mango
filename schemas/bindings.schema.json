@@ -49,9 +49,9 @@
       "enum": ["minimal", "low", "medium", "high", "xhigh", "max"]
     },
     "roles": {
-      "description": "Per-role routes keyed by portable role. Oh My Pi slots: worker=task, planner=plan+slow, research=smol, tiny=tiny+commit.",
+      "description": "Per-role routes keyed by canonical identifier (default is reserved). Oh My Pi slots: worker=task, planner=plan+slow, research=smol, tiny=commit+tiny; other names map directly.",
       "type": "object", "minProperties": 1,
-      "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+      "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$", "not": {"const": "default"}},
       "additionalProperties": {"$ref": "#/$defs/roleRoute"}
     },
     "roleRoute": {
@@ -74,7 +74,7 @@
         "roles": {
           "description": "Per-target changes to roles the base route binds under roles; non-empty fields replace the base role's.",
           "type": "object", "minProperties": 1,
-          "propertyNames": {"enum": ["worker", "planner", "research", "tiny"]},
+          "propertyNames": {"pattern": "^[a-z][a-z0-9-]{0,62}$", "not": {"const": "default"}},
           "additionalProperties": {"$ref": "#/$defs/roleOverride"}
         }
       }

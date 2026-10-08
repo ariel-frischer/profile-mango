@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/ariel-frischer/profile-mango/pkg/profilemango"
 	"github.com/ariel-frischer/profile-mango/pkg/render"
@@ -97,11 +98,12 @@ func supportedSubset(adapter Adapter, agent AgentDestination, setsDefault bool, 
 func routeSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bool, route profilemango.RouteBinding, definitions map[string]profilemango.RoleDefinition) (profilemango.RouteBinding, []SkippedRequirement, string) {
 	var skipped []SkippedRequirement
 	if !supportsRequirement(adapter, agent, setsDefault, RequirementRoles) {
-		if count := uncoveredRoles(route.Roles, definitions); count > 0 {
+		if names := uncoveredRoleNames(route.Roles, definitions); len(names) > 0 {
+			reason := rolesUnsupportedReason + "; roles: " + strings.Join(names, ", ")
 			if strict {
-				return route, nil, fmt.Sprintf("--strict: %d route roles cannot be installed: %s", count, rolesUnsupportedReason)
+				return route, nil, fmt.Sprintf("--strict: %d route roles cannot be installed: %s", len(names), reason)
 			}
-			skipped = append(skipped, SkippedRequirement{Requirement: RequirementRoles, Count: count, Reason: rolesUnsupportedReason})
+			skipped = append(skipped, SkippedRequirement{Requirement: RequirementRoles, Count: len(names), Reason: reason})
 		}
 		route.Roles = nil
 	}
@@ -115,15 +117,16 @@ func routeSubset(adapter Adapter, agent AgentDestination, setsDefault, strict bo
 	return route, skipped, ""
 }
 
-// uncoveredRoles counts the route roles no installed role definition carries.
-func uncoveredRoles(roles map[string]profilemango.RoleRoute, definitions map[string]profilemango.RoleDefinition) int {
-	count := 0
+// uncoveredRoleNames lists route roles no installed role definition carries.
+func uncoveredRoleNames(roles map[string]profilemango.RoleRoute, definitions map[string]profilemango.RoleDefinition) []string {
+	var names []string
 	for name := range roles {
 		if _, covered := definitions[name]; !covered {
-			count++
+			names = append(names, name)
 		}
 	}
-	return count
+	slices.Sort(names)
+	return names
 }
 
 // roleDefinitionSubset strips the profile's role definitions when the target writes no

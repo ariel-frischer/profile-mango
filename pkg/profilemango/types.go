@@ -36,8 +36,8 @@ type PolicyProfile struct {
 	// AgentFiles maps a target name to whole native subagent files installed verbatim
 	// in its subagent directory (file name -> resource path), e.g. oh-my-pi: {scout.md: agents/scout.md}.
 	AgentFiles map[string]map[string]string `yaml:"agentFiles,omitempty" json:"agentFiles,omitempty"`
-	// Roles describes portable roles (worker, planner, research, tiny); models for
-	// them come from the bound route's roles.
+	// Roles describes roles keyed by canonical identifier; models for them
+	// come from the bound route's roles.
 	Roles map[string]RoleDefinition `yaml:"roles,omitempty" json:"roles,omitempty"`
 }
 
@@ -78,8 +78,8 @@ type Bindings struct {
 // RouteBinding is a base route plus optional explicit per-target overrides.
 // Targets is empty in every effective route returned by RouteFor. ParseBindings
 // fills an omitted Transport with DefaultTransport and Authentication with
-// DefaultAuthentication. Roles maps portable roles (worker, planner, research,
-// tiny) to their own route; the base route is the default role.
+// DefaultAuthentication. Roles maps role identifiers to their own route;
+// the base route is the default role.
 // SubagentMaxEffort caps the effort a caller may request for one subagent spawn.
 // A target override may change bound Roles through targets.<agent>.roles but
 // never SubagentMaxEffort.

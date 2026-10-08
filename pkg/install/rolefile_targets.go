@@ -60,7 +60,7 @@ func (ohMyPiAdapter) roleFilePath(role string) string { return "agents/" + role 
 // roleFileModel names the role's modelRoles slot as an @ alias, so the subagent resolves
 // the provider/model:effort selector the same install writes to that slot.
 func (ohMyPiAdapter) roleFileModel(role string, _ profilemango.RoleRoute) (string, string) {
-	slots := ohmypi.RoleSlots[role]
+	slots := ohmypi.SlotsForRole(role)
 	if len(slots) == 0 {
 		return "", "no Oh My Pi modelRoles slot carries role " + role
 	}

@@ -44,8 +44,8 @@ type SettingChange struct {
 	After  string
 }
 
-// RoleSlots maps each portable role to the Oh My Pi 18.6.0 modelRoles slots it
-// sets. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
+// RoleSlots maps semantic roles to the Oh My Pi 18.6.0 modelRoles slots they
+// set. Pinned consumers: the task agent uses @task (task/agents.ts); plan mode
 // resolves plan (modes/interactive-mode.ts) and the reviewer agent @slow
 // (prompts/agents/reviewer.md); the scout agent uses @smol
 // (prompts/agents/scout.md); commit messages resolve commit first
@@ -56,6 +56,18 @@ var RoleSlots = map[string][]string{
 	profilemango.RolePlanner:  {"plan", "slow"},
 	profilemango.RoleResearch: {"smol"},
 	profilemango.RoleTiny:     {"commit", "tiny"},
+}
+
+// SlotsForRole preserves semantic aliases and maps custom identifiers directly.
+// Invalid identifiers, including the reserved default role, have no slots.
+func SlotsForRole(name string) []string {
+	if !profilemango.ValidRoleName(name) {
+		return nil
+	}
+	if slots, found := RoleSlots[name]; found {
+		return slots
+	}
+	return []string{name}
 }
 
 // TaskMaxEffortSetting is the Oh My Pi 18.6.0 setting route.subagentMaxEffort
@@ -165,12 +177,17 @@ type slotRoute struct {
 // roleSlots expands every route role into its Oh My Pi slots, ordered by slot.
 func roleSlots(route profilemango.RouteBinding) ([]slotRoute, error) {
 	var slots []slotRoute
+	claimed := map[string]string{}
 	for _, name := range route.SortedRoleNames() {
-		mapped, found := RoleSlots[name]
-		if !found {
-			return nil, fmt.Errorf("oh my pi install rejects role %q; portable roles are %s", name, strings.Join(profilemango.PortableRoles, ", "))
+		mapped := SlotsForRole(name)
+		if len(mapped) == 0 {
+			return nil, fmt.Errorf("oh my pi install rejects role %q; expected a canonical identifier other than default", name)
 		}
 		for _, slot := range mapped {
+			if prior, found := claimed[slot]; found {
+				return nil, fmt.Errorf("oh my pi modelRoles.%s slot collision: roles %q and %q both claim it; bind only one", slot, prior, name)
+			}
+			claimed[slot] = name
 			slots = append(slots, slotRoute{slot: slot, role: name, route: route.Roles[name]})
 		}
 	}

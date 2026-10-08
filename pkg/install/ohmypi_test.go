@@ -139,12 +139,12 @@ func TestOhMyPiRolePlanReportsEveryRoleField(t *testing.T) {
 	}
 }
 
-func TestOhMyPiOldSlotRoleNamesFailWithPortableHint(t *testing.T) {
+func TestOhMyPiDirectSlotRoleNamesInstall(t *testing.T) {
 	request, _ := ohMyPiTestRequest(t)
 	writeInstallTestFile(t, request.BindingsPath, "routes:\n  primary:\n    provider: openai\n    model: gpt-5.6\n    effort: high\n    roles:\n      smol:\n        provider: openai\n        model: gpt-5.6-mini\n")
-	_, err := BuildPlan(request)
-	if err == nil || !strings.Contains(err.Error(), `routes.primary.roles.smol`) || !strings.Contains(err.Error(), `use the portable role "research"`) {
-		t.Fatalf("err = %v", err)
+	plan, err := BuildPlan(request)
+	if err != nil || plan.Status != StatusReady {
+		t.Fatalf("plan = %#v, err = %v", plan, err)
 	}
 }
 

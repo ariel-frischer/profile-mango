@@ -71,8 +71,13 @@ func Render(input Input) Result {
 	})
 	result.Diagnostics = append(result.Diagnostics, resourceDiagnostics...)
 	if !render.HasCodePrefix(resourceDiagnostics, "ohmypi.resource.") {
-		result.Artifacts = append(result.Artifacts, candidateArtifact(input.Profile, input.Route))
-		result.Artifacts = append(result.Artifacts, resourceArtifacts...)
+		artifact, err := candidateArtifact(input.Profile, input.Route)
+		if err != nil {
+			result.Diagnostics.Add(profilemango.SeverityError, "ohmypi.route.roles_invalid", "route.roles", err.Error(), 0, 0)
+		} else {
+			result.Artifacts = append(result.Artifacts, artifact)
+			result.Artifacts = append(result.Artifacts, resourceArtifacts...)
+		}
 	}
 	result.Artifacts = render.SortedArtifacts(result.Artifacts)
 	result.Diagnostics = result.Diagnostics.Sorted()
@@ -150,7 +155,7 @@ func addRouteCapabilities(result *Result, route profilemango.RouteBinding) {
 		result.AddCapability("route."+field, StatusPartial, "documented candidate syntax only")
 	}
 	if len(route.Roles) > 0 {
-		result.AddCapability("route.roles", StatusPartial, "portable roles map to documented modelRoles slots (worker: task; planner: plan, slow; research: smol; tiny: commit, tiny)")
+		result.AddCapability("route.roles", StatusPartial, "semantic roles map to documented modelRoles slots; other valid names map directly")
 	}
 	if route.SubagentMaxEffort != "" {
 		result.AddCapability("route.subagentMaxEffort", StatusPartial, "documented task.maxEffort setting syntax only")
@@ -166,13 +171,13 @@ func routeDiagnostics(route profilemango.RouteBinding) profilemango.Diagnostics 
 	return diagnostics
 }
 
-func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.RouteBinding) Artifact {
+func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.RouteBinding) (Artifact, error) {
 	if !render.ValidName(profile.Metadata.Name) || route.Provider == "" || route.Model == "" || route.Effort == "" {
-		return Artifact{}
+		return Artifact{}, nil
 	}
 	slots, err := roleSlots(route)
 	if err != nil {
-		return Artifact{}
+		return Artifact{}, err
 	}
 	var roles strings.Builder
 	fmt.Fprintf(&roles, "  default: %s\n", yamlString(RoleSelector(route.Provider, route.Model, route.Effort)))
@@ -183,7 +188,7 @@ func candidateArtifact(profile profilemango.ResolvedProfile, route profilemango.
 		fmt.Fprintf(&roles, "task:\n  maxEffort: %s\n", yamlString(route.SubagentMaxEffort))
 	}
 	content := []byte(fmt.Sprintf("# profile-mango: INERT PREVIEW ONLY\n# NON-APPLICABLE: candidate syntax for Oh My Pi %s.\n# This is not an active configuration. Authentication, delivery, and enforcement are unverified.\n\nmodelRoles:\n%s", TargetVersion, roles.String()))
-	return render.NewArtifact("preview/"+profile.Metadata.Name+".config.yml.preview", "candidate-config", content)
+	return render.NewArtifact("preview/"+profile.Metadata.Name+".config.yml.preview", "candidate-config", content), nil
 }
 
 func yamlString(value string) string {

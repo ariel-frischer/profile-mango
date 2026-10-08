@@ -15,12 +15,14 @@ routes:
         model: claude-sonnet-5
       opencode:
         model: gpt-6-luna
-    # `roles` is optional: a model per portable role (worker, planner, research,
-    # tiny). Profile roles install as subagent files with these models (Codex,
-    # OpenCode, Claude Code) or as Oh My Pi model slots (worker: task; planner:
-    # plan, slow; research: smol; tiny: tiny, commit). A role without a model
-    # here uses the agent's default model. `subagentMaxEffort` (Oh My Pi task.maxEffort)
-    # caps the effort a subagent spawn may request.
+    # `roles` is optional: names match ^[a-z][a-z0-9-]{0,62}$ except default.
+    # Profile definitions generate subagent files (Codex, OpenCode, Claude Code,
+    # Oh My Pi). Binding-only roles set Oh My Pi modelRoles without agent files.
+    # Semantic slots: worker=task; planner=plan+slow; research=smol; tiny=commit+tiny.
+    # Other names map directly (code=modelRoles.code, review=modelRoles.review).
+    # Do not bind an alias and its direct slot together (e.g. worker + task).
+    # A profile role without a binding uses the agent's default model.
+    # `subagentMaxEffort` (Oh My Pi task.maxEffort) caps per-spawn effort.
     subagentMaxEffort: high
     roles:
       research:

@@ -2,12 +2,11 @@ package profilemango
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 )
 
-// Portable role names. A profile describes them under roles.<role>; bindings
-// route them under routes.<name>.roles.<role>; adapters map them to native slots.
+// Semantic role names have target-specific mappings. Other valid identifiers
+// are custom roles; profiles define them and bindings route them by name.
 const (
 	// RoleWorker is an implementation subagent.
 	RoleWorker = "worker"
@@ -19,46 +18,31 @@ const (
 	RoleTiny = "tiny"
 )
 
-// PortableRoles is the fixed role vocabulary, in documentation order.
-var PortableRoles = []string{RoleWorker, RolePlanner, RoleResearch, RoleTiny}
+// SemanticRoles lists the roles with target-specific semantic mappings.
+var SemanticRoles = []string{RoleWorker, RolePlanner, RoleResearch, RoleTiny}
 
-// roleNameHints explains well-known names that are not portable roles: the base
-// route's default role and the Oh My Pi native slot names bindings used before.
-var roleNameHints = map[string]string{
-	ReservedRoleDefault: "the route's own provider, model, and effort are the default role; remove roles.default",
-	"task":              `"task" is an Oh My Pi slot name; use the portable role "worker"`,
-	"plan":              `"plan" is an Oh My Pi slot name; use the portable role "planner"`,
-	"slow":              `"slow" is an Oh My Pi slot name; use the portable role "planner"`,
-	"smol":              `"smol" is an Oh My Pi slot name; use the portable role "research"`,
-	"commit":            `"commit" is an Oh My Pi slot name; use the portable role "tiny"`,
-	"advisor":           `"advisor" is an Oh My Pi slot name with no portable role`,
-	"vision":            `"vision" is an Oh My Pi slot name with no portable role`,
+// ValidRoleName reports whether name is a canonical identifier other than default.
+func ValidRoleName(name string) bool {
+	return name != ReservedRoleDefault && profileNamePattern.MatchString(name)
 }
 
-// PortableRole reports whether name is in the fixed role vocabulary.
-func PortableRole(name string) bool {
-	return slices.Contains(PortableRoles, name)
-}
-
-// unknownRoleMessage explains why name is not a portable role, naming the
-// portable replacement for a known native slot name.
+// unknownRoleMessage explains the identifier contract and the reserved base role.
 func unknownRoleMessage(name string) string {
-	expected := "expected one of " + strings.Join(PortableRoles, ", ")
-	if hint, found := roleNameHints[name]; found {
-		return fmt.Sprintf("unknown role %q: %s; %s", name, hint, expected)
+	if name == ReservedRoleDefault {
+		return fmt.Sprintf("unknown role %q: the route's own provider, model, and effort are the default role; remove roles.default", name)
 	}
-	return fmt.Sprintf("unknown role %q; %s", name, expected)
+	return fmt.Sprintf("unknown role %q; expected an identifier matching ^[a-z][a-z0-9-]{0,62}$ (default is reserved)", name)
 }
 
-// validateRoleDefinitions checks profile roles: portable names, a non-empty
-// description, and an optional instructions resource beneath the package root.
+// validateRoleDefinitions checks role identifiers, a non-empty description,
+// and an optional instructions resource beneath the package root.
 func validateRoleDefinitions(roles map[string]RoleDefinition, diagnostics *Diagnostics) {
 	if roles != nil && len(roles) == 0 {
 		diagnostics.Add(SeverityError, "profile.roles_empty", "roles", "roles must define at least one role", 0, 0)
 	}
 	for _, name := range sortedKeys(roles) {
 		path := "roles." + name
-		if !PortableRole(name) {
+		if !ValidRoleName(name) {
 			diagnostics.Add(SeverityError, "profile.role_unknown", path, unknownRoleMessage(name), 0, 0)
 		}
 		role := roles[name]

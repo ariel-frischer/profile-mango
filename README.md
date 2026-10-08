@@ -59,7 +59,8 @@ mango use default                                    # preview switching every m
 One YAML file describing how you want your agents set up. It bundles:
 
 - **Model route:** which model and effort to use
-- **Subagent roles:** worker, planner, research, tiny, each with its own model,
+- **Subagent roles:** custom names such as `coder` and `reviewer`, or semantic
+  roles `worker`, `planner`, `research`, `tiny`, each with its own model,
   plus native agent files shipped as-is
 - **Global instructions:** whole files like `AGENTS.md` and `CLAUDE.md`
 - **Skills:** skill folders (`SKILL.md` and its files) copied into each agent's
