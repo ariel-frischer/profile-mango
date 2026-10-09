@@ -98,6 +98,10 @@ lint-go: ## Run Go linters
 		echo "golangci-lint not installed, running go vet"; \
 		go vet ./...; \
 		fi
+	@unformatted="$$(git ls-files -- '*.go' | xargs gofmt -s -l)"; \
+	if [ -n "$$unformatted" ]; then \
+		echo "gofmt -s needed (run make format):"; echo "$$unformatted"; exit 1; \
+	fi
 
 lint-shell: ## Check POSIX shell scripts
 	@if command -v shellcheck >/dev/null 2>&1; then \
@@ -108,7 +112,7 @@ lint-shell: ## Check POSIX shell scripts
 	fi
 
 format: ## Format code
-	go fmt ./...
+	git ls-files -- '*.go' | xargs gofmt -s -w
 
 f: format ## Alias for format
 
